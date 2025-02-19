@@ -2,15 +2,14 @@
 
 import { useRef, useEffect, useState } from "react";
 
-// Constants for the curve (adjust as needed)
-const height = 2000;
+// --- Configuration Constants ---
 const coeffB = 0.5;
-const coeffA = height * 0.16;
+const coeffA = 2000 * 0.16; // using a base height of 2000 (for the curve)
 
-// Zoom factor to scale down the path (lower than 1 zooms out)
-const zoomFactor = 0.5;
+const zoomFactor = 0.5; // < 1 zooms out the drawn content
 
-// Load assets – ensure these files exist in your public folder.
+// --- Asset Loading ---
+// Make sure these files exist in your public folder.
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
   rocketImage = new Image();
@@ -22,16 +21,19 @@ if (typeof window !== "undefined") {
 const rocketWidth = 220;
 const rocketHeight = 220;
 
+// --- Curve Function ---
+// Returns the vertical displacement for time t (in seconds)
 function curveFunction(t: number) {
   return coeffA * (Math.exp(coeffB * t) - 1);
 }
 
+// --- CrashGame Types ---
 export type GameStatus = "Waiting" | "Running" | "Crashed" | "CashedOut";
 
 interface CrashGameProps {
   isPlaying: boolean;
   betAmount: number;
-  autoCashOut?: number; // if provided, auto-cashout multiplier
+  autoCashOut?: number; // optional auto-cashout multiplier
   onGameEnd: (finalMultiplier: number, winAmount: number) => void;
   onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
   onManualCashout: () => void;
@@ -52,7 +54,16 @@ export function CrashGame({
   const [crashMultiplier, setCrashMultiplier] = useState<number>(1);
   const requestRef = useRef<number>();
 
-  // Start the game animation only when isPlaying becomes true.
+  // Set up the canvas resolution for crisp rendering.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+  }, []);
+
+  // When isPlaying changes, start (or reset) the animation.
   useEffect(() => {
     if (!isPlaying) {
       setGameStatus("Waiting");
@@ -60,11 +71,10 @@ export function CrashGame({
       setMultiplier(1);
       return;
     }
-    // Start the game
     setGameStatus("Running");
-    // Choose a random crash multiplier between 1.5 and 100 (biased toward lower values)
-    const random = Math.random();
-    const crash = Math.max(1.5, Math.min(100, 1.5 + random * 98));
+    // Use a new formula for crash multiplier:
+    // This gives a wider distribution. (For example, if random=0.5, crash≈1.90; if 0.9, crash≈6.90; if 0.99, crash≈16.8)
+    const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     setCrashMultiplier(crash);
 
     const start = performance.now();
@@ -75,111 +85,117 @@ export function CrashGame({
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
 
-      // Auto cashout check
+      // Auto cashout check:
       if (autoCashOut && newMultiplier >= autoCashOut) {
         setGameStatus("CashedOut");
         onCashoutSuccess(newMultiplier, betAmount * newMultiplier);
         cancelAnimationFrame(requestRef.current);
         return;
       }
-      // Crash condition
+      // Crash condition:
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
-        onGameEnd(crash, 0); // no win if crashed
+        onGameEnd(crash, 0);
         cancelAnimationFrame(requestRef.current);
         return;
       }
-
       requestRef.current = requestAnimationFrame(animate);
     };
-
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
   }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd]);
 
-  // Render the canvas contents
+  // Render the canvas.
   const renderCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    const { width, height: canvasHeight } = canvas;
-    context.clearRect(0, 0, width, canvasHeight);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    // If the game hasn't started, show a waiting message.
+    // For crisp rendering, scale context by devicePixelRatio.
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    ctx.clearRect(0, 0, width, height);
+
+    // Use transparent background.
+    // If game isn't started, display "Place your bet" message.
     if (!isPlaying) {
-      context.fillStyle = "white";
-      context.font = "30px Arial";
+      ctx.fillStyle = "white";
+      ctx.font = "30px Arial";
       const text = "Place your bet to start playing";
-      const textWidth = context.measureText(text).width;
-      context.fillText(text, width / 2 - textWidth / 2, canvasHeight / 2);
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillText(text, width / 2 - textWidth / 2, height / 2);
+      ctx.restore();
       return;
     }
 
-    // Draw the rocket path using your accent color.
-    const gradient = context.createLinearGradient(0, 0, width, canvasHeight);
+    // Draw the rocket path.
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#49EACB");
-    gradient.addColorStop(1, "#111"); // dark shade to blend with black background
-    context.strokeStyle = gradient;
-    context.lineWidth = 5;
-    context.beginPath();
-    context.moveTo(0, canvasHeight);
+    gradient.addColorStop(1, "#111");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, height);
     const step = 10;
-    // Multiply x and y positions by zoomFactor
     for (let t = 0; t < timeElapsed / 10; t += step) {
       const x = t * zoomFactor;
-      const y = canvasHeight - curveFunction(t / 1000) * zoomFactor;
-      context.lineTo(x, y);
+      const y = height - curveFunction(t / 1000) * zoomFactor;
+      ctx.lineTo(x, y);
     }
-    context.stroke();
+    ctx.stroke();
 
-    // Determine the rocket's position along the curve.
+    // Determine rocket position.
     const maxX = width - rocketWidth;
-    // Use zoomFactor to scale down the movement.
     const x = Math.min(((timeElapsed / 1000) * 10) * zoomFactor, maxX);
-    const y = canvasHeight - curveFunction(timeElapsed / 1000) * zoomFactor;
+    const y = height - curveFunction(timeElapsed / 1000) * zoomFactor;
 
-    context.save();
+    ctx.save();
     if (gameStatus === "Crashed") {
-      context.translate(x, y);
-      context.drawImage(
+      ctx.translate(x, y);
+      ctx.drawImage(
         explodeImage,
         -rocketWidth / 2,
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
       );
-      context.translate(-x, -y);
+      ctx.translate(-x, -y);
     } else {
-      // Compute the angle from the curve derivative.
+      // Compute angle from the derivative of the curve.
       const d1 = curveFunction(timeElapsed / 1000);
       const d2 = curveFunction((timeElapsed + 10) / 1000);
       const slope = (d2 - d1) / 10;
       const angle = -Math.atan(slope);
-      context.translate(x, y);
-      context.rotate(angle);
-      context.drawImage(
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.drawImage(
         rocketImage,
         -rocketWidth / 2,
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
       );
-      context.rotate(-angle);
-      context.translate(-x, -y);
+      ctx.rotate(-angle);
+      ctx.translate(-x, -y);
     }
-    context.restore();
+    ctx.restore();
 
-    // Draw the multiplier in a style matching your website.
-    context.font = "60px Arial";
+    // Draw the multiplier.
+    ctx.font = "60px Arial";
     let fillStyle = "white";
     const m = parseFloat(multiplier.toFixed(2));
     if (m > 5) fillStyle = "red";
     else if (m > 2) fillStyle = "yellow";
-    context.fillStyle = fillStyle;
+    ctx.fillStyle = fillStyle;
     const text = m.toFixed(2) + "x";
-    const textWidth = context.measureText(text).width;
-    context.fillText(text, width / 2 - textWidth / 2, canvasHeight / 2);
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, width / 2 - textWidth / 2, height / 2);
+    ctx.restore();
   };
 
   useEffect(() => {
@@ -191,9 +207,9 @@ export function CrashGame({
       ref={canvasRef}
       style={{
         width: "100%",
-        height: "100%", // fill the container completely
+        height: "100%", // fill the container fully
         display: "block",
-        background: "black",
+        background: "transparent",
         borderRadius: "8px",
       }}
     />
