@@ -67,7 +67,13 @@ export function CrashControls({
               disabled={!isConnected || isPlaying}
             />
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-              <Image src="/kaspa-icon.png" alt="KAS" width={16} height={16} className="rounded-full" />
+              <Image
+                src="/kaspa-icon.png"
+                alt="KAS"
+                width={16}
+                height={16}
+                className="rounded-full"
+              />
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -148,7 +154,7 @@ export function CrashControls({
         {gameOver && (
           <div className="text-center">
             <div className="text-2xl font-bold text-red-500">Game Over</div>
-            <div className="text-xl text-[#49EACB]">Crashed @ {crashMultiplier.toFixed(2)}×</div>
+            <div className="text-xl text-[#49EACB]">Crashed @ {crashPoint.toFixed(2)}×</div>
           </div>
         )}
       </div>
