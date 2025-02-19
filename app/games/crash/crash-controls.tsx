@@ -13,11 +13,14 @@ interface CrashControlsProps {
   setBetAmount: (amount: string) => void;
   autoCashout: string;
   setAutoCashout: (amount: string) => void;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
   onPlaceBet: () => void;
   onCashout: () => void;
   resetGame: () => void;
-  gameStatus: "Waiting" | "Running" | "Crashed" | "CashedOut";
-  crashMultiplier: number;
+  gameOver: boolean;
+  crashPoint: number;
 }
 
 export function CrashControls({
@@ -25,11 +28,14 @@ export function CrashControls({
   setBetAmount,
   autoCashout,
   setAutoCashout,
+  isPlaying,
+  isWalletConnected,
+  balance,
   onPlaceBet,
   onCashout,
   resetGame,
-  gameStatus,
-  crashMultiplier,
+  gameOver,
+  crashPoint,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
   const [hasAutoCashout, setHasAutoCashout] = useState(false);
@@ -58,16 +64,10 @@ export function CrashControls({
               onChange={(e) => setBetAmount(e.target.value)}
               className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
               placeholder="0.00"
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              disabled={!isConnected || isPlaying}
             />
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-              <Image
-                src="/kaspa-icon.png"
-                alt="KAS"
-                width={16}
-                height={16}
-                className="rounded-full"
-              />
+              <Image src="/kaspa-icon.png" alt="KAS" width={16} height={16} className="rounded-full" />
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -75,7 +75,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              disabled={!isConnected || isPlaying}
             >
               ½
             </Button>
@@ -83,7 +83,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              disabled={!isConnected || isPlaying}
             >
               2×
             </Button>
@@ -91,15 +91,15 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount("0.00")}
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              disabled={!isConnected || isPlaying}
             >
               Min
             </Button>
             <Button
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => {}}
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              onClick={() => setBetAmount(balance.toString())}
+              disabled={!isConnected || isPlaying}
             >
               Max
             </Button>
@@ -114,7 +114,7 @@ export function CrashControls({
               size="sm"
               className="text-[#49EACB] hover:text-[#49EACB]/80 hover:bg-[#49EACB]/10"
               onClick={() => setHasAutoCashout(!hasAutoCashout)}
-              disabled={!isConnected || gameStatus !== "Waiting"}
+              disabled={!isConnected || isPlaying}
             >
               {hasAutoCashout ? "Disable" : "Enable"}
             </Button>
@@ -125,27 +125,27 @@ export function CrashControls({
             onChange={(e) => setAutoCashout(e.target.value)}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
             placeholder="e.g., 2.00"
-            disabled={!hasAutoCashout || gameStatus !== "Waiting"}
+            disabled={!hasAutoCashout || isPlaying}
           />
         </div>
 
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          {gameStatus === "Crashed" || gameStatus === "CashedOut" ? (
+          {gameOver ? (
             <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={resetGame}>
               Play Again
             </Button>
-          ) : gameStatus === "Waiting" ? (
+          ) : !isPlaying ? (
             <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={handlePlaceBet} disabled={!isConnected}>
               {!isConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
-          ) : gameStatus === "Running" ? (
+          ) : (
             <Button className="w-full bg-green-500 text-white hover:bg-green-600" onClick={onCashout}>
               Cash Out
             </Button>
-          ) : null}
+          )}
         </motion.div>
 
-        {gameStatus === "Crashed" && (
+        {gameOver && (
           <div className="text-center">
             <div className="text-2xl font-bold text-red-500">Game Over</div>
             <div className="text-xl text-[#49EACB]">Crashed @ {crashMultiplier.toFixed(2)}×</div>
