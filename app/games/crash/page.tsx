@@ -11,7 +11,6 @@ import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
-import { Card } from "@/components/ui/card"; // Ensure this import path and export are correct.
 import "./styles.css";
 
 export default function CrashPage() {
@@ -32,8 +31,7 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Normally you'd deduct the bet amount from the wallet balance.
-    // For simulation, we simply start the game.
+    // Start the game – in a real app, you might deduct the bet amount.
     setGameOver(false);
     setCrashPoint(null);
     setIsPlaying(true);
@@ -46,16 +44,11 @@ export default function CrashPage() {
     }
   };
 
-  const handleManualCashout = () => {
-    handleCashout();
-  };
-
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
-    // In a real app you would update the wallet balance.
-    // For simulation, we simply end the game and display the result.
     setGameOver(true);
     setCrashPoint(multiplier);
     setIsPlaying(false);
+    // Optionally update wallet balance with amount.
   };
 
   const handleGameEnd = (result: number, winAmount: number) => {
@@ -63,7 +56,10 @@ export default function CrashPage() {
     setIsPlaying(false);
     setGameOver(true);
     setCrashPoint(result);
-    // Optionally update the balance if there's a win.
+  };
+
+  const handleManualCashout = () => {
+    handleCashout();
   };
 
   const resetGame = () => {
@@ -91,20 +87,19 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
+            <div className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "100%" }}>
+              {/* Ensure the game container fills available space */}
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
-                  <button
-                    className="text-[#49EACB] hover:underline"
-                    onClick={() => setShowHowToPlay(true)}
-                  >
+                  <button className="text-[#49EACB] hover:underline" onClick={() => setShowHowToPlay(true)}>
                     <Info className="w-4 h-4 mr-2" />
                     How to Play
                   </button>
                 </div>
-                <div className="flex-grow relative aspect-[16/9] bg-[#49EACB]/5 rounded-lg mb-6">
+                <div className="flex-grow relative bg-[#49EACB]/5 rounded-lg mb-6" style={{ height: "500px" }}>
                   <CrashGame
+                    isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
                     autoCashOut={Number(autoCashout)}
                     onGameEnd={handleGameEnd}
@@ -113,7 +108,7 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
-            </Card>
+            </div>
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -121,7 +116,7 @@ export default function CrashPage() {
                 autoCashout={autoCashout}
                 setAutoCashout={setAutoCashout}
                 isPlaying={isPlaying}
-                isWalletConnected={isConnected} // Pass wallet connection state from context
+                isWalletConnected={isConnected}
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
@@ -152,10 +147,7 @@ export default function CrashPage() {
             <p className="mt-4 text-white">
               The longer you wait, the higher the potential payout, but also the higher the risk!
             </p>
-            <Button
-              onClick={() => setShowHowToPlay(false)}
-              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-            >
+            <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
               Got it!
             </Button>
           </div>
