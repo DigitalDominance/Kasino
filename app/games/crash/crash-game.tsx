@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
@@ -32,22 +32,18 @@ export function CrashGame({
   const startTimeRef = useRef<number>(0);
   const lastUpdateTimeRef = useRef<number>(0);
   const hasManualCashedOut = useRef<boolean>(false);
-  // We'll use a fixed game duration (in ms) for the multiplier to reach the crash point.
-  const targetDuration = 10000; // 10 seconds
 
-  // Reset game state when isPlaying changes to false
+  // When the game stops playing, reset the state.
   useEffect(() => {
     if (!isPlaying) {
       resetGameState();
     }
   }, [isPlaying]);
 
-  // Initialize game when isPlaying changes to true
+  // When starting a new game, calculate the crash point and initialize.
   useEffect(() => {
     if (isPlaying && !gameInitialized) {
-      console.log("Initializing game with bet amount:", betAmount);
       const newCrashPoint = calculateCrashPoint();
-      console.log("Calculated crash point:", newCrashPoint);
       setCrashPoint(newCrashPoint);
       setGameInitialized(true);
       initializeGame(newCrashPoint);
@@ -55,7 +51,6 @@ export function CrashGame({
       resetGameState();
     }
     return () => cleanup();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameInitialized, betAmount]);
 
   const resetGameState = () => {
@@ -71,7 +66,6 @@ export function CrashGame({
   };
 
   const cleanup = () => {
-    console.log("Cleaning up game");
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = undefined;
@@ -81,29 +75,22 @@ export function CrashGame({
   };
 
   /**
-   * Calculate the crash point using a 10% house edge.
-   * The formula below uses a uniformly distributed random value and then scales the “fair”
-   * multiplier by the house edge (0.9). Finally, the value is capped at 100×.
+   * Calculate the crash point.
+   * Uses a 10% house edge:
+   *   - A uniformly random value is scaled by a factor (houseEdge = 0.9).
+   *   - The result is floored to two decimals.
+   *   - The multiplier is ensured to be at least 1.01× and capped at 100×.
    */
   const calculateCrashPoint = (): number => {
     const random = Math.random();
     const houseEdge = 0.9; // 10% house edge in favor of the casino
-    // Compute a base multiplier. (This formula is one way to simulate a fair game modified by house edge.)
     let baseMultiplier = (100 * houseEdge) / (random * 0.99 + 0.01);
-    // Floor to two decimals:
     baseMultiplier = Math.floor(baseMultiplier * 100) / 100;
-    // Ensure a minimum multiplier of 1.01×:
     baseMultiplier = Math.max(1.01, baseMultiplier);
-    // Cap the crash point to 100×:
     const finalCrashPoint = Math.min(Number(baseMultiplier.toFixed(2)), 100);
-    console.log("Calculated crash point:", finalCrashPoint);
     return finalCrashPoint;
   };
 
-  /**
-   * Initialize the game by resetting the chart and multiplier,
-   * then starting the game loop.
-   */
   const initializeGame = (newCrashPoint: number) => {
     if (!gameStartedRef.current) {
       setChartData([{ x: 0, y: 1 }]);
@@ -117,27 +104,22 @@ export function CrashGame({
   };
 
   /**
-   * Start the game loop.
-   * We compute a growth constant k such that:
-   *    crashPoint = exp(k * targetDuration)
-   * or equivalently:
-   *    k = ln(crashPoint) / targetDuration
-   * Then the multiplier at any time elapsed is:
-   *    multiplier = exp(k * elapsed)
+   * Game loop: uses a fixed growth rate so that:
+   *   multiplier = exp(growthRate × elapsedTime)
+   * This produces a variable game duration—lower crash points will be reached quickly,
+   * while higher crash points will take longer.
    */
   const startGameLoop = (crashPointValue: number) => {
-    console.log("Starting game loop with crash point:", crashPointValue);
-    const k = Math.log(crashPointValue) / targetDuration;
+    const growthRate = 0.00006; // constant growth rate
+
     const updateGame = (timestamp: number) => {
       const elapsed = timestamp - startTimeRef.current;
       const timeSinceLastUpdate = timestamp - lastUpdateTimeRef.current;
 
-      // Calculate new multiplier using the dynamic growth rate
-      const newMultiplier = Math.exp(k * elapsed);
+      const newMultiplier = Math.exp(growthRate * elapsed);
       setCurrentMultiplier(newMultiplier);
 
       if (timeSinceLastUpdate >= 50) {
-        // Update chart every 50ms
         setChartData((prevData) => [
           ...prevData,
           { x: elapsed / 1000, y: Math.min(newMultiplier, crashPointValue) },
@@ -146,7 +128,6 @@ export function CrashGame({
       }
 
       if (newMultiplier >= crashPointValue) {
-        console.log("Game over, crashed at:", newMultiplier.toFixed(2));
         setIsGameOver(true);
         onGameEnd(crashPointValue, 0);
         return;
@@ -159,8 +140,8 @@ export function CrashGame({
   };
 
   /**
-   * Cashout the game manually.
-   * This stops the game loop and notifies the parent component.
+   * Handle a manual cashout.
+   * Once cashed out, the game stops and the parent is notified.
    */
   const handleCashout = () => {
     if (!hasManualCashedOut.current && !isGameOver && currentMultiplier > 1) {
@@ -182,7 +163,7 @@ export function CrashGame({
     }
   };
 
-  // Initial state display when not playing and no game result to show.
+  // When not playing and no game result is showing, display an initial prompt.
   if (!isPlaying && !isGameOver && !showCashoutPopup) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -197,14 +178,7 @@ export function CrashGame({
         <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
           <XAxis dataKey="x" domain={[0, "auto"]} hide />
           <YAxis dataKey="y" domain={[1, "auto"]} hide />
-          <Line
-            type="monotone"
-            dataKey="y"
-            stroke="#49EACB"
-            strokeWidth={2}
-            dot={false}
-            isAnimationActive={false}
-          />
+          <Line type="monotone" dataKey="y" stroke="#49EACB" strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
 
