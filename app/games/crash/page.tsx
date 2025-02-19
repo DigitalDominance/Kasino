@@ -1,121 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, Info } from "lucide-react"
-import Link from "next/link"
-import { SiteFooter } from "@/components/site-footer"
-import { CrashGame } from "./crash-game"
-import { CrashControls } from "./crash-controls"
-import { LiveChat } from "../mines/live-chat"
-import { LiveWins } from "../mines/live-wins"
-import { WalletConnection } from "@/components/wallet-connection"
-import "./styles.css"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Info } from "lucide-react";
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { CrashGame } from "./crash-game";
+import { CrashControls } from "./crash-controls";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
+import { WalletConnection } from "@/components/wallet-connection";
+import { useWallet } from "@/contexts/WalletContext";
+import "./styles.css";
 
 export default function CrashPage() {
-  //const [isWalletConnected, setIsWalletConnected] = useState(false)
-  //const [user, setUser] = useState(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [betAmount, setBetAmount] = useState("0.00")
-  const [autoCashout, setAutoCashout] = useState("2.00")
-  const [balance, setBalance] = useState(0)
-  const [showHowToPlay, setShowHowToPlay] = useState(false)
-  const [gameOver, setGameOver] = useState(false)
-  const [crashPoint, setCrashPoint] = useState<number | null>(null)
+  // Get wallet connection status and balance from wallet context.
+  const { isConnected, balance } = useWallet();
 
-  //useEffect(() => {
-  //  checkKaswareWallet()
-  //}, [])
-
-  //const checkKaswareWallet = async () => {
-  //  const kasware = (window as any).kasware
-  //  if (kasware) {
-  //    const accounts = await kasware.getAccounts()
-  //    if (accounts.length > 0) {
-  //      setIsWalletConnected(true)
-  //      setUser({ username: accounts[0] })
-  //      await getBalance()
-  //    }
-  //  }
-  //}
-
-  //const connectWallet = async () => {
-  //  try {
-  //    const kasware = (window as any).kasware
-  //    if (kasware) {
-  //      const accounts = await kasware.requestAccounts()
-  //      if (accounts.length > 0) {
-  //        setIsWalletConnected(true)
-  //        setUser({ username: accounts[0] })
-  //        await getBalance()
-  //      }
-  //    } else {
-  //      console.error("Kasware wallet not found")
-  //    }
-  //  } catch (error) {
-  //    console.error("Failed to connect wallet:", error)
-  //  }
-  //}
-
-  //const getBalance = async () => {
-  //  try {
-  //    const kasware = (window as any).kasware
-  //    if (kasware) {
-  //      const balanceData = await kasware.getBalance()
-  //      setBalance(Number(balanceData.total) / Math.pow(10, 8))
-  //    }
-  //  } catch (error) {
-  //    console.error("Failed to get balance:", error)
-  //  }
-  //}
+  // Local states for game control.
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [betAmount, setBetAmount] = useState("0.00");
+  const [autoCashout, setAutoCashout] = useState("2.00");
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [crashPoint, setCrashPoint] = useState<number | null>(null);
 
   const handlePlaceBet = () => {
-    const bet = Number(betAmount)
+    const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount")
-      return
+      alert("Invalid bet amount");
+      return;
     }
-    setBalance((prevBalance) => prevBalance - bet)
-    setGameOver(false)
-    setCrashPoint(null)
-    setIsPlaying(true)
-    console.log("Bet placed, starting game")
-  }
+    // Normally you'd deduct the bet amount from the wallet balance.
+    // For simulation, we simply start the game.
+    setGameOver(false);
+    setCrashPoint(null);
+    setIsPlaying(true);
+    console.log("Bet placed, starting game");
+  };
 
   const handleCashout = () => {
     if (isPlaying) {
-      setIsPlaying(false)
+      setIsPlaying(false);
     }
-  }
+  };
 
   const handleManualCashout = () => {
-    handleCashout()
-  }
+    handleCashout();
+  };
 
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
-    setBalance((prevBalance) => prevBalance + amount)
-    setGameOver(true)
-    setCrashPoint(multiplier)
-    setIsPlaying(false)
-  }
+    // In a real app you would update the wallet balance.
+    // For simulation, we simply end the game and display the result.
+    setGameOver(true);
+    setCrashPoint(multiplier);
+    setIsPlaying(false);
+  };
 
   const handleGameEnd = (result: number, winAmount: number) => {
-    console.log("Game ended with result:", result, "and win amount:", winAmount)
-    setIsPlaying(false)
-    setGameOver(true)
-    setCrashPoint(result)
-    if (winAmount > 0) {
-      setBalance((prevBalance) => prevBalance + winAmount)
-    }
-  }
+    console.log("Game ended with result:", result, "and win amount:", winAmount);
+    setIsPlaying(false);
+    setGameOver(true);
+    setCrashPoint(result);
+    // Optionally update the balance if there's a win.
+  };
 
   const resetGame = () => {
-    setIsPlaying(false)
-    setGameOver(false)
-    setCrashPoint(null)
-  }
+    setIsPlaying(false);
+    setGameOver(false);
+    setCrashPoint(null);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -140,7 +96,12 @@ export default function CrashPage() {
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
-                  <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={() => setShowHowToPlay(true)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#49EACB]"
+                    onClick={() => setShowHowToPlay(true)}
+                  >
                     <Info className="w-4 h-4 mr-2" />
                     How to Play
                   </Button>
@@ -163,13 +124,13 @@ export default function CrashPage() {
                 autoCashout={autoCashout}
                 setAutoCashout={setAutoCashout}
                 isPlaying={isPlaying}
-                //isWalletConnected={isWalletConnected}
+                isWalletConnected={isConnected} // Pass wallet connection state from context
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
                 resetGame={resetGame}
                 gameOver={gameOver}
-                crashPoint={crashPoint}
+                crashPoint={crashPoint ?? 0}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
@@ -204,6 +165,5 @@ export default function CrashPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
-
