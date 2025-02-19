@@ -1,59 +1,58 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect, useRef, FormEvent } from "react";
+import { io, Socket } from "socket.io-client";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessage {
-  username: string
-  message: string
-  timestamp: Date
+  username: string;
+  message: string;
+  timestamp: string;
 }
 
 interface LiveChatProps {
-  textColor?: string
+  textColor?: string;
 }
 
 export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [newMessage, setNewMessage] = useState("")
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Simulated chat messages
-    const simulatedMessages: ChatMessage[] = [
-      { username: "Player1", message: "Good luck everyone!", timestamp: new Date() },
-      { username: "CryptoKing", message: "Just won 100 KAS!", timestamp: new Date() },
-      { username: "MinesExpert", message: "Be careful of those mines!", timestamp: new Date() },
-    ]
+    // Connect to the Heroku-deployed Socket.IO server
+    socketRef.current = io("https://your-app-name.herokuapp.com");
 
-    setMessages(simulatedMessages)
+    // Listen for incoming chat messages
+    socketRef.current.on("chat message", (msg: ChatMessage) => {
+      setMessages((prevMessages) => [...prevMessages, msg]);
+    });
 
-    // Simulated new messages every 5 seconds
-    const interval = setInterval(() => {
-      const newSimulatedMessage: ChatMessage = {
-        username: `Player${Math.floor(Math.random() * 100)}`,
-        message: `Random message ${Math.floor(Math.random() * 1000)}`,
-        timestamp: new Date(),
-      }
-      setMessages((prevMessages) => [...prevMessages, newSimulatedMessage])
-    }, 5000)
+    // Clean up on component unmount
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
 
-    return () => clearInterval(interval)
-  }, [])
+  const handleSendMessage = (e: FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === "") return;
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() !== "") {
-      const userMessage: ChatMessage = {
-        username: "You",
-        message: newMessage,
-        timestamp: new Date(),
-      }
-      setMessages((prevMessages) => [...prevMessages, userMessage])
-      setNewMessage("")
-    }
-  }
+    const userMessage: ChatMessage = {
+      username: "You", // Replace with actual user info if available
+      message: newMessage,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Emit the message to the server
+    socketRef.current?.emit("chat message", userMessage);
+    // Optionally update the UI immediately
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setNewMessage("");
+  };
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
@@ -69,7 +68,7 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
             </div>
           ))}
         </ScrollArea>
-        <div className="flex space-x-2">
+        <form onSubmit={handleSendMessage} className="flex space-x-2">
           <Input
             type="text"
             value={newMessage}
@@ -77,12 +76,11 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
             placeholder="Type your message..."
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white flex-grow"
           />
-          <Button onClick={handleSendMessage} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+          <Button type="submit" className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
             Send
           </Button>
-        </div>
+        </form>
       </div>
     </Card>
-  )
+  );
 }
-
