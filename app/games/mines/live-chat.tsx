@@ -6,11 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface ChatMessage {
   username: string;
   message: string;
-  timestamp: string;
+  timestamp: string; // Using ISO string format
 }
 
 interface LiveChatProps {
@@ -22,8 +23,11 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
   const [newMessage, setNewMessage] = useState("");
   const socketRef = useRef<Socket | null>(null);
 
+  // Pull wallet state. We assume that once connected, the wallet provides a username.
+  const { isConnected, username } = useWallet();
+
   useEffect(() => {
-    // Connect to the Heroku-deployed Socket.IO server
+    // Connect to your Socket.IO server (update with your Heroku URL)
     socketRef.current = io("https://kasino-backend-4818b4b69870.herokuapp.com");
 
     // Listen for incoming chat messages
@@ -31,7 +35,7 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
 
-    // Clean up on component unmount
+    // Cleanup on component unmount
     return () => {
       socketRef.current?.disconnect();
     };
@@ -40,17 +44,18 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
+    if (!isConnected || !username) return; // Should never happen since input is disabled
 
     const userMessage: ChatMessage = {
-      username: "You", // Replace with actual user info if available
+      username, // use the wallet's username instead of "You"
       message: newMessage,
       timestamp: new Date().toISOString(),
     };
 
-    // Emit the message to the server
+    // Emit the message to the server.
+    // Do not update the messages locally here – let the server broadcast it.
     socketRef.current?.emit("chat message", userMessage);
-    // Optionally update the UI immediately
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+
     setNewMessage("");
   };
 
@@ -73,10 +78,15 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={isConnected ? "Type your message..." : "Connect wallet to chat"}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white flex-grow"
+            disabled={!isConnected}
           />
-          <Button type="submit" className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+          <Button
+            type="submit"
+            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+            disabled={!isConnected}
+          >
             Send
           </Button>
         </form>
