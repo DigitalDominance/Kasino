@@ -24,7 +24,7 @@ export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
 
   useEffect(() => {
     // Connect to the Heroku-deployed Socket.IO server
-    socketRef.current = io("https://your-app-name.herokuapp.com");
+    socketRef.current = io("https://kasino-backend-4818b4b69870.herokuapp.com");
 
     // Listen for incoming chat messages
     socketRef.current.on("chat message", (msg: ChatMessage) => {
