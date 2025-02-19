@@ -1,44 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useWallet, WalletStatus } from "@/contexts/WalletContext"
 import { useModal } from "@/contexts/ModalContext"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Loader2 } from "lucide-react"
+import { debounce } from "underscore"
 
 export function WalletConnection() {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet()
   const { showModal } = useModal()
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleConnect = async () => {
-    setIsLoading(true)
-    try {
-      const address = await connectWallet()
-      if (address) {
-        const isCorrectNetwork = await checkNetwork()
-        if (isCorrectNetwork) {
-          checkUserAccount(address)
+  const handleConnect = useCallback(
+    debounce(async () => {
+      setIsLoading(true)
+      try {
+        const address = await connectWallet()
+        if (address) {
+          const isCorrectNetwork = await checkNetwork()
+          if (isCorrectNetwork) {
+            await checkUserAccount(address)
+          }
         }
+      } catch (error) {
+        showNotification("Failed to connect wallet. Please try again.", "error")
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      showNotification("Failed to connect wallet. Please try again.", "error")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    }, 300),
+    [],
+  )
 
-  const handleDisconnect = async () => {
-    setIsLoading(true)
-    try {
-      await disconnectWallet()
-    } catch (error) {
-      showNotification("Failed to disconnect wallet. Please try again.", "error")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const handleDisconnect = useCallback(
+    debounce(async () => {
+      setIsLoading(true)
+      try {
+        await disconnectWallet()
+      } catch (error) {
+        showNotification("Failed to disconnect wallet. Please try again.", "error")
+      } finally {
+        setIsLoading(false)
+      }
+    }, 300),
+    [],
+  )
 
   const checkUserAccount = async (address: string) => {
     try {
