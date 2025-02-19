@@ -31,7 +31,7 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Start the game – in a real app, you might deduct the bet amount.
+    // Start the game – in a real app, deduct the bet amount.
     setGameOver(false);
     setCrashPoint(null);
     setIsPlaying(true);
@@ -87,8 +87,8 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <div className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "100%" }}>
-              {/* Ensure the game container fills available space */}
+            <div className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "700px" }}>
+              {/* Increased height for the game container */}
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
@@ -97,7 +97,7 @@ export default function CrashPage() {
                     How to Play
                   </button>
                 </div>
-                <div className="flex-grow relative bg-[#49EACB]/5 rounded-lg mb-6" style={{ height: "500px" }}>
+                <div className="flex-grow relative bg-[#49EACB]/5 rounded-lg mb-6" style={{ height: "100%" }}>
                   <CrashGame
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
