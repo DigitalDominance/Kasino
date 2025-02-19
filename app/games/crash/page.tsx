@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
@@ -27,13 +25,14 @@ export default function CrashPage() {
   const [gameOver, setGameOver] = useState(false);
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
 
+  // When a bet is placed, validate the amount and start the game.
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
       alert("Invalid bet amount");
       return;
     }
-    // Normally you'd deduct the bet amount from the wallet balance.
+    // Normally you would deduct the bet from the wallet balance.
     // For simulation, we simply start the game.
     setGameOver(false);
     setCrashPoint(null);
@@ -41,32 +40,36 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
+  // When the user clicks Cash Out, we end the game.
   const handleCashout = () => {
     if (isPlaying) {
       setIsPlaying(false);
     }
   };
 
-  const handleManualCashout = () => {
-    handleCashout();
-  };
-
-  const handleCashoutSuccess = (multiplier: number, amount: number) => {
-    // In a real app you would update the wallet balance.
-    // For simulation, we simply end the game and display the result.
-    setGameOver(true);
-    setCrashPoint(multiplier);
-    setIsPlaying(false);
-  };
-
+  // This is called when the game naturally ends (i.e. the rocket crashes).
   const handleGameEnd = (result: number, winAmount: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmount);
     setIsPlaying(false);
     setGameOver(true);
     setCrashPoint(result);
-    // Optionally update the balance if there's a win.
+    // Optionally update balance here if there is a win.
   };
 
+  // This callback is triggered when the user manually cashes out before the crash.
+  const handleCashoutSuccess = (multiplier: number, amount: number) => {
+    // In a real app you would update the wallet balance with the win amount.
+    setGameOver(true);
+    setCrashPoint(multiplier);
+    setIsPlaying(false);
+  };
+
+  // For manual cashout from controls.
+  const handleManualCashout = () => {
+    handleCashout();
+  };
+
+  // Reset the game state for a new round.
   const resetGame = () => {
     setIsPlaying(false);
     setGameOver(false);
@@ -96,21 +99,19 @@ export default function CrashPage() {
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-[#49EACB]"
+                  <button
+                    className="text-[#49EACB] hover:underline"
                     onClick={() => setShowHowToPlay(true)}
                   >
                     <Info className="w-4 h-4 mr-2" />
                     How to Play
-                  </Button>
+                  </button>
                 </div>
                 <div className="flex-grow relative aspect-[16/9] bg-[#49EACB]/5 rounded-lg mb-6">
                   <CrashGame
-                    isPlaying={isPlaying}
-                    onGameEnd={handleGameEnd}
                     betAmount={Number(betAmount)}
+                    autoCashOut={Number(autoCashout)}
+                    onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
                     onManualCashout={handleManualCashout}
                   />
@@ -124,7 +125,7 @@ export default function CrashPage() {
                 autoCashout={autoCashout}
                 setAutoCashout={setAutoCashout}
                 isPlaying={isPlaying}
-                isWalletConnected={isConnected} // Pass wallet connection state from context
+                isWalletConnected={isConnected} // Pass wallet connection status from wallet context.
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
