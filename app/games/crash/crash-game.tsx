@@ -7,6 +7,9 @@ const height = 2000;
 const coeffB = 0.5;
 const coeffA = height * 0.16;
 
+// Zoom factor to scale down the path (lower than 1 zooms out)
+const zoomFactor = 0.5;
+
 // Load assets – ensure these files exist in your public folder.
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
@@ -122,32 +125,46 @@ export function CrashGame({
     context.beginPath();
     context.moveTo(0, canvasHeight);
     const step = 10;
+    // Multiply x and y positions by zoomFactor
     for (let t = 0; t < timeElapsed / 10; t += step) {
-      const x = t;
-      const y = canvasHeight - curveFunction(t / 1000);
+      const x = t * zoomFactor;
+      const y = canvasHeight - curveFunction(t / 1000) * zoomFactor;
       context.lineTo(x, y);
     }
     context.stroke();
 
     // Determine the rocket's position along the curve.
     const maxX = width - rocketWidth;
-    const x = Math.min((timeElapsed / 1000) * 10, maxX);
-    const y = canvasHeight - curveFunction(timeElapsed / 1000);
+    // Use zoomFactor to scale down the movement.
+    const x = Math.min(((timeElapsed / 1000) * 10) * zoomFactor, maxX);
+    const y = canvasHeight - curveFunction(timeElapsed / 1000) * zoomFactor;
 
     context.save();
     if (gameStatus === "Crashed") {
       context.translate(x, y);
-      context.drawImage(explodeImage, -rocketWidth / 2, -rocketHeight / 2, rocketWidth, rocketHeight);
+      context.drawImage(
+        explodeImage,
+        -rocketWidth / 2,
+        -rocketHeight / 2,
+        rocketWidth,
+        rocketHeight
+      );
       context.translate(-x, -y);
     } else {
-      // Compute angle from curve derivative.
+      // Compute the angle from the curve derivative.
       const d1 = curveFunction(timeElapsed / 1000);
       const d2 = curveFunction((timeElapsed + 10) / 1000);
       const slope = (d2 - d1) / 10;
       const angle = -Math.atan(slope);
       context.translate(x, y);
       context.rotate(angle);
-      context.drawImage(rocketImage, -rocketWidth / 2, -rocketHeight / 2, rocketWidth, rocketHeight);
+      context.drawImage(
+        rocketImage,
+        -rocketWidth / 2,
+        -rocketHeight / 2,
+        rocketWidth,
+        rocketHeight
+      );
       context.rotate(-angle);
       context.translate(-x, -y);
     }
