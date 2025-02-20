@@ -22,6 +22,7 @@ interface CrashControlsProps {
   gameOver: boolean;
   crashPoint: number;
   winAmount: number;
+  hideModal?: boolean;
 }
 
 export function CrashControls({
@@ -38,6 +39,7 @@ export function CrashControls({
   gameOver,
   crashPoint,
   winAmount,
+  hideModal = false,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
   const [hasAutoCashout, setHasAutoCashout] = useState(false);
@@ -54,155 +56,149 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Determine the win/loss message:
+  // Determine the win/loss message.
   const winMessage =
     winAmount > 0
       ? `You Won ${winAmount.toFixed(2)} KAS!`
       : `You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
-    <>
-      <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm text-[#49EACB]">Bet Amount</label>
-            <div className="relative">
-              <Input
-                type="number"
-                value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
-                className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
-                placeholder="0.00"
-                disabled={!isConnected || isPlaying}
-              />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                  alt="KAS"
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() =>
-                  setBetAmount((Number(betAmount) / 2).toString())
-                }
-                disabled={!isConnected || isPlaying}
-              >
-                ½
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() =>
-                  setBetAmount((Number(betAmount) * 2).toString())
-                }
-                disabled={!isConnected || isPlaying}
-              >
-                2×
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount("0.00")}
-                disabled={!isConnected || isPlaying}
-              >
-                Min
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(balance.toString())}
-                disabled={!isConnected || isPlaying}
-              >
-                Max
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-[#49EACB]">Auto Cashout</label>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[#49EACB] hover:text-[#49EACB]/80 hover:bg-[#49EACB]/10"
-                onClick={() => setHasAutoCashout(!hasAutoCashout)}
-                disabled={!isConnected || isPlaying}
-              >
-                {hasAutoCashout ? "Disable" : "Enable"}
-              </Button>
-            </div>
+    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm text-[#49EACB]">Bet Amount</label>
+          <div className="relative">
             <Input
               type="number"
-              value={autoCashout}
-              onChange={(e) => setAutoCashout(e.target.value)}
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
-              placeholder="e.g., 2.00"
-              disabled={!hasAutoCashout || isPlaying}
+              value={betAmount}
+              onChange={(e) => setBetAmount(e.target.value)}
+              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+              placeholder="0.00"
+              disabled={!isConnected || isPlaying}
             />
-          </div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameOver ? (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={resetGame}
-              >
-                Play Again
-              </Button>
-            ) : !isPlaying ? (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={handlePlaceBet}
-                disabled={!isConnected}
-              >
-                {!isConnected ? "Connect Wallet to Play" : "Place Bet"}
-              </Button>
-            ) : (
-              <Button
-                className="w-full bg-green-500 text-white hover:bg-green-600"
-                onClick={onCashout}
-              >
-                Cash Out
-              </Button>
-            )}
-          </motion.div>
-        </div>
-      </Card>
-
-      {/* Glass-style modal overlay when game is over */}
-      {gameOver && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 flex items-center justify-center z-50"
-        >
-          <Card className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
-            <div className="flex items-center space-x-2">
+            <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                 alt="KAS"
-                width={20}
-                height={20}
+                width={16}
+                height={16}
                 className="rounded-full"
               />
-              <span className="text-xl text-[#49EACB]">{winMessage}</span>
             </div>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
             <Button
-              className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+              variant="outline"
+              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+              onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
+              disabled={!isConnected || isPlaying}
+            >
+              ½
+            </Button>
+            <Button
+              variant="outline"
+              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+              onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
+              disabled={!isConnected || isPlaying}
+            >
+              2×
+            </Button>
+            <Button
+              variant="outline"
+              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+              onClick={() => setBetAmount("0.00")}
+              disabled={!isConnected || isPlaying}
+            >
+              Min
+            </Button>
+            <Button
+              variant="outline"
+              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+              onClick={() => setBetAmount(balance.toString())}
+              disabled={!isConnected || isPlaying}
+            >
+              Max
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[#49EACB]">Auto Cashout</label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#49EACB] hover:text-[#49EACB]/80 hover:bg-[#49EACB]/10"
+              onClick={() => setHasAutoCashout(!hasAutoCashout)}
+              disabled={!isConnected || isPlaying}
+            >
+              {hasAutoCashout ? "Disable" : "Enable"}
+            </Button>
+          </div>
+          <Input
+            type="number"
+            value={autoCashout}
+            onChange={(e) => setAutoCashout(e.target.value)}
+            className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
+            placeholder="e.g., 2.00"
+            disabled={!hasAutoCashout || isPlaying}
+          />
+        </div>
+
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          {gameOver ? (
+            <Button
+              className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
               onClick={resetGame}
             >
-              Close
+              Play Again
             </Button>
-          </Card>
+          ) : !isPlaying ? (
+            <Button
+              className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+              onClick={handlePlaceBet}
+              disabled={!isConnected}
+            >
+              {!isConnected ? "Connect Wallet to Play" : "Place Bet"}
+            </Button>
+          ) : (
+            <Button
+              className="w-full bg-green-500 text-white hover:bg-green-600"
+              onClick={onCashout}
+            >
+              Cash Out
+            </Button>
+          )}
         </motion.div>
-      )}
-    </>
+
+        {/* Only render the modal here if hideModal is false */}
+        {!hideModal && gameOver && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 flex items-center justify-center z-50"
+          >
+            <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <img
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={20}
+                  height={20}
+                  className="rounded-full"
+                />
+                <span className="text-xl text-[#49EACB]">{winMessage}</span>
+              </div>
+              <Button
+                className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                onClick={resetGame}
+              >
+                Close
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </Card>
   );
 }
