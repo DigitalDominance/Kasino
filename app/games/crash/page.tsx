@@ -11,6 +11,7 @@ import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
 import "./styles.css";
 
 export default function CrashPage() {
@@ -29,6 +30,8 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
+    // Hide the How-to-Play overlay when a game starts.
+    setShowHowToPlay(false);
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
@@ -36,7 +39,7 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  // Manual cashout: simulate a win using the autoCashout value as the current multiplier.
+  // Manual cashout: calculate win using the autoCashout multiplier.
   const handleCashout = () => {
     if (isPlaying) {
       const multiplier = Number(autoCashout) || 1;
@@ -48,7 +51,7 @@ export default function CrashPage() {
     }
   };
 
-  // Auto cashout handler from CrashGame: receives multiplier and calculated win amount.
+  // Auto cashout success from CrashGame.
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
     setGameOver(true);
     setCrashPoint(multiplier);
@@ -56,15 +59,17 @@ export default function CrashPage() {
     setIsPlaying(false);
   };
 
-  // Game end handler (i.e. crash): treat win amount as 0 to indicate a loss.
+  // When the game crashes, leave the current game screen visible.
   const handleGameEnd = (result: number, winAmountParam: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmountParam);
     setIsPlaying(false);
     setGameOver(true);
     setCrashPoint(result);
+    // On crash, win amount is zero (loss).
     setWinAmount(0);
   };
 
+  // When the user closes the modal, reset the game screen.
   const resetGame = () => {
     setIsPlaying(false);
     setGameOver(false);
@@ -87,8 +92,9 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+            {/* Game Container – now positioned relative so the modal can be absolutely centered */}
             <div
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
+              className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
             >
               <div className="p-6 flex flex-col h-full">
@@ -116,7 +122,40 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
+              {/* Modal overlay inside game container */}
+              {gameOver && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="absolute inset-0 flex items-center justify-center z-50"
+                >
+                  <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <img
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                      <span className="text-xl text-[#49EACB]">
+                        {winAmount > 0
+                          ? `You Won ${winAmount.toFixed(2)} KAS!`
+                          : `You Lost ${Number(betAmount).toFixed(2)} KAS!`}
+                      </span>
+                    </div>
+                    <Button
+                      className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                      onClick={resetGame}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
             </div>
+
+            {/* Controls and other components */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -141,7 +180,7 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* How to Play Modal */}
+      {/* Full-page How-to-Play Modal */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
