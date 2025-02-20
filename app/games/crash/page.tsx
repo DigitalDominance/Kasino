@@ -10,7 +10,7 @@ import { CrashControls } from "./crash-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet } from "@/contexts/walletContext";
+import { useWallet } from "@/contexts/WalletContext";
 import "./styles.css";
 
 export default function CrashPage() {
