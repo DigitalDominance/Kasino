@@ -149,13 +149,22 @@ export function CrashGame({
     }
     ctx.stroke();
 
-    // Determine rocket position.
+    // Determine rocket position at the tip of the drawn line.
+    const t_tip = timeElapsed / 10;
     const maxX = width - rocketWidth;
-    const x = Math.min(((timeElapsed / 1000) * 10) * zoomFactor, maxX);
-    const y = height - curveFunction(timeElapsed / 1000) * zoomFactor;
+    const x = Math.min(t_tip * zoomFactor, maxX);
+    const y = height - curveFunction(t_tip / 1000) * zoomFactor;
+
+    // Compute angle at the tip using finite differences.
+    const u = t_tip / 1000; // current time in seconds
+    const deltaU = 0.001; // small increment in seconds
+    const derivative = (curveFunction(u + deltaU) - curveFunction(u)) / deltaU;
+    // The tangent slope in canvas coordinates: dy/dx = -curveFunction'(u)/1000.
+    const angle = Math.atan(-derivative / 1000);
 
     ctx.save();
     if (gameStatus === "Crashed") {
+      // Draw explosion image centered at (x, y).
       ctx.translate(x, y);
       ctx.drawImage(
         explodeImage,
@@ -166,16 +175,13 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Compute angle from the derivative of the curve.
-      const d1 = curveFunction(timeElapsed / 1000);
-      const d2 = curveFunction((timeElapsed + 10) / 1000);
-      const slope = (d2 - d1) / 10;
-      const angle = -Math.atan(slope);
+      // Draw rocket so that its tip (right edge) is at (x, y) and rotated along the path.
       ctx.translate(x, y);
       ctx.rotate(angle);
+      // Draw rocket image with an offset so the tip (assumed at the right edge) aligns at (0,0).
       ctx.drawImage(
         rocketImage,
-        -rocketWidth / 2,
+        -rocketWidth, // shift left by the full image width
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
