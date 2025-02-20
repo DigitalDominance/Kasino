@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
   explodeImage.src = "/explode.svg";
 }
 
-const rocketWidth = 50;
+const rocketWidth = 55;
 const rocketHeight = 50;
 
 // --- Curve Function ---
