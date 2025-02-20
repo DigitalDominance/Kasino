@@ -39,19 +39,18 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  // Manual cashout: calculate win using the autoCashout multiplier.
   const handleCashout = () => {
     if (isPlaying) {
       const multiplier = Number(autoCashout) || 1;
       const amount = Number(betAmount) * multiplier;
       setWinAmount(amount);
       setCrashPoint(multiplier);
+      // Do not reset the game immediately; leave the final frame visible.
       setIsPlaying(false);
       setGameOver(true);
     }
   };
 
-  // Auto cashout success from CrashGame.
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
     setGameOver(true);
     setCrashPoint(multiplier);
@@ -59,18 +58,17 @@ export default function CrashPage() {
     setIsPlaying(false);
   };
 
-  // When the game crashes, leave the current game screen visible.
   const handleGameEnd = (result: number, winAmountParam: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmountParam);
+    // When the game crashes, preserve the final frame (explosion) without resetting.
     setIsPlaying(false);
     setGameOver(true);
     setCrashPoint(result);
-    // On crash, win amount is zero (loss).
     setWinAmount(0);
   };
 
-  // When the user closes the modal, reset the game screen.
   const resetGame = () => {
+    // Reset only when user clicks Close.
     setIsPlaying(false);
     setGameOver(false);
     setCrashPoint(null);
@@ -92,7 +90,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container – positioned relative so that the modal is centered within it */}
+            {/* Game Container */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -108,10 +106,7 @@ export default function CrashPage() {
                     How to Play
                   </button>
                 </div>
-                <div
-                  className="flex-grow relative bg-transparent rounded-lg mb-6"
-                  style={{ height: "100%" }}
-                >
+                <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
                   <CrashGame
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
@@ -122,7 +117,7 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
-              {/* Modal overlay inside game container – remains until "Close" is clicked */}
+              {/* Win/Loss Modal inside game container */}
               {gameOver && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -155,7 +150,7 @@ export default function CrashPage() {
               )}
             </div>
 
-            {/* Controls and other components – we pass hideModal to suppress any modal from CrashControls */}
+            {/* Controls and other components */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -181,8 +176,8 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* Full-page How-to-Play Modal */}
-      {showHowToPlay && (
+      {/* Full-page How-to-Play Modal – render only when no game is active */}
+      {showHowToPlay && !isPlaying && !gameOver && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Crash</h3>
