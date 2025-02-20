@@ -23,6 +23,7 @@ export default function CrashPage() {
   const [gameOver, setGameOver] = useState(false);
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -30,8 +31,9 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Hide the How-to-Play overlay when a game starts.
+    // When starting a game, hide the How-to-Play and any win/loss modal.
     setShowHowToPlay(false);
+    setModalVisible(false);
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
@@ -45,34 +47,34 @@ export default function CrashPage() {
       const amount = Number(betAmount) * multiplier;
       setWinAmount(amount);
       setCrashPoint(multiplier);
-      // Do not reset the game immediately; leave the final frame visible.
+      // Leave final frame visible.
       setIsPlaying(false);
       setGameOver(true);
+      setModalVisible(true);
     }
   };
 
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
-    setGameOver(true);
     setCrashPoint(multiplier);
     setWinAmount(amount);
     setIsPlaying(false);
+    setGameOver(true);
+    setModalVisible(true);
   };
 
   const handleGameEnd = (result: number, winAmountParam: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmountParam);
-    // When the game crashes, preserve the final frame (explosion) without resetting.
-    setIsPlaying(false);
-    setGameOver(true);
+    // When the game crashes, preserve the final (explosion) frame.
     setCrashPoint(result);
     setWinAmount(0);
+    setIsPlaying(false);
+    setGameOver(true);
+    setModalVisible(true);
   };
 
-  const resetGame = () => {
-    // Reset only when user clicks Close.
-    setIsPlaying(false);
-    setGameOver(false);
-    setCrashPoint(null);
-    setWinAmount(0);
+  // We no longer auto-reset the game window on modal close.
+  const hideModal = () => {
+    setModalVisible(false);
   };
 
   return (
@@ -90,7 +92,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container */}
+            {/* Game Container – positioned relative so that the modal is centered within it */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -117,12 +119,13 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
-              {/* Win/Loss Modal inside game container */}
-              {gameOver && (
+              {/* Win/Loss Modal inside game container, offset 15% above center */}
+              {modalVisible && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="absolute inset-0 flex items-center justify-center z-50"
+                  style={{ transform: "translateY(-15%)" }}
                 >
                   <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
                     <div className="flex items-center space-x-2">
@@ -141,7 +144,7 @@ export default function CrashPage() {
                     </div>
                     <Button
                       className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                      onClick={resetGame}
+                      onClick={hideModal}
                     >
                       Close
                     </Button>
@@ -150,7 +153,7 @@ export default function CrashPage() {
               )}
             </div>
 
-            {/* Controls and other components */}
+            {/* Controls and other components – we pass hideModal to CrashControls to suppress its own modal */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -162,7 +165,7 @@ export default function CrashPage() {
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
-                resetGame={resetGame}
+                resetGame={hideModal} // Not used to reset the game window here.
                 gameOver={gameOver}
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
