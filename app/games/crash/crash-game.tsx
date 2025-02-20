@@ -135,7 +135,7 @@ export function CrashGame({
     ctx.moveTo(0, height);
     const step = 10;
     for (let t = 0; t < timeElapsed / 10; t += step) {
-      const x = t * zoomFactor + 5;
+      const x = t * zoomFactor - 5;
       const y = height - curveFunction(t / 1000) * zoomFactor;
       ctx.lineTo(x, y);
     }
