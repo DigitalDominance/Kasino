@@ -6,7 +6,7 @@ import { useRef, useEffect, useState } from "react";
 const coeffB = 0.5;
 const coeffA = 2000 * 0.16; // using a base height of 2000 (for the curve)
 
-const zoomFactor = 0.5; // < 1 zooms out the drawn content
+const zoomFactor = 0.8; // < 1 zooms out the drawn content
 
 // --- Asset Loading ---
 // Make sure these files exist in your public folder.
@@ -18,8 +18,8 @@ if (typeof window !== "undefined") {
   explodeImage.src = "/explode.svg";
 }
 
-const rocketWidth = 50;
-const rocketHeight = 50;
+const rocketWidth = 60;
+const rocketHeight = 60;
 
 // --- Curve Function ---
 // Returns the vertical displacement for time t (in seconds)
