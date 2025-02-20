@@ -5,7 +5,7 @@ import { useRef, useEffect, useState } from "react";
 // --- Configuration Constants ---
 const coeffB = 0.5;
 const coeffA = 2000 * 0.16; // using a base height of 2000 (for the curve)
-const zoomFactor = 0.8; // < 1 zooms out the drawn content
+const zoomFactor = 0.5; // < 1 zooms out the drawn content
 
 // --- Asset Loading ---
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
@@ -135,7 +135,7 @@ export function CrashGame({
     ctx.moveTo(0, height);
     const step = 10;
     for (let t = 0; t < timeElapsed / 10; t += step) {
-      const x = t * zoomFactor;
+      const x = t * zoomFactor + 5;
       const y = height - curveFunction(t / 1000) * zoomFactor;
       ctx.lineTo(x, y);
     }
