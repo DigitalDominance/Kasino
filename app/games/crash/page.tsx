@@ -10,14 +10,11 @@ import { CrashControls } from "./crash-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet } from "@/contexts/WalletContext";
+import { useWallet } from "@/contexts/walletContext";
 import "./styles.css";
 
 export default function CrashPage() {
-  // Get wallet connection status and balance from wallet context.
   const { isConnected, balance } = useWallet();
-
-  // Local states for game control.
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
   const [autoCashout, setAutoCashout] = useState("2.00");
@@ -31,7 +28,6 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Start the game – in a real app, deduct the bet amount.
     setGameOver(false);
     setCrashPoint(null);
     setIsPlaying(true);
@@ -48,7 +44,6 @@ export default function CrashPage() {
     setGameOver(true);
     setCrashPoint(multiplier);
     setIsPlaying(false);
-    // Optionally update wallet balance with amount.
   };
 
   const handleGameEnd = (result: number, winAmount: number) => {
@@ -56,10 +51,6 @@ export default function CrashPage() {
     setIsPlaying(false);
     setGameOver(true);
     setCrashPoint(result);
-  };
-
-  const handleManualCashout = () => {
-    handleCashout();
   };
 
   const resetGame = () => {
@@ -73,24 +64,17 @@ export default function CrashPage() {
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
-          <header className="flex items-center justify-between mb-6">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Games
-              </Link>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              <WalletConnection />
-            </motion.div>
-          </header>
+          <motion.div className="flex items-center justify-between mb-6">
+            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Games
+            </Link>
+            <WalletConnection />
+          </motion.div>
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <div
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
-              style={{ height: "700px" }}
-            >
+            <div className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "700px" }}>
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
@@ -106,7 +90,7 @@ export default function CrashPage() {
                     autoCashOut={Number(autoCashout)}
                     onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
-                    onManualCashout={handleManualCashout}
+                    onManualCashout={handleCashout}
                   />
                 </div>
               </div>
