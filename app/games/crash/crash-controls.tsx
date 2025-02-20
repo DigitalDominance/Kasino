@@ -21,6 +21,7 @@ interface CrashControlsProps {
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
+  winAmount: number;
 }
 
 export function CrashControls({
@@ -36,6 +37,7 @@ export function CrashControls({
   resetGame,
   gameOver,
   crashPoint,
+  winAmount,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
   const [hasAutoCashout, setHasAutoCashout] = useState(false);
@@ -52,14 +54,11 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Calculate payout based on bet and crashPoint.
-  // (You may adjust this logic as needed.)
-  const betNum = Number(betAmount);
-  const payout = betNum * crashPoint;
+  // Determine the win/loss message:
   const winMessage =
-    crashPoint > 1
-      ? `You Won ${payout.toFixed(2)} KAS!`
-      : `You Lost ${betNum.toFixed(2)} KAS!`;
+    winAmount > 0
+      ? `You Won ${winAmount.toFixed(2)} KAS!`
+      : `You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <>
@@ -78,7 +77,7 @@ export function CrashControls({
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
-                  src="/kaspa-icon.png"
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                   alt="KAS"
                   width={16}
                   height={16}
@@ -174,18 +173,10 @@ export function CrashControls({
               </Button>
             )}
           </motion.div>
-
-          {!gameOver && (
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-500">Game Over</div>
-              <div className="text-xl text-[#49EACB]">
-                Crashed @ {crashPoint.toFixed(2)}×
-              </div>
-            </div>
-          )}
         </div>
       </Card>
 
+      {/* Glass-style modal overlay when game is over */}
       {gameOver && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -195,7 +186,7 @@ export function CrashControls({
           <Card className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
             <div className="flex items-center space-x-2">
               <Image
-                src="/kaspa-icon.png"
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                 alt="KAS"
                 width={20}
                 height={20}
