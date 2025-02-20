@@ -18,8 +18,8 @@ if (typeof window !== "undefined") {
   explodeImage.src = "/explode.svg";
 }
 
-const rocketWidth = 220;
-const rocketHeight = 220;
+const rocketWidth = 50;
+const rocketHeight = 50;
 
 // --- Curve Function ---
 // Returns the vertical displacement for time t (in seconds)
