@@ -1,139 +1,127 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, Info, X } from "lucide-react"
-import Link from "next/link"
-import { SiteFooter } from "@/components/site-footer"
-import { PlayerList } from "./player-list"
-import { LiveChat } from "./live-chat"
-import { LiveWins } from "./live-wins"
-import { HowToPlay } from "./how-to-play"
-import { WalletConnection } from "@/components/wallet-connection"
-import { useWallet } from "@/contexts/WalletContext"
-import { useRouter } from "next/navigation"
-import { AnimatePresence } from "framer-motion"
-import type { MinesGame, MinesTile } from "./mines-game"
-import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic"
-import { Bomb, Diamond } from "./icons"
-import "./styles.css"
-import Image from "next/image"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Info, X } from "lucide-react";
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { LiveChat } from "./live-chat";
+import { LiveWins } from "./live-wins";
+import { HowToPlay } from "./how-to-play";
+import { WalletConnection } from "@/components/wallet-connection";
+import { useWallet } from "@/contexts/WalletContext";
+import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
+import type { MinesGame, MinesTile } from "./mines-game";
+import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic";
+import { Bomb, Diamond } from "./icons";
+import "./styles.css";
+import Image from "next/image";
 
 export default function MinesPage() {
-  const { isConnected, balance } = useWallet()
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [betAmount, setBetAmount] = useState("0.00")
-  const [showHowToPlay, setShowHowToPlay] = useState(false)
-  const [gameResult, setGameResult] = useState<string | null>(null)
-  const [winAmount, setWinAmount] = useState<number | null>(null)
-  const [selectedMultiplier, setSelectedMultiplier] = useState(2)
-  const [game, setGame] = useState<MinesGame | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showGameOver, setShowGameOver] = useState(false)
-  const router = useRouter()
+  const { isConnected, balance } = useWallet();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [betAmount, setBetAmount] = useState("0.00");
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [winAmount, setWinAmount] = useState<number | null>(null);
+  const [selectedMultiplier, setSelectedMultiplier] = useState(2);
+  const [game, setGame] = useState<MinesGame | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    //checkKaswareWallet()
-  }, [])
-
-  //const checkKaswareWallet = async () => { ... } //Removed as WalletContext handles this
-
-  //const connectWallet = async () => { ... } //Removed as WalletContext handles this
-
-  //const getBalance = async () => { ... } //Removed as WalletContext handles this
+    // WalletContext handles wallet connection.
+  }, []);
 
   const handleTileClick = async (index: number) => {
     if (!isConnected || isLoading || !game || game.isGameOver) {
-      return
+      return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const updatedGame = await revealTile(game, index)
+      const updatedGame = await revealTile(game, index);
       const response = await fetch("/api/mines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "updateGame",
-          //userId: user.username, //Removed as WalletContext handles user
           gameData: updatedGame,
         }),
-      })
+      });
       if (response.ok) {
-        setGame(updatedGame)
+        setGame(updatedGame);
         if (updatedGame.isGameOver) {
-          setShowGameOver(true)
-          await endGame(updatedGame)
+          setShowGameOver(true);
+          await endGame(updatedGame);
         }
       } else {
-        throw new Error("Failed to update game")
+        throw new Error("Failed to update game");
       }
     } catch (error) {
-      console.error("Error revealing tile:", error)
+      console.error("Error revealing tile:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const startNewGame = async () => {
-    const bet = Number.parseFloat(betAmount)
+    const bet = Number.parseFloat(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount")
-      return
+      alert("Invalid bet amount");
+      return;
     }
     try {
-      const betInRawUnits = bet * Math.pow(10, 8)
-      const newGame = initializeMinesGame(5, betInRawUnits, selectedMultiplier)
+      const betInRawUnits = bet * Math.pow(10, 8);
+      const newGame = initializeMinesGame(5, betInRawUnits, selectedMultiplier);
       const response = await fetch("/api/mines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "startGame",
-          //userId: user.username, //Removed as WalletContext handles user
           gameData: newGame,
         }),
-      })
+      });
       if (response.ok) {
-        setGame(newGame)
-        //setBalance(balance - bet) //Removed as WalletContext handles balance
-        setIsPlaying(true)
-        setShowGameOver(false)
+        setGame(newGame);
+        setIsPlaying(true);
+        setShowGameOver(false);
       } else {
-        throw new Error("Failed to start game")
+        throw new Error("Failed to start game");
       }
     } catch (error) {
-      console.error("Failed to start new game:", error)
-      setGame(null)
+      console.error("Failed to start new game:", error);
+      setGame(null);
     }
-  }
+  };
 
   const cashOut = async () => {
-    if (!game) return
+    if (!game) return;
     try {
-      const payout = calculatePayout(game)
+      const payout = calculatePayout(game);
       const response = await fetch("/api/mines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "endGame",
-          //userId: user.username, //Removed as WalletContext handles user
           gameData: { ...game, isGameOver: true },
         }),
-      })
+      });
       if (response.ok) {
-        //setBalance(balance + payout) //Removed as WalletContext handles balance
-        setGame(null)
-        setGameResult("win")
-        setWinAmount(payout)
-        setShowGameOver(true)
+        setGame(null);
+        setGameResult("win");
+        setWinAmount(payout);
+        setShowGameOver(true);
       } else {
-        throw new Error("Failed to cash out")
+        throw new Error("Failed to cash out");
       }
     } catch (error) {
-      console.error("Error cashing out:", error)
+      console.error("Error cashing out:", error);
     }
-  }
+  };
 
   const endGame = async (gameData: MinesGame) => {
     try {
@@ -142,24 +130,23 @@ export default function MinesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "endGame",
-          //userId: user.username, //Removed as WalletContext handles user
           gameData,
         }),
-      })
+      });
     } catch (error) {
-      console.error("Error ending game:", error)
+      console.error("Error ending game:", error);
     }
-  }
+  };
 
   const resetGameState = () => {
-    setGame(null)
-    setShowGameOver(false)
-    setBetAmount("0.00")
-    setGameResult(null)
-    setWinAmount(null)
-    setIsPlaying(false)
-    router.refresh()
-  }
+    setGame(null);
+    setShowGameOver(false);
+    setBetAmount("0.00");
+    setGameResult(null);
+    setWinAmount(null);
+    setIsPlaying(false);
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -208,8 +195,8 @@ export default function MinesPage() {
                                 ? "bg-red-500"
                                 : "bg-green-500"
                               : isLoading
-                                ? "bg-[#003B2D]"
-                                : "bg-[#003B2D] hover:bg-[#004D3B]"
+                              ? "bg-[#003B2D]"
+                              : "bg-[#003B2D] hover:bg-[#004D3B]"
                           }`}
                         >
                           {tile.revealed ? (
@@ -226,34 +213,30 @@ export default function MinesPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col h-full">
-                    <div className="flex-grow bg-[#49EACB]/10 flex items-center justify-center rounded-lg mb-4">
-                      <span className="text-[#49EACB]">Banner Placeholder</span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="relative flex-grow">
-                        <input
-                          type="number"
-                          value={betAmount}
-                          onChange={(e) => setBetAmount(e.target.value)}
-                          placeholder="Enter bet amount"
-                          className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-16 rounded-md"
+                  // Bet Controls (same as dice page)
+                  <div className="flex items-center space-x-4">
+                    <div className="relative flex-grow">
+                      <input
+                        type="number"
+                        value={betAmount}
+                        onChange={(e) => setBetAmount(e.target.value)}
+                        placeholder="Enter bet amount"
+                        className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-16 rounded-md"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                        <Image
+                          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                          alt="KAS"
+                          width={20}
+                          height={20}
+                          className="rounded-full"
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                          <Image
-                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                            alt="KAS"
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                          />
-                          <span className="ml-1 text-[#49EACB]">KAS</span>
-                        </div>
+                        <span className="ml-1 text-[#49EACB]">KAS</span>
                       </div>
-                      <Button onClick={startNewGame} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
-                        Start New Game
-                      </Button>
                     </div>
+                    <Button onClick={startNewGame} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                      Start New Game
+                    </Button>
                   </div>
                 )}
               </div>
@@ -261,7 +244,7 @@ export default function MinesPage() {
             <div className="space-y-6">
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
-              <PlayerList players={[]} />
+              {/* Removed the PlayerList component */}
             </div>
           </div>
         </div>
@@ -347,6 +330,5 @@ export default function MinesPage() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
-
