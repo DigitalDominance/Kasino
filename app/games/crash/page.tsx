@@ -92,7 +92,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container – now positioned relative so the modal can be absolutely centered */}
+            {/* Game Container – positioned relative so that the modal is centered within it */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -122,7 +122,7 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
-              {/* Modal overlay inside game container */}
+              {/* Modal overlay inside game container – remains until "Close" is clicked */}
               {gameOver && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -155,7 +155,7 @@ export default function CrashPage() {
               )}
             </div>
 
-            {/* Controls and other components */}
+            {/* Controls and other components – we pass hideModal to suppress any modal from CrashControls */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -171,6 +171,7 @@ export default function CrashPage() {
                 gameOver={gameOver}
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
+                hideModal={true}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
