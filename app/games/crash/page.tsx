@@ -24,6 +24,7 @@ export default function CrashPage() {
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -31,7 +32,7 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // When starting a game, hide the How-to-Play and any win/loss modal.
+    // When starting a game, hide How-to-Play and clear previous game state.
     setShowHowToPlay(false);
     setModalVisible(false);
     setGameOver(false);
@@ -47,7 +48,7 @@ export default function CrashPage() {
       const amount = Number(betAmount) * multiplier;
       setWinAmount(amount);
       setCrashPoint(multiplier);
-      // Leave final frame visible.
+      // Leave the final frame visible.
       setIsPlaying(false);
       setGameOver(true);
       setModalVisible(true);
@@ -72,9 +73,20 @@ export default function CrashPage() {
     setModalVisible(true);
   };
 
-  // We no longer auto-reset the game window on modal close.
-  const hideModal = () => {
+  // Reset the game by incrementing the gameKey so that CrashGame remounts.
+  const resetGame = () => {
+    setGameKey((prev) => prev + 1);
+    setShowHowToPlay(false);
+    setIsPlaying(false);
+    setGameOver(false);
+    setCrashPoint(null);
+    setWinAmount(0);
     setModalVisible(false);
+  };
+
+  const hideModal = () => {
+    // When clicking "Close" in the win/loss popup, reset the game.
+    resetGame();
   };
 
   return (
@@ -109,7 +121,9 @@ export default function CrashPage() {
                   </button>
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
+                  {/* Pass the gameKey as the key so that it remounts on reset */}
                   <CrashGame
+                    key={gameKey}
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
                     autoCashOut={Number(autoCashout)}
@@ -153,7 +167,7 @@ export default function CrashPage() {
               )}
             </div>
 
-            {/* Controls and other components – we pass hideModal to CrashControls to suppress its own modal */}
+            {/* Controls and other components – CrashControls modal suppressed via hideModal prop */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
