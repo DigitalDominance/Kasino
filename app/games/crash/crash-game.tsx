@@ -62,15 +62,10 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect.
+  // Animation effect – run only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // If the game has ended (crashed or cashed out), preserve final frame.
-      if (gameStatus !== "Crashed" && gameStatus !== "CashedOut") {
-        setGameStatus("Waiting");
-        setTimeElapsed(0);
-        setMultiplier(1);
-      }
+      // Do not update state; just leave the current frame.
       return;
     }
     setGameStatus("Running");
@@ -102,7 +97,7 @@ export function CrashGame({
     };
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd, gameStatus, onMultiplierChange]);
+  }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd, onMultiplierChange]);
 
   // Render the canvas.
   const renderCanvas = () => {
@@ -169,7 +164,7 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so that its tip (right edge) aligns with (x, y).
+      // Draw rocket so its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
