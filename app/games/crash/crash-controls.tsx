@@ -17,7 +17,7 @@ interface CrashControlsProps {
   onCashout: (manualMultiplier: number) => void;
   resetGame: () => void;
   gameOver: boolean;
-  crashPoint: number;
+  // Instead of a separate crashPoint, we use currentMultiplier.
   winAmount: number;
   hideModal?: boolean;
   currentMultiplier: number;
@@ -33,7 +33,6 @@ export function CrashControls({
   onCashout,
   resetGame,
   gameOver,
-  crashPoint,
   winAmount,
   hideModal = false,
   currentMultiplier,
@@ -53,12 +52,11 @@ export function CrashControls({
   };
 
   const safeCurrentMultiplier = currentMultiplier || 1;
-  const safeCrashPoint = crashPoint || 1;
   const calculatedWin = Number(betAmount) * safeCurrentMultiplier;
   const winMessage =
     winAmount > 0
       ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${calculatedWin.toFixed(2)} KAS!`
-      : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+      : `Crashed at ${safeCurrentMultiplier.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
