@@ -18,12 +18,13 @@ export default function CrashPage() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
+  const [autoCashout, setAutoCashout] = useState("2.00");
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [gameKey, setGameKey] = useState(0); // used to force remount
-  const [currentMultiplier, setCurrentMultiplier] = useState(1);
+  const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -31,55 +32,60 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Clear previous state and start game.
+    // When starting a game, hide How-to-Play and clear previous game state.
     setShowHowToPlay(false);
     setModalVisible(false);
     setGameOver(false);
+    setCrashPoint(null);
     setWinAmount(0);
     setIsPlaying(true);
     console.log("Bet placed, starting game");
   };
 
-  // When the user clicks Cash Out, we use the currentMultiplier stored in state.
-  const handleCashout = (multiplier: number) => {
+  const handleCashout = () => {
     if (isPlaying) {
+      const multiplier = Number(autoCashout) || 1;
       const amount = Number(betAmount) * multiplier;
       setWinAmount(amount);
+      setCrashPoint(multiplier);
+      // Leave the final frame visible.
       setIsPlaying(false);
       setGameOver(true);
       setModalVisible(true);
     }
   };
 
-  // When the game crashes, win amount is 0.
-  const handleGameEnd = (finalMultiplier: number, _winAmount: number) => {
-    console.log("Game crashed at:", finalMultiplier);
-    setWinAmount(0);
-    setIsPlaying(false);
-    setGameOver(true);
-    setModalVisible(true);
-  };
-
-  // When cashout succeeds (if you trigger it from an auto‐cashout flow), do the same.
   const handleCashoutSuccess = (multiplier: number, amount: number) => {
+    setCrashPoint(multiplier);
     setWinAmount(amount);
     setIsPlaying(false);
     setGameOver(true);
     setModalVisible(true);
   };
 
-  // Reset the game by forcing CrashGame to remount.
+  const handleGameEnd = (result: number, winAmountParam: number) => {
+    console.log("Game ended with result:", result, "and win amount:", winAmountParam);
+    // When the game crashes, preserve the final (explosion) frame.
+    setCrashPoint(result);
+    setWinAmount(0);
+    setIsPlaying(false);
+    setGameOver(true);
+    setModalVisible(true);
+  };
+
+  // Reset the game by incrementing the gameKey so that CrashGame remounts.
   const resetGame = () => {
     setGameKey((prev) => prev + 1);
     setShowHowToPlay(false);
     setIsPlaying(false);
     setGameOver(false);
+    setCrashPoint(null);
     setWinAmount(0);
     setModalVisible(false);
-    setCurrentMultiplier(1);
   };
 
   const hideModal = () => {
+    // When clicking "Close" in the win/loss popup, reset the game.
     resetGame();
   };
 
@@ -98,7 +104,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container */}
+            {/* Game Container – positioned relative so that the modal is centered within it */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -115,19 +121,19 @@ export default function CrashPage() {
                   </button>
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
-                  {/* Force remount using gameKey and update currentMultiplier via onMultiplierChange */}
+                  {/* Pass the gameKey as the key so that it remounts on reset */}
                   <CrashGame
                     key={gameKey}
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
+                    autoCashOut={Number(autoCashout)}
                     onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
                     onManualCashout={handleCashout}
-                    onMultiplierChange={setCurrentMultiplier}
                   />
                 </div>
               </div>
-              {/* Win/Loss Modal (offset 15% above center) */}
+              {/* Win/Loss Modal inside game container, offset 15% above center */}
               {modalVisible && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -138,7 +144,7 @@ export default function CrashPage() {
                   <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <img
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                         alt="KAS"
                         width={20}
                         height={20}
@@ -146,8 +152,8 @@ export default function CrashPage() {
                       />
                       <span className="text-xl text-[#49EACB]">
                         {winAmount > 0
-                          ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
-                          : `Crashed at ${currentMultiplier.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`}
+                          ? You Won ${winAmount.toFixed(2)} KAS!
+                          : You Lost ${Number(betAmount).toFixed(2)} KAS!}
                       </span>
                     </div>
                     <Button
@@ -161,22 +167,23 @@ export default function CrashPage() {
               )}
             </div>
 
-            {/* Controls and other components */}
+            {/* Controls and other components – CrashControls modal suppressed via hideModal prop */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
                 setBetAmount={setBetAmount}
+                autoCashout={autoCashout}
+                setAutoCashout={setAutoCashout}
                 isPlaying={isPlaying}
                 isWalletConnected={isConnected}
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
-                resetGame={hideModal} // not used to reset the game window here
+                resetGame={hideModal} // Not used to reset the game window here.
                 gameOver={gameOver}
-                crashPoint={currentMultiplier}  // use currentMultiplier as crash multiplier
+                crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
-                currentMultiplier={currentMultiplier}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
@@ -186,20 +193,20 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* Full-page How-to-Play Modal – only when no game is active */}
+      {/* Full-page How-to-Play Modal – render only when no game is active */}
       {showHowToPlay && !isPlaying && !gameOver && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Crash</h3>
             <ol className="list-decimal list-inside space-y-2 text-white">
-              <li>Enter your bet amount.</li>
+              <li>Enter your bet amount and optional auto-cashout multiplier.</li>
               <li>Click "Place Bet" to start the game.</li>
               <li>Watch the multiplier increase as the rocket flies higher.</li>
-              <li>Click "Cash Out" at any time to secure your winnings.</li>
-              <li>If you don't cash out before the rocket crashes, you lose your bet.</li>
+              <li>Click "Cash Out" to secure your winnings before the rocket crashes.</li>
+              <li>If you don't cash out before the crash, you lose your bet.</li>
             </ol>
             <p className="mt-4 text-white">
-              The longer you wait, the higher your potential payout—but the risk increases too!
+              The longer you wait, the higher the potential payout, but also the higher the risk!
             </p>
             <Button
               onClick={() => setShowHowToPlay(false)}
