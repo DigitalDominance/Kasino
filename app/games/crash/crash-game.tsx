@@ -4,11 +4,11 @@ import { useRef, useEffect, useState } from "react";
 
 // --- Configuration Constants ---
 const coeffB = 0.5;
-const coeffA = 2000 * 0.16; // Base height for the curve
+const coeffA = 2000 * 0.16; // Base height for curve calculation
 const zoomFactor = 0.5;
 
 // --- Asset Loading ---
-// Rocket and explosion images are in your public folder.
+// Rocket and explosion images (in public folder)
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
   rocketImage = new Image();
@@ -26,22 +26,22 @@ function curveFunction(t: number) {
 }
 
 // --- Custom Crash Multiplier Generator ---
-// Returns a crash multiplier between min=1.01 and max=100 according to:
-// • 40% chance: [1.01, 1.5)
-// • 40% chance: [1.5, 2)
-// • 10% chance: [2, 3)
-// • 10% chance: [3, 100] (exponentially distributed)
+// Returns a crash multiplier between 1.01 and 100 with:
+// • 60% chance for a value between 1.01 and 1.5
+// • 20% chance for a value between 1.5 and 2.0
+// • 10% chance for a value between 2.0 and 3.0
+// • 10% chance for a value between 3.0 and 100 (exponentially distributed)
 function generateCrashMultiplier(): number {
   const r = Math.random();
-  if (r < 0.40) {
-    return 1.01 + (1.5 - 1.01) * (r / 0.40);
+  if (r < 0.60) {
+    return 1.01 + (1.5 - 1.01) * Math.random();
   } else if (r < 0.80) {
-    return 1.5 + (2 - 1.5) * ((r - 0.40) / 0.40);
+    return 1.5 + (2.0 - 1.5) * Math.random();
   } else if (r < 0.90) {
-    return 2 + (3 - 2) * ((r - 0.80) / 0.10);
+    return 2.0 + (3.0 - 2.0) * Math.random();
   } else {
-    const t = (r - 0.90) / 0.10; // t in [0,1]
-    return 3 * Math.pow(100 / 3, t);
+    const t = Math.random();
+    return 3 + (100 - 3) * Math.pow(t, 3);
   }
 }
 
@@ -80,15 +80,16 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect – runs only when isPlaying is true.
+  // Animation effect – runs when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
+    // Generate a crash multiplier using our custom function.
     const crash = generateCrashMultiplier();
     console.log("Crash Multiplier:", crash.toFixed(2));
     const start = performance.now();
-    // Growth rate controls how fast the multiplier increases.
-    const growthRate = 0.0003; 
+    // Set growthRate so that after 1 second multiplier ≈ exp(0.0005*1000)=exp(0.5)≈1.65x
+    const growthRate = 0.0005;
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
@@ -96,7 +97,6 @@ export function CrashGame({
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
-      // End game if multiplier reaches crash.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -122,7 +122,6 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show placeholder message.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -155,7 +154,7 @@ export function CrashGame({
     const x = Math.min(tTip * zoomFactor, maxX);
     const y = height - curveFunction(tTip / 1000) * zoomFactor;
 
-    // Compute tangent angle at the tip.
+    // Compute tangent angle.
     const u = tTip / 1000;
     const deltaU = 0.001;
     const derivative = (curveFunction(u + deltaU) - curveFunction(u)) / deltaU;
