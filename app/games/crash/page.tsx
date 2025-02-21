@@ -23,9 +23,8 @@ export default function CrashPage() {
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  // Remove gameKey to avoid unnecessary remounting.
-  // Initialize currentMultiplier as null so that we only show a live value.
-  const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null);
+  // currentMultiplier is updated live by CrashGame via onMultiplierChange.
+  const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -38,14 +37,12 @@ export default function CrashPage() {
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
-    // Start the game; CrashGame will update currentMultiplier via onMultiplierChange.
     setIsPlaying(true);
     console.log("Bet placed, starting game");
   };
 
-  // Cash out now always uses the live multiplier from the game.
   const handleCashout = () => {
-    if (isPlaying && currentMultiplier !== null) {
+    if (isPlaying) {
       const m = currentMultiplier;
       const amount = Number(betAmount) * m;
       setWinAmount(amount);
@@ -74,14 +71,12 @@ export default function CrashPage() {
   };
 
   const resetGame = () => {
-    // Instead of remounting CrashGame via a key, simply reset state.
-    setShowHowToPlay(false);
     setIsPlaying(false);
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
     setModalVisible(false);
-    setCurrentMultiplier(null);
+    setCurrentMultiplier(1);
   };
 
   const hideModal = () => {
@@ -179,9 +174,7 @@ export default function CrashPage() {
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
-                // Pass the live multiplier (if not updated, currentMultiplier will be null,
-                // so you can decide what to show in CrashControls based on that).
-                currentMultiplier={currentMultiplier ?? 0}
+                currentMultiplier={currentMultiplier}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
@@ -191,7 +184,6 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* How-to-Play Modal */}
       {showHowToPlay && !isPlaying && !gameOver && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
