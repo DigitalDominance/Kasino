@@ -25,40 +25,46 @@ export function CrashGame({
   const [multiplier, setMultiplier] = useState(1);
   const [gameStatus, setGameStatus] = useState<GameStatus>("Waiting");
   const requestRef = useRef<number>();
+  // Use a ref to store the crash point so it is computed only once per game.
+  const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
-    // Generate a random crash point.
-    // Here we use a formula that ensures at least 1.5x.
-    const crashPoint = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
-    console.log("Crash point:", crashPoint);
+    // Generate crash point only once
+    if (crashPointRef.current === null) {
+      crashPointRef.current = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
+      console.log("Crash point:", crashPointRef.current);
+    }
     const start = performance.now();
-    const growthRate = 1; // multiplier grows as exp(0.5 * seconds)
+    const growthRate = 0.5; // multiplier grows as exp(0.5 * seconds)
     const animate = (time: number) => {
-      const elapsed = time - start; // in ms
+      const elapsed = time - start; // elapsed in ms
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
       console.log("Multiplier:", currentMultiplier.toFixed(2), "Elapsed:", elapsed);
-      if (currentMultiplier >= crashPoint) {
+      if (crashPointRef.current !== null && currentMultiplier >= crashPointRef.current) {
         setGameStatus("Crashed");
-        onGameEnd(crashPoint, 0);
-        return;
+        onGameEnd(crashPointRef.current, 0);
+        return; // Stop animation.
       }
       requestRef.current = requestAnimationFrame(animate);
     };
     requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
+    return () => {
+      cancelAnimationFrame(requestRef.current);
+      // Reset crash point when the game stops
+      crashPointRef.current = null;
+    };
   }, [isPlaying, onGameEnd, onMultiplierChange]);
 
-  // Render the multiplier on a simple canvas.
+  // Draw the live multiplier on a canvas.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    // Set proper resolution for crisp rendering.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.clientWidth * dpr;
     canvas.height = canvas.clientHeight * dpr;
