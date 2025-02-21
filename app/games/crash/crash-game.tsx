@@ -67,9 +67,8 @@ export function CrashGame({
     // Generate a random crash point (ensuring at least 1.5x).
     const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Use a growth rate of 0.0005:
-    // After 1 sec: exp(0.5) ≈ 1.65x; after 2 sec: exp(1) ≈ 2.72x, etc.
-    const growthRate = 0.0005;
+    // Use a growth rate of 0.0003 (adjust if needed).
+    const growthRate = 0.0003;
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
@@ -77,7 +76,7 @@ export function CrashGame({
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
-      // End game if multiplier reaches crash point.
+      // End game (crash) if multiplier reaches crash point.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -160,7 +159,7 @@ export function CrashGame({
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // shift so that the right edge is at (0,0)
+        -rocketWidth,
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
