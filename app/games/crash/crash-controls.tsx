@@ -52,7 +52,7 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Use safe defaults.
+  // Use safe defaults for display.
   const safeCurrentMultiplier = currentMultiplier || 1;
   const safeCrashPoint = crashPoint || 1;
 
