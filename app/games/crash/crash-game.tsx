@@ -65,14 +65,16 @@ export function CrashGame({
   // Animation effect – run only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // Do not update state; just leave the current frame.
+      // Do not update state; leave current frame intact.
       return;
     }
     setGameStatus("Running");
+    // Determine crash point randomly.
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     setCrashMultiplier(crash);
     const start = performance.now();
-    const growthRate = 0.00006; // multiplier = exp(growthRate * elapsed)
+    // Increased growthRate so the game reaches its crash faster.
+    const growthRate = 0.0003; // For example, after 3 sec: exp(0.9) ~ 2.46×
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
@@ -164,7 +166,7 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so its tip (right edge) aligns with (x, y).
+      // Draw rocket so that its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
