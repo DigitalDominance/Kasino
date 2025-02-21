@@ -4,11 +4,11 @@ import { useRef, useEffect, useState } from "react";
 
 // --- Configuration Constants ---
 const coeffB = 0.5;
-const coeffA = 2000 * 0.16; // Base height for curve calculation
+const coeffA = 2000 * 0.16; // using a base height of 2000
 const zoomFactor = 0.5;
 
 // --- Asset Loading ---
-// Rocket and explosion images (in public folder)
+// Rocket and explosion images are in your public folder.
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
   rocketImage = new Image();
@@ -23,26 +23,6 @@ const rocketHeight = 50;
 // --- Curve Function ---
 function curveFunction(t: number) {
   return coeffA * (Math.exp(coeffB * t) - 1);
-}
-
-// --- Custom Crash Multiplier Generator ---
-// Returns a target multiplier between 1.01 and 100 with approximate probabilities:
-// • 60% chance: [1.01, 1.5)
-// • 20% chance: [1.5, 2.0)
-// • 10% chance: [2.0, 3.0)
-// • 10% chance: [3.0, 100] (exponentially distributed)
-function generateCrashMultiplier(): number {
-  const r = Math.random();
-  if (r < 0.60) {
-    return 1.01 + (1.5 - 1.01) * Math.random();
-  } else if (r < 0.80) {
-    return 1.5 + (2.0 - 1.5) * Math.random();
-  } else if (r < 0.90) {
-    return 2.0 + (3.0 - 2.0) * Math.random();
-  } else {
-    const t = Math.random();
-    return 3 + (100 - 3) * Math.pow(t, 3);
-  }
 }
 
 // --- CrashGame Types ---
@@ -84,11 +64,11 @@ export function CrashGame({
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
-    // Generate a target crash multiplier using our custom generator.
-    const crashTarget = generateCrashMultiplier();
-    console.log("Crash Multiplier:", crashTarget.toFixed(2));
+    // Generate a random crash point (ensuring at least 1.5x).
+    const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Use a growth rate (adjust as needed). For example, 0.0005 gives ~1.65x after 1 second.
+    // Use a growth rate of 0.0005:
+    // After 1 sec: exp(0.5) ≈ 1.65x; after 2 sec: exp(1) ≈ 2.72x, etc.
     const growthRate = 0.0005;
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -97,10 +77,10 @@ export function CrashGame({
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
-      // End game if multiplier reaches the target.
-      if (newMultiplier >= crashTarget) {
+      // End game if multiplier reaches crash point.
+      if (newMultiplier >= crash) {
         setGameStatus("Crashed");
-        onGameEnd(crashTarget, 0);
+        onGameEnd(crash, 0);
         cancelAnimationFrame(requestRef.current);
         return;
       }
@@ -123,6 +103,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
+    // If game not started, show placeholder.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -149,13 +130,13 @@ export function CrashGame({
     }
     ctx.stroke();
 
-    // Compute rocket position at the tip.
+    // Compute rocket position at tip of drawn line.
     const tTip = timeElapsed / 10;
     const maxX = width - rocketWidth;
     const x = Math.min(tTip * zoomFactor, maxX);
     const y = height - curveFunction(tTip / 1000) * zoomFactor;
 
-    // Compute the tangent angle.
+    // Compute tangent angle at the tip.
     const u = tTip / 1000;
     const deltaU = 0.001;
     const derivative = (curveFunction(u + deltaU) - curveFunction(u)) / deltaU;
@@ -163,6 +144,7 @@ export function CrashGame({
 
     ctx.save();
     if (gameStatus === "Crashed") {
+      // Draw explosion image centered at (x, y).
       ctx.translate(x, y);
       ctx.drawImage(
         explodeImage,
@@ -173,11 +155,12 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
+      // Draw rocket so its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth,
+        -rocketWidth, // shift so that the right edge is at (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
