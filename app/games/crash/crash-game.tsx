@@ -61,20 +61,21 @@ export function CrashGame({
   }, []);
 
   // Animation effect – runs only when isPlaying is true.
+  // This animation computes the multiplier using the in-game elapsed time.
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
     // Generate a random crash point (ensuring at least 1.5x).
     const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Use a growth rate of 0.0005:
-    // After 1 sec: exp(0.5) ≈ 1.65x; after 2 sec: exp(1) ≈ 2.72x, etc.
+    // Growth rate: multiplier = exp(growthRate * elapsed)
     const growthRate = 0.0005;
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
+      // Pass the live multiplier to the parent via callback.
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
       // End game if multiplier reaches crash point.
