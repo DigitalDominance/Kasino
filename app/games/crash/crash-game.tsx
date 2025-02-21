@@ -32,7 +32,6 @@ interface CrashGameProps {
   betAmount: number;
   onGameEnd: (finalMultiplier: number, winAmount: number) => void;
   onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
-  onManualCashout: () => void;
   onMultiplierChange?: (multiplier: number) => void;
 }
 
@@ -41,7 +40,6 @@ export function CrashGame({
   betAmount,
   onGameEnd,
   onCashoutSuccess,
-  onManualCashout,
   onMultiplierChange,
 }: CrashGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,23 +58,25 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect – runs only when isPlaying is true.
+  // Animation effect – run only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
+      // Leave current frame intact.
       return;
     }
     setGameStatus("Running");
+    // Randomly generate a crash point.
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     setCrashMultiplier(crash);
     const start = performance.now();
-    const growthRate = 0.001; // After about 1 second: exp(1) ≈ 2.72×
+    const growthRate = 0.0005; // Slower growth rate: after 1 sec, multiplier ~ exp(0.5) ≈ 1.65×
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
-      // If multiplier reaches the crash point, end the game.
+      // When the multiplier reaches the crash point, end the game.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -87,7 +87,7 @@ export function CrashGame({
     };
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [isPlaying, betAmount, onGameEnd, onMultiplierChange, onCashoutSuccess]);
+  }, [isPlaying, betAmount, onGameEnd, onMultiplierChange]);
 
   // Render the canvas.
   const renderCanvas = () => {
@@ -154,7 +154,7 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so its tip (right edge) aligns with (x, y).
+      // Draw rocket so that its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
