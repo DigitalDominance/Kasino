@@ -4,8 +4,8 @@ import { useRef, useEffect, useState } from "react";
 
 // --- Configuration Constants ---
 const coeffB = 0.5;
-const coeffA = 2000 * 0.16; // using a base height of 2000 (for the curve)
-const zoomFactor = 0.5; // < 1 zooms out the drawn content
+const coeffA = 2000 * 0.16; // using a base height of 2000
+const zoomFactor = 0.5; // zoom factor
 
 // --- Asset Loading ---
 // Rocket and explosion images are in your public folder.
@@ -60,17 +60,18 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect – runs only when isPlaying is true.
+  // Animation effect – runs when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // Do not update state; leave current frame intact.
+      // Do nothing if not playing.
       return;
     }
     setGameStatus("Running");
-    // Generate a random crash point.
-    const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
+    // Generate a random crash point—ensuring it's at least 1.5x.
+    const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    const growthRate = 0.00002; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x, etc.
+    // Use a slower growth rate so the multiplier increases gradually.
+    const growthRate = 0.0003; // After 1 sec: exp(0.3) ≈ 1.35×; after 2 sec: exp(0.6) ≈ 1.82×; after 5 sec: ≈4.48×
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
@@ -84,6 +85,8 @@ export function CrashGame({
         cancelAnimationFrame(requestRef.current);
         return;
       }
+      // Uncomment below to debug multiplier values.
+      // console.log("Multiplier:", newMultiplier);
       requestRef.current = requestAnimationFrame(animate);
     };
     requestRef.current = requestAnimationFrame(animate);
@@ -103,7 +106,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show placeholder message.
+    // If game not started, show placeholder.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
