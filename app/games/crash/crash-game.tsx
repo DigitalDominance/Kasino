@@ -8,14 +8,13 @@ const coeffA = 2000 * 0.16; // using a base height of 2000 (for the curve)
 const zoomFactor = 0.5; // < 1 zooms out the drawn content
 
 // --- Asset Loading ---
+// Rocket and explosion images are in your public folder.
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
   rocketImage = new Image();
-  rocketImage.src =
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/rocket.svg"; // Ensure your asset path is correct.
+  rocketImage.src = "/rocket.svg";
   explodeImage = new Image();
-  explodeImage.src =
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/explode.svg"; // Ensure your asset path is correct.
+  explodeImage.src = "/explode.svg";
 }
 
 const rocketWidth = 55;
@@ -71,15 +70,14 @@ export function CrashGame({
     // Generate a random crash point.
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Adjust this growth rate until the pace feels right.
-    const growthRate = 0.0005; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x; etc.
+    const growthRate = 0.0005; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x, etc.
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
-      // Crash condition.
+      // End game if multiplier reaches crash point.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
