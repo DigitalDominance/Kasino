@@ -24,7 +24,8 @@ export default function CrashPage() {
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
-  const [currentMultiplier, setCurrentMultiplier] = useState(1);
+  // Remove the default 1 so that currentMultiplier is only set from the live game
+  const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null);
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -43,7 +44,7 @@ export default function CrashPage() {
 
   // Cash out now always uses the live multiplier from the game.
   const handleCashout = () => {
-    if (isPlaying) {
+    if (isPlaying && currentMultiplier !== null) {
       const m = currentMultiplier;
       const amount = Number(betAmount) * m;
       setWinAmount(amount);
@@ -79,6 +80,8 @@ export default function CrashPage() {
     setCrashPoint(null);
     setWinAmount(0);
     setModalVisible(false);
+    // Reset currentMultiplier to null so that it won't show a default value.
+    setCurrentMultiplier(null);
   };
 
   const hideModal = () => {
@@ -177,7 +180,8 @@ export default function CrashPage() {
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
-                currentMultiplier={currentMultiplier}
+                // Pass the live multiplier (it will be null until updated)
+                currentMultiplier={currentMultiplier ?? 0}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
