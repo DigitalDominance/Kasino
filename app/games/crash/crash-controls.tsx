@@ -52,8 +52,8 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // If winAmount is greater than 0, that means the user cashed out successfully.
-  // Otherwise, they lost by crashing.
+  // Build the win message using the current multiplier for a cashout win
+  // or the crashPoint for a loss.
   const winMessage =
     winAmount > 0
       ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
@@ -75,7 +75,7 @@ export function CrashControls({
             />
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                 alt="KAS"
                 width={16}
                 height={16}
@@ -136,6 +136,7 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
+            // Use the currentMultiplier for manual cashout.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
               onClick={() => onCashout(currentMultiplier)}
@@ -155,7 +156,7 @@ export function CrashControls({
             <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
               <div className="flex items-center space-x-2">
                 <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                   alt="KAS"
                   width={20}
                   height={20}
