@@ -68,12 +68,12 @@ export function CrashGame({
     // Generate a random crash point (ensuring at least 1.5x).
     const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Growth rate: multiplier = exp(growthRate * elapsed)
-    const growthRate = 0.0005;
+    // Growth rate is now per second (convert elapsed ms to seconds)
+    const growthRate = 0.5; // Adjust this for faster/slower growth
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
-      const newMultiplier = Math.exp(growthRate * elapsed);
+      const newMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(newMultiplier);
       // Pass the live multiplier to the parent via callback.
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
