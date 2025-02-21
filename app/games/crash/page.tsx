@@ -23,8 +23,8 @@ export default function CrashPage() {
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
-  // Remove the default 1 so that currentMultiplier is only set from the live game
+  // Remove gameKey to avoid unnecessary remounting.
+  // Initialize currentMultiplier as null so that we only show a live value.
   const [currentMultiplier, setCurrentMultiplier] = useState<number | null>(null);
 
   const handlePlaceBet = () => {
@@ -38,6 +38,7 @@ export default function CrashPage() {
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
+    // Start the game; CrashGame will update currentMultiplier via onMultiplierChange.
     setIsPlaying(true);
     console.log("Bet placed, starting game");
   };
@@ -73,14 +74,13 @@ export default function CrashPage() {
   };
 
   const resetGame = () => {
-    setGameKey((prev) => prev + 1);
+    // Instead of remounting CrashGame via a key, simply reset state.
     setShowHowToPlay(false);
     setIsPlaying(false);
     setGameOver(false);
     setCrashPoint(null);
     setWinAmount(0);
     setModalVisible(false);
-    // Reset currentMultiplier to null so that it won't show a default value.
     setCurrentMultiplier(null);
   };
 
@@ -121,7 +121,6 @@ export default function CrashPage() {
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
                   <CrashGame
-                    key={gameKey}
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
                     onGameEnd={handleGameEnd}
@@ -180,7 +179,8 @@ export default function CrashPage() {
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
-                // Pass the live multiplier (it will be null until updated)
+                // Pass the live multiplier (if not updated, currentMultiplier will be null,
+                // so you can decide what to show in CrashControls based on that).
                 currentMultiplier={currentMultiplier ?? 0}
               />
               <LiveChat textColor="#49EACB" />
