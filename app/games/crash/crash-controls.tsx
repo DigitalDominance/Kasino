@@ -14,7 +14,7 @@ interface CrashControlsProps {
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: () => void; // updated: no parameter
+  onCashout: () => void;
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
@@ -52,14 +52,10 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Use the actual multiplier value from the game.
-  const safeCurrentMultiplier = currentMultiplier;
-  const safeCrashPoint = crashPoint || 1;
-
   const winMessage =
     winAmount > 0
-      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${(Number(betAmount) * safeCurrentMultiplier).toFixed(2)} KAS!`
-      : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+      ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${(Number(betAmount) * currentMultiplier).toFixed(2)} KAS!`
+      : `Crashed at ${crashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
@@ -147,7 +143,6 @@ export function CrashControls({
           )}
         </motion.div>
 
-        {/* Modal */}
         {!hideModal && gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
