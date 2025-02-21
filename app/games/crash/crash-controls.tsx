@@ -14,7 +14,7 @@ interface CrashControlsProps {
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: (manualMultiplier?: number) => void;
+  onCashout: () => void; // updated: no parameter
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
@@ -140,14 +140,14 @@ export function CrashControls({
           ) : (
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
-              onClick={() => onCashout(safeCurrentMultiplier)}
+              onClick={onCashout}
             >
               Cash Out
             </Button>
           )}
         </motion.div>
 
-        {/* Only render the modal here if hideModal is false */}
+        {/* Modal */}
         {!hideModal && gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
