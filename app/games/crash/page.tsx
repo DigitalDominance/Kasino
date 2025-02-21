@@ -18,7 +18,6 @@ export default function CrashPage() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
-  // Remove autoCashout state since it's no longer used.
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
@@ -43,13 +42,12 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  // Updated: Use the passed multiplier (currentMultiplier) for manual cashout.
+  // When user clicks cashout, use the currentMultiplier stored in state.
   const handleCashout = (multiplier: number) => {
     if (isPlaying) {
       const amount = Number(betAmount) * multiplier;
       setWinAmount(amount);
       setCrashPoint(multiplier);
-      // End the game (manual cashout) and show the win popup.
       setIsPlaying(false);
       setGameOver(true);
       setModalVisible(true);
@@ -66,7 +64,7 @@ export default function CrashPage() {
 
   const handleGameEnd = (result: number, winAmountParam: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmountParam);
-    // When the game crashes, preserve the final (explosion) frame and show loss.
+    // When the game crashes, win amount is 0.
     setCrashPoint(result);
     setWinAmount(0);
     setIsPlaying(false);
@@ -74,7 +72,7 @@ export default function CrashPage() {
     setModalVisible(true);
   };
 
-  // Reset the game by incrementing gameKey so CrashGame remounts.
+  // Reset the game by forcing CrashGame to remount.
   const resetGame = () => {
     setGameKey((prev) => prev + 1);
     setShowHowToPlay(false);
@@ -87,7 +85,6 @@ export default function CrashPage() {
   };
 
   const hideModal = () => {
-    // When clicking "Close" in the win/loss popup, reset the game.
     resetGame();
   };
 
@@ -106,7 +103,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container – positioned relative so that the modal is centered within it */}
+            {/* Game Container */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -123,7 +120,7 @@ export default function CrashPage() {
                   </button>
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
-                  {/* Pass gameKey to force remount on reset, and pass onMultiplierChange */}
+                  {/* Force remount by using gameKey and update currentMultiplier */}
                   <CrashGame
                     key={gameKey}
                     isPlaying={isPlaying}
@@ -135,7 +132,7 @@ export default function CrashPage() {
                   />
                 </div>
               </div>
-              {/* Win/Loss Modal inside game container, offset 15% above center */}
+              {/* Win/Loss Modal (offset 15% above center) */}
               {modalVisible && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -194,7 +191,7 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* Full-page How-to-Play Modal – rendered only when no game is active */}
+      {/* Full-page How-to-Play Modal */}
       {showHowToPlay && !isPlaying && !gameOver && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
