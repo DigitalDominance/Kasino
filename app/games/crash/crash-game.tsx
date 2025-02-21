@@ -5,7 +5,7 @@ import { useRef, useEffect, useState } from "react";
 // --- Configuration Constants ---
 const coeffB = 0.5;
 const coeffA = 2000 * 0.16; // using a base height of 2000
-const zoomFactor = 0.5; // zoom factor for the drawn content
+const zoomFactor = 0.5; // zoom factor
 
 // --- Asset Loading ---
 // Rocket and explosion images are in your public folder.
@@ -63,22 +63,20 @@ export function CrashGame({
   // Animation effect – runs only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // Do not update state; leave current frame intact.
       return;
     }
     setGameStatus("Running");
-    // Generate a random crash point (for example, ensure it's at least 1.5x).
+    // Generate a random crash point, ensuring it's at least 1.5x.
     const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Use a slower growth rate: after 1 second, multiplier ≈ exp(0.00015*1000)=exp(0.15)≈1.16x
-    const growthRate = 0.00015;
+    // Use a slow growth rate; adjust as needed.
+    const growthRate = 0.0003; // After 1 sec: exp(0.3)≈1.35x; after 2 sec: exp(0.6)≈1.82x; after 5 sec: ≈4.48x.
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
-      // Log the multiplier for debugging.
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
       // End game if multiplier reaches crash point.
       if (newMultiplier >= crash) {
@@ -163,7 +161,7 @@ export function CrashGame({
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // shift so the right edge is at (0,0)
+        -rocketWidth, // shift so that the right edge is at (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
