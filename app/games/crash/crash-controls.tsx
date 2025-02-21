@@ -165,7 +165,6 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
-            // On manual cashout, pass the current multiplier from CrashPage.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
               onClick={() => onCashout(currentMultiplier)}
