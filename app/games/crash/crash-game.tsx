@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
   explodeImage.src = "/explode.svg";
 }
 
-const rocketWidth = 50;
+const rocketWidth = 55;
 const rocketHeight = 50;
 
 // --- Curve Function ---
@@ -30,19 +30,19 @@ export type GameStatus = "Waiting" | "Running" | "Crashed" | "CashedOut";
 interface CrashGameProps {
   isPlaying: boolean;
   betAmount: number;
-  autoCashOut?: number;
   onGameEnd: (finalMultiplier: number, winAmount: number) => void;
   onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
   onManualCashout: () => void;
+  onMultiplierChange?: (multiplier: number) => void;
 }
 
 export function CrashGame({
   isPlaying,
   betAmount,
-  autoCashOut,
   onGameEnd,
   onCashoutSuccess,
   onManualCashout,
+  onMultiplierChange,
 }: CrashGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>("Waiting");
@@ -60,35 +60,23 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect.
+  // Animation effect – runs only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // If the game has ended with a crash or cashout, preserve the final frame.
-      if (gameStatus !== "Crashed" && gameStatus !== "CashedOut") {
-        setGameStatus("Waiting");
-        setTimeElapsed(0);
-        setMultiplier(1);
-      }
       return;
     }
     setGameStatus("Running");
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     setCrashMultiplier(crash);
     const start = performance.now();
-    const growthRate = 0.00006; // multiplier = exp(growthRate * elapsed)
+    const growthRate = 0.001; // After about 1 second: exp(1) ≈ 2.72×
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
-      // Auto cashout.
-      if (autoCashOut && newMultiplier >= autoCashOut) {
-        setGameStatus("CashedOut");
-        onCashoutSuccess(newMultiplier, betAmount * newMultiplier);
-        cancelAnimationFrame(requestRef.current);
-        return;
-      }
-      // Crash condition.
+      if (onMultiplierChange) onMultiplierChange(newMultiplier);
+      // If multiplier reaches the crash point, end the game.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -99,7 +87,7 @@ export function CrashGame({
     };
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd, gameStatus]);
+  }, [isPlaying, betAmount, onGameEnd, onMultiplierChange, onCashoutSuccess]);
 
   // Render the canvas.
   const renderCanvas = () => {
@@ -114,7 +102,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show message.
+    // If game not started, show placeholder.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -135,7 +123,7 @@ export function CrashGame({
     ctx.moveTo(0, height);
     const step = 10;
     for (let t = 0; t < timeElapsed / 10; t += step) {
-      const x = t * zoomFactor;
+      const x = t * zoomFactor - 5;
       const y = height - curveFunction(t / 1000) * zoomFactor;
       ctx.lineTo(x, y);
     }
@@ -166,12 +154,12 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so its tip (right edge) aligns with (x,y).
+      // Draw rocket so its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // shift so right edge is at (0,0)
+        -rocketWidth, // shift so that the right edge is at (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
