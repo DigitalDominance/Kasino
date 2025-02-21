@@ -52,13 +52,13 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Ensure we have safe values for currentMultiplier and crashPoint.
-  const safeCurrentMultiplier = currentMultiplier !== undefined ? currentMultiplier : 1;
-  const safeCrashPoint = crashPoint !== undefined ? crashPoint : 1;
+  // Use safe defaults.
+  const safeCurrentMultiplier = currentMultiplier || 1;
+  const safeCrashPoint = crashPoint || 1;
 
   const winMessage =
     winAmount > 0
-      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
+      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${(Number(betAmount) * safeCurrentMultiplier).toFixed(2)} KAS!`
       : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
