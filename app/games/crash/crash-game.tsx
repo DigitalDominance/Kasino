@@ -34,6 +34,7 @@ interface CrashGameProps {
   onGameEnd: (finalMultiplier: number, winAmount: number) => void;
   onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
   onManualCashout: () => void;
+  onMultiplierChange?: (multiplier: number) => void;
 }
 
 export function CrashGame({
@@ -43,6 +44,7 @@ export function CrashGame({
   onGameEnd,
   onCashoutSuccess,
   onManualCashout,
+  onMultiplierChange,
 }: CrashGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>("Waiting");
@@ -63,7 +65,7 @@ export function CrashGame({
   // Animation effect.
   useEffect(() => {
     if (!isPlaying) {
-      // If the game has ended with a crash or cashout, preserve the final frame.
+      // If the game has ended (crashed or cashed out), preserve final frame.
       if (gameStatus !== "Crashed" && gameStatus !== "CashedOut") {
         setGameStatus("Waiting");
         setTimeElapsed(0);
@@ -81,6 +83,7 @@ export function CrashGame({
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
+      if (onMultiplierChange) onMultiplierChange(newMultiplier);
       // Auto cashout.
       if (autoCashOut && newMultiplier >= autoCashOut) {
         setGameStatus("CashedOut");
@@ -99,7 +102,7 @@ export function CrashGame({
     };
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd, gameStatus]);
+  }, [isPlaying, autoCashOut, betAmount, onCashoutSuccess, onGameEnd, gameStatus, onMultiplierChange]);
 
   // Render the canvas.
   const renderCanvas = () => {
@@ -114,7 +117,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show message.
+    // If game not started, show placeholder message.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -166,12 +169,12 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so its tip (right edge) aligns with (x,y).
+      // Draw rocket so that its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // shift so right edge is at (0,0)
+        -rocketWidth, // shift so that the right edge is at (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
