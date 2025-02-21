@@ -1,178 +1,203 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import { useWallet } from "@/contexts/WalletContext";
+import { useRef, useEffect, useState } from "react";
 
-interface CrashControlsProps {
-  betAmount: string;
-  setBetAmount: (amount: string) => void;
-  isPlaying: boolean;
-  isWalletConnected: boolean;
-  balance: number;
-  onPlaceBet: () => void;
-  onCashout: (manualMultiplier?: number) => void;
-  resetGame: () => void;
-  gameOver: boolean;
-  crashPoint: number;
-  winAmount: number;
-  hideModal?: boolean;
-  currentMultiplier: number;
+// --- Configuration Constants ---
+const coeffB = 0.5;
+const coeffA = 2000 * 0.16; // using a base height of 2000
+const zoomFactor = 0.5; // zoom factor
+
+// --- Asset Loading ---
+// Rocket and explosion images are in your public folder.
+let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
+if (typeof window !== "undefined") {
+  rocketImage = new Image();
+  rocketImage.src = "/rocket.svg";
+  explodeImage = new Image();
+  explodeImage.src = "/explode.svg";
 }
 
-export function CrashControls({
-  betAmount,
-  setBetAmount,
-  isPlaying,
-  isWalletConnected,
-  balance,
-  onPlaceBet,
-  onCashout,
-  resetGame,
-  gameOver,
-  crashPoint,
-  winAmount,
-  hideModal = false,
-  currentMultiplier,
-}: CrashControlsProps) {
-  const { isConnected } = useWallet();
+const rocketWidth = 55;
+const rocketHeight = 50;
 
-  const handlePlaceBet = () => {
-    if (!isConnected) {
-      alert("Please connect your wallet first");
+// --- Curve Function ---
+function curveFunction(t: number) {
+  return coeffA * (Math.exp(coeffB * t) - 1);
+}
+
+// --- CrashGame Types ---
+export type GameStatus = "Waiting" | "Running" | "Crashed" | "CashedOut";
+
+interface CrashGameProps {
+  isPlaying: boolean;
+  betAmount: number;
+  onGameEnd: (finalMultiplier: number, winAmount: number) => void;
+  onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
+  onManualCashout: () => void;
+  onMultiplierChange?: (multiplier: number) => void;
+}
+
+export function CrashGame({
+  isPlaying,
+  betAmount,
+  onGameEnd,
+  onCashoutSuccess,
+  onManualCashout,
+  onMultiplierChange,
+}: CrashGameProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [gameStatus, setGameStatus] = useState<GameStatus>("Waiting");
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [multiplier, setMultiplier] = useState(1);
+  const requestRef = useRef<number>();
+
+  // Set up canvas resolution.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+  }, []);
+
+  // Animation effect – runs only when isPlaying is true.
+  useEffect(() => {
+    if (!isPlaying) {
       return;
     }
-    if (Number(betAmount) <= 0) {
-      alert("Invalid bet amount");
+    setGameStatus("Running");
+    // Generate a random crash point, ensuring it's at least 1.5x.
+    const crash = Math.max(1.0, 1 / (1 - Math.random() * 0.95));
+    const start = performance.now();
+    // Use a slow growth rate; adjust as needed.
+    const growthRate = 0.000015; // After 1 sec: exp(0.3)≈1.35x; after 2 sec: exp(0.6)≈1.82x; after 5 sec: ≈4.48x.
+    const animate = (time: number) => {
+      const elapsed = time - start;
+      setTimeElapsed(elapsed);
+      const newMultiplier = Math.exp(growthRate * elapsed);
+      setMultiplier(newMultiplier);
+      if (onMultiplierChange) onMultiplierChange(newMultiplier);
+      console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
+      // End game if multiplier reaches crash point.
+      if (newMultiplier >= crash) {
+        setGameStatus("Crashed");
+        onGameEnd(crash, 0);
+        cancelAnimationFrame(requestRef.current);
+        return;
+      }
+      requestRef.current = requestAnimationFrame(animate);
+    };
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isPlaying, betAmount, onGameEnd, onMultiplierChange]);
+
+  // Render the canvas.
+  const renderCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    ctx.clearRect(0, 0, width, height);
+
+    // If game not started, show placeholder message.
+    if (!isPlaying && gameStatus === "Waiting") {
+      ctx.fillStyle = "white";
+      ctx.font = "30px Arial";
+      const text = "Place your bet to start playing";
+      const textWidth = ctx.measureText(text).width;
+      ctx.fillText(text, width / 2 - textWidth / 2, height / 2);
+      ctx.restore();
       return;
     }
-    onPlaceBet();
+
+    // Draw the rocket path.
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#49EACB");
+    gradient.addColorStop(1, "#111");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    const step = 10;
+    for (let t = 0; t < timeElapsed / 10; t += step) {
+      const x = t * zoomFactor - 5;
+      const y = height - curveFunction(t / 1000) * zoomFactor;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Compute rocket position at tip of drawn line.
+    const tTip = timeElapsed / 10;
+    const maxX = width - rocketWidth;
+    const x = Math.min(tTip * zoomFactor, maxX);
+    const y = height - curveFunction(tTip / 1000) * zoomFactor;
+
+    // Compute tangent angle at the tip.
+    const u = tTip / 1000;
+    const deltaU = 0.001;
+    const derivative = (curveFunction(u + deltaU) - curveFunction(u)) / deltaU;
+    const angle = Math.atan(-derivative / 1000);
+
+    ctx.save();
+    if (gameStatus === "Crashed") {
+      // Draw explosion image centered at (x, y).
+      ctx.translate(x, y);
+      ctx.drawImage(
+        explodeImage,
+        -rocketWidth / 2,
+        -rocketHeight / 2,
+        rocketWidth,
+        rocketHeight
+      );
+      ctx.translate(-x, -y);
+    } else {
+      // Draw rocket so its tip (right edge) aligns with (x, y).
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.drawImage(
+        rocketImage,
+        -rocketWidth, // shift so that the right edge is at (0,0)
+        -rocketHeight / 2,
+        rocketWidth,
+        rocketHeight
+      );
+      ctx.rotate(-angle);
+      ctx.translate(-x, -y);
+    }
+    ctx.restore();
+
+    // Draw the multiplier.
+    ctx.font = "60px Arial";
+    let fillStyle = "white";
+    const m = parseFloat(multiplier.toFixed(2));
+    if (m > 5) fillStyle = "red";
+    else if (m > 2) fillStyle = "yellow";
+    ctx.fillStyle = fillStyle;
+    const text = m.toFixed(2) + "x";
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, width / 2 - textWidth / 2, height / 2);
+    ctx.restore();
   };
 
-  // If winAmount is greater than 0, that means the user cashed out successfully.
-  // Otherwise, they lost by crashing.
-  const winMessage =
-    winAmount > 0
-      ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
-      : `Crashed at ${crashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+  useEffect(() => {
+    renderCanvas();
+  }, [timeElapsed, multiplier, gameStatus, isPlaying]);
 
   return (
-    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm text-[#49EACB]">Bet Amount</label>
-          <div className="relative">
-            <Input
-              type="number"
-              value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
-              placeholder="0.00"
-              disabled={!isWalletConnected || isPlaying}
-            />
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
-                alt="KAS"
-                width={16}
-                height={16}
-                className="rounded-full"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
-              disabled={!isWalletConnected || isPlaying}
-            >
-              ½
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
-              disabled={!isWalletConnected || isPlaying}
-            >
-              2×
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount("0.00")}
-              disabled={!isWalletConnected || isPlaying}
-            >
-              Min
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount(balance.toString())}
-              disabled={!isWalletConnected || isPlaying}
-            >
-              Max
-            </Button>
-          </div>
-        </div>
-
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          {gameOver ? (
-            <Button
-              className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-              onClick={resetGame}
-            >
-              Play Again
-            </Button>
-          ) : !isPlaying ? (
-            <Button
-              className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-              onClick={handlePlaceBet}
-              disabled={!isWalletConnected}
-            >
-              {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
-            </Button>
-          ) : (
-            <Button
-              className="w-full bg-green-500 text-white hover:bg-green-600"
-              onClick={() => onCashout(currentMultiplier)}
-            >
-              Cash Out
-            </Button>
-          )}
-        </motion.div>
-
-        {/* Only render the modal here if hideModal is false */}
-        {!hideModal && gameOver && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 flex items-center justify-center z-50"
-          >
-            <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
-                  alt="KAS"
-                  width={20}
-                  height={20}
-                  className="rounded-full"
-                />
-                <span className="text-xl text-[#49EACB]">{winMessage}</span>
-              </div>
-              <Button
-                className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={resetGame}
-              >
-                Close
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </Card>
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+        background: "transparent",
+        borderRadius: "8px",
+      }}
+    />
   );
 }
