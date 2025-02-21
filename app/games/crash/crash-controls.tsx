@@ -52,10 +52,12 @@ export function CrashControls({
     onPlaceBet();
   };
 
+  // If winAmount is greater than 0, that means the user cashed out successfully.
+  // Otherwise, they lost by crashing.
   const winMessage =
     winAmount > 0
-      ? `You Won ${winAmount.toFixed(2)} KAS!`
-      : `You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+      ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
+      : `Crashed at ${crashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
@@ -134,7 +136,6 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
-            // Use the currentMultiplier for manual cashout.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
               onClick={() => onCashout(currentMultiplier)}
