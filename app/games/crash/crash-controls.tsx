@@ -52,12 +52,14 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Build the win message using the current multiplier for a cashout win
-  // or the crashPoint for a loss.
+  // Ensure we have safe values for currentMultiplier and crashPoint.
+  const safeCurrentMultiplier = currentMultiplier !== undefined ? currentMultiplier : 1;
+  const safeCrashPoint = crashPoint !== undefined ? crashPoint : 1;
+
   const winMessage =
     winAmount > 0
-      ? `Cashed out at ${currentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
-      : `Crashed at ${crashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${winAmount.toFixed(2)} KAS!`
+      : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
@@ -136,10 +138,9 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
-            // Use the currentMultiplier for manual cashout.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
-              onClick={() => onCashout(currentMultiplier)}
+              onClick={() => onCashout(safeCurrentMultiplier)}
             >
               Cash Out
             </Button>
