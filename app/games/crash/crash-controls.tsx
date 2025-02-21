@@ -18,12 +18,13 @@ interface CrashControlsProps {
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: () => void;
+  onCashout: (manualMultiplier?: number) => void;
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
   winAmount: number;
   hideModal?: boolean;
+  currentMultiplier: number;
 }
 
 export function CrashControls({
@@ -43,6 +44,7 @@ export function CrashControls({
   crashPoint,
   winAmount,
   hideModal = false,
+  currentMultiplier,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
 
@@ -163,9 +165,10 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
+            // On manual cashout, pass the current multiplier from CrashPage.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
-              onClick={onCashout}
+              onClick={() => onCashout(currentMultiplier)}
             >
               Cash Out
             </Button>
