@@ -5,7 +5,7 @@ import { useRef, useEffect, useState } from "react";
 // --- Configuration Constants ---
 const coeffB = 0.5;
 const coeffA = 2000 * 0.16; // using a base height of 2000
-const zoomFactor = 0.5; // zoom factor
+const zoomFactor = 0.5; // zoom factor for the drawn content
 
 // --- Asset Loading ---
 // Rocket and explosion images are in your public folder.
@@ -60,24 +60,26 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect – runs when isPlaying is true.
+  // Animation effect – runs only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // Do nothing if not playing.
+      // Do not update state; leave current frame intact.
       return;
     }
     setGameStatus("Running");
-    // Generate a random crash point—ensuring it's at least 1.5x.
+    // Generate a random crash point (for example, ensure it's at least 1.5x).
     const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    // Use a slower growth rate so the multiplier increases gradually.
-    const growthRate = 0.0003; // After 1 sec: exp(0.3) ≈ 1.35×; after 2 sec: exp(0.6) ≈ 1.82×; after 5 sec: ≈4.48×
+    // Use a slower growth rate: after 1 second, multiplier ≈ exp(0.00015*1000)=exp(0.15)≈1.16x
+    const growthRate = 0.00015;
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
+      // Log the multiplier for debugging.
+      console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
       // End game if multiplier reaches crash point.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
@@ -85,8 +87,6 @@ export function CrashGame({
         cancelAnimationFrame(requestRef.current);
         return;
       }
-      // Uncomment below to debug multiplier values.
-      // console.log("Multiplier:", newMultiplier);
       requestRef.current = requestAnimationFrame(animate);
     };
     requestRef.current = requestAnimationFrame(animate);
@@ -106,7 +106,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show placeholder.
+    // If game not started, show placeholder message.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -163,7 +163,7 @@ export function CrashGame({
       ctx.rotate(angle);
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // shift so that the right edge is at (0,0)
+        -rocketWidth, // shift so the right edge is at (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
