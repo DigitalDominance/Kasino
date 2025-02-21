@@ -11,9 +11,11 @@ const zoomFactor = 0.5; // < 1 zooms out the drawn content
 let rocketImage: HTMLImageElement, explodeImage: HTMLImageElement;
 if (typeof window !== "undefined") {
   rocketImage = new Image();
-  rocketImage.src = "/rocket.svg";
+  rocketImage.src =
+    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/rocket.svg"; // Ensure your asset path is correct.
   explodeImage = new Image();
-  explodeImage.src = "/explode.svg";
+  explodeImage.src =
+    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/explode.svg"; // Ensure your asset path is correct.
 }
 
 const rocketWidth = 55;
@@ -32,6 +34,7 @@ interface CrashGameProps {
   betAmount: number;
   onGameEnd: (finalMultiplier: number, winAmount: number) => void;
   onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
+  onManualCashout: () => void;
   onMultiplierChange?: (multiplier: number) => void;
 }
 
@@ -40,13 +43,13 @@ export function CrashGame({
   betAmount,
   onGameEnd,
   onCashoutSuccess,
+  onManualCashout,
   onMultiplierChange,
 }: CrashGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>("Waiting");
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
-  const [crashMultiplier, setCrashMultiplier] = useState<number>(1);
   const requestRef = useRef<number>();
 
   // Set up canvas resolution.
@@ -58,25 +61,25 @@ export function CrashGame({
     canvas.height = canvas.clientHeight * dpr;
   }, []);
 
-  // Animation effect – run only when isPlaying is true.
+  // Animation effect – runs only when isPlaying is true.
   useEffect(() => {
     if (!isPlaying) {
-      // Leave current frame intact.
+      // Do not update state; leave current frame intact.
       return;
     }
     setGameStatus("Running");
-    // Randomly generate a crash point.
+    // Generate a random crash point.
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
-    setCrashMultiplier(crash);
     const start = performance.now();
-    const growthRate = 0.0005; // Slower growth rate: after 1 sec, multiplier ~ exp(0.5) ≈ 1.65×
+    // Adjust this growth rate until the pace feels right.
+    const growthRate = 0.0005; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x; etc.
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
       const newMultiplier = Math.exp(growthRate * elapsed);
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
-      // When the multiplier reaches the crash point, end the game.
+      // Crash condition.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -102,7 +105,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show placeholder.
+    // If game not started, show placeholder message.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -154,7 +157,7 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so that its tip (right edge) aligns with (x, y).
+      // Draw rocket so its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
