@@ -70,7 +70,7 @@ export function CrashGame({
     // Generate a random crash point.
     const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
-    const growthRate = 0.0005; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x, etc.
+    const growthRate = 0.00002; // After 1 sec: ~exp(0.5)=~1.65x; after 2 sec: ~exp(1)=~2.72x, etc.
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
