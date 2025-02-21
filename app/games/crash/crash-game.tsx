@@ -64,11 +64,11 @@ export function CrashGame({
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
-    // Generate a random crash point (ensuring at least 1.5x).
-    const crash = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
+    // Generate a random crash point (ensuring at least 1.01x).
+    const crash = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     const start = performance.now();
     // Use a growth rate of 0.0003 (adjust if needed).
-    const growthRate = 0.0003;
+    const growthRate = 0.0001;
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
