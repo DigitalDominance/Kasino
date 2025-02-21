@@ -10,29 +10,22 @@ import { useWallet } from "@/contexts/WalletContext";
 interface CrashControlsProps {
   betAmount: string;
   setBetAmount: (amount: string) => void;
-  autoCashout: string;
-  setAutoCashout: (amount: string) => void;
-  autoCashoutEnabled: boolean;
-  setAutoCashoutEnabled: (enabled: boolean) => void;
   isPlaying: boolean;
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: () => void;
+  onCashout: (manualMultiplier?: number) => void;
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
   winAmount: number;
   hideModal?: boolean;
+  currentMultiplier: number;
 }
 
 export function CrashControls({
   betAmount,
   setBetAmount,
-  autoCashout,
-  setAutoCashout,
-  autoCashoutEnabled,
-  setAutoCashoutEnabled,
   isPlaying,
   isWalletConnected,
   balance,
@@ -43,6 +36,7 @@ export function CrashControls({
   crashPoint,
   winAmount,
   hideModal = false,
+  currentMultiplier,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
 
@@ -123,29 +117,6 @@ export function CrashControls({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm text-[#49EACB]">Auto Cashout</label>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-[#49EACB] hover:text-[#49EACB]/80 hover:bg-[#49EACB]/10"
-              onClick={() => setAutoCashoutEnabled(!autoCashoutEnabled)}
-              disabled={!isWalletConnected || isPlaying}
-            >
-              {autoCashoutEnabled ? "Disable" : "Enable"}
-            </Button>
-          </div>
-          <Input
-            type="number"
-            value={autoCashout}
-            onChange={(e) => setAutoCashout(e.target.value)}
-            className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
-            placeholder="e.g., 2.00"
-            disabled={!autoCashoutEnabled || isPlaying}
-          />
-        </div>
-
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           {gameOver ? (
             <Button
@@ -163,9 +134,10 @@ export function CrashControls({
               {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
+            // Use the currentMultiplier for manual cashout.
             <Button
               className="w-full bg-green-500 text-white hover:bg-green-600"
-              onClick={onCashout}
+              onClick={() => onCashout(currentMultiplier)}
             >
               Cash Out
             </Button>
