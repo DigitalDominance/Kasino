@@ -152,8 +152,8 @@ export default function CrashPage() {
                       />
                       <span className="text-xl text-[#49EACB]">
                         {winAmount > 0
-                          ? You Won ${winAmount.toFixed(2)} KAS!
-                          : You Lost ${Number(betAmount).toFixed(2)} KAS!}
+                          ? `You Won ${winAmount.toFixed(2)} KAS!`
+                          : `You Lost ${Number(betAmount).toFixed(2)} KAS!`}
                       </span>
                     </div>
                     <Button
