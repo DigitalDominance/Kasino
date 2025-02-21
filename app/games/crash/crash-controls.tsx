@@ -52,8 +52,8 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Use safe defaults for display.
-  const safeCurrentMultiplier = currentMultiplier || 1;
+  // Use the actual multiplier value from the game.
+  const safeCurrentMultiplier = currentMultiplier;
   const safeCrashPoint = crashPoint || 1;
 
   const winMessage =
