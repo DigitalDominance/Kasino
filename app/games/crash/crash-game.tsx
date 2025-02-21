@@ -31,10 +31,10 @@ export function CrashGame({
     setGameStatus("Running");
     // Generate a random crash point.
     // Here we use a formula that ensures at least 1.5x.
-    const crashPoint = Math.max(1.0, 1 / (1 - Math.random() * 0.95));
+    const crashPoint = Math.max(1.01, 1 / (1 - Math.random() * 0.95));
     console.log("Crash point:", crashPoint);
     const start = performance.now();
-    const growthRate = 0.5; // multiplier grows as exp(0.5 * seconds)
+    const growthRate = 1; // multiplier grows as exp(0.5 * seconds)
     const animate = (time: number) => {
       const elapsed = time - start; // in ms
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
