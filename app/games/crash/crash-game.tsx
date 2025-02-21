@@ -32,11 +32,11 @@ export function CrashGame({
 
     // Generate the crash point only once when the game starts.
     if (crashPointRef.current === null) {
-      crashPointRef.current = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
+      crashPointRef.current = Math.max(1, 1 / (1 - Math.random() * 0.95));
       console.log("Crash point:", crashPointRef.current);
     }
     const start = performance.now();
-    const growthRate = 0.5; // Multiplier grows as exp(0.5 * seconds)
+    const growthRate = 0.005; // Multiplier grows as exp(0.5 * seconds)
 
     const animate = (time: number) => {
       const elapsed = time - start; // elapsed in ms
