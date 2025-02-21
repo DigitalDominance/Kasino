@@ -14,7 +14,7 @@ interface CrashControlsProps {
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: (manualMultiplier?: number) => void;
+  onCashout: (manualMultiplier: number) => void;
   resetGame: () => void;
   gameOver: boolean;
   crashPoint: number;
@@ -56,9 +56,11 @@ export function CrashControls({
   const safeCurrentMultiplier = currentMultiplier || 1;
   const safeCrashPoint = crashPoint || 1;
 
+  // Calculate win amount as betAmount * currentMultiplier.
+  const calculatedWin = Number(betAmount) * safeCurrentMultiplier;
   const winMessage =
     winAmount > 0
-      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${(Number(betAmount) * safeCurrentMultiplier).toFixed(2)} KAS!`
+      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${calculatedWin.toFixed(2)} KAS!`
       : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
@@ -147,7 +149,7 @@ export function CrashControls({
           )}
         </motion.div>
 
-        {/* Only render the modal here if hideModal is false */}
+        {/* Render popup modal if game is over and hideModal is false */}
         {!hideModal && gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
