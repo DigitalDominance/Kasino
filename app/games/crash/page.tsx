@@ -25,6 +25,8 @@ export default function CrashPage() {
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
+  // NEW: Track the current live multiplier from CrashGame.
+  const [currentMultiplier, setCurrentMultiplier] = useState(1);
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -42,13 +44,15 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  const handleCashout = () => {
+  // UPDATED: Accept an optional multiplier parameter.
+  const handleCashout = (multiplier?: number) => {
     if (isPlaying) {
-      const multiplier = Number(autoCashout) || 1;
-      const amount = Number(betAmount) * multiplier;
+      // Use the provided multiplier (from manual cashout) or fall back to autoCashout.
+      const m = multiplier !== undefined ? multiplier : Number(autoCashout) || 1;
+      const amount = Number(betAmount) * m;
       setWinAmount(amount);
-      setCrashPoint(multiplier);
-      // Leave the final frame visible.
+      setCrashPoint(m);
+      // End the game immediately.
       setIsPlaying(false);
       setGameOver(true);
       setModalVisible(true);
@@ -130,6 +134,7 @@ export default function CrashPage() {
                     onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
                     onManualCashout={handleCashout}
+                    onMultiplierChange={setCurrentMultiplier}  {/* NEW: update current multiplier */}
                   />
                 </div>
               </div>
@@ -144,7 +149,7 @@ export default function CrashPage() {
                   <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <img
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                         alt="KAS"
                         width={20}
                         height={20}
@@ -184,6 +189,7 @@ export default function CrashPage() {
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
+                currentMultiplier={currentMultiplier}  {/* NEW: pass live multiplier to controls */}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
