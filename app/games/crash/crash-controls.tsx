@@ -14,10 +14,10 @@ interface CrashControlsProps {
   isWalletConnected: boolean;
   balance: number;
   onPlaceBet: () => void;
-  onCashout: (manualMultiplier: number) => void;
+  onCashout: (manualMultiplier?: number) => void;
   resetGame: () => void;
   gameOver: boolean;
-  // Instead of a separate crashPoint, we use currentMultiplier.
+  crashPoint: number;
   winAmount: number;
   hideModal?: boolean;
   currentMultiplier: number;
@@ -33,6 +33,7 @@ export function CrashControls({
   onCashout,
   resetGame,
   gameOver,
+  crashPoint,
   winAmount,
   hideModal = false,
   currentMultiplier,
@@ -51,12 +52,14 @@ export function CrashControls({
     onPlaceBet();
   };
 
+  // Use safe defaults.
   const safeCurrentMultiplier = currentMultiplier || 1;
-  const calculatedWin = Number(betAmount) * safeCurrentMultiplier;
+  const safeCrashPoint = crashPoint || 1;
+
   const winMessage =
     winAmount > 0
-      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${calculatedWin.toFixed(2)} KAS!`
-      : `Crashed at ${safeCurrentMultiplier.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
+      ? `Cashed out at ${safeCurrentMultiplier.toFixed(2)}x: You Won ${(Number(betAmount) * safeCurrentMultiplier).toFixed(2)} KAS!`
+      : `Crashed at ${safeCrashPoint.toFixed(2)}x: You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
@@ -144,6 +147,7 @@ export function CrashControls({
           )}
         </motion.div>
 
+        {/* Only render the modal here if hideModal is false */}
         {!hideModal && gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
