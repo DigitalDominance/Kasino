@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from "react";
 
 // --- Configuration Constants ---
 const coeffB = 0.5;
-const coeffA = 2000 * 0.16; // using a base height of 2000
+const coeffA = 2000 * 0.16; // Base height for the curve
 const zoomFactor = 0.5;
 
 // --- Asset Loading ---
@@ -23,6 +23,26 @@ const rocketHeight = 50;
 // --- Curve Function ---
 function curveFunction(t: number) {
   return coeffA * (Math.exp(coeffB * t) - 1);
+}
+
+// --- Custom Crash Multiplier Generator ---
+// Returns a crash multiplier between min=1.01 and max=100 according to:
+// • 40% chance: [1.01, 1.5)
+// • 40% chance: [1.5, 2)
+// • 10% chance: [2, 3)
+// • 10% chance: [3, 100] (exponentially distributed)
+function generateCrashMultiplier(): number {
+  const r = Math.random();
+  if (r < 0.40) {
+    return 1.01 + (1.5 - 1.01) * (r / 0.40);
+  } else if (r < 0.80) {
+    return 1.5 + (2 - 1.5) * ((r - 0.40) / 0.40);
+  } else if (r < 0.90) {
+    return 2 + (3 - 2) * ((r - 0.80) / 0.10);
+  } else {
+    const t = (r - 0.90) / 0.10; // t in [0,1]
+    return 3 * Math.pow(100 / 3, t);
+  }
 }
 
 // --- CrashGame Types ---
@@ -64,11 +84,11 @@ export function CrashGame({
   useEffect(() => {
     if (!isPlaying) return;
     setGameStatus("Running");
-    // Generate a random crash point (ensuring at least 1.01x).
-    const crash = Math.max(1, 1 / (1 - Math.random() * 0.95));
+    const crash = generateCrashMultiplier();
+    console.log("Crash Multiplier:", crash.toFixed(2));
     const start = performance.now();
-    // Use a growth rate of 0.0003 (adjust if needed).
-    const growthRate = 0.0003;
+    // Growth rate controls how fast the multiplier increases.
+    const growthRate = 0.0003; 
     const animate = (time: number) => {
       const elapsed = time - start;
       setTimeElapsed(elapsed);
@@ -76,7 +96,7 @@ export function CrashGame({
       setMultiplier(newMultiplier);
       if (onMultiplierChange) onMultiplierChange(newMultiplier);
       console.log("Multiplier:", newMultiplier.toFixed(2), "Elapsed:", elapsed);
-      // End game (crash) if multiplier reaches crash point.
+      // End game if multiplier reaches crash.
       if (newMultiplier >= crash) {
         setGameStatus("Crashed");
         onGameEnd(crash, 0);
@@ -102,7 +122,7 @@ export function CrashGame({
     const height = canvas.clientHeight;
     ctx.clearRect(0, 0, width, height);
 
-    // If game not started, show placeholder.
+    // If game not started, show placeholder message.
     if (!isPlaying && gameStatus === "Waiting") {
       ctx.fillStyle = "white";
       ctx.font = "30px Arial";
@@ -143,7 +163,6 @@ export function CrashGame({
 
     ctx.save();
     if (gameStatus === "Crashed") {
-      // Draw explosion image centered at (x, y).
       ctx.translate(x, y);
       ctx.drawImage(
         explodeImage,
@@ -154,7 +173,6 @@ export function CrashGame({
       );
       ctx.translate(-x, -y);
     } else {
-      // Draw rocket so its tip (right edge) aligns with (x, y).
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.drawImage(
