@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -13,6 +12,8 @@ interface CrashControlsProps {
   setBetAmount: (amount: string) => void;
   autoCashout: string;
   setAutoCashout: (amount: string) => void;
+  autoCashoutEnabled: boolean;
+  setAutoCashoutEnabled: (enabled: boolean) => void;
   isPlaying: boolean;
   isWalletConnected: boolean;
   balance: number;
@@ -30,6 +31,8 @@ export function CrashControls({
   setBetAmount,
   autoCashout,
   setAutoCashout,
+  autoCashoutEnabled,
+  setAutoCashoutEnabled,
   isPlaying,
   isWalletConnected,
   balance,
@@ -42,7 +45,6 @@ export function CrashControls({
   hideModal = false,
 }: CrashControlsProps) {
   const { isConnected } = useWallet();
-  const [hasAutoCashout, setHasAutoCashout] = useState(false);
 
   const handlePlaceBet = () => {
     if (!isConnected) {
@@ -56,14 +58,13 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Determine the win/loss message.
   const winMessage =
     winAmount > 0
       ? `You Won ${winAmount.toFixed(2)} KAS!`
       : `You Lost ${Number(betAmount).toFixed(2)} KAS!`;
 
   return (
-    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4">
+    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4 relative">
       <div className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm text-[#49EACB]">Bet Amount</label>
@@ -74,11 +75,11 @@ export function CrashControls({
               onChange={(e) => setBetAmount(e.target.value)}
               className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
               placeholder="0.00"
-              disabled={!isConnected || isPlaying}
+              disabled={!isWalletConnected || isPlaying}
             />
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                 alt="KAS"
                 width={16}
                 height={16}
@@ -91,7 +92,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
-              disabled={!isConnected || isPlaying}
+              disabled={!isWalletConnected || isPlaying}
             >
               ½
             </Button>
@@ -99,7 +100,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
-              disabled={!isConnected || isPlaying}
+              disabled={!isWalletConnected || isPlaying}
             >
               2×
             </Button>
@@ -107,7 +108,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount("0.00")}
-              disabled={!isConnected || isPlaying}
+              disabled={!isWalletConnected || isPlaying}
             >
               Min
             </Button>
@@ -115,7 +116,7 @@ export function CrashControls({
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
               onClick={() => setBetAmount(balance.toString())}
-              disabled={!isConnected || isPlaying}
+              disabled={!isWalletConnected || isPlaying}
             >
               Max
             </Button>
@@ -129,10 +130,10 @@ export function CrashControls({
               variant="ghost"
               size="sm"
               className="text-[#49EACB] hover:text-[#49EACB]/80 hover:bg-[#49EACB]/10"
-              onClick={() => setHasAutoCashout(!hasAutoCashout)}
-              disabled={!isConnected || isPlaying}
+              onClick={() => setAutoCashoutEnabled(!autoCashoutEnabled)}
+              disabled={!isWalletConnected || isPlaying}
             >
-              {hasAutoCashout ? "Disable" : "Enable"}
+              {autoCashoutEnabled ? "Disable" : "Enable"}
             </Button>
           </div>
           <Input
@@ -141,7 +142,7 @@ export function CrashControls({
             onChange={(e) => setAutoCashout(e.target.value)}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
             placeholder="e.g., 2.00"
-            disabled={!hasAutoCashout || isPlaying}
+            disabled={!autoCashoutEnabled || isPlaying}
           />
         </div>
 
@@ -157,9 +158,9 @@ export function CrashControls({
             <Button
               className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
               onClick={handlePlaceBet}
-              disabled={!isConnected}
+              disabled={!isWalletConnected}
             >
-              {!isConnected ? "Connect Wallet to Play" : "Place Bet"}
+              {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet"}
             </Button>
           ) : (
             <Button
@@ -181,7 +182,7 @@ export function CrashControls({
             <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
               <div className="flex items-center space-x-2">
                 <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                   alt="KAS"
                   width={20}
                   height={20}
