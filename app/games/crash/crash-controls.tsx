@@ -55,8 +55,6 @@ export function CrashControls({
   // Use safe defaults.
   const safeCurrentMultiplier = currentMultiplier || 1;
   const safeCrashPoint = crashPoint || 1;
-
-  // Calculate win amount as betAmount * currentMultiplier.
   const calculatedWin = Number(betAmount) * safeCurrentMultiplier;
   const winMessage =
     winAmount > 0
@@ -149,7 +147,6 @@ export function CrashControls({
           )}
         </motion.div>
 
-        {/* Render popup modal if game is over and hideModal is false */}
         {!hideModal && gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
