@@ -26,6 +26,8 @@ export default function CrashPage() {
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [gameKey, setGameKey] = useState(0);
+  // New state to hold the current multiplier from CrashGame.
+  const [currentMultiplier, setCurrentMultiplier] = useState(1);
 
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
@@ -33,7 +35,6 @@ export default function CrashPage() {
       alert("Invalid bet amount");
       return;
     }
-    // Hide the How-to-Play overlay and any previous game.
     setShowHowToPlay(false);
     setModalVisible(false);
     setGameOver(false);
@@ -43,12 +44,23 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  const handleCashout = () => {
+  // Modified handleCashout now accepts an optional manual multiplier.
+  const handleCashout = (manualMultiplier?: number) => {
     if (isPlaying) {
-      const multiplier = Number(autoCashout) || 1;
-      const amount = Number(betAmount) * multiplier;
+      // Use the passed multiplier if provided (manual cashout),
+      // Otherwise if auto cashout is enabled, use that value,
+      // Else fall back to the current multiplier.
+      let multiplierToUse: number;
+      if (manualMultiplier !== undefined) {
+        multiplierToUse = manualMultiplier;
+      } else if (autoCashoutEnabled) {
+        multiplierToUse = Number(autoCashout) || 1;
+      } else {
+        multiplierToUse = currentMultiplier;
+      }
+      const amount = Number(betAmount) * multiplierToUse;
       setWinAmount(amount);
-      setCrashPoint(multiplier);
+      setCrashPoint(multiplierToUse);
       setIsPlaying(false);
       setGameOver(true);
       setModalVisible(true);
@@ -81,12 +93,11 @@ export default function CrashPage() {
     setCrashPoint(null);
     setWinAmount(0);
     setModalVisible(false);
-    // Optionally, also disable auto cashout when resetting.
     setAutoCashoutEnabled(false);
   };
 
   const hideModal = () => {
-    // When clicking Close in the win/loss popup, reset the game.
+    // When closing the win/loss popup, reset the game.
     resetGame();
   };
 
@@ -105,7 +116,7 @@ export default function CrashPage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container – relative for modal positioning */}
+            {/* Game Container */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
@@ -122,6 +133,7 @@ export default function CrashPage() {
                   </button>
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
+                  {/* Pass gameKey to force remount on reset, and onMultiplierChange to update currentMultiplier */}
                   <CrashGame
                     key={gameKey}
                     isPlaying={isPlaying}
@@ -130,6 +142,7 @@ export default function CrashPage() {
                     onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
                     onManualCashout={handleCashout}
+                    onMultiplierChange={setCurrentMultiplier}
                   />
                 </div>
               </div>
@@ -144,7 +157,7 @@ export default function CrashPage() {
                   <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <img
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                         alt="KAS"
                         width={20}
                         height={20}
@@ -180,12 +193,13 @@ export default function CrashPage() {
                 isWalletConnected={isConnected}
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
-                onCashout={handleCashout}
-                resetGame={hideModal} // This prop is not used for resetting here.
+                onCashout={(manualMultiplier) => handleCashout(manualMultiplier)}
+                resetGame={hideModal} // Not used to reset the game here.
                 gameOver={gameOver}
                 crashPoint={crashPoint ?? 0}
                 winAmount={winAmount}
                 hideModal={true}
+                currentMultiplier={currentMultiplier}
               />
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
@@ -195,7 +209,7 @@ export default function CrashPage() {
       </div>
       <SiteFooter />
 
-      {/* Full-page How-to-Play Modal – only rendered when no game is active */}
+      {/* Full-page How-to-Play Modal – rendered only when no game is active */}
       {showHowToPlay && !isPlaying && !gameOver && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
