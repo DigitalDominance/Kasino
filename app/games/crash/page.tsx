@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
@@ -26,15 +26,6 @@ export default function CrashPage() {
   const [gameKey, setGameKey] = useState(0); // Used to force remount of CrashGame
   const [currentMultiplier, setCurrentMultiplier] = useState(1);
 
-  // Use a ref to always have the latest multiplier value.
-  const multiplierRef = useRef(1);
-
-  // Update both state and ref when the multiplier changes.
-  const handleMultiplierChange = (multiplier: number) => {
-    setCurrentMultiplier(multiplier);
-    multiplierRef.current = multiplier;
-  };
-
   const handlePlaceBet = () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
@@ -50,10 +41,10 @@ export default function CrashPage() {
     console.log("Bet placed, starting game");
   };
 
-  // Cash out uses the most up-to-date multiplier from the ref.
+  // Cash out now always uses the live multiplier from the game.
   const handleCashout = () => {
     if (isPlaying) {
-      const m = multiplierRef.current;
+      const m = currentMultiplier;
       const amount = Number(betAmount) * m;
       setWinAmount(amount);
       setCrashPoint(m);
@@ -133,7 +124,7 @@ export default function CrashPage() {
                     onGameEnd={handleGameEnd}
                     onCashoutSuccess={handleCashoutSuccess}
                     onManualCashout={handleCashout}
-                    onMultiplierChange={handleMultiplierChange}
+                    onMultiplierChange={setCurrentMultiplier}
                   />
                 </div>
               </div>
