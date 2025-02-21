@@ -52,7 +52,6 @@ export function CrashControls({
     onPlaceBet();
   };
 
-  // Use safe defaults.
   const safeCurrentMultiplier = currentMultiplier || 1;
   const safeCrashPoint = crashPoint || 1;
   const calculatedWin = Number(betAmount) * safeCurrentMultiplier;
