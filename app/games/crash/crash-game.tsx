@@ -36,7 +36,7 @@ export function CrashGame({
       console.log("Crash point:", crashPointRef.current);
     }
     const start = performance.now();
-    const growthRate = 0.005; // Multiplier grows as exp(0.5 * seconds)
+    const growthRate = 0.01; // Multiplier grows as exp(0.5 * seconds)
 
     const animate = (time: number) => {
       const elapsed = time - start; // elapsed in ms
