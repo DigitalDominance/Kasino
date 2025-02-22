@@ -11,15 +11,9 @@ import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
-import { Montserrat } from "next/font/google" // Import the Montserrat font
 
 // Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
-
-const montserrat = Montserrat({
-  weight: "700",
-  subsets: ["latin"],
-})
 
 const MotionCard = motion(Card)
 const MotionButton = motion(Button)
@@ -99,26 +93,10 @@ export default function Page() {
   }, [])
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black`}>
-      {/* Global Styles: Gradient, glow, and hover effects */}
+    <div className="min-h-screen bg-black">
+      {/* Global Styles: Google Font (if desired), Gradient, glow, and hover effects */}
       <style jsx global>{`
-        @keyframes glow {
-          0% {
-            box-shadow: 0 0 5px rgba(73, 234, 203, 0.3),
-              0 0 10px rgba(73, 234, 203, 0.3),
-              0 0 15px rgba(73, 234, 203, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 10px rgba(73, 234, 203, 0.5),
-              0 0 20px rgba(73, 234, 203, 0.5),
-              0 0 30px rgba(73, 234, 203, 0.5);
-          }
-          100% {
-            box-shadow: 0 0 5px rgba(73, 234, 203, 0.3),
-              0 0 10px rgba(73, 234, 203, 0.3),
-              0 0 15px rgba(73, 234, 203, 0.3);
-          }
-        }
+        /* Animated gradient with a larger contrast: from #49EACB to #006D5B */
         @keyframes gradientAnimation {
           0% {
             background-position: 0% 50%;
@@ -131,17 +109,18 @@ export default function Page() {
           }
         }
         .animate-gradient {
-          background: linear-gradient(270deg, #49eacb, #2a7b68);
+          background: linear-gradient(270deg, #49EACB, #006D5B);
           background-size: 200% 200%;
           animation: gradientAnimation 5s ease infinite;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
+        /* Sleek glow on hover */
         .hover-effect:hover {
-          transform: scale(1.1) rotate(3deg);
-          filter: drop-shadow(0 0 10px #49eacb);
+          filter: drop-shadow(0 0 8px #49EACB);
         }
       `}</style>
+
       <LoadingAnimation />
       <AnimatePresence mode="wait">
         {!isLoading && (
@@ -176,8 +155,8 @@ export default function Page() {
                   )}
                 </MotionButton>
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden hover:animate-[glow_2s_infinite]"
+                  whileHover={{ filter: "drop-shadow(0 0 8px #49EACB)" }}
+                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden"
                   style={{
                     transition: "box-shadow 0.3s ease-in-out",
                   }}
@@ -290,9 +269,11 @@ export default function Page() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient hover-effect transition-all duration-500">
-                    <GiCheerful className="inline-block mr-2" style={{ fill: "currentColor" }} />
-                    <span>Original Games</span>
+                  <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="animate-gradient inline-block mr-2">
+                      <GiCheerful />
+                    </span>
+                    <span className="animate-gradient">Original Games</span>
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
@@ -353,9 +334,11 @@ export default function Page() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient hover-effect transition-all duration-500">
-                    <GiStarFormation className="inline-block mr-2" style={{ fill: "currentColor" }} />
-                    <span>Live Wins</span>
+                  <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="animate-gradient inline-block mr-2">
+                      <GiStarFormation />
+                    </span>
+                    <span className="animate-gradient">Live Wins</span>
                   </h2>
                   <ScrollArea>
                     <motion.div
