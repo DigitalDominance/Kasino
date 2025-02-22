@@ -26,6 +26,17 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   // Pull wallet state. We assume that once connected, the wallet provides a username.
   const { isConnected, username } = useWallet();
 
+  // Simple filter function for abusive words.
+  function filterMessage(message: string): string {
+    const bannedWords = ["badword", "abuse", "curse"]; // Add more banned words as needed.
+    let sanitized = message;
+    bannedWords.forEach((word) => {
+      const regex = new RegExp(word, "gi");
+      sanitized = sanitized.replace(regex, "*****");
+    });
+    return sanitized;
+  }
+
   useEffect(() => {
     // Connect to your Socket.IO server (update with your Heroku URL)
     socketRef.current = io("https://kasino-backend-4818b4b69870.herokuapp.com");
@@ -46,13 +57,16 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     if (newMessage.trim() === "") return;
     if (!isConnected || !username) return; // Should never happen since input is disabled
 
+    // Enforce filtering before sending.
+    const sanitizedMessage = filterMessage(newMessage);
+
     const userMessage: ChatMessage = {
       username,
-      message: newMessage,
+      message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
 
-    // Emit the message to the server.
+    // Emit the sanitized message to the server.
     socketRef.current?.emit("chat message", userMessage);
 
     setNewMessage("");
@@ -83,7 +97,9 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
           <Input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) =>
+              setNewMessage(e.target.value.slice(0, 100)) // Enforce a max of 100 characters.
+            }
             placeholder={isConnected ? "Type your message..." : "Connect wallet to chat"}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white flex-grow"
             disabled={!isConnected}
