@@ -94,9 +94,9 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Global Styles: Google Font (if desired), Gradient, glow, and hover effects */}
+      {/* Global Styles: Gradient, glow, nav hover, and icon coloring */}
       <style jsx global>{`
-        /* Animated gradient with a larger contrast: from #49EACB to #006D5B */
+        /* Animated gradient for headings: from #49EACB to a contrasting #006D5B */
         @keyframes gradientAnimation {
           0% {
             background-position: 0% 50%;
@@ -115,9 +115,21 @@ export default function Page() {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        /* Sleek glow on hover */
+        /* Hover effect for headings */
         .hover-effect:hover {
           filter: drop-shadow(0 0 8px #49EACB);
+        }
+        /* Navigation image hover effect */
+        .nav-hover {
+          transition: filter 0.3s ease;
+        }
+        .nav-hover:hover {
+          filter: drop-shadow(0 0 8px #49EACB);
+        }
+        /* Icon primary: force icons to use primary green */
+        .icon-primary {
+          color: #49EACB;
+          fill: #49EACB;
         }
       `}</style>
 
@@ -155,11 +167,8 @@ export default function Page() {
                   )}
                 </MotionButton>
                 <motion.div
-                  whileHover={{ filter: "drop-shadow(0 0 8px #49EACB)" }}
-                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden"
-                  style={{
-                    transition: "box-shadow 0.3s ease-in-out",
-                  }}
+                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
+                  style={{ transition: "box-shadow 0.3s ease-in-out" }}
                 >
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
@@ -270,7 +279,7 @@ export default function Page() {
                   className="mb-12"
                 >
                   <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="animate-gradient inline-block mr-2">
+                    <span className="icon-primary inline-block mr-2">
                       <GiCheerful />
                     </span>
                     <span className="animate-gradient">Original Games</span>
@@ -335,7 +344,7 @@ export default function Page() {
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
                   <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="animate-gradient inline-block mr-2">
+                    <span className="icon-primary inline-block mr-2">
                       <GiStarFormation />
                     </span>
                     <span className="animate-gradient">Live Wins</span>
