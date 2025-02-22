@@ -64,7 +64,7 @@ export function RouletteControls({
   ];
 
   return (
-    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
+    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 rounded-lg">
       <div className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm text-[#49EACB]">Bet Amount</label>
@@ -125,7 +125,7 @@ export function RouletteControls({
               onClick={handleSpinRoulette}
               disabled={!isWalletConnected || !selectedBet}
             >
-              {!isWalletConnected ? "Connect Wallet to Play" : "Spin Roulette"}
+              {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet to Start"}
             </Button>
           ) : (
             <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
