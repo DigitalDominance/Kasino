@@ -28,11 +28,14 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Banner images (originally 1920x500)
+  // New mainBanners array using your public folder images
   const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
   ]
+
+  // Original banner data is no longer used.
+  // const banners = [ ... ]
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -40,24 +43,6 @@ export default function Page() {
     { name: "Roulette", players: 765, slug: "roulette" },
     { name: "Dice", players: 543, slug: "dice" },
     { name: "Coin Flip", players: 321, slug: "coinflip" },
-  ]
-
-  // Live Wins examples using your card images
-  const liveWins = [
-    {
-      game: "Roulette",
-      image: "/roulettecard.PNG",
-      player: "Player123",
-      amount: "1,234.56",
-      time: "2 minutes ago",
-    },
-    {
-      game: "Crash",
-      image: "/crashcard.PNG",
-      player: "Player456",
-      amount: "987.65",
-      time: "3 minutes ago",
-    },
   ]
 
   const nextBanner = () =>
@@ -68,7 +53,8 @@ export default function Page() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 3000)
+    }, 3000) // 3-second delay for fadeout animation
+
     return () => clearTimeout(timer)
   }, [])
 
@@ -153,6 +139,7 @@ export default function Page() {
                         className="w-full bg-[#49EACB]/5 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#49EACB]/30 border border-[#49EACB]/10 transition-all duration-300"
                       />
                     </div>
+
                     <div className="mt-4 space-y-2">
                       <Link
                         href="#"
@@ -178,162 +165,154 @@ export default function Page() {
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
                 {/* Banner Carousel */}
-                <div className="mx-auto max-w-screen-xl w-full px-4">
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative mb-12 h-[300px]"
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="relative mb-12 h-[300px]"
+                >
+                  <div className="relative w-full h-full overflow-hidden rounded-lg">
+                    {mainBanners.map((banner, index) => (
+                      <motion.div
+                        key={index}
+                        className="absolute inset-0"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: index === currentBanner ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <Image
+                          src={banner}
+                          alt="Main Banner"
+                          layout="fill"
+                          objectFit="cover"
+                          className="object-cover"
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={prevBanner}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
                   >
-                    <div className="relative w-full h-full overflow-hidden rounded-lg">
-                      {mainBanners.map((banner, index) => (
-                        <motion.div
-                          key={index}
-                          className="absolute inset-0"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: index === currentBanner ? 1 : 0 }}
-                          transition={{ duration: 0.5 }}
-                        >
-                          <Image
-                            src={banner}
-                            alt="Main Banner"
-                            layout="fill"
-                            objectFit="contain"
-                            className="object-contain"
-                          />
-                        </motion.div>
-                      ))}
-                      {/* Left Gradient Overlay */}
-                      <div className="absolute left-0 top-0 h-full w-[200px] pointer-events-none bg-gradient-to-r from-black/70 via-[#49EACB]/60 to-transparent" />
-                      {/* Right Gradient Overlay */}
-                      <div className="absolute right-0 top-0 h-full w-[200px] pointer-events-none bg-gradient-to-l from-black/70 via-[#49EACB]/60 to-transparent" />
-                    </div>
-                    <button
-                      onClick={prevBanner}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                    >
-                      <ChevronLeft />
-                    </button>
-                    <button
-                      onClick={nextBanner}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                    >
-                      <ChevronRight />
-                    </button>
-                  </motion.div>
-                </div>
+                    <ChevronLeft />
+                  </button>
+                  <button
+                    onClick={nextBanner}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronRight />
+                  </button>
+                </motion.div>
 
                 {/* Original Games */}
-                <div className="mx-auto max-w-screen-xl w-full px-4">
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                    className="mb-12"
-                  >
-                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {games.map((game, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
-                        >
-                          <Link href={`/games/${game.slug}`} key={i}>
-                            <MotionCard
-                              className="group relative overflow-hidden border border-[#49EACB]/10 bg-transparent"
-                              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <div className="relative aspect-[3/2]">
-                                <Image
-                                  src={
-                                    game.slug === "crash"
-                                      ? "/crashcard.PNG"
-                                      : game.slug === "roulette"
-                                      ? "/roulettecard.PNG"
-                                      : "/placeholder.svg"
-                                  }
-                                  alt={`${game.name} thumbnail`}
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="transition-transform duration-300 group-hover:scale-110"
-                                />
-                              </div>
-                              <div className="p-4">
-                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                  {game.name}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  {game.players.toLocaleString()} Players
-                                </p>
-                              </div>
-                            </MotionCard>
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Live Wins */}
-                <div className="mx-auto max-w-screen-xl w-full px-4">
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-                  >
-                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
-                    <ScrollArea>
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+                  className="mb-12"
+                >
+                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {games.map((game, i) => (
                       <motion.div
-                        className="flex gap-4 pb-4"
-                        initial={{ x: -20 }}
-                        animate={{ x: 0 }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                       >
-                        {liveWins.map((win, i) => (
+                        <Link href={`/games/${game.slug}`} key={i}>
                           <MotionCard
-                            key={i}
-                            className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-transparent overflow-hidden"
-                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                            className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
+                            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
+                            transition={{ duration: 0.3 }}
                           >
-                            <div className="relative aspect-[3/2]">
+                            <div className="relative aspect-[4/3]">
                               <Image
-                                src={win.image}
-                                alt={`${win.game} card`}
+                                src={
+                                  game.slug === "crash"
+                                    ? "/crashcard.PNG"
+                                    : game.slug === "roulette"
+                                    ? "/roulettecard.PNG"
+                                    : "/placeholder.svg"
+                                }
+                                alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="object-cover"
+                                className="transition-transform duration-300 group-hover:scale-110"
                               />
-                              <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
-                                LIVE
+                              <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                <MotionButton
+                                  className="mx-4 mb-2 bg-[#49EACB] text-black font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                  whileHover={{ scale: 1.02 }}
+                                >
+                                  Play Now
+                                </MotionButton>
                               </div>
                             </div>
                             <div className="p-4">
-                              <div className="font-semibold mb-2">{win.player}</div>
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="text-sm text-[#49EACB]">{win.game} Game</div>
-                                <div className="flex items-center gap-1.5">
-                                  <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                    alt="KAS"
-                                    width={16}
-                                    height={16}
-                                    className="rounded-full"
-                                  />
-                                  <span className="text-[#49EACB] font-bold">{win.amount}</span>
-                                </div>
-                              </div>
-                              <div className="text-sm text-gray-400">{win.time}</div>
+                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                {game.name}
+                              </h3>
+                              <p className="text-sm text-gray-400">
+                                {game.players.toLocaleString()} Players
+                              </p>
                             </div>
                           </MotionCard>
-                        ))}
+                        </Link>
                       </motion.div>
-                      <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
-                    </ScrollArea>
-                  </motion.div>
-                </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Live Wins */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
+                >
+                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
+                  <ScrollArea>
+                    <motion.div
+                      className="flex gap-4 pb-4"
+                      initial={{ x: -20 }}
+                      animate={{ x: 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    >
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <MotionCard
+                          key={i}
+                          className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
+                          whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                        >
+                          <div className="relative aspect-video">
+                            <Image src="/placeholder.svg" alt="Game thumbnail" layout="fill" objectFit="cover" />
+                            <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
+                              LIVE
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <div className="font-semibold mb-2">Player123</div>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-sm text-[#49EACB]">Crash Game</div>
+                              <div className="flex items-center gap-1.5">
+                                <Image
+                                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                  alt="KAS"
+                                  width={16}
+                                  height={16}
+                                  className="rounded-full"
+                                />
+                                <span className="text-[#49EACB] font-bold">1,234.56</span>
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-400">2 minutes ago</div>
+                          </div>
+                        </MotionCard>
+                      ))}
+                    </motion.div>
+                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                  </ScrollArea>
+                </motion.div>
               </main>
             </div>
 
