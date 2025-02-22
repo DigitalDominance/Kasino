@@ -61,7 +61,6 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
   const determineWinningNumber = (): number => {
     const r = Math.random();
     if (r < 0.6 && selectedBet) {
-      // Force a loss on common bets.
       if (selectedBet.type === "red" || selectedBet.type === "black") {
         const opp = ROULETTE_NUMBERS.filter((n) => n.color !== selectedBet.type && n.num !== 0);
         return opp[Math.floor(Math.random() * opp.length)].num;
@@ -91,7 +90,6 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
         return randomNum;
       }
     }
-    // Otherwise, favor a win (40% chance) or pick a random number.
     if (selectedBet) {
       if (selectedBet.type === "red" || selectedBet.type === "black") {
         const same = ROULETTE_NUMBERS.filter((n) => n.color === selectedBet.type);
@@ -154,23 +152,25 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Ensure the canvas is a square to avoid stretching.
+    // Keep the canvas square.
     const dpr = window.devicePixelRatio || 1;
-    const size = canvas.clientWidth; // Assumes container gives a fixed width.
+    const size = canvas.clientWidth;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
-    // Animation settings.
+    // Use exactly three rotations.
     const spinDuration = 6000; // ms
-    const totalRotations = 8; // full rotations before slowing
+    const rotations = 3;
+    const segmentAngle = 360 / ROULETTE_NUMBERS.length;
 
     // Determine winning number and its index.
     const winningNumber = determineWinningNumber();
     const winningIndex = ROULETTE_NUMBERS.findIndex((n) => n.num === winningNumber);
-    const segmentAngle = 360 / ROULETTE_NUMBERS.length;
-    // Compute target rotation so the winning segment (centered) lands at the top.
-    const targetRotation = totalRotations * 360 + (winningIndex + 0.5) * segmentAngle;
+    // We want the center of the winning segment to align with the pointer.
+    // Assume pointer should be at 90° (top center).
+    const pointerAngle = 90;
+    const targetRotation = rotations * 360 + (pointerAngle - (winningIndex + 0.5) * segmentAngle);
 
     const startTime = performance.now();
     setSpinning(true);
@@ -201,10 +201,12 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     const radius = size / 2;
     const center = { x: radius, y: radius };
 
-    // Draw each segment.
+    // Draw each segment with a marker.
     ROULETTE_NUMBERS.forEach((segment, i) => {
       const startAngle = ((i * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
       const endAngle = (((i + 1) * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
+      
+      // Draw segment
       ctx.beginPath();
       ctx.moveTo(center.x, center.y);
       ctx.arc(center.x, center.y, radius, startAngle, endAngle);
@@ -221,9 +223,9 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Draw number text.
+      // Draw the number text.
       const textAngle = (startAngle + endAngle) / 2;
-      const textRadius = radius * 0.7;
+      const textRadius = radius * 0.65;
       const textX = center.x + textRadius * Math.cos(textAngle);
       const textY = center.y + textRadius * Math.sin(textAngle);
       ctx.fillStyle = "#fff";
@@ -231,9 +233,19 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(segment.num.toString(), textX, textY);
+
+      // Draw a marker (small circle) along the outer edge.
+      const markerRadius = radius * 0.9;
+      const markerX = center.x + markerRadius * Math.cos(textAngle);
+      const markerY = center.y + markerRadius * Math.sin(textAngle);
+      ctx.beginPath();
+      ctx.arc(markerX, markerY, 4, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fillStyle = "#49EACB";
+      ctx.fill();
     });
 
-    // Draw a themed pointer (triangle) at the top center.
+    // Draw the fixed pointer at the top.
     ctx.fillStyle = "#49EACB";
     ctx.beginPath();
     ctx.moveTo(center.x - 12, 20);
