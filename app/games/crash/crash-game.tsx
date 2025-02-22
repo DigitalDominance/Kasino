@@ -26,11 +26,11 @@ export function CrashGame({
   const [hasCrashed, setHasCrashed] = useState(false);
   const requestRef = useRef<number>();
 
-  // Create refs for the images, initializing them as null.
+  // Refs for the images.
   const rocketImg = useRef<HTMLImageElement | null>(null);
   const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load the images from the public folder in a client-side effect.
+  // Load images only in the browser.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const rocket = new Image();
@@ -43,22 +43,38 @@ export function CrashGame({
     }
   }, []);
 
-  // Use a ref for the crash point so it’s computed only once per round.
+  // Use a ref so the crash point is computed only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isPlaying) return;
 
-    // Reset the crash state when a new round starts.
     setHasCrashed(false);
 
-    // Generate the crash point only once per round.
+    // Generate the crash point based on custom odds.
     if (crashPointRef.current === null) {
-      crashPointRef.current = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
+      const r = Math.random();
+      let crashPoint;
+      if (r < 0.5) {
+        // 50% chance: Uniform between 1 and 1.5.
+        crashPoint = 1 + Math.random() * 0.5;
+      } else if (r < 0.6) {
+        // 10% chance: Uniform between 1.5 and 2.
+        crashPoint = 1.5 + Math.random() * 0.5;
+      } else if (r < 0.8) {
+        // 20% chance: Uniform between 2 and 3.
+        crashPoint = 2 + Math.random();
+      } else {
+        // Remaining 20%: Exponential between 3 and 100 (log-uniform).
+        const expR = Math.random();
+        crashPoint = 3 * Math.exp(expR * Math.log(100 / 3));
+      }
+      crashPointRef.current = crashPoint;
       console.log("Crash point:", crashPointRef.current);
     }
+
     const start = performance.now();
-    const growthRate = 0.5; // Adjust growth rate as needed.
+    const growthRate = 0.5; // Adjust as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -68,11 +84,10 @@ export function CrashGame({
       console.log("Multiplier:", currentMultiplier.toFixed(2), "Elapsed:", elapsed);
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
-        // Set multiplier to the crash point and trigger explosion.
         setMultiplier(crashPoint);
         setHasCrashed(true);
         onGameEnd(crashPoint, 0);
-        return; // Stop the animation loop.
+        return;
       }
       requestRef.current = requestAnimationFrame(animate);
     };
@@ -85,7 +100,13 @@ export function CrashGame({
   }, [isPlaying]);
 
   // Cubic Bézier helper.
-  const cubicBezier = (P0: any, P1: any, P2: any, P3: any, t: number) => {
+  const cubicBezier = (
+    P0: { x: number; y: number },
+    P1: { x: number; y: number },
+    P2: { x: number; y: number },
+    P3: { x: number; y: number },
+    t: number
+  ) => {
     const mt = 1 - t;
     const x =
       mt * mt * mt * P0.x +
@@ -100,40 +121,41 @@ export function CrashGame({
     return { x, y };
   };
 
-  // This effect handles drawing the game on the canvas.
+  // Draw the game on the canvas.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Adjust for device pixel ratio.
+    // Handle device pixel ratio.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.clientWidth * dpr;
     canvas.height = canvas.clientHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear the canvas (transparent background).
+    // Clear canvas (transparent background).
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-    // Set margin and dimensions.
     const margin = 20;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Define cubic Bézier curve points for an upward path:
-    // Start at bottom center, end at top center.
-    const P0 = { x: width / 2, y: height - margin };
-    const P3 = { x: width / 2, y: margin };
-    // Control points offset to the right to create a smooth, upward curve.
-    const P1 = { x: width / 2 + 100, y: height - margin - 100 };
-    const P2 = { x: width / 2 + 100, y: margin + 100 };
+    // Define cubic Bézier curve points.
+    // P0: Bottom left of the container.
+    const P0 = { x: margin, y: height - margin };
+    // P3: End point toward the right. Here we choose a point near the right edge, but not fully at the top.
+    const P3 = { x: width - margin, y: height * 0.4 };
+    // P1: A control point above P0 to direct the curve upward.
+    const P1 = { x: margin, y: height * 0.6 };
+    // P2: A control point to bend the curve rightward.
+    const P2 = { x: width * 0.6, y: height * 0.2 };
 
     // Compute progress (t) based on multiplier relative to crash point.
-    const crashPoint = crashPointRef.current || 1.5;
+    const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
 
-    // Draw the partial cubic Bézier curve by sampling points.
+    // Draw the partial cubic Bézier curve.
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
@@ -145,22 +167,22 @@ export function CrashGame({
         ctx.lineTo(x, y);
       }
     }
-    ctx.strokeStyle = "#00FF00"; // Bright green.
+    ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.stroke();
 
-    // Compute the tip point along the curve.
+    // Determine the tip of the curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
-    // Choose the image: rocket while running, explosion when crashed.
+    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
 
-    // Optionally, display the multiplier text at the bottom.
+    // Draw the multiplier text.
     ctx.font = "24px Arial";
     ctx.fillStyle = "white";
     const text = multiplier.toFixed(2) + "x";
