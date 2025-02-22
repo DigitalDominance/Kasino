@@ -28,14 +28,11 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // New mainBanners array using your public folder images
+  // New mainBanners array using your public folder images (1920x500)
   const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
   ]
-
-  // Original banner data is no longer used.
-  // const banners = [ ... ]
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -169,7 +166,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-12 h-[450px]"
+                  className="relative mb-12 h-[300px]"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
                     {mainBanners.map((banner, index) => (
@@ -184,8 +181,8 @@ export default function Page() {
                           src={banner}
                           alt="Main Banner"
                           layout="fill"
-                          objectFit="cover"
-                          className="object-cover"
+                          objectFit="contain"
+                          className="object-contain"
                         />
                       </motion.div>
                     ))}
