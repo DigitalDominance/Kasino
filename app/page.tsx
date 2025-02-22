@@ -30,8 +30,8 @@ export default function Page() {
 
   // Banner images
   const mainBanners = [
-    "/roulettebanner.PNG",
-    "/crashbanner.PNG",
+    "/roulettebanner.webp",
+    "/crashbanner.webp",
   ]
 
   const games = [
@@ -46,42 +46,42 @@ export default function Page() {
   const liveWins = [
     {
       game: "Crash",
-      image: "/crashcard.PNG",
+      image: "/crashcard.webp",
       player: "CrashPlayer1",
       amount: "1,234.56",
       time: "2 minutes ago",
     },
     {
       game: "Crash",
-      image: "/crashcard.PNG",
+      image: "/crashcard.webp",
       player: "CrashPlayer2",
       amount: "2,345.67",
       time: "5 minutes ago",
     },
     {
       game: "Crash",
-      image: "/crashcard.PNG",
+      image: "/crashcard.webp",
       player: "CrashPlayer3",
       amount: "3,456.78",
       time: "10 minutes ago",
     },
     {
       game: "Roulette",
-      image: "/roulettecard.PNG",
+      image: "/roulettecard.webp",
       player: "RoulettePlayer1",
       amount: "987.65",
       time: "3 minutes ago",
     },
     {
       game: "Roulette",
-      image: "/roulettecard.PNG",
+      image: "/roulettecard.webp",
       player: "RoulettePlayer2",
       amount: "1,111.11",
       time: "7 minutes ago",
     },
     {
       game: "Roulette",
-      image: "/roulettecard.PNG",
+      image: "/roulettecard.webp",
       player: "RoulettePlayer3",
       amount: "1,222.22",
       time: "12 minutes ago",
@@ -271,9 +271,9 @@ export default function Page() {
                               <Image
                                 src={
                                   game.slug === "crash"
-                                    ? "/crashcard.PNG"
+                                    ? "/crashcard.webp"
                                     : game.slug === "roulette"
-                                    ? "/roulettecard.PNG"
+                                    ? "/roulettecard.webp"
                                     : "/placeholder.svg"
                                 }
                                 alt={`${game.name} thumbnail`}
