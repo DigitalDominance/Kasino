@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Camera offset ref for positioning.
+  // Camera offset ref for smooth following.
   const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Compute the crash multiplier only once per round.
@@ -56,7 +56,7 @@ export function CrashGame({
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
-      // Using adjusted odds (unchanged):
+      // Using adjusted odds:
       if (r < 0.605) {
         // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
@@ -82,7 +82,7 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Unchanged multiplier growth.
+    const growthRate = 0.5; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -105,7 +105,7 @@ export function CrashGame({
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
     };
-  }, [isPlaying, onGameEnd]);
+  }, [isPlaying]);
 
   // Cubic Bézier helper.
   const cubicBezier = (
@@ -145,79 +145,51 @@ export function CrashGame({
     // Clear the entire canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // --- Draw the multiplier text (background layer) ---
+    // ---
+    // Draw the multiplier text first (as a background layer).
     ctx.save();
     ctx.resetTransform();
-    ctx.font = "48px Arial";
+    ctx.font = "48px Arial"; // Bigger font.
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    // Center the text in the container.
+    // Center the text horizontally; position it at 50% of height.
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
-    // -------------------------------------------------------
+    // ---
 
     // Define the cubic Bézier curve points for the rocket path.
     // The curve starts at the bottom left.
     const margin = 20;
     const P0 = { x: margin, y: height - margin };
-    // P1: Start moving right.
+    // P1: Start by moving right (almost horizontal).
     const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
     // P2: Then begin curving upward.
     const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
     // P3: End toward the top right.
     const P3 = { x: width - margin, y: margin };
 
+    // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+
+    // Determine the rocket tip along the curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
-    // --- Preset Zoom Factors (based on multiplier) ---
-    let zoom = 1;
-    if (multiplier < 1.5) {
-      zoom = 4; // More zoomed in.
-    } else if (multiplier < 2) {
-      zoom = 3;
-    } else if (multiplier < 3) {
-      zoom = 2.5;
-    } else if (multiplier < 5) {
-      zoom = 2;
-    } else if (multiplier < 7.5) {
-      zoom = 1.7;
-    } else if (multiplier < 10) {
-      zoom = 1.4;
-    } else {
-      zoom = 1;
-    }
-    // ----------------------------------------------------
-
     // --- Camera Transform ---
-    // We want the rocket tip to remain visible inside the container.
-    // For horizontal placement:
-    // - If the tip hasn't reached mid‑container, keep it centered.
-    // - Otherwise, fix it near the right edge.
-    let desiredX = width / 2;
-    if (tip.x > width / 2) {
-      desiredX = width - margin - 20;
-    }
-    // For vertical placement, choose a position near the bottom.
-    const desired = { x: desiredX, y: height - margin - 100 };
+    // We want the rocket to appear at a fixed "desired" position.
+    const desired = { x: width / 2, y: height * 0.7 };
+    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
 
-    // Since scaling is applied after translation, we compute the offset so that:
-    // desired = zoom * (tip + offset)  =>  offset = desired/zoom - tip.
-    const targetOffset = {
-      x: desired.x / zoom - tip.x,
-      y: desired.y / zoom - tip.y,
-    };
-
-    // Set the camera offset.
-    cameraOffsetRef.current = targetOffset;
+    // Smoothly interpolate the camera offset.
+    cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
+    cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     const cameraOffset = cameraOffsetRef.current;
-    // ----------------------------------------------------
 
     ctx.save();
+    // Apply the camera translation.
     ctx.translate(cameraOffset.x, cameraOffset.y);
-    ctx.scale(zoom, zoom);
+    // ---
 
     // Draw the partial cubic Bézier curve.
     ctx.beginPath();
@@ -240,7 +212,7 @@ export function CrashGame({
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
-    // ----------------------------------------------------
+    // ---
   }, [multiplier, hasCrashed]);
 
   return (
@@ -251,6 +223,7 @@ export function CrashGame({
         height: "100%",
         borderRadius: "8px",
         backgroundColor: "transparent",
+        // The canvas itself is the container; internal drawing order handles z-index.
       }}
     />
   );
