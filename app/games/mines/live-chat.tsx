@@ -11,11 +11,26 @@ import { useWallet } from "@/contexts/WalletContext";
 interface ChatMessage {
   username: string;
   message: string;
-  timestamp: string; // Using ISO string format
+  timestamp: string;
 }
 
 interface LiveChatProps {
   textColor?: string;
+}
+
+// Helper to escape regex special characters.
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Generate a regex that matches the banned word even if there are spaces between its letters.
+function createBannedRegex(word: string): RegExp {
+  // Escape the word first.
+  const escaped = escapeRegExp(word);
+  // Insert \s* between each character.
+  const pattern = escaped.split("").join("\\s*");
+  // Use word boundaries.
+  return new RegExp(`\\b${pattern}\\b`, "i");
 }
 
 export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
@@ -24,7 +39,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const socketRef = useRef<Socket | null>(null);
   const { isConnected, username } = useWallet();
 
-  // Comprehensive banned words list (and phrases), including common obfuscations.
+  // Comprehensive banned words list with phrases and additional variations.
   const bannedWords = [
     "anal", "anus", "arse", "ass", "asshole", "ballsack", "balls", "bastard", "bitch", "biatch", "bloody",
     "blowjob", "blow job", "bollock", "bollok", "boner", "boob", "bugger", "bum", "butt", "buttplug",
@@ -34,7 +49,6 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     "lmfao", "muff", "nigger", "nigga", "omg", "penis", "piss", "poop", "prick", "pube", "pussy",
     "queer", "scrotum", "sex", "shit", "s hit", "sh1t", "slut", "smegma", "spunk", "tit", "tosser",
     "turd", "twat", "vagina", "wank", "whore", "wtf",
-    // Additional variations and phrases:
     "f*ck", "sh*t", "d!ck", "b!tch", "a$$", "c*nt", "n!gger", "n!gga", "screw", "fuk",
     "asswipe", "bampot", "bawbag", "bellend", "berserk", "bint", "bollocks", "chancer",
     "choad", "crikey", "cuck", "dago", "dagoes", "dickhead", "dipshit", "donkeyribber",
@@ -42,28 +56,16 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     "honeybunch", "junglebungle", "kike", "minger", "muffdiver", "numpty", "paki",
     "plonker", "prat", "puto", "randy", "scrote", "shite", "slag", "spastic", "sod", "tosspot",
     "twatwaffle", "wazzock",
-    // Extra phrases/words
     "cum", "porn", "no links allowed"
   ];
 
-  // Regex to detect URLs (simple version)
-  const urlRegex = /(https?:\/\/[^\s]+)/gi;
+  // Build an array of regexes from the banned words.
+  const bannedRegexes = bannedWords.map(createBannedRegex);
 
-  // Normalize string: remove spaces and punctuation, and lowercase.
-  function normalizeString(str: string): string {
-    return str.replace(/[\s\W_]+/g, "").toLowerCase();
-  }
-
-  // Custom filter system: if the message contains a URL or any banned word in normalized form, return "*****"
+  // Filter function: only if one of our banned regexes matches the message, return "*****"
   function filterMessage(message: string): string {
-    // Check for URLs:
-    if (urlRegex.test(message)) {
-      return "*****";
-    }
-    const normalizedMsg = normalizeString(message);
-    for (const word of bannedWords) {
-      const normalizedWord = normalizeString(word);
-      if (normalizedMsg.includes(normalizedWord)) {
+    for (const regex of bannedRegexes) {
+      if (regex.test(message)) {
         return "*****";
       }
     }
@@ -73,7 +75,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   useEffect(() => {
     socketRef.current = io("https://kasino-backend-4818b4b69870.herokuapp.com");
     socketRef.current.on("chat message", (msg: ChatMessage) => {
-      setMessages((prevMessages) => [...prevMessages, msg]);
+      setMessages((prev) => [...prev, msg]);
     });
     return () => {
       socketRef.current?.disconnect();
