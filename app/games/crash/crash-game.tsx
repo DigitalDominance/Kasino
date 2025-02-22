@@ -30,7 +30,7 @@ export function CrashGame({
   const rocketImg = useRef<HTMLImageElement | null>(null);
   const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load images client-side.
+  // Load images on the client.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const rocket = new Image();
@@ -44,16 +44,15 @@ export function CrashGame({
   }, []);
 
   // For smooth camera following.
-  const cameraOffsetRef = useRef({ x: 0, y: 0 });
+  const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Generate a random Bézier curve configuration per game.
-  // The offsets will be added to P1 and P2.
+  // Generate random offsets for the control points per game.
   const curveControlRef = useRef<{
     P1Offset: { x: number; y: number };
     P2Offset: { x: number; y: number };
   } | null>(null);
   useEffect(() => {
-    // Reset curve control when a new game starts.
+    // Each new game gets its own random offsets.
     curveControlRef.current = {
       P1Offset: { x: (Math.random() - 0.5) * 40, y: (Math.random() - 0.5) * 40 },
       P2Offset: { x: (Math.random() - 0.5) * 40, y: (Math.random() - 0.5) * 40 },
@@ -65,11 +64,11 @@ export function CrashGame({
   useEffect(() => {
     if (!isPlaying) return;
     setHasCrashed(false);
-    setMultiplier(1);
 
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
+      // Using adjusted odds:
       if (r < 0.605) {
         // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
@@ -95,7 +94,7 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Base growth rate.
+    const growthRate = 0.5; // Unchanged multiplier growth.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -147,7 +146,6 @@ export function CrashGame({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
@@ -155,35 +153,32 @@ export function CrashGame({
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear canvas.
+    // Clear the entire canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // --- Draw centered multiplier text (background layer) ---
+    // --- Draw the multiplier text (background layer) ---
     ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.resetTransform();
     ctx.font = "48px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
-    // --------------------------------------------------------
+    // -------------------------------------------------------
 
-    // Set up our dynamic Bézier curve.
+    // --- Dynamic Bézier Curve ---
     const margin = 20;
     const P0 = { x: margin, y: height - margin };
-
-    // Compute a dynamic P3 based on the crash multiplier.
+    // Compute P3 based on crash multiplier.
     const maxMultiplier = 100;
     const crashPoint = crashPointRef.current || 1;
-    const norm = Math.min((crashPoint - 1) / (maxMultiplier - 1), 1);
-    // As crash multiplier increases, P3 moves farther right and higher.
+    const norm = Math.min((crashPoint - 1) / (maxMultiplier - 1), 1); // 0 to 1
     const P3 = {
       x: margin + (width - 2 * margin) * (0.3 + 0.7 * norm),
       y: margin + (height - 2 * margin) * (1 - norm),
     };
-
-    // Use random offsets for control points (generated per game).
+    // Base control points as fractions along the line.
     const baseP1 = {
       x: P0.x + 0.3 * (P3.x - P0.x),
       y: P0.y + 0.3 * (P3.y - P0.y),
@@ -192,7 +187,7 @@ export function CrashGame({
       x: P0.x + 0.6 * (P3.x - P0.x),
       y: P0.y + 0.6 * (P3.y - P0.y),
     };
-
+    // Apply random offsets (generated per game) so the curve changes each game.
     const randomOffsets = curveControlRef.current || {
       P1Offset: { x: 0, y: 0 },
       P2Offset: { x: 0, y: 0 },
@@ -205,19 +200,17 @@ export function CrashGame({
       x: baseP2.x + randomOffsets.P2Offset.x,
       y: baseP2.y + randomOffsets.P2Offset.y,
     };
-
-    // tProgress is determined by current multiplier relative to crashPoint.
+    // tProgress based on current multiplier.
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
-
-    // Determine the rocket tip along the curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
+    // --------------------------------------------------
 
-    // --- Camera Following with Zoom ---
-    // We'll zoom in on the curve.
-    const zoom = 2; // Zoom factor.
-    // Desired position for the rocket tip in screen coordinates.
+    // --- Dynamic Zoom & Camera Follow ---
+    // Define a zoom that decreases (zooms out) as tProgress increases.
+    const zoom = 3 - 1.5 * tProgress; // When tProgress=0, zoom=3; when tProgress=1, zoom=1.5.
+    // Desired on-screen position for the rocket tip.
     const desired = { x: width / 2, y: height * 0.7 };
-    // Compute target offset so that after scaling, the tip appears at 'desired'.
+    // Compute target offset so that after scaling the tip appears at 'desired'.
     const targetOffset = {
       x: desired.x - tip.x * zoom,
       y: desired.y - tip.y * zoom,
@@ -232,7 +225,7 @@ export function CrashGame({
     ctx.scale(zoom, zoom);
     // --------------------------------------------------
 
-    // Draw the partial cubic Bézier curve.
+    // --- Draw the Bézier Curve & Rocket ---
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
@@ -246,13 +239,13 @@ export function CrashGame({
     ctx.lineCap = "round";
     ctx.stroke();
 
-    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
+    // --------------------------------------------------
   }, [multiplier, hasCrashed]);
 
   return (
