@@ -11,16 +11,22 @@ import { LiveChat } from "./live-chat";
 import { LiveWins } from "./live-wins";
 import { HowToPlay } from "./how-to-play";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet } from "@/contexts/WalletContext";
+import { useWallet, WalletProvider } from "@/contexts/WalletContext";
 import { useRouter } from "next/navigation";
 import type { MinesGame, MinesTile } from "./mines-game";
 import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic";
 import { Bomb, Diamond } from "./icons";
 import "./styles.css";
 import Image from "next/image";
-import { MinesControls } from "./mines-controls"; // <-- import your new controls
+import { MinesControls } from "./mines-controls";
+import { Montserrat } from "next/font/google";
 
-export default function MinesPage() {
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
+
+function MinesContent() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
@@ -76,7 +82,6 @@ export default function MinesPage() {
     }
     try {
       const betInRawUnits = bet * Math.pow(10, 8);
-      // Optionally update initializeMinesGame to accept the multiplier if needed.
       const newGame = initializeMinesGame(5, betInRawUnits);
       const response = await fetch("/api/mines", {
         method: "POST",
@@ -150,7 +155,7 @@ export default function MinesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -214,7 +219,6 @@ export default function MinesPage() {
                     </div>
                   </>
                 ) : (
-                  // When no game is active, show a placeholder message
                   <div className="flex items-center justify-center h-full">
                     <p className="text-2xl text-[#49EACB]">Place your bet and start a new game!</p>
                   </div>
@@ -222,7 +226,7 @@ export default function MinesPage() {
               </div>
             </Card>
 
-            {/* Right-side Panel: MinesControls above LiveChat/LiveWins */}
+            {/* Right-side Panel */}
             <div className="space-y-6">
               {!game && (
                 <MinesControls
@@ -236,8 +240,6 @@ export default function MinesPage() {
                   setSelectedMultiplier={setSelectedMultiplier}
                 />
               )}
-              {/* LiveChat now receives textColor "#B6B6B6" to render message text in grey,
-                  while the LiveChat component applies a gradient to usernames */}
               <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
             </div>
@@ -342,5 +344,13 @@ export default function MinesPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function MinesPage() {
+  return (
+    <WalletProvider>
+      <MinesContent />
+    </WalletProvider>
   );
 }
