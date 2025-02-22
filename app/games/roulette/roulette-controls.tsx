@@ -20,7 +20,6 @@ interface RouletteControlsProps {
   setSelectedBet: (bet: { type: string; amount: number } | null) => void;
 }
 
-// A fancy bet type button with tooltip.
 interface BetTypeButtonProps {
   bet: { name: string; type: string; description: string };
   selected: boolean;
@@ -34,7 +33,7 @@ function BetTypeButton({ bet, selected, onClick, disabled }: BetTypeButtonProps)
     <div className="relative">
       <Button
         variant={selected ? "default" : "outline"}
-        className={`border-[#49EACB]/10 ${selected ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"}`}
+        className="w-full border-[#49EACB]/10 px-2 py-1 sm:px-4 sm:py-2 text-center"
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={onClick}
@@ -92,14 +91,14 @@ export function RouletteControls({
   };
 
   const betTypes = [
-    { name: "Red", type: "red", description: "2x reward" },
-    { name: "Black", type: "black", description: "2x reward" },
-    { name: "Odd", type: "odd", description: "2x reward" },
-    { name: "Even", type: "even", description: "2x reward" },
-    { name: "1-12", type: "1st12", description: "3x reward (1 in 5 chance)" },
-    { name: "13-24", type: "2nd12", description: "3x reward (1 in 5 chance)" },
-    { name: "25-36", type: "3rd12", description: "3x reward (1 in 5 chance)" },
-    { name: "Green", type: "green", description: "10x reward (1 in 37 chance)" },
+    { name: "Red", type: "red", description: "2x" },
+    { name: "Black", type: "black", description: "2x" },
+    { name: "Odd", type: "odd", description: "2x" },
+    { name: "Even", type: "even", description: "2x" },
+    { name: "1-12", type: "1st12", description: "2.5x" },
+    { name: "13-24", type: "2nd12", description: "2.5x" },
+    { name: "25-36", type: "3rd12", description: "2.5x" },
+    { name: "Green", type: "green", description: "10x" },
   ];
 
   return (
@@ -144,7 +143,7 @@ export function RouletteControls({
         </div>
 
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          {gameResult !== null ? (
+          {gameResult !== null && (
             <div className="text-center mb-4">
               <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
               {winAmount !== null && winAmount > 0 ? (
@@ -153,7 +152,7 @@ export function RouletteControls({
                 <div className="text-xl text-red-500">You lost your bet.</div>
               )}
             </div>
-          ) : null}
+          )}
           {!isPlaying ? (
             <Button
               className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
