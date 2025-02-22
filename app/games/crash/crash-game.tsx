@@ -65,7 +65,7 @@ export function CrashGame({
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
-      // Using adjusted odds:
+      // Adjusted odds:
       if (r < 0.605) {
         // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
@@ -98,7 +98,7 @@ export function CrashGame({
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
-      // Trigger crash when reaching the crash point.
+      // Crash when reaching the crash point.
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
         setMultiplier(crashPoint);
@@ -113,7 +113,7 @@ export function CrashGame({
     return () => {
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
-      controlPointsRef.current = null; // Reset the curve for the next round.
+      controlPointsRef.current = null; // Reset curve for the next round.
     };
   }, [isPlaying]);
 
@@ -155,9 +155,9 @@ export function CrashGame({
     // Clear the canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // --- Multiplier text (drawn before any camera transform) ---
+    // --- Draw the multiplier text ---
     ctx.save();
-    // Removed resetTransform() so the canvas scaling is maintained.
+    // Do not resetTransform() so that scaling is maintained.
     ctx.font = "48px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
@@ -186,15 +186,51 @@ export function CrashGame({
     }
     const { P0, P1, P2, P3 } = controlPointsRef.current!;
 
-    // Compute progress (t) based on multiplier relative to crash point.
-    const crashPoint = crashPointRef.current || 1;
-    const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+    // --- Determine the rocket's progress along the curve ---
+    const cp = crashPointRef.current || 1;
+    let tProgress = 0;
+    let extraOffsetY = 0;
+    if (cp <= 1.5) {
+      // Crash occurs at P1 (~33% along the curve).
+      const targetT = 0.33;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else if (cp <= 2) {
+      // Crash occurs at P2 (~66% along the curve).
+      const targetT = 0.66;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else if (cp <= 3) {
+      // Crash occurs at P3 (end of the curve).
+      const targetT = 1.0;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else {
+      // For crash points above 3x, follow the curve until multiplier reaches 3,
+      // then add extra upward motion.
+      const targetT = 1.0;
+      if (multiplier <= 3) {
+        tProgress = ((multiplier - 1) / (3 - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+        extraOffsetY = -((multiplier - 3) * 50); // Adjust factor (50) as needed.
+      }
+    }
 
-    // Determine the rocket tip along the randomized curve.
-    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
+    // Compute the tip position along the curve.
+    let tip = cubicBezier(P0, P1, P2, P3, tProgress);
+    tip.y += extraOffsetY;
 
-    // --- Camera Transform ---
-    // Keep the rocket in a desired position.
+    // --- Camera Transform: keep the rocket in view ---
     const desired = { x: width / 2, y: height * 0.7 };
     const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
 
@@ -205,9 +241,8 @@ export function CrashGame({
 
     ctx.save();
     ctx.translate(cameraOffset.x, cameraOffset.y);
-    // ---
 
-    // Draw the partial Bézier curve.
+    // Draw the partial Bézier curve up to the current tProgress.
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
