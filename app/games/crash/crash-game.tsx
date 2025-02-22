@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Use a ref for the crash point so it's computed only once per round.
+  // Use a ref for the crash point so it’s computed only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -100,20 +100,44 @@ export function CrashGame({
     // Clear the canvas (transparent background).
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-    // Set margins and compute line coordinates.
+    // Define margin and full canvas dimensions.
     const margin = 20;
-    const lineY = canvas.clientHeight / 2;
-    const crashPoint = crashPointRef.current || 1.5;
-    const lineMaxWidth = canvas.clientWidth - 2 * margin;
-    // Compute progress based on multiplier (clamped to 1).
-    const progress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
-    const rocketX = margin + progress * lineMaxWidth;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
 
-    // Draw the progress line.
+    // Define quadratic Bézier curve points:
+    // Start at bottom-left, end at top-right, with a control point at top-center.
+    const P0 = { x: margin, y: height - margin };
+    const P1 = { x: width / 2, y: margin };
+    const P2 = { x: width - margin, y: margin };
+
+    // Compute progress (t) based on multiplier relative to crash point.
+    const crashPoint = crashPointRef.current || 1.5;
+    const t = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+
+    // Use de Casteljau's algorithm for a quadratic Bézier:
+    // A = lerp(P0, P1, t)
+    // B = lerp(P1, P2, t)
+    // C = lerp(A, B, t) -> Point on the curve at parameter t.
+    const A = {
+      x: (1 - t) * P0.x + t * P1.x,
+      y: (1 - t) * P0.y + t * P1.y,
+    };
+    const B = {
+      x: (1 - t) * P1.x + t * P2.x,
+      y: (1 - t) * P1.y + t * P2.y,
+    };
+    const C = {
+      x: (1 - t) * A.x + t * B.x,
+      y: (1 - t) * A.y + t * B.y,
+    };
+
+    // Draw the partial curve from t=0 to t using the subdivided quadratic curve.
     ctx.beginPath();
-    ctx.moveTo(margin, lineY);
-    ctx.lineTo(rocketX, lineY);
-    ctx.strokeStyle = "#00FF00"; // A bright green for a nice look.
+    ctx.moveTo(P0.x, P0.y);
+    // The partial curve can be drawn as a quadratic curve with control point A and endpoint C.
+    ctx.quadraticCurveTo(A.x, A.y, C.x, C.y);
+    ctx.strokeStyle = "#00FF00"; // A bright green.
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.stroke();
@@ -122,16 +146,16 @@ export function CrashGame({
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40; // Size for the rocket/explosion image.
-      // Draw the image centered on the tip of the line.
-      ctx.drawImage(img, rocketX - imgSize / 2, lineY - imgSize / 2, imgSize, imgSize);
+      // Draw the image centered at the point C (tip of the partial curve).
+      ctx.drawImage(img, C.x - imgSize / 2, C.y - imgSize / 2, imgSize, imgSize);
     }
 
-    // Optionally, display the multiplier text.
+    // Optionally, display the multiplier text at the bottom.
     ctx.font = "24px Arial";
     ctx.fillStyle = "white";
     const text = multiplier.toFixed(2) + "x";
     const textWidth = ctx.measureText(text).width;
-    ctx.fillText(text, (canvas.clientWidth - textWidth) / 2, canvas.clientHeight - 30);
+    ctx.fillText(text, (width - textWidth) / 2, height - 30);
   }, [multiplier, hasCrashed]);
 
   return (
