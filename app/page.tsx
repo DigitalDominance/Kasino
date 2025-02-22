@@ -214,7 +214,8 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 h-[15vh] sm:h-[45vh] -mt-6 sm:mt-0"
+                  className="relative mb-6 sm:mb-12 w-full -mt-6 sm:mt-0"
+                  style={{ aspectRatio: "1920 / 500" }}
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
                     {mainBanners.map((banner, index) => (
@@ -228,7 +229,7 @@ export default function Page() {
                         <Image
                           src={banner}
                           alt="Main Banner"
-                          layout="fill"
+                          fill
                           objectFit="contain"
                           className="object-contain"
                         />
@@ -283,7 +284,7 @@ export default function Page() {
                                     : "/placeholder.svg"
                                 }
                                 alt={`${game.name} thumbnail`}
-                                layout="fill"
+                                fill
                                 objectFit="cover"
                                 style={{ bottom: "10px" }}
                                 className="scale-100 transition-transform duration-300 group-hover:scale-110"
@@ -338,7 +339,7 @@ export default function Page() {
                             <Image
                               src={win.image}
                               alt={`${win.game} card`}
-                              layout="fill"
+                              fill
                               objectFit="cover"
                               style={{ bottom: "10px" }}
                               className="rounded-none scale-100 object-cover"
