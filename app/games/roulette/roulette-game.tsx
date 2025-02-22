@@ -154,21 +154,22 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Ensure the canvas is a square to avoid stretching.
     const dpr = window.devicePixelRatio || 1;
-    const size = canvas.clientWidth;
+    const size = canvas.clientWidth; // Assumes container gives a fixed width.
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
     // Animation settings.
-    const spinDuration = 6000; // total spin time in ms
-    const totalRotations = 8; // full rotations before slowing down
+    const spinDuration = 6000; // ms
+    const totalRotations = 8; // full rotations before slowing
 
-    // Determine winning number and compute its index.
+    // Determine winning number and its index.
     const winningNumber = determineWinningNumber();
     const winningIndex = ROULETTE_NUMBERS.findIndex((n) => n.num === winningNumber);
     const segmentAngle = 360 / ROULETTE_NUMBERS.length;
-    // Calculate target rotation so that the winning segment aligns with the pointer (centered).
+    // Compute target rotation so the winning segment (centered) lands at the top.
     const targetRotation = totalRotations * 360 + (winningIndex + 0.5) * segmentAngle;
 
     const startTime = performance.now();
@@ -194,7 +195,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     requestAnimationFrame(animate);
   }, [isPlaying]);
 
-  // Draw the roulette wheel on the canvas.
+  // Draw the roulette wheel.
   const drawWheel = (ctx: CanvasRenderingContext2D, rotation: number, size: number) => {
     ctx.clearRect(0, 0, size, size);
     const radius = size / 2;
@@ -232,12 +233,12 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.fillText(segment.num.toString(), textX, textY);
     });
 
-    // Draw the pointer (triangle at the top).
-    ctx.fillStyle = "#f1c40f";
+    // Draw a themed pointer (triangle) at the top center.
+    ctx.fillStyle = "#49EACB";
     ctx.beginPath();
-    ctx.moveTo(center.x - 10, 10);
-    ctx.lineTo(center.x + 10, 10);
-    ctx.lineTo(center.x, 30);
+    ctx.moveTo(center.x - 12, 20);
+    ctx.lineTo(center.x + 12, 20);
+    ctx.lineTo(center.x, 40);
     ctx.closePath();
     ctx.fill();
   };
@@ -247,9 +248,10 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ref={canvasRef}
       style={{
         width: "100%",
-        height: "100%",
+        maxWidth: "400px",
+        height: "400px",
         borderRadius: "8px",
-        backgroundColor: "#000",
+        backgroundColor: "transparent",
       }}
     />
   );
