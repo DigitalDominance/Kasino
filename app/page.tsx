@@ -214,7 +214,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 h-[15vh] sm:h-[45vh] -mt-6 sm:mt-0"
+                  className="relative mb-6 sm:mb-12 w-[90vw] sm:w-[90vw] -mt-6 sm:mt-0"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
                     {mainBanners.map((banner, index) => (
