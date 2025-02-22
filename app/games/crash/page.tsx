@@ -106,13 +106,15 @@ export default function CrashPage() {
               <div className="p-6 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
-                  <button
-                    className="text-[#49EACB] hover:underline"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#49EACB]"
                     onClick={() => setShowHowToPlay(true)}
                   >
                     <Info className="w-4 h-4 mr-2" />
                     How to Play
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
                   <CrashGame
@@ -176,7 +178,8 @@ export default function CrashPage() {
                 hideModal={true}
                 currentMultiplier={currentMultiplier}
               />
-              <LiveChat textColor="#49EACB" />
+              {/* LiveChat now receives textColor "#B6B6B6" to render message text in grey */}
+              <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
             </div>
           </div>
