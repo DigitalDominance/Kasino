@@ -89,7 +89,7 @@ export function CrashGame({
       console.log("Crash point:", crashPoint);
     }
 
-    const growthRate = 0.5; // Base growth rate.
+    const growthRate = 0.1; // Base growth rate.
 
     const animate = (time: number) => {
       const dt = (time - lastTimeRef.current) / 1000; // seconds elapsed
