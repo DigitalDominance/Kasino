@@ -328,7 +328,9 @@ export function CrashGame({
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.beginPath();
-    const segments = 30;
+    
+    // Increase segments for a smoother curve.
+    const segments = 60;
     if (cp > 3 && multiplier > 3) {
       // Draw the full composite curve then the extension.
       for (let i = 0; i <= segments; i++) {
@@ -358,17 +360,24 @@ export function CrashGame({
     } else {
       tip = compositeBezier(tProgress);
     }
-
-    // --- Apply camera transform to keep the rocket in view ---
+    
+    // --- Adjust the camera transform for tracking & dynamic zoom ---
+    let scale = 1;
+    if (multiplier > 3) {
+      // For multipliers above 3, zoom out so the rocket and line remain visible.
+      scale = 3 / multiplier; // You can tweak this function to adjust the zoom rate.
+    }
     const desired = { x: width / 2, y: height * 0.7 };
     const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
     cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
     cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     const cameraOffset = cameraOffsetRef.current;
-
+    
     ctx.save();
-    ctx.translate(cameraOffset.x, cameraOffset.y);
-
+    // Apply scaling first, then translate (adjusting the translation by dividing by scale).
+    ctx.scale(scale, scale);
+    ctx.translate(cameraOffset.x / scale, cameraOffset.y / scale);
+    
     // --- Draw the rocket or explosion image at the tip ---
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
@@ -376,6 +385,7 @@ export function CrashGame({
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
+
   }, [multiplier, hasCrashed]);
 
   return (
