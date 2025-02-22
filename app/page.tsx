@@ -28,14 +28,11 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // New mainBanners array using your public folder images
+  // mainBanners array using your public folder images
   const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
   ]
-
-  // Original banner data is no longer used.
-  // const banners = [ ... ]
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -45,7 +42,7 @@ export default function Page() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ]
 
-  // New liveWins array with several examples for Crash and Roulette
+  // liveWins array with examples for Crash and Roulette
   const liveWins = [
     {
       game: "Crash",
@@ -258,7 +255,7 @@ export default function Page() {
                   className="mb-12"
                 >
                   <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid max-md:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
@@ -268,7 +265,7 @@ export default function Page() {
                       >
                         <Link href={`/games/${game.slug}`} key={i}>
                           <MotionCard
-                            className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
+                            className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm max-md:bg-transparent"
                             whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
                             transition={{ duration: 0.3 }}
                           >
@@ -327,7 +324,7 @@ export default function Page() {
                       {liveWins.map((win, i) => (
                         <MotionCard
                           key={i}
-                          className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
+                          className="flex-shrink-0 w-[280px] max-md:w-[180px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm max-md:bg-transparent overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
                           <div className="relative aspect-[4/3]">
