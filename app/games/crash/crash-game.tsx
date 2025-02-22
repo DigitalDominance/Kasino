@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 
-// --- Configuration Constants for the path ---
+// --- Configuration Constants for the rocket path ---
 const coeffB = 0.5;
 const coeffA = 2000 * 0.16; // using a base height of 2000
 const zoomFactor = 0.5;
@@ -46,7 +46,7 @@ export function CrashGame({
   const [multiplier, setMultiplier] = useState(1);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const requestRef = useRef<number>();
-  // Store the crash point so it’s computed only once per round.
+  // Use a ref to store the crash point so it's computed only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -78,12 +78,13 @@ export function CrashGame({
     requestRef.current = requestAnimationFrame(animate);
     return () => {
       cancelAnimationFrame(requestRef.current);
-      // Reset for next round.
+      // Reset crash point for the next round.
       crashPointRef.current = null;
     };
+    // Only re-run when isPlaying changes.
   }, [isPlaying, onGameEnd, onMultiplierChange]);
 
-  // Render everything onto the canvas.
+  // Render the entire game on the canvas: path, rocket/explosion, and multiplier text.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -98,7 +99,7 @@ export function CrashGame({
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // --- Draw the rocket path line ---
+    // Draw the rocket path line (gradient).
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#49EACB");
     gradient.addColorStop(1, "#111");
@@ -114,11 +115,13 @@ export function CrashGame({
     }
     ctx.stroke();
 
-    // --- Compute the rocket’s current position and angle ---
+    // Compute rocket position at the tip of the drawn path.
     const tTip = timeElapsed / 10;
     const maxX = width - rocketWidth;
     const x = Math.min(tTip * zoomFactor, maxX);
     const y = height - curveFunction(tTip / 1000) * zoomFactor;
+
+    // Compute tangent angle at the tip.
     const u = tTip / 1000;
     const deltaU = 0.001;
     const derivative = (curveFunction(u + deltaU) - curveFunction(u)) / deltaU;
@@ -127,7 +130,7 @@ export function CrashGame({
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    // --- Draw the rocket or explosion based on game status ---
+    // Draw explosion if crashed; otherwise, draw rocket.
     const hasCrashed = crashPointRef.current !== null && multiplier >= crashPointRef.current;
     if (hasCrashed) {
       ctx.drawImage(
@@ -140,7 +143,7 @@ export function CrashGame({
     } else {
       ctx.drawImage(
         rocketImage,
-        -rocketWidth, // Align the right edge with the tip.
+        -rocketWidth, // so that the right edge is at the tip (0,0)
         -rocketHeight / 2,
         rocketWidth,
         rocketHeight
@@ -148,7 +151,7 @@ export function CrashGame({
     }
     ctx.restore();
 
-    // --- Draw the multiplier text ---
+    // Draw the multiplier text.
     ctx.font = "60px Arial";
     let fillStyle = "white";
     const m = parseFloat(multiplier.toFixed(2));
