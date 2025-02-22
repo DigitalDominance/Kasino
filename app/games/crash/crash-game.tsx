@@ -343,8 +343,8 @@ export function CrashGame({
       const desired = { x: width / 2, y: height * 0.7 };
       const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
       // Slow down horizontal camera movement by using a smaller interpolation factor.
-      cameraOffsetRef.current.x += 0.001 * (targetOffset.x - cameraOffsetRef.current.x);
-      cameraOffsetRef.current.y += 0.05 * (targetOffset.y - cameraOffsetRef.current.y);
+      cameraOffsetRef.current.x += 0.0005 * (targetOffset.x - cameraOffsetRef.current.x);
+      cameraOffsetRef.current.y += 0.005 * (targetOffset.y - cameraOffsetRef.current.y);
     }
     const cameraOffset = cameraOffsetRef.current;
 
