@@ -152,26 +152,25 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Keep the canvas square.
+    // Ensure the canvas is square.
     const dpr = window.devicePixelRatio || 1;
     const size = canvas.clientWidth;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
-    // Use exactly three rotations.
+    // Use exactly 3 full rotations.
     const spinDuration = 6000; // ms
     const rotations = 3;
     const segmentAngle = 360 / ROULETTE_NUMBERS.length;
+    const pointerAngle = 270; // Top center in our coordinate system
 
     // Determine winning number and its index.
     const winningNumber = determineWinningNumber();
     const winningIndex = ROULETTE_NUMBERS.findIndex((n) => n.num === winningNumber);
-    // We want the center of the winning segment to align with the pointer.
-    // Assume pointer should be at 90° (top center).
-    const pointerAngle = 90;
-    const targetRotation = rotations * 360 + (pointerAngle - (winningIndex + 0.5) * segmentAngle) - 120;
 
+    // Compute final rotation so that the center of the winning segment aligns with pointerAngle.
+    const finalRotation = rotations * 360 + ((winningIndex + 0.5) * segmentAngle - pointerAngle);
 
     const startTime = performance.now();
     setSpinning(true);
@@ -180,7 +179,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       const elapsed = time - startTime;
       const progress = Math.min(elapsed / spinDuration, 1);
       const easedProgress = easeOutCubic(progress);
-      const currentRotation = easedProgress * targetRotation;
+      const currentRotation = easedProgress * finalRotation;
 
       drawWheel(ctx, currentRotation, size);
 
@@ -207,18 +206,13 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       const startAngle = ((i * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
       const endAngle = (((i + 1) * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
       
-      // Draw segment
+      // Draw the segment.
       ctx.beginPath();
       ctx.moveTo(center.x, center.y);
       ctx.arc(center.x, center.y, radius, startAngle, endAngle);
       ctx.closePath();
-      if (segment.color === "green") {
-        ctx.fillStyle = "#008000";
-      } else if (segment.color === "red") {
-        ctx.fillStyle = "#e74c3c";
-      } else {
-        ctx.fillStyle = "#2c3e50";
-      }
+      ctx.fillStyle =
+        segment.color === "green" ? "#008000" : segment.color === "red" ? "#e74c3c" : "#2c3e50";
       ctx.fill();
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1;
@@ -235,7 +229,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.textBaseline = "middle";
       ctx.fillText(segment.num.toString(), textX, textY);
 
-      // Draw a marker (small circle) along the outer edge.
+      // Draw a marker along the outer edge.
       const markerRadius = radius * 0.9;
       const markerX = center.x + markerRadius * Math.cos(textAngle);
       const markerY = center.y + markerRadius * Math.sin(textAngle);
