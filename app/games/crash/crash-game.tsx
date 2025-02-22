@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Compute the crash multiplier once per round.
+  // Use a ref to compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -55,25 +55,34 @@ export function CrashGame({
       const r = Math.random();
       let crashPoint;
       if (r < 0.5) {
-        // 50% chance: Uniform between 1 and 1.5.
+        // 50% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
-      } else if (r < 0.6) {
-        // 10% chance: Uniform between 1.5 and 2.
+      } else if (r < 0.5 + 0.1) {
+        // 10% chance: uniform between 1.5 and 2.
         crashPoint = 1.5 + Math.random() * 0.5;
-      } else if (r < 0.8) {
-        // 20% chance: Uniform between 2 and 3.
-        crashPoint = 2 + Math.random();
+      } else if (r < 0.5 + 0.1 + 0.2) {
+        // 20% chance: uniform between 2 and 3.
+        crashPoint = 2 + Math.random() * 1;
+      } else if (r < 0.5 + 0.1 + 0.2 + 0.1) {
+        // 10% chance: uniform between 5 and 7.5.
+        crashPoint = 5 + Math.random() * 2.5;
+      } else if (r < 0.5 + 0.1 + 0.2 + 0.1 + 0.05) {
+        // 5% chance: uniform between 7.5 and 10.
+        crashPoint = 7.5 + Math.random() * 2.5;
+      } else if (r < 0.5 + 0.1 + 0.2 + 0.1 + 0.05 + 0.04) {
+        // 4% chance: uniform between 11 and 12.
+        crashPoint = 11 + Math.random() * 1;
       } else {
-        // Remaining 20%: Log-uniform (exponential) between 3 and 100.
+        // 1% chance: exponential between 12 and 100.
         const expR = Math.random();
-        crashPoint = 3 * Math.exp(expR * Math.log(100 / 3));
+        crashPoint = 12 * Math.exp(expR * Math.log(100 / 12));
       }
       crashPointRef.current = crashPoint;
       console.log("Crash point:", crashPointRef.current);
     }
 
     const start = performance.now();
-    const growthRate = 0.5;
+    const growthRate = 0.5; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -139,15 +148,14 @@ export function CrashGame({
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Define cubic Bézier curve points for the upward/rightward path.
-    // P0: Bottom left of the container.
+    // Define the cubic Bézier curve points.
+    // P0: Start at the bottom left.
     const P0 = { x: margin, y: height - margin };
-    // P1: Control point to push the curve upward.
+    // P1: Control point to push the path upward.
     const P1 = { x: margin, y: height * 0.6 };
-    // P2 and P3 have been reversed relative to the previous version:
-    // P2: Now with a higher y value (staying more upward).
-    const P2 = { x: width * 0.6, y: height * 0.4 };
-    // P3: End point is further right and higher (lower y) so the curve remains upward.
+    // P2: Adjusted to reverse the bend—higher up to keep the path upward/right.
+    const P2 = { x: width * 0.6, y: height * 0.2 };
+    // P3: End point toward the right.
     const P3 = { x: width - margin, y: height * 0.2 };
 
     // Compute progress (t) based on multiplier relative to crash point.
