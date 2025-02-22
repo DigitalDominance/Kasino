@@ -57,7 +57,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [spinning, setSpinning] = useState(false);
 
-  // Determine the winning number based on the bet type and house edge.
+  // Determine the winning number based on bet type and house edge.
   const determineWinningNumber = (): number => {
     const r = Math.random();
     if (r < 0.6 && selectedBet) {
@@ -91,7 +91,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
         return randomNum;
       }
     }
-    // Otherwise, favor a win for the player (40% chance) or pick a random number.
+    // Otherwise, favor a win (40% chance) or pick a random number.
     if (selectedBet) {
       if (selectedBet.type === "red" || selectedBet.type === "black") {
         const same = ROULETTE_NUMBERS.filter((n) => n.color === selectedBet.type);
@@ -161,8 +161,8 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     ctx.scale(dpr, dpr);
 
     // Animation settings.
-    const spinDuration = 6000; // Total spin time (ms)
-    const totalRotations = 8; // Full rotations before slowing down
+    const spinDuration = 6000; // total spin time in ms
+    const totalRotations = 8; // full rotations before slowing down
 
     // Determine winning number and compute its index.
     const winningNumber = determineWinningNumber();
