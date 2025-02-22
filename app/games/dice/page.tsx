@@ -137,9 +137,5 @@ function DiceContent() {
 }
 
 export default function DicePage() {
-  return (
-    <WalletProvider>
-      <DiceContent />
-    </WalletProvider>
-  );
+  return <DiceContent />;
 }
