@@ -28,13 +28,14 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  const banners = [
-    { title: "Summer Jackpot", subtitle: "Win up to $100,000" },
-    { title: "New Slots", subtitle: "Try our latest games" },
-    { title: "VIP Experience", subtitle: "Exclusive rewards await" },
-    { title: "Live Casino", subtitle: "Real dealers, real action" },
-    { title: "Sports Betting", subtitle: "Bet on your favorite teams" },
+  // New mainBanners array using your public folder images
+  const mainBanners = [
+    "/roulettebanner.PNG",
+    "/crashbanner.PNG",
   ]
+
+  // Original banner data is no longer used.
+  // const banners = [ ... ]
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -44,13 +45,15 @@ export default function Page() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ]
 
-  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % banners.length)
-  const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
+  const nextBanner = () =>
+    setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
+  const prevBanner = () =>
+    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length)
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 3000) // Set to 3 seconds to account for fadeout animation
+    }, 3000) // 3-second delay for fadeout animation
 
     return () => clearTimeout(timer)
   }, [])
@@ -169,19 +172,21 @@ export default function Page() {
                   className="relative mb-12 h-[300px]"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
-                    {banners.map((banner, index) => (
+                    {mainBanners.map((banner, index) => (
                       <motion.div
                         key={index}
-                        className="absolute inset-0 flex items-center justify-center"
+                        className="absolute inset-0"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: index === currentBanner ? 1 : 0 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#49EACB]/20 to-[#49EACB]/5" />
-                        <div className="relative z-10 text-center">
-                          <h2 className="text-4xl font-bold mb-2">{banner.title}</h2>
-                          <p className="text-xl">{banner.subtitle}</p>
-                        </div>
+                        <Image
+                          src={banner}
+                          alt="Main Banner"
+                          layout="fill"
+                          objectFit="cover"
+                          className="object-cover"
+                        />
                       </motion.div>
                     ))}
                   </div>
@@ -223,7 +228,13 @@ export default function Page() {
                           >
                             <div className="relative aspect-[4/3]">
                               <Image
-                                src="/placeholder.svg"
+                                src={
+                                  game.slug === "crash"
+                                    ? "/crashcard.PNG"
+                                    : game.slug === "roulette"
+                                    ? "/roulettecard.PNG"
+                                    : "/placeholder.svg"
+                                }
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
@@ -242,7 +253,9 @@ export default function Page() {
                               <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
                                 {game.name}
                               </h3>
-                              <p className="text-sm text-gray-400">{game.players.toLocaleString()} Players</p>
+                              <p className="text-sm text-gray-400">
+                                {game.players.toLocaleString()} Players
+                              </p>
                             </div>
                           </MotionCard>
                         </Link>
@@ -311,4 +324,3 @@ export default function Page() {
     </div>
   )
 }
-
