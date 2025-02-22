@@ -13,8 +13,7 @@ import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
 // Custom icons from react-icons
-// Replaced FaGamepad with GiCheerful for Original Games
-// Replaced GiTrophyCup with GiStarFormation for Live Wins
+// Using GiCheerful for Original Games and GiStarFormation for Live Wins
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
 const glowAnimation = `
@@ -32,8 +31,11 @@ const gradientAnimation = `
     100% { background-position: 0% 50%; }
   }
   .animate-gradient {
+    background: linear-gradient(270deg, #49EACB, #2A7B68);
     background-size: 200% 200%;
     animation: gradientAnimation 5s ease infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 `
 
@@ -273,8 +275,9 @@ export default function Page() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#49EACB] to-black bg-clip-text text-transparent animate-gradient hover:scale-105 transition-transform duration-300">
-                    <GiCheerful className="inline-block mr-2" /> Original Games
+                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient">
+                    <GiCheerful className="inline-block mr-2" style={{ fill: "currentColor" }} /> 
+                    <span>Original Games</span>
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
@@ -335,8 +338,9 @@ export default function Page() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#49EACB] to-black bg-clip-text text-transparent animate-gradient hover:scale-105 transition-transform duration-300">
-                    <GiStarFormation className="inline-block mr-2" /> Live Wins
+                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient">
+                    <GiStarFormation className="inline-block mr-2" style={{ fill: "currentColor" }} /> 
+                    <span>Live Wins</span>
                   </h2>
                   <ScrollArea>
                     <motion.div
