@@ -61,49 +61,43 @@ export function CrashGame({
     if (!isPlaying) return;
     setHasCrashed(false);
 
-    // Compute crash point only once per round.
+    // Generate crash point only once per round.
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
       // Adjusted odds:
       if (r < 0.605) {
-        // 60.5% chance: uniform between 1 and 1.5.
-        crashPoint = 1 + Math.random() * 0.5;
+        crashPoint = 1 + Math.random() * 0.5; // 1 to 1.5
       } else if (r < 0.705) {
-        // 10% chance: uniform between 1.5 and 2.
-        crashPoint = 1.5 + Math.random() * 0.5;
+        crashPoint = 1.5 + Math.random() * 0.5; // 1.5 to 2
       } else if (r < 0.905) {
-        // 20% chance: uniform between 2 and 3.
-        crashPoint = 2 + Math.random() * 1;
+        crashPoint = 2 + Math.random() * 1; // 2 to 3
       } else if (r < 0.955) {
-        // 5% chance: uniform between 5 and 7.5.
-        crashPoint = 5 + Math.random() * 2.5;
+        crashPoint = 5 + Math.random() * 2.5; // 5 to 7.5
       } else if (r < 0.995) {
-        // 4% chance: uniform between 7.5 and 10.
-        crashPoint = 7.5 + Math.random() * 2.5;
+        crashPoint = 7.5 + Math.random() * 2.5; // 7.5 to 10
       } else {
-        // 0.5% chance: exponential (log‑uniform) above 10.
         const expR = Math.random();
-        crashPoint = 10 * Math.exp(expR * Math.log(100 / 10));
+        crashPoint = 10 * Math.exp(expR * Math.log(100 / 10)); // above 10
       }
       crashPointRef.current = crashPoint;
       console.log("Crash point:", crashPointRef.current);
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Adjust growth rate as needed.
+    const growthRate = 0.5; // Adjust as needed
 
     const animate = (time: number) => {
       const elapsed = time - start;
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
-      // Crash when reaching the crash point.
-      const crashPoint = crashPointRef.current;
-      if (crashPoint && currentMultiplier >= crashPoint) {
-        setMultiplier(crashPoint);
+      // Crash when multiplier reaches crash point.
+      const cp = crashPointRef.current;
+      if (cp && currentMultiplier >= cp) {
+        setMultiplier(cp);
         setHasCrashed(true);
-        onGameEnd(crashPoint, 0);
+        onGameEnd(cp, 0);
         return;
       }
       requestRef.current = requestAnimationFrame(animate);
@@ -113,7 +107,7 @@ export function CrashGame({
     return () => {
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
-      controlPointsRef.current = null; // Reset curve for the next round.
+      controlPointsRef.current = null; // Reset curve for next round.
     };
   }, [isPlaying]);
 
@@ -152,12 +146,11 @@ export function CrashGame({
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear the canvas.
+    // Clear canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // --- Draw the multiplier text ---
+    // --- Draw multiplier text (centered) ---
     ctx.save();
-    // Do not resetTransform() so that scaling is maintained.
     ctx.font = "48px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
@@ -166,7 +159,7 @@ export function CrashGame({
     ctx.restore();
     // ---
 
-    // Initialize a randomized curve if not set for this round.
+    // Initialize randomized curve if not already set.
     if (!controlPointsRef.current) {
       const margin = 20;
       const P0 = { x: margin, y: height - margin };
@@ -186,12 +179,16 @@ export function CrashGame({
     }
     const { P0, P1, P2, P3 } = controlPointsRef.current!;
 
-    // --- Determine the rocket's progress along the curve ---
+    // --- Determine how far along the path to draw ---
+    // Based on crash point (cp):
+    // • cp in [1, 1.5] → stop around P1 (~33% of the curve)
+    // • cp in (1.5, 2] → stop around P2 (~66% of the curve)
+    // • cp in (2, 3] → stop at P3 (end of the curve)
+    // • cp > 3 → follow the curve to P3 and then extend upward.
     const cp = crashPointRef.current || 1;
-    let tProgress = 0;
-    let extraOffsetY = 0;
+    let tProgress = 0; // progress along cubic bezier (0 to 1)
+    let extension = 0; // additional upward extension if multiplier > 3
     if (cp <= 1.5) {
-      // Crash occurs at P1 (~33% along the curve).
       const targetT = 0.33;
       if (multiplier <= cp) {
         tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
@@ -199,7 +196,6 @@ export function CrashGame({
         tProgress = targetT;
       }
     } else if (cp <= 2) {
-      // Crash occurs at P2 (~66% along the curve).
       const targetT = 0.66;
       if (multiplier <= cp) {
         tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
@@ -207,7 +203,6 @@ export function CrashGame({
         tProgress = targetT;
       }
     } else if (cp <= 3) {
-      // Crash occurs at P3 (end of the curve).
       const targetT = 1.0;
       if (multiplier <= cp) {
         tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
@@ -215,26 +210,59 @@ export function CrashGame({
         tProgress = targetT;
       }
     } else {
-      // For crash points above 3x, follow the curve until multiplier reaches 3,
-      // then add extra upward motion.
-      const targetT = 1.0;
+      // For crash points above 3:
       if (multiplier <= 3) {
-        tProgress = ((multiplier - 1) / (3 - 1)) * targetT;
+        tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
       } else {
-        tProgress = targetT;
-        extraOffsetY = -((multiplier - 3) * 50); // Adjust factor (50) as needed.
+        tProgress = 1.0;
+        extension = (multiplier - 3) * 50; // Adjust the extension factor as needed.
       }
     }
 
-    // Compute the tip position along the curve.
-    let tip = cubicBezier(P0, P1, P2, P3, tProgress);
-    tip.y += extraOffsetY;
+    // --- Draw the trajectory line ---
+    ctx.save();
+    ctx.strokeStyle = "#00FF00";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    // If the crash point is above 3 and multiplier > 3, draw the full curve then the extension.
+    if (cp > 3 && multiplier > 3) {
+      // Draw the complete cubic Bézier curve.
+      const segments = 30;
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const { x, y } = cubicBezier(P0, P1, P2, P3, t);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      // Draw the extension upward from P3.
+      const extendedTip = { x: P3.x, y: P3.y - extension };
+      ctx.lineTo(extendedTip.x, extendedTip.y);
+    } else {
+      // Otherwise, draw only the partial curve.
+      const segments = 30;
+      for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * tProgress;
+        const { x, y } = cubicBezier(P0, P1, P2, P3, t);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
 
-    // --- Camera Transform: keep the rocket in view ---
+    // --- Determine the rocket tip position ---
+    let tip = { x: 0, y: 0 };
+    if (cp > 3 && multiplier > 3) {
+      // When above 3x, the tip is at the end of the extension.
+      tip = { x: P3.x, y: P3.y - extension };
+    } else {
+      tip = cubicBezier(P0, P1, P2, P3, tProgress);
+    }
+
+    // --- Apply camera transform to keep the rocket in view ---
     const desired = { x: width / 2, y: height * 0.7 };
     const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
-
-    // Smoothly interpolate the camera offset.
     cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
     cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     const cameraOffset = cameraOffsetRef.current;
@@ -242,21 +270,7 @@ export function CrashGame({
     ctx.save();
     ctx.translate(cameraOffset.x, cameraOffset.y);
 
-    // Draw the partial Bézier curve up to the current tProgress.
-    ctx.beginPath();
-    const segments = 30;
-    for (let i = 0; i <= segments; i++) {
-      const t = (i / segments) * tProgress;
-      const { x, y } = cubicBezier(P0, P1, P2, P3, t);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = "#00FF00";
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.stroke();
-
-    // Draw the rocket (or explosion) image at the tip.
+    // --- Draw the rocket or explosion image at the tip ---
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
