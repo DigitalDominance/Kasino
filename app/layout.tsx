@@ -1,14 +1,19 @@
-import type React from "react"
-import { Inter } from "next/font/google"
-import { WalletProvider } from "@/contexts/WalletContext"
-import { ModalProvider } from "@/contexts/ModalContext"
+import type React from "react";
+import { Inter } from "next/font/google";
+import { WalletProvider } from "@/contexts/WalletContext";
+import { ModalProvider } from "@/contexts/ModalContext";
+import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] })
+export const metadata = {
+  generator: "v0.dev",
+};
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -31,13 +36,5 @@ export default function RootLayout({
         </WalletProvider>
       </body>
     </html>
-  )
+  );
 }
-
-
-
-import './globals.css'
-
-export const metadata = {
-      generator: 'v0.dev'
-    };
