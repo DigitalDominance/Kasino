@@ -280,7 +280,7 @@ export default function MinesPage() {
                       className="rounded-full mr-2"
                     />
                     <span className="text-xl">
-                      You won {winAmount?.toFixed(8)}
+                      You won {winAmount?.toFixed(2)}
                     </span>
                   </>
                 ) : (
@@ -298,7 +298,7 @@ export default function MinesPage() {
                       setBetAmount(val.toString())
                     }}
                     placeholder="Enter bet amount"
-                    className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-20 rounded-md py-2 pl-10"
+                    className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full rounded-md py-2 pl-10 pr-3"
                   />
                   <div className="absolute left-3 top-1/2 -translate-y-1/2">
                     <Image
@@ -308,40 +308,6 @@ export default function MinesPage() {
                       height={20}
                       className="rounded-full"
                     />
-                  </div>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex space-x-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setBetAmount((Math.max(1, Number(betAmount)) / 2).toString())
-                      }
-                    >
-                      ½
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setBetAmount((Math.max(1, Number(betAmount)) * 2).toString())
-                      }
-                    >
-                      2×
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setBetAmount("1")}
-                    >
-                      Min
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setBetAmount(balance.toString())}
-                    >
-                      Max
-                    </Button>
                   </div>
                 </div>
                 <Button
@@ -355,6 +321,7 @@ export default function MinesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
 
 
       {/* How to Play Modal */}
