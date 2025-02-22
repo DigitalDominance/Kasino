@@ -48,6 +48,7 @@ function BetTypeButton({ bet, selected, onClick, disabled }: BetTypeButtonProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
             className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded border border-[#49EACB] bg-black bg-opacity-70 text-[#49EACB]"
+            style={{ zIndex: 50 }}  // Higher z-index for tooltip
           >
             {bet.description}
           </motion.div>
