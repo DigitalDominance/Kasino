@@ -47,13 +47,12 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     if (!isConnected || !username) return; // Should never happen since input is disabled
 
     const userMessage: ChatMessage = {
-      username, // use the wallet's username instead of "You"
+      username,
       message: newMessage,
       timestamp: new Date().toISOString(),
     };
 
     // Emit the message to the server.
-    // Do not update the messages locally here – let the server broadcast it.
     socketRef.current?.emit("chat message", userMessage);
 
     setNewMessage("");
@@ -66,7 +65,14 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2">
-              <span className="font-bold" style={{ color: textColor }}>
+              <span
+                className="font-bold"
+                style={{
+                  background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
                 {msg.username}:{" "}
               </span>
               <span style={{ color: textColor }}>{msg.message}</span>
