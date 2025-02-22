@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 import { Montserrat } from "next/font/google"
-import { WalletProvider } from "@/contexts/WalletContext"
+import { WalletProvider, Notification } from "@/contexts/WalletContext"
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
 const montserrat = Montserrat({
