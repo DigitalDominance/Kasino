@@ -218,9 +218,5 @@ function CrashContent() {
 }
 
 export default function CrashPage() {
-  return (
-    <WalletProvider>
-      <CrashContent />
-    </WalletProvider>
-  );
+  return <CrashContent />;
 }
