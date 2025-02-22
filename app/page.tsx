@@ -11,10 +11,8 @@ import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
-import { Montserrat } from "next/font/google" // Import Montserrat font
+import { Montserrat } from "next/font/google"
 import { WalletProvider } from "@/contexts/WalletContext"
-
-// Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
 const montserrat = Montserrat({
@@ -25,7 +23,7 @@ const montserrat = Montserrat({
 const MotionCard = motion(Card)
 const MotionButton = motion(Button)
 
-export default function Page() {
+function MainPageContent() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -41,7 +39,6 @@ export default function Page() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ]
 
-  // Live Wins examples
   const liveWins = [
     {
       game: "Crash",
@@ -101,46 +98,28 @@ export default function Page() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
-      {/* Global Styles: Updated animated gradient, glow, nav hover, and icon coloring */}
       <style jsx global>{`
-        /* Animated gradient for headings with a swirling paint effect */
         @keyframes gradientAnimation {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
         .animate-gradient {
-          background: linear-gradient(
-            270deg,
-            #49eacb,
-            #006d5b,
-            #003f2f,
-            #006d5b,
-            #49eacb
-          );
+          background: linear-gradient(270deg, #49eacb, #006d5b, #003f2f, #006d5b, #49eacb);
           background-size: 400% 400%;
           animation: gradientAnimation 8s ease infinite;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        /* Hover effect for headings */
         .hover-effect:hover {
           filter: drop-shadow(0 0 8px #49eacb);
         }
-        /* Navigation image hover effect */
         .nav-hover {
           transition: filter 0.3s ease;
         }
         .nav-hover:hover {
           filter: drop-shadow(0 0 8px #49eacb);
         }
-        /* Icon primary: force icons to use primary green */
         .icon-primary {
           color: #49eacb;
           fill: #49eacb;
@@ -429,5 +408,5 @@ export default function PageWrapper() {
     <WalletProvider>
       <MainPageContent />
     </WalletProvider>
-  );
+  )
 }
