@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
-// Custom icons (make sure to install react-icons: npm install react-icons)
+// Custom icons from react-icons (remember to install react-icons: npm install react-icons)
 import { FaGamepad } from "react-icons/fa"
 import { GiTrophyCup } from "react-icons/gi"
 
@@ -210,164 +210,174 @@ export default function Page() {
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
                 {/* Banner Carousel */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 w-[90vw] sm:w-[90vw] -mt-6 sm:mt-0"
-                >
-                  <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
-                    {mainBanners.map((banner, index) => (
-                      <motion.div
-                        key={index}
-                        className="absolute inset-0"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: index === currentBanner ? 1 : 0 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Image
-                          src={banner}
-                          alt="Main Banner"
-                          layout="fill"
-                          objectFit="contain"
-                          className="object-contain"
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={prevBanner}
-                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
+                <div className="mx-auto max-w-screen-xl w-full px-4">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="relative mb-6 sm:mb-12 -mt-6 sm:mt-0"
                   >
-                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                  <button
-                    onClick={nextBanner}
-                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
-                  >
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </motion.div>
+                    <div className="relative w-full overflow-hidden rounded-lg border border-[#49EACB]/10">
+                      {mainBanners.map((banner, index) => (
+                        <motion.div
+                          key={index}
+                          className="absolute inset-0"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: index === currentBanner ? 1 : 0 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <Image
+                            src={banner}
+                            alt="Main Banner"
+                            layout="responsive"
+                            width={1920}
+                            height={500}
+                            objectFit="contain"
+                            className="object-contain"
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={prevBanner}
+                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
+                    >
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                    <button
+                      onClick={nextBanner}
+                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
+                    >
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </motion.div>
+                </div>
 
                 {/* Original Games */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                  className="mb-12"
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
-                    <FaGamepad className="inline-block mr-2" /> Original Games
-                  </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {games.map((game, i) => (
+                <div className="mx-auto max-w-screen-xl w-full px-4">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+                    className="mb-12"
+                  >
+                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
+                      <FaGamepad className="inline-block mr-2" /> Original Games
+                    </h2>
+                    <div className="grid grid-cols-2 gap-6">
+                      {games.map((game, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                        >
+                          <Link href={`/games/${game.slug}`} key={i}>
+                            <MotionCard
+                              className="group relative overflow-hidden border-none bg-transparent"
+                              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="relative aspect-[4/3] mt-1">
+                                <Image
+                                  src={
+                                    game.slug === "crash"
+                                      ? "/crashcard.webp"
+                                      : game.slug === "roulette"
+                                      ? "/roulettecard.webp"
+                                      : "/placeholder.svg"
+                                  }
+                                  alt={`${game.name} thumbnail`}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  style={{ bottom: "10px" }}
+                                  className="scale-105 transition-transform duration-300 group-hover:scale-110 rounded-none"
+                                />
+                                <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                  <MotionButton
+                                    className="mx-4 mb-2 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    Play Now
+                                  </MotionButton>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                  {game.name}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  {game.players.toLocaleString()} Players
+                                </p>
+                              </div>
+                            </MotionCard>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Live Wins */}
+                <div className="mx-auto max-w-screen-xl w-full px-4">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
+                  >
+                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
+                      <GiTrophyCup className="inline-block mr-2" /> Live Wins
+                    </h2>
+                    <ScrollArea>
                       <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                        className="flex gap-4 pb-4"
+                        initial={{ x: -20 }}
+                        animate={{ x: 0 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
                       >
-                        <Link href={`/games/${game.slug}`} key={i}>
+                        {liveWins.map((win, i) => (
                           <MotionCard
-                            className="group relative overflow-hidden border-none bg-transparent"
-                            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
-                            transition={{ duration: 0.3 }}
+                            key={i}
+                            className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
+                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                           >
-                            <div className="relative aspect-[4/3]">
+                            <div className="relative aspect-[4/3] mt-1">
                               <Image
-                                src={
-                                  game.slug === "crash"
-                                    ? "/crashcard.webp"
-                                    : game.slug === "roulette"
-                                    ? "/roulettecard.webp"
-                                    : "/placeholder.svg"
-                                }
-                                alt={`${game.name} thumbnail`}
+                                src={win.image}
+                                alt={`${win.game} card`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                style={{ bottom: "10px" }}
+                                className="rounded-none scale-105 transition-transform duration-300 object-cover"
                               />
-                              <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                <MotionButton
-                                  className="mx-4 mb-2 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                  whileHover={{ scale: 1.02 }}
-                                >
-                                  Play Now
-                                </MotionButton>
+                              <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
+                                LIVE
                               </div>
                             </div>
                             <div className="p-4">
-                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                {game.name}
-                              </h3>
-                              <p className="text-sm text-gray-400">
-                                {game.players.toLocaleString()} Players
-                              </p>
+                              <div className="font-semibold mb-2">{win.player}</div>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-sm text-[#49EACB]">{win.game} Game</div>
+                                <div className="flex items-center gap-1.5">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-[#49EACB] font-bold">{win.amount}</span>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-400">{win.time}</div>
                             </div>
                           </MotionCard>
-                        </Link>
+                        ))}
                       </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Live Wins */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
-                    <GiTrophyCup className="inline-block mr-2" /> Live Wins
-                  </h2>
-                  <ScrollArea>
-                    <motion.div
-                      className="flex gap-4 pb-4"
-                      initial={{ x: -20 }}
-                      animate={{ x: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                    >
-                      {liveWins.map((win, i) => (
-                        <MotionCard
-                          key={i}
-                          className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                          whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
-                        >
-                          <div className="relative aspect-[4/3]">
-                            <Image
-                              src={win.image}
-                              alt={`${win.game} card`}
-                              layout="fill"
-                              objectFit="cover"
-                              className="rounded-none scale-100 object-cover"
-                            />
-                            <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
-                              LIVE
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <div className="font-semibold mb-2">{win.player}</div>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm text-[#49EACB]">{win.game} Game</div>
-                              <div className="flex items-center gap-1.5">
-                                <Image
-                                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                  alt="KAS"
-                                  width={16}
-                                  height={16}
-                                  className="rounded-full"
-                                />
-                                <span className="text-[#49EACB] font-bold">{win.amount}</span>
-                              </div>
-                            </div>
-                            <div className="text-sm text-gray-400">{win.time}</div>
-                          </div>
-                        </MotionCard>
-                      ))}
-                    </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
-                  </ScrollArea>
-                </motion.div>
+                      <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                    </ScrollArea>
+                  </motion.div>
+                </div>
               </main>
             </div>
 
