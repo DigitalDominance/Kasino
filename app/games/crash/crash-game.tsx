@@ -43,11 +43,12 @@ export function CrashGame({
     }
   }, []);
 
-  // Camera offset ref.
+  // Camera offset ref for smooth following.
   const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!isPlaying) return;
     setHasCrashed(false);
@@ -81,12 +82,14 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Unchanged multiplier growth.
+    const growthRate = 0.5; // Adjust growth rate as needed.
+
     const animate = (time: number) => {
       const elapsed = time - start;
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
+      // When the multiplier reaches the crash point, trigger crash.
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
         setMultiplier(crashPoint);
@@ -96,12 +99,13 @@ export function CrashGame({
       }
       requestRef.current = requestAnimationFrame(animate);
     };
+
     requestRef.current = requestAnimationFrame(animate);
     return () => {
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
     };
-  }, [isPlaying, onGameEnd]);
+  }, [isPlaying]);
 
   // Cubic Bézier helper.
   const cubicBezier = (
@@ -148,70 +152,69 @@ export function CrashGame({
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    // Center the text in the container.
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
     // -------------------------------------------------------
 
-    // Define the cubic Bézier curve for the rocket path.
-    // We keep P0 on the left.
+    // Define the cubic Bézier curve points for the rocket path.
+    // The curve starts at the bottom left.
     const margin = 20;
     const P0 = { x: margin, y: height - margin };
-    // P1: Starts moving right.
+    // P1: Start by moving right (almost horizontal).
     const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
-    // P2: Begins curving upward.
+    // P2: Then begin curving upward.
     const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
-    // P3: Ends toward the top right.
+    // P3: End toward the top right.
     const P3 = { x: width - margin, y: margin };
 
+    // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+
+    // Determine the rocket tip along the curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
-    // --- Preset Zoom Factors (based on multiplier) ---
+    // --- Camera Transform with Preset Zoom Factors ---
+    // We want the rocket tip to always be visible inside the container.
+    // For horizontal placement:
+    // - If the tip hasn't moved past the center, keep it centered.
+    // - Otherwise, fix it near the right edge.
+    let desiredX = width / 2;
+    if (tip.x > width / 2) {
+      desiredX = width - margin - 20;
+    }
+    // For vertical placement, choose a position a bit above the bottom so that the rocket climbs upward.
+    const desired = { x: desiredX, y: height - margin - 100 };
+
+    // Preset zoom factors based on the current multiplier.
     let zoom = 1;
     if (multiplier < 1.5) {
-      zoom = 2; // less zoomed in than before so it's not offscreen.
+      zoom = 3; // Very zoomed in.
     } else if (multiplier < 2) {
-      zoom = 1.8;
+      zoom = 2.5;
     } else if (multiplier < 3) {
-      zoom = 1.6;
+      zoom = 2;
     } else if (multiplier < 5) {
-      zoom = 1.4;
+      zoom = 1.8;
     } else if (multiplier < 7.5) {
-      zoom = 1.2;
+      zoom = 1.5;
     } else if (multiplier < 10) {
-      zoom = 1.1;
+      zoom = 1.2;
     } else {
       zoom = 1;
     }
-    // ----------------------------------------------------
 
-    // --- Camera Transform ---
-    // We want the rocket tip to always be visible inside the container.
-    // Let’s choose a desired position as follows:
-    // - If the tip hasn't moved past the center, keep it centered.
-    // - Otherwise, fix it near the right.
-    let desiredX;
-    if (tip.x < width / 2) {
-      desiredX = width / 2;
-    } else {
-      desiredX = width - margin - 20;
-    }
-    // For vertical placement, we choose a value a bit above the bottom so that the rocket climbs upward.
-    const desired = { x: desiredX, y: height - margin - 100 };
-
-    // Because scaling is applied after translation, we compute:
-    // offset = (desired/zoom) - tip.
+    // Since scaling is applied after translation, we want the rocket tip to appear at 'desired'
+    // in the container. Solve: desired = zoom * (tip + offset)  =>  offset = desired/zoom - tip.
     const targetOffset = {
       x: desired.x / zoom - tip.x,
       y: desired.y / zoom - tip.y,
     };
 
-    // Set the camera offset (no smoothing for now).
+    // Set the camera offset.
     cameraOffsetRef.current = targetOffset;
     const cameraOffset = cameraOffsetRef.current;
-    // ----------------------------------------------------
+    // --------------------------------------------------
 
     ctx.save();
     ctx.translate(cameraOffset.x, cameraOffset.y);
@@ -231,7 +234,7 @@ export function CrashGame({
     ctx.lineCap = "round";
     ctx.stroke();
 
-    // Draw the rocket (or explosion) at the tip.
+    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
