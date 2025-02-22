@@ -47,7 +47,7 @@ function BetTypeButton({ bet, selected, onClick, disabled }: BetTypeButtonProps)
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
-            className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded"
+            className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded border border-[#49EACB] bg-black bg-opacity-70 text-[#49EACB]"
           >
             {bet.description}
           </motion.div>
@@ -95,9 +95,9 @@ export function RouletteControls({
     { name: "Black", type: "black", description: "2x" },
     { name: "Odd", type: "odd", description: "2x" },
     { name: "Even", type: "even", description: "2x" },
-    { name: "1-12", type: "1st12", description: "2.5x" },
-    { name: "13-24", type: "2nd12", description: "2.5x" },
-    { name: "25-36", type: "3rd12", description: "2.5x" },
+    { name: "1-12", type: "1st12", description: "3x" },
+    { name: "13-24", type: "2nd12", description: "3x" },
+    { name: "25-36", type: "3rd12", description: "3x" },
     { name: "Green", type: "green", description: "10x" },
   ];
 
