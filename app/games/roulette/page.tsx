@@ -159,9 +159,5 @@ function RouletteContent() {
 }
 
 export default function RoulettePage() {
-  return (
-    <WalletProvider>
-      <RouletteContent />
-    </WalletProvider>
-  );
+  return <RouletteContent />;
 }
