@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { RouletteControls } from "./RouletteControls";
-import { RouletteGame } from "./RouletteGame";
+import { RouletteControls } from "./roulette-controls";
+import { RouletteGame } from "./roulette-game";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
@@ -78,7 +78,7 @@ export default function RoulettePage() {
       return;
     }
     // Deduct bet amount.
-    setBalance((prevBalance) => prevBalance - bet);
+    setBalance((prev) => prev - bet);
     setGameResult(null);
     setWinAmount(null);
     setIsPlaying(true);
@@ -88,9 +88,8 @@ export default function RoulettePage() {
     setGameResult(result);
     setWinAmount(winAmount);
     setIsPlaying(false);
-    // If win, add winnings.
     if (winAmount > 0) {
-      setBalance((prevBalance) => prevBalance + winAmount);
+      setBalance((prev) => prev + winAmount);
     }
     setSelectedBet(null);
   };
@@ -117,10 +116,7 @@ export default function RoulettePage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <div
-              className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
-              style={{ height: "700px" }}
-            >
+            <div className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "700px" }}>
               <RouletteGame
                 isPlaying={isPlaying}
                 betAmount={Number(betAmount)}
