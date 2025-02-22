@@ -403,10 +403,7 @@ function MainPageContent() {
   )
 }
 
-export default function PageWrapper() {
-  return (
-    <WalletProvider>
-      <MainPageContent />
-    </WalletProvider>
-  )
+export default function MainPage() {
+  return <MainPageContent />;
 }
+
