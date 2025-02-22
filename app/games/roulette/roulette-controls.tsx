@@ -125,7 +125,7 @@ export function RouletteControls({
               onClick={handleSpinRoulette}
               disabled={!isWalletConnected || !selectedBet}
             >
-              {!isWalletConnected ? "Connect Wallet to Play" : "Place Bet to Start"}
+              {!isWalletConnected ? "Connect Wallet to Play" : "Spin Roulette"}
             </Button>
           ) : (
             <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
