@@ -12,8 +12,6 @@ interface MinesControlsProps {
   isWalletConnected: boolean
   balance: number
   onStartGame: () => void
-  selectedMultiplier: number
-  setSelectedMultiplier: (multiplier: number) => void
 }
 
 export function MinesControls({
@@ -23,8 +21,6 @@ export function MinesControls({
   isWalletConnected,
   balance,
   onStartGame,
-  selectedMultiplier,
-  setSelectedMultiplier,
 }: MinesControlsProps) {
   const handleStartGame = () => {
     if (!isWalletConnected) {
@@ -49,9 +45,14 @@ export function MinesControls({
           <div className="relative">
             <Input
               type="number"
+              min="1"
               value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+              onChange={(e) => {
+                // Enforce a minimum bet of 1
+                const val = Math.max(1, Number(e.target.value))
+                setBetAmount(val.toString())
+              }}
+              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-10"
               placeholder="0.00"
               disabled={isPlaying || !isWalletConnected}
             />
@@ -69,7 +70,9 @@ export function MinesControls({
             <Button
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
+              onClick={() =>
+                setBetAmount((Math.max(1, Number(betAmount)) / 2).toString())
+              }
               disabled={isPlaying || !isWalletConnected}
             >
               ½
@@ -77,7 +80,9 @@ export function MinesControls({
             <Button
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
+              onClick={() =>
+                setBetAmount((Math.max(1, Number(betAmount)) * 2).toString())
+              }
               disabled={isPlaying || !isWalletConnected}
             >
               2×
@@ -85,7 +90,7 @@ export function MinesControls({
             <Button
               variant="outline"
               className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount("0.00")}
+              onClick={() => setBetAmount("1")}
               disabled={isPlaying || !isWalletConnected}
             >
               Min
@@ -98,28 +103,6 @@ export function MinesControls({
             >
               Max
             </Button>
-          </div>
-        </div>
-
-        {/* Multiplier Selection */}
-        <div className="space-y-2">
-          <label className="text-sm text-[#49EACB]">Multiplier</label>
-          <div className="grid grid-cols-3 gap-2">
-            {[2, 5, 10].map((multiplier) => (
-              <Button
-                key={multiplier}
-                variant={selectedMultiplier === multiplier ? "default" : "outline"}
-                className={`border-[#49EACB]/10 ${
-                  selectedMultiplier === multiplier
-                    ? "bg-[#49EACB] text-black"
-                    : "hover:bg-[#49EACB]/10"
-                }`}
-                onClick={() => setSelectedMultiplier(multiplier)}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                {multiplier}x
-              </Button>
-            ))}
           </div>
         </div>
 
