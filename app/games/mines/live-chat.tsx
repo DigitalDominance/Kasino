@@ -26,12 +26,33 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   // Pull wallet state. We assume that once connected, the wallet provides a username.
   const { isConnected, username } = useWallet();
 
-  // Simple filter function for abusive words.
+  // Extensive banned words list with many variations
+  const bannedWords = [
+    "anal", "anus", "arse", "ass", "asshole", "ballsack", "balls", "bastard", "bitch", "biatch", "bloody",
+    "blowjob", "blow job", "bollock", "bollok", "boner", "boob", "bugger", "bum", "butt", "buttplug",
+    "clitoris", "cock", "coon", "crap", "cunt", "damn", "dick", "dildo", "dyke", "fag", "feck",
+    "fellate", "fellatio", "felching", "fuck", "f u c k", "fudgepacker", "fudge packer", "flange",
+    "goddamn", "god damn", "hell", "homo", "jerk", "jizz", "knobend", "knob end", "labia", "lmao",
+    "lmfao", "muff", "nigger", "nigga", "omg", "penis", "piss", "poop", "prick", "pube", "pussy",
+    "queer", "scrotum", "sex", "shit", "s hit", "sh1t", "slut", "smegma", "spunk", "tit", "tosser",
+    "turd", "twat", "vagina", "wank", "whore", "wtf",
+    // Additional variations and common obfuscations:
+    "f*ck", "sh*t", "d!ck", "b!tch", "a$$", "c*nt", "n!gger", "n!gga", "screw", "fuk",
+    "asswipe", "bampot", "bawbag", "bellend", "berserk", "bint", "bollocks", "chancer",
+    "choad", "crikey", "cuck", "dago", "dagoes", "dickhead", "dipshit", "donkeyribber",
+    "dumbass", "fanny", "flamer", "fuckwit", "gash", "git", "gobshite", "goddammit", "gook",
+    "honeybunch", "junglebungle", "kike", "minger", "minger", "muffdiver", "numpty", "paki",
+    "plonker", "prat", "puto", "randy", "scrote", "shite", "slag", "spastic", "sod", "tosspot",
+    "twatwaffle", "wazzock"
+  ];
+
+  // Filter function replaces each banned word (case-insensitive) with "*****"
   function filterMessage(message: string): string {
-    const bannedWords = ["badword", "abuse", "curse"]; // Add more banned words as needed.
     let sanitized = message;
     bannedWords.forEach((word) => {
-      const regex = new RegExp(word, "gi");
+      // Escape any special characters in the banned word.
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedWord, "gi");
       sanitized = sanitized.replace(regex, "*****");
     });
     return sanitized;
@@ -57,7 +78,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     if (newMessage.trim() === "") return;
     if (!isConnected || !username) return; // Should never happen since input is disabled
 
-    // Enforce filtering before sending.
+    // Sanitize the message using our filter function
     const sanitizedMessage = filterMessage(newMessage);
 
     const userMessage: ChatMessage = {
@@ -97,9 +118,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
           <Input
             type="text"
             value={newMessage}
-            onChange={(e) =>
-              setNewMessage(e.target.value.slice(0, 100)) // Enforce a max of 100 characters.
-            }
+            onChange={(e) => setNewMessage(e.target.value.slice(0, 100))} // Enforce a max of 100 characters.
             placeholder={isConnected ? "Type your message..." : "Connect wallet to chat"}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white flex-grow"
             disabled={!isConnected}
