@@ -269,22 +269,38 @@ export default function MinesPage() {
                 <X className="h-4 w-4" />
               </Button>
               <h3 className="text-2xl font-bold text-[#49EACB] mb-4">Game Over</h3>
-              <p className="mb-4">
-                {gameResult === "win"
-                  ? `You won ${winAmount?.toFixed(8)} KAS!`
-                  : "You hit a mine! Better luck next time."}
+              <p className="mb-4 flex items-center justify-center">
+                {gameResult === "win" ? (
+                  <>
+                    <Image
+                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                      alt="KAS"
+                      width={20}
+                      height={20}
+                      className="rounded-full mr-2"
+                    />
+                    <span className="text-xl">
+                      You won {winAmount?.toFixed(8)}
+                    </span>
+                  </>
+                ) : (
+                  "You hit a mine! Better luck next time."
+                )}
               </p>
               <div className="space-y-4">
-                {/* Optionally, you could reuse MinesControls here instead of a duplicate input */}
                 <div className="relative">
                   <input
                     type="number"
+                    min="1"
                     value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
+                    onChange={(e) => {
+                      const val = Math.max(1, Number(e.target.value))
+                      setBetAmount(val.toString())
+                    }}
                     placeholder="Enter bet amount"
-                    className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-16 rounded-md"
+                    className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-20 rounded-md py-2 pl-10"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                       alt="KAS"
@@ -292,10 +308,46 @@ export default function MinesPage() {
                       height={20}
                       className="rounded-full"
                     />
-                    <span className="ml-1 text-[#49EACB]">KAS</span>
+                  </div>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setBetAmount((Math.max(1, Number(betAmount)) / 2).toString())
+                      }
+                    >
+                      ½
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setBetAmount((Math.max(1, Number(betAmount)) * 2).toString())
+                      }
+                    >
+                      2×
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBetAmount("1")}
+                    >
+                      Min
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBetAmount(balance.toString())}
+                    >
+                      Max
+                    </Button>
                   </div>
                 </div>
-                <Button onClick={startNewGame} className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                <Button
+                  onClick={startNewGame}
+                  className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80 py-3"
+                >
                   Play Again
                 </Button>
               </div>
@@ -303,6 +355,7 @@ export default function MinesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* How to Play Modal */}
       <AnimatePresence>
