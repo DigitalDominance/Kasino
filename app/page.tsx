@@ -320,7 +320,7 @@ export default function Page() {
                       {liveWins.map((win, i) => (
                         <MotionCard
                           key={i}
-                          className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
+                          className="flex-shrink-0 w-[260px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
                           <div className="relative aspect-video">
