@@ -1,296 +1,294 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useRef, useState } from "react";
+
+// Define the roulette numbers and their colors.
+export const ROULETTE_NUMBERS = [
+  { num: 0, color: "green" },
+  { num: 32, color: "red" },
+  { num: 15, color: "black" },
+  { num: 19, color: "red" },
+  { num: 4, color: "black" },
+  { num: 21, color: "red" },
+  { num: 2, color: "black" },
+  { num: 25, color: "red" },
+  { num: 17, color: "black" },
+  { num: 34, color: "red" },
+  { num: 6, color: "black" },
+  { num: 27, color: "red" },
+  { num: 13, color: "black" },
+  { num: 36, color: "red" },
+  { num: 11, color: "black" },
+  { num: 30, color: "red" },
+  { num: 8, color: "black" },
+  { num: 23, color: "red" },
+  { num: 10, color: "black" },
+  { num: 5, color: "red" },
+  { num: 24, color: "black" },
+  { num: 16, color: "red" },
+  { num: 33, color: "black" },
+  { num: 1, color: "red" },
+  { num: 20, color: "black" },
+  { num: 14, color: "red" },
+  { num: 31, color: "black" },
+  { num: 9, color: "red" },
+  { num: 22, color: "black" },
+  { num: 18, color: "red" },
+  { num: 29, color: "black" },
+  { num: 7, color: "red" },
+  { num: 28, color: "black" },
+  { num: 12, color: "red" },
+  { num: 35, color: "black" },
+  { num: 3, color: "red" },
+  { num: 26, color: "black" },
+];
 
 interface RouletteGameProps {
-  isPlaying: boolean
-  onGameEnd: (result: number, winAmount: number) => void
-  selectedBet: { type: string; amount: number } | null
+  isPlaying: boolean;
+  selectedBet: { type: string; amount: number } | null;
+  onGameEnd: (result: number, winAmount: number) => void;
+  betAmount: number;
 }
 
-const ROULETTE_NUMBERS = [
-  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7,
-  28, 12, 35, 3, 26,
-]
+export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: RouletteGameProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [spinning, setSpinning] = useState(false);
 
-const easeOutCubic = (t: number): number => {
-  return 1 - Math.pow(1 - t, 3)
-}
+  // Easing function for a smooth ease-out animation.
+  const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
 
-export function RouletteGame({ isPlaying, onGameEnd, selectedBet }: RouletteGameProps) {
-  const [result, setResult] = useState<number | null>(null)
-  const [spinning, setSpinning] = useState(false)
-  const [activeMarkers, setActiveMarkers] = useState<number[]>([])
-  const wheelRef = useRef<SVGSVGElement>(null)
-  const spinIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (isPlaying) {
-      spinRoulette()
-    } else {
-      resetGame()
-    }
-  }, [isPlaying])
-
-  const spinRoulette = () => {
-    setSpinning(true)
-    setResult(null)
-
-    // Determine winning number with adjusted odds
-    const randomResult = determineWinningNumber()
-
-    // Calculate total rotation
-    const totalRotations = 8 // Increased number of full rotations before stopping
-    const resultIndex = ROULETTE_NUMBERS.indexOf(randomResult)
-    const finalRotation = -360 * totalRotations - (360 * resultIndex) / 37
-
-    // Start the color travel effect
-    let currentIndex = 0
-    const updateInterval = 16 // ms (increased for smoother animation)
-    const spinDuration = 10000 // ms (increased for longer animation)
-    const totalSteps = spinDuration / updateInterval
-
-    spinIntervalRef.current = setInterval(() => {
-      const progress = currentIndex / totalSteps
-      const easedProgress = easeOutCubic(progress)
-      const currentRotation = finalRotation * easedProgress
-
-      if (wheelRef.current) {
-        wheelRef.current.style.transform = `rotate(${currentRotation}deg)`
-      }
-
-      const currentStep = Math.floor((ROULETTE_NUMBERS.length * easedProgress) % ROULETTE_NUMBERS.length)
-
-      // Gradually reduce lit-up markers as the animation ends
-      const markersToLight = progress > 0.8 ? Math.floor(5 * (1 - (progress - 0.8) / 0.2)) : 5
-
-      setActiveMarkers(Array.from({ length: markersToLight }, (_, i) => (currentStep + i) % ROULETTE_NUMBERS.length))
-
-      if (currentIndex >= totalSteps) {
-        if (spinIntervalRef.current) {
-          clearInterval(spinIntervalRef.current)
-        }
-        setSpinning(false)
-        setResult(randomResult)
-        setActiveMarkers([resultIndex])
-        calculateWinnings(randomResult)
-      }
-
-      currentIndex++
-    }, updateInterval)
-  }
-
-  const resetGame = () => {
-    setActiveMarkers([])
-    setResult(null)
-    if (wheelRef.current) {
-      wheelRef.current.style.transition = "none"
-      wheelRef.current.style.transform = "rotate(0deg)"
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      if (spinIntervalRef.current) {
-        clearInterval(spinIntervalRef.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (result !== null) {
-      const resultIndex = ROULETTE_NUMBERS.indexOf(result)
-      setActiveMarkers([resultIndex])
-    }
-  }, [result])
-
+  // Determine the winning number based on the bet.
   const determineWinningNumber = (): number => {
-    const houseEdge = Math.random()
-    if (houseEdge < 0.6) {
-      // House wins (60% chance)
-      if (selectedBet?.type === "red" || selectedBet?.type === "black") {
-        return getOppositeColorNumber(selectedBet.type)
-      } else if (selectedBet?.type === "odd" || selectedBet?.type === "even") {
-        return getOppositeParityNumber(selectedBet.type)
-      } else {
-        return Math.floor(Math.random() * 37)
+    // 60% chance the house “forces” a loss for bets on color/odd/even.
+    const r = Math.random();
+    if (r < 0.6 && selectedBet) {
+      // For color bets.
+      if (selectedBet.type === "red" || selectedBet.type === "black") {
+        // Return a number of the opposite color.
+        const opp = ROULETTE_NUMBERS.filter((n) => n.color !== selectedBet.type && n.num !== 0);
+        return opp[Math.floor(Math.random() * opp.length)].num;
       }
-    } else {
-      // Player wins (40% chance)
-      if (selectedBet?.type === "red" || selectedBet?.type === "black") {
-        return getSameColorNumber(selectedBet.type)
-      } else if (selectedBet?.type === "odd" || selectedBet?.type === "even") {
-        return getSameParityNumber(selectedBet.type)
-      } else {
-        return Math.floor(Math.random() * 37)
+      // For odd/even bets.
+      if (selectedBet.type === "odd" || selectedBet.type === "even") {
+        const opp = ROULETTE_NUMBERS.filter((n) => {
+          if (n.num === 0) return false;
+          return selectedBet.type === "odd" ? n.num % 2 === 0 : n.num % 2 === 1;
+        });
+        return opp[Math.floor(Math.random() * opp.length)].num;
+      }
+      // For dozen bets, force a loss.
+      if (["1st12", "2nd12", "3rd12"].includes(selectedBet.type)) {
+        const targetRange =
+          selectedBet.type === "1st12"
+            ? { min: 1, max: 12 }
+            : selectedBet.type === "2nd12"
+            ? { min: 13, max: 24 }
+            : { min: 25, max: 36 };
+        // Return a number outside the selected dozen.
+        const other = ROULETTE_NUMBERS.filter((n) => n.num < targetRange.min || n.num > targetRange.max);
+        return other[Math.floor(Math.random() * other.length)].num;
+      }
+      // For a single number bet, force a loss by not returning the chosen number.
+      if (!isNaN(Number(selectedBet.type))) {
+        let randomNum: number;
+        do {
+          randomNum = ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)].num;
+        } while (randomNum === Number(selectedBet.type));
+        return randomNum;
       }
     }
-  }
-
-  const calculateWinnings = (result: number) => {
-    let winAmount = 0
-
+    // Else (40% chance or no bet) let the player win or just pick a random number.
     if (selectedBet) {
-      const { type, amount } = selectedBet
-      if (type === result.toString()) {
-        winAmount = amount * 35 // Single number bet
-      } else if ((type === "red" && isRed(result)) || (type === "black" && isBlack(result))) {
-        winAmount = amount * 2 // Color bet
-      } else if (
-        (type === "odd" && result % 2 !== 0 && result !== 0) ||
-        (type === "even" && result % 2 === 0 && result !== 0)
-      ) {
-        winAmount = amount * 2 // Odd/Even bet
-      } else if (
-        (type === "1st12" && result >= 1 && result <= 12) ||
-        (type === "2nd12" && result >= 13 && result <= 24) ||
-        (type === "3rd12" && result >= 25 && result <= 36)
-      ) {
-        winAmount = amount * 3 // Dozen bet
-      } else if (type === "green" && result === 0) {
-        winAmount = amount * 10 // Green (0) bet
+      if (selectedBet.type === "red" || selectedBet.type === "black") {
+        const same = ROULETTE_NUMBERS.filter((n) => n.color === selectedBet.type);
+        return same[Math.floor(Math.random() * same.length)].num;
+      }
+      if (selectedBet.type === "odd" || selectedBet.type === "even") {
+        const same = ROULETTE_NUMBERS.filter((n) => {
+          if (n.num === 0) return false;
+          return selectedBet.type === "odd" ? n.num % 2 === 1 : n.num % 2 === 0;
+        });
+        return same[Math.floor(Math.random() * same.length)].num;
+      }
+      if (["1st12", "2nd12", "3rd12"].includes(selectedBet.type)) {
+        const targetRange =
+          selectedBet.type === "1st12"
+            ? { min: 1, max: 12 }
+            : selectedBet.type === "2nd12"
+            ? { min: 13, max: 24 }
+            : { min: 25, max: 36 };
+        const inRange = ROULETTE_NUMBERS.filter((n) => n.num >= targetRange.min && n.num <= targetRange.max);
+        return inRange[Math.floor(Math.random() * inRange.length)].num;
+      }
+      // For a single number bet, win if the selected number comes up.
+      if (!isNaN(Number(selectedBet.type))) {
+        return Number(selectedBet.type);
       }
     }
+    // Fallback: return a random number.
+    return ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)].num;
+  };
 
-    onGameEnd(result, winAmount)
-  }
+  // Calculate winnings based on bet type.
+  const calculateWinnings = (winningNumber: number): number => {
+    let winAmount = 0;
+    if (!selectedBet) return winAmount;
+    const { type, amount } = selectedBet;
+    if (type === "red" && ROULETTE_NUMBERS.find((n) => n.num === winningNumber)?.color === "red") {
+      winAmount = amount * 2;
+    } else if (type === "black" && ROULETTE_NUMBERS.find((n) => n.num === winningNumber)?.color === "black") {
+      winAmount = amount * 2;
+    } else if (
+      type === "odd" &&
+      winningNumber !== 0 &&
+      winningNumber % 2 === 1
+    ) {
+      winAmount = amount * 2;
+    } else if (
+      type === "even" &&
+      winningNumber !== 0 &&
+      winningNumber % 2 === 0
+    ) {
+      winAmount = amount * 2;
+    } else if (
+      type === "1st12" &&
+      winningNumber >= 1 &&
+      winningNumber <= 12
+    ) {
+      winAmount = amount * 3;
+    } else if (
+      type === "2nd12" &&
+      winningNumber >= 13 &&
+      winningNumber <= 24
+    ) {
+      winAmount = amount * 3;
+    } else if (
+      type === "3rd12" &&
+      winningNumber >= 25 &&
+      winningNumber <= 36
+    ) {
+      winAmount = amount * 3;
+    } else if (!isNaN(Number(type)) && Number(type) === winningNumber) {
+      // Single–number bet (payout 35x)
+      winAmount = amount * 35;
+    }
+    return winAmount;
+  };
 
-  const isRed = (number: number) => {
-    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
-    return redNumbers.includes(number)
-  }
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (!canvasRef.current) return;
 
-  const isBlack = (number: number) => {
-    return number !== 0 && !isRed(number)
-  }
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  const getOppositeColorNumber = (color: string) => {
-    const oppositeNumbers =
-      color === "red" ? ROULETTE_NUMBERS.filter((n) => isBlack(n)) : ROULETTE_NUMBERS.filter((n) => isRed(n))
-    return oppositeNumbers[Math.floor(Math.random() * oppositeNumbers.length)]
-  }
+    // Set canvas dimensions.
+    const dpr = window.devicePixelRatio || 1;
+    const size = canvas.clientWidth;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    ctx.scale(dpr, dpr);
 
-  const getSameColorNumber = (color: string) => {
-    const sameColorNumbers =
-      color === "red" ? ROULETTE_NUMBERS.filter((n) => isRed(n)) : ROULETTE_NUMBERS.filter((n) => isBlack(n))
-    return sameColorNumbers[Math.floor(Math.random() * sameColorNumbers.length)]
-  }
+    // Animation settings.
+    const spinDuration = 6000; // total spin time in ms
+    const totalRotations = 8; // full rotations before slowing down
 
-  const getOppositeParityNumber = (parity: string) => {
-    const oppositeNumbers =
-      parity === "odd"
-        ? ROULETTE_NUMBERS.filter((n) => n % 2 === 0 && n !== 0)
-        : ROULETTE_NUMBERS.filter((n) => n % 2 !== 0)
-    return oppositeNumbers[Math.floor(Math.random() * oppositeNumbers.length)]
-  }
+    // Determine the winning number and its index.
+    const winningNumber = determineWinningNumber();
+    const winningIndex = ROULETTE_NUMBERS.findIndex((n) => n.num === winningNumber);
+    // Each segment occupies an angle of 360/37 degrees.
+    const segmentAngle = 360 / ROULETTE_NUMBERS.length;
+    // Calculate target rotation so that the winning segment lines up with the pointer at top (0°).
+    // (We add a half–segment to center the segment.)
+    const targetRotation = totalRotations * 360 + (winningIndex + 0.5) * segmentAngle;
 
-  const getSameParityNumber = (parity: string) => {
-    const sameParityNumbers =
-      parity === "odd"
-        ? ROULETTE_NUMBERS.filter((n) => n % 2 !== 0)
-        : ROULETTE_NUMBERS.filter((n) => n % 2 === 0 && n !== 0)
-    return sameParityNumbers[Math.floor(Math.random() * sameParityNumbers.length)]
-  }
+    const startTime = performance.now();
+    setSpinning(true);
+
+    const animate = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / spinDuration, 1);
+      const easedProgress = easeOutCubic(progress);
+      const currentRotation = easedProgress * targetRotation;
+
+      // Draw the wheel.
+      drawWheel(ctx, currentRotation, size);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Spin complete.
+        setSpinning(false);
+        const winAmount = calculateWinnings(winningNumber);
+        onGameEnd(winningNumber, winAmount);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isPlaying]);
+
+  // Function to draw the roulette wheel with a given rotation.
+  const drawWheel = (ctx: CanvasRenderingContext2D, rotation: number, size: number) => {
+    ctx.clearRect(0, 0, size, size);
+    const radius = size / 2;
+    const center = { x: radius, y: radius };
+
+    // Draw each segment.
+    ROULETTE_NUMBERS.forEach((segment, i) => {
+      const startAngle = ((i * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
+      const endAngle = (((i + 1) * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
+
+      ctx.beginPath();
+      ctx.moveTo(center.x, center.y);
+      ctx.arc(center.x, center.y, radius, startAngle, endAngle);
+      ctx.closePath();
+      // Fill with the segment’s color.
+      if (segment.color === "green") {
+        ctx.fillStyle = "#008000";
+      } else if (segment.color === "red") {
+        ctx.fillStyle = "#e74c3c";
+      } else {
+        ctx.fillStyle = "#2c3e50";
+      }
+      ctx.fill();
+
+      // Draw segment border.
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Draw number text.
+      const textAngle = (startAngle + endAngle) / 2;
+      const textRadius = radius * 0.7;
+      const textX = center.x + textRadius * Math.cos(textAngle);
+      const textY = center.y + textRadius * Math.sin(textAngle);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(segment.num.toString(), textX, textY);
+    });
+
+    // Draw the pointer (a simple triangle at the top).
+    ctx.fillStyle = "#f1c40f";
+    ctx.beginPath();
+    ctx.moveTo(center.x - 10, 10);
+    ctx.lineTo(center.x + 10, 10);
+    ctx.lineTo(center.x, 30);
+    ctx.closePath();
+    ctx.fill();
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full">
-      <div className="relative w-[700px] h-[700px] mb-8 roulette-table p-4">
-        <div className="relative w-full h-full">
-          <svg ref={wheelRef} viewBox="0 0 100 100" className="w-full h-full">
-            {/* Outer ring */}
-            <circle cx="50" cy="50" r="49" fill="#1a1a1a" stroke="#c0c0c0" strokeWidth="0.5" />
-            <circle cx="50" cy="50" r="46" fill="#2c3e50" stroke="#c0c0c0" strokeWidth="0.25" />
-
-            {/* Number segments */}
-            {ROULETTE_NUMBERS.map((number, index) => {
-              const angle = (index * 360) / 37
-              const startAngle = angle * (Math.PI / 180)
-              const endAngle = (angle + 360 / 37) * (Math.PI / 180)
-
-              const x1 = 50 + 44 * Math.cos(startAngle)
-              const y1 = 50 + 44 * Math.sin(startAngle)
-              const x2 = 50 + 44 * Math.cos(endAngle)
-              const y2 = 50 + 44 * Math.sin(endAngle)
-
-              const largeArcFlag = 0
-
-              const d = ["M", 50, 50, "L", x1, y1, "A", 44, 44, 0, largeArcFlag, 1, x2, y2, "Z"].join(" ")
-
-              // Text position calculation
-              const textAngle = (angle + 360 / 74) * (Math.PI / 180)
-              const textRadius = 38
-              const textX = 50 + textRadius * Math.cos(textAngle)
-              const textY = 50 + textRadius * Math.sin(textAngle)
-
-              // Marker position calculation
-              const markerRadius = 45
-              const markerX = 50 + markerRadius * Math.cos(textAngle)
-              const markerY = 50 + markerRadius * Math.sin(textAngle)
-
-              return (
-                <g key={index}>
-                  <path
-                    d={d}
-                    fill={number === 0 ? "#008000" : isRed(number) ? "#e74c3c" : "#2c3e50"}
-                    stroke="#c0c0c0"
-                    strokeWidth="0.1"
-                  />
-                  <text
-                    x={textX}
-                    y={textY}
-                    fill="white"
-                    fontSize="2.5"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    transform={`rotate(${angle + 90}, ${textX}, ${textY})`}
-                    className="roulette-text"
-                  >
-                    {number}
-                  </text>
-                  {/* Marker */}
-                  <circle
-                    cx={markerX}
-                    cy={markerY}
-                    r="0.75"
-                    fill={activeMarkers.includes(index) ? "#ffff00" : "#c0c0c0"}
-                    className="transition-all duration-200"
-                  />
-                </g>
-              )
-            })}
-
-            {/* Center decorative elements */}
-            <circle cx="50" cy="50" r="4" fill="#c0c0c0" />
-            <circle cx="50" cy="50" r="3" fill="#2c3e50" />
-            <circle cx="50" cy="50" r="1" fill="#c0c0c0" />
-          </svg>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {result !== null && !spinning && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="text-center"
-          >
-            <h3 className="text-3xl font-bold mb-4">
-              <span
-                className={`${isRed(result) ? "text-red-500" : isBlack(result) ? "text-gray-800" : "text-green-500"}`}
-              >
-                {result}
-              </span>{" "}
-              <span className="text-[#49EACB]">
-                {isRed(result) ? "(Red)" : isBlack(result) ? "(Black)" : "(Green)"}
-              </span>
-            </h3>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        borderRadius: "8px",
+        backgroundColor: "#000",
+      }}
+    />
+  );
 }
-
