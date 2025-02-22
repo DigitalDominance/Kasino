@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
@@ -22,6 +22,7 @@ export default function RoulettePage() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   useEffect(() => {
     // Additional wallet checks if needed.
@@ -40,14 +41,13 @@ export default function RoulettePage() {
     setShowOverlay(false);
   };
 
-  const handleGameEnd = (result: number, winAmount: number) => {
+  const handleGameEnd = (result: number, winAmt: number) => {
     setGameResult(result);
-    setWinAmount(winAmount);
+    setWinAmount(winAmt);
     setIsPlaying(false);
-    if (winAmount > 0) {
-      // Update balance if needed.
-    }
     setSelectedBet(null);
+    // Show modal popup with result.
+    setShowResultModal(true);
   };
 
   const resetGame = () => {
@@ -57,6 +57,7 @@ export default function RoulettePage() {
     setSelectedBet(null);
     setBetAmount("0.00");
     setShowOverlay(true);
+    setShowResultModal(false);
   };
 
   return (
@@ -74,14 +75,19 @@ export default function RoulettePage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <div className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm rounded-lg overflow-hidden" style={{ height: "700px" }}>
+            <div
+              className="relative bg-[#49EACB]/5 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg overflow-hidden"
+              style={{ height: "700px" }}
+            >
               {showOverlay && !isPlaying && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 p-4">
-                  <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Roulette</h2>
-                  <p className="text-lg text-white mb-6 text-center max-w-md">
-                    Place your bet, choose your bet type, and spin the wheel. The wheel will spin exactly three rotations to land on the winning number.
-                  </p>
-                  <p className="text-xl text-[#49EACB]">Place Bet to Start</p>
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
+                  <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg p-6 text-center">
+                    <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Roulette</h2>
+                    <p className="text-lg text-white mb-6 max-w-md">
+                      Place your bet, choose your bet type, and spin the wheel. The wheel will complete exactly three rotations to land on the winning number.
+                    </p>
+                    <p className="text-xl text-[#49EACB]">Place Bet to Start</p>
+                  </div>
                 </div>
               )}
               <div className="p-6 flex flex-col h-full">
@@ -117,7 +123,32 @@ export default function RoulettePage() {
       </div>
       <SiteFooter />
 
-      {/* Optionally, include a reset button or modal as needed */}
+      {/* Result Modal Popup */}
+      <AnimatePresence>
+        {showResultModal && !isPlaying && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4"
+          >
+            <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg p-6 text-center">
+              {winAmount && winAmount > 0 ? (
+                <h3 className="text-3xl font-bold text-green-500 mb-4">
+                  You won {winAmount.toFixed(2)} KAS!
+                </h3>
+              ) : (
+                <h3 className="text-3xl font-bold text-red-500 mb-4">
+                  You lost your bet.
+                </h3>
+              )}
+              <Button onClick={resetGame} className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                Play Again
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
