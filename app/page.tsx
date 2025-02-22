@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
-// Custom icons (make sure to install react-icons: npm install react-icons)
+// Custom icons from react-icons (remember to install react-icons with npm install react-icons)
 import { FaGamepad } from "react-icons/fa"
 import { GiTrophyCup } from "react-icons/gi"
 
@@ -214,7 +214,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 h-[15vh] sm:h-[45vh] -mt-6 sm:mt-0"
+                  className="relative mb-6 sm:mb-12 h-[26vh] sm:h-[45vh] -mt-6 sm:mt-0"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
                     {mainBanners.map((banner, index) => (
@@ -273,7 +273,8 @@ export default function Page() {
                             whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
                             transition={{ duration: 0.3 }}
                           >
-                            <div className="relative aspect-[4/3]">
+                            {/* Added mt-1 to move the image container down by 5px */}
+                            <div className="relative aspect-[4/3] mt-1">
                               <Image
                                 src={
                                   game.slug === "crash"
@@ -285,7 +286,7 @@ export default function Page() {
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="scale-110 transition-transform duration-300 group-hover:scale-110"
+                                className="scale-105 transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
@@ -333,7 +334,8 @@ export default function Page() {
                           className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
-                          <div className="relative aspect-[4/3]">
+                          {/* Added mt-1 to push the image down slightly */}
+                          <div className="relative aspect-[4/3] mt-1">
                             <Image
                               src={win.image}
                               alt={`${win.game} card`}
