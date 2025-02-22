@@ -46,7 +46,6 @@ export default function RoulettePage() {
     setWinAmount(winAmt);
     setIsPlaying(false);
     setSelectedBet(null);
-    // Show modal popup with result.
     setShowResultModal(true);
   };
 
