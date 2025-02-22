@@ -36,12 +36,10 @@ export function RouletteControls({
       alert("Please connect your wallet first");
       return;
     }
-
     if (!selectedBet || selectedBet.amount <= 0 || selectedBet.amount > balance) {
       alert("Invalid bet amount or bet type");
       return;
     }
-
     onSpinRoulette();
   };
 
