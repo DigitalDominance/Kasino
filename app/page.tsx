@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
-// Custom icons from react-icons
+// Custom icons (make sure to install react-icons: npm install react-icons)
 import { FaGamepad } from "react-icons/fa"
 import { GiTrophyCup } from "react-icons/gi"
 
@@ -214,7 +214,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 h-[26vh] sm:h-[45vh] -mt-6 sm:mt-0"
+                  className="relative mb-6 sm:mb-12 h-[15vh] sm:h-[45vh] -mt-6 sm:mt-0"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
                     {mainBanners.map((banner, index) => (
@@ -285,7 +285,7 @@ export default function Page() {
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="transition-transform duration-300 group-hover:scale-110"
+                                className="scale-105 transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
@@ -339,7 +339,7 @@ export default function Page() {
                               alt={`${win.game} card`}
                               layout="fill"
                               objectFit="cover"
-                              className="object-cover"
+                              className="rounded-none scale-105 object-cover"
                             />
                             <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                               LIVE
