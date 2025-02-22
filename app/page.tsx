@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 import { Montserrat } from "next/font/google" // Import Montserrat font
+import { WalletProvider } from "@/contexts/WalletContext"
 
 // Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
@@ -422,3 +423,10 @@ export default function Page() {
     </div>
   )
 }
+
+export default function PageWrapper() {
+  return (
+    <WalletProvider>
+      <MainPageContent />
+    </WalletProvider>
+  );
