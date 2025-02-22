@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { motion } from "framer-motion"
-import Image from "next/image"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface RouletteControlsProps {
-  betAmount: string
-  setBetAmount: (amount: string) => void
-  isPlaying: boolean
-  isWalletConnected: boolean
-  balance: number
-  onSpinRoulette: () => void
-  gameResult: number | null
-  winAmount: number | null
-  selectedBet: { type: string; amount: number } | null
-  setSelectedBet: (bet: { type: string; amount: number } | null) => void
+  betAmount: string;
+  setBetAmount: (amount: string) => void;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
+  onSpinRoulette: () => void;
+  gameResult: number | null;
+  winAmount: number | null;
+  selectedBet: { type: string; amount: number } | null;
+  setSelectedBet: (bet: { type: string; amount: number } | null) => void;
 }
 
 export function RouletteControls({
@@ -33,41 +33,41 @@ export function RouletteControls({
 }: RouletteControlsProps) {
   const handleSpinRoulette = () => {
     if (!isWalletConnected) {
-      alert("Please connect your wallet first")
-      return
+      alert("Please connect your wallet first");
+      return;
     }
 
     if (!selectedBet || selectedBet.amount <= 0 || selectedBet.amount > balance) {
-      alert("Invalid bet amount")
-      return
+      alert("Invalid bet amount or bet type");
+      return;
     }
 
-    onSpinRoulette()
-  }
+    onSpinRoulette();
+  };
 
   const handleBetTypeSelect = (betType: string) => {
-    const amount = Number(betAmount)
+    const amount = Number(betAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid bet amount")
-      return
+      alert("Please enter a valid bet amount");
+      return;
     }
-    setSelectedBet({ type: betType, amount })
-  }
+    setSelectedBet({ type: betType, amount });
+  };
 
   const betTypes = [
-    { name: "Red", type: "red", description: "Win on any red number (2x)" },
-    { name: "Black", type: "black", description: "Win on any black number (2x)" },
-    { name: "Odd", type: "odd", description: "Win on any odd number (2x)" },
-    { name: "Even", type: "even", description: "Win on any even number (2x)" },
-    { name: "1st 12", type: "1st12", description: "Win on numbers 1-12 (3x)" },
-    { name: "2nd 12", type: "2nd12", description: "Win on numbers 13-24 (3x)" },
-    { name: "3rd 12", type: "3rd12", description: "Win on numbers 25-36 (3x)" },
-    { name: "Green (0)", type: "green", description: "Win on 0 (35x)" },
-  ]
+    { name: "Red", type: "red", description: "Win on red (2x)" },
+    { name: "Black", type: "black", description: "Win on black (2x)" },
+    { name: "Odd", type: "odd", description: "Win on odd (2x)" },
+    { name: "Even", type: "even", description: "Win on even (2x)" },
+    { name: "1st 12", type: "1st12", description: "Win on 1-12 (3x)" },
+    { name: "2nd 12", type: "2nd12", description: "Win on 13-24 (3x)" },
+    { name: "3rd 12", type: "3rd12", description: "Win on 25-36 (3x)" },
+    { name: "Number", type: "17", description: "Bet on a specific number (35x)" },
+  ];
 
   return (
-    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
-      <div className="p-6 space-y-4">
+    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
+      <div className="space-y-4">
         <div className="space-y-2">
           <label className="text-sm text-[#49EACB]">Bet Amount</label>
           <div className="relative">
@@ -100,14 +100,11 @@ export function RouletteControls({
                 variant={selectedBet?.type === bet.type ? "default" : "outline"}
                 className={`border-[#49EACB]/10 ${
                   selectedBet?.type === bet.type ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"
-                } relative group`}
+                }`}
                 onClick={() => handleBetTypeSelect(bet.type)}
                 disabled={isPlaying || !isWalletConnected}
               >
                 {bet.name}
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {bet.description}
-                </span>
               </Button>
             ))}
           </div>
@@ -118,7 +115,7 @@ export function RouletteControls({
             <div className="text-center mb-4">
               <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
               {winAmount !== null && winAmount > 0 ? (
-                <div className="text-xl text-green-500">You won {winAmount.toFixed(8)} KAS!</div>
+                <div className="text-xl text-green-500">You won {winAmount.toFixed(2)} KAS!</div>
               ) : (
                 <div className="text-xl text-red-500">You lost your bet.</div>
               )}
@@ -140,6 +137,5 @@ export function RouletteControls({
         </motion.div>
       </div>
     </Card>
-  )
+  );
 }
-
