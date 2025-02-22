@@ -28,7 +28,7 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // mainBanners array using your public folder images
+  // Banner images
   const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
@@ -42,7 +42,7 @@ export default function Page() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ]
 
-  // liveWins array with examples for Crash and Roulette
+  // Live Wins examples
   const liveWins = [
     {
       game: "Crash",
@@ -96,8 +96,7 @@ export default function Page() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 3000) // 3-second delay for fadeout animation
-
+    }, 3000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -182,7 +181,6 @@ export default function Page() {
                         className="w-full bg-[#49EACB]/5 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#49EACB]/30 border border-[#49EACB]/10 transition-all duration-300"
                       />
                     </div>
-
                     <div className="mt-4 space-y-2">
                       <Link
                         href="#"
@@ -212,7 +210,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-12 h-[26vh] sm:h-[45vh]"
+                  className="relative mb-6 sm:mb-12 h-[26vh] sm:h-[45vh] -mt-4 sm:mt-0"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
                     {mainBanners.map((banner, index) => (
@@ -235,15 +233,15 @@ export default function Page() {
                   </div>
                   <button
                     onClick={prevBanner}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
                   >
-                    <ChevronLeft />
+                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   <button
                     onClick={nextBanner}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
                   >
-                    <ChevronRight />
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </motion.div>
 
@@ -255,7 +253,7 @@ export default function Page() {
                   className="mb-12"
                 >
                   <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
-                  <div className="grid max-md:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
@@ -285,7 +283,7 @@ export default function Page() {
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
-                                  className="mx-4 mb-2 bg-[#49EACB] text-black font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                  className="mx-4 mb-2 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
                                   whileHover={{ scale: 1.02 }}
                                 >
                                   Play Now
