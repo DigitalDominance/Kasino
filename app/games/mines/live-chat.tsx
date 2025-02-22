@@ -18,7 +18,7 @@ interface LiveChatProps {
   textColor?: string;
 }
 
-export function LiveChat({ textColor = "#FFFFFF" }: LiveChatProps) {
+export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const socketRef = useRef<Socket | null>(null);
