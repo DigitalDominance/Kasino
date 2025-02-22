@@ -17,20 +17,22 @@ export default function Page() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Banner images - add more paths to this array as needed
+  // Banner images array – add more image paths here as needed.
   const banners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
   ]
 
-  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % banners.length)
-  const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
-
-  // Game cards for Original Games section with their respective images
+  // Game cards for the Original Games section.
   const gameCards = [
-    { name: "roulette", image: "/roulettecard.PNG" },
-    { name: "crash", image: "/crashcard.PNG" },
+    { name: "Roulette", image: "/roulettecard.PNG" },
+    { name: "Crash", image: "/crashcard.PNG" },
   ]
+
+  const nextBanner = () =>
+    setCurrentBanner((prev) => (prev + 1) % banners.length)
+  const prevBanner = () =>
+    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -45,7 +47,11 @@ export default function Page() {
             className="text-[#49EACB] hover:bg-[#49EACB]/10"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isSidebarOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </MotionButton>
           <span className="text-2xl font-bold text-[#49EACB]">Kasino</span>
         </div>
@@ -53,13 +59,13 @@ export default function Page() {
           <MotionButton
             variant="outline"
             className="border-[#49EACB] bg-black text-[#49EACB] hover:bg-[#49EACB]/10 transition-all duration-300"
-            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.3)" }}
+            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73,234,203,0.3)" }}
           >
             Sign up
           </MotionButton>
           <MotionButton
             className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
-            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.3)" }}
+            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73,234,203,0.3)" }}
           >
             Connect
           </MotionButton>
@@ -151,7 +157,7 @@ export default function Page() {
                 <MotionCard
                   key={i}
                   className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
+                  whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73,234,203,0.15)" }}
                   transition={{ duration: 0.3 }}
                 >
                   <div className="relative aspect-[4/3]">
@@ -181,18 +187,32 @@ export default function Page() {
           </motion.div>
 
           {/* Live Wins */}
-          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
-            <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
+              Live Wins
+            </h2>
             <ScrollArea>
               <div className="flex gap-4 pb-4">
                 {Array.from({ length: 12 }).map((_, i) => (
                   <MotionCard
                     key={i}
                     className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
-                    whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: "0 0 20px rgba(73,234,203,0.15)",
+                    }}
                   >
                     <div className="relative aspect-video">
-                      <Image src="/placeholder.svg" alt="Game thumbnail" fill className="object-cover" />
+                      <Image
+                        src="/placeholder.svg"
+                        alt="Game thumbnail"
+                        fill
+                        className="object-cover"
+                      />
                       <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                         LIVE
                       </div>
@@ -209,7 +229,9 @@ export default function Page() {
                             height={16}
                             className="rounded-full"
                           />
-                          <span className="text-[#49EACB] font-bold">1,234.56</span>
+                          <span className="text-[#49EACB] font-bold">
+                            1,234.56
+                          </span>
                         </div>
                       </div>
                       <div className="text-sm text-gray-400">2 minutes ago</div>
@@ -217,7 +239,10 @@ export default function Page() {
                   </MotionCard>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+              <ScrollBar
+                orientation="horizontal"
+                className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
+              />
             </ScrollArea>
           </motion.div>
         </main>
