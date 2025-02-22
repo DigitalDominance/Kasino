@@ -13,7 +13,6 @@ import { HowToPlay } from "./how-to-play";
 import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
 import { useRouter } from "next/navigation";
-import { AnimatePresence as FramerPresence } from "framer-motion";
 import type { MinesGame, MinesTile } from "./mines-game";
 import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic";
 import { Bomb, Diamond } from "./icons";
@@ -237,7 +236,8 @@ export default function MinesPage() {
                   setSelectedMultiplier={setSelectedMultiplier}
                 />
               )}
-              {/* Updated LiveChat text color to grey (#B6B6B6) */}
+              {/* LiveChat now receives textColor "#B6B6B6" to render message text in grey,
+                  while the LiveChat component applies a gradient to usernames */}
               <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
             </div>
@@ -273,9 +273,7 @@ export default function MinesPage() {
               <p className="mb-4 flex items-center justify-center text-white">
                 {gameResult === "win" ? (
                   <>
-                    <span className="text-xl">
-                      You won {winAmount?.toFixed(2)}
-                    </span>
+                    <span className="text-xl">You won {winAmount?.toFixed(2)}</span>
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                       alt="KAS"
