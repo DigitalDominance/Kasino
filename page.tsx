@@ -28,8 +28,8 @@ export default function Page() {
 
   // Game cards for Original Games section with their respective images
   const gameCards = [
-    { name: "Roulette", image: "/roulettecard.PNG" },
-    { name: "Crash", image: "/crashcard.PNG" },
+    { name: "roulette", image: "/roulettecard.PNG" },
+    { name: "crash", image: "/crashcard.PNG" },
   ]
 
   return (
