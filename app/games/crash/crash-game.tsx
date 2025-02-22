@@ -282,7 +282,7 @@ export function CrashGame({
     // • 1.25x – 1.5x: follow segments 1 & 2 (ending at P1)
     // • 1.5x – 2x: map to segment 3 (ending at P2)
     // • 2x – 3x: map to segment 4 (ending at P3)
-    // • >3x: follow full curve then extend upward.
+    // • >3x: follow full curve then extend along the tangent.
     const cp = crashPointRef.current || 1;
     let tProgress = 0;
     let extension = 0;
@@ -320,14 +320,18 @@ export function CrashGame({
         tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
       } else {
         tProgress = 1.0;
-        extension = (multiplier - 3) * 50; // Adjust the extension factor as needed.
+        extension = (multiplier - 3) * 50; // Adjust extension factor as needed.
       }
     }
 
     // --- Compute the rocket tip position using the composite curve ---
     let tip = { x: 0, y: 0 };
     if (cp > 3 && multiplier > 3) {
-      tip = { x: P3.x, y: P3.y - extension };
+      // Compute the tangent of the last segment at t=1 using CP1_4.
+      const tangent = { x: P3.x - CP1_4.x, y: P3.y - CP1_4.y };
+      const length = Math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y) || 1;
+      const normTangent = { x: tangent.x / length, y: tangent.y / length };
+      tip = { x: P3.x + normTangent.x * extension, y: P3.y + normTangent.y * extension };
     } else {
       tip = compositeBezier(tProgress);
     }
@@ -359,14 +363,17 @@ export function CrashGame({
     ctx.beginPath();
     const segments = 60;
     if (cp > 3 && multiplier > 3) {
-      // Draw the full composite curve then the extension.
+      // Draw the full composite curve then the extension along the tangent.
       for (let i = 0; i <= segments; i++) {
         const t = i / segments;
         const { x, y } = compositeBezier(t);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-      const extendedTip = { x: P3.x, y: P3.y - extension };
+      const tangent = { x: P3.x - CP1_4.x, y: P3.y - CP1_4.y };
+      const length = Math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y) || 1;
+      const normTangent = { x: tangent.x / length, y: tangent.y / length };
+      const extendedTip = { x: P3.x + normTangent.x * extension, y: P3.y + normTangent.y * extension };
       ctx.lineTo(extendedTip.x, extendedTip.y);
     } else {
       // Draw only the composite curve up to tProgress.
