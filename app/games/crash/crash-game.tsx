@@ -98,7 +98,8 @@ export function CrashGame({
         crashPoint = 7.5 * Math.exp(expR * Math.log(100 / 7.5));
       }
       crashPointRef.current = crashPoint;
-      console.log("Crash point generated, game started!);
+      console.log("Crash point generated, game started!");
+
     }
 
 
