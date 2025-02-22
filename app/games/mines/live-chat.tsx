@@ -18,17 +18,17 @@ interface LiveChatProps {
   textColor?: string;
 }
 
-// Helper to escape regex special characters.
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// Helper to escape a single character for regex.
+function escapeChar(ch: string): string {
+  return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // Generate a regex that matches the banned word even if there are spaces between its letters.
-// Before generating the regex, remove all spaces from the banned word.
+// First remove all spaces from the word, then escape each character individually and join with \s*.
 function createBannedRegex(word: string): RegExp {
   const trimmed = word.replace(/\s+/g, "");
-  const escaped = escapeRegExp(trimmed);
-  const pattern = escaped.split("").join("\\s*");
+  const escapedChars = trimmed.split("").map((ch) => escapeChar(ch));
+  const pattern = escapedChars.join("\\s*");
   return new RegExp(`\\b${pattern}\\b`, "i");
 }
 
@@ -38,7 +38,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const socketRef = useRef<Socket | null>(null);
   const { isConnected, username } = useWallet();
 
-  // Comprehensive banned words list with phrases and additional variations.
+  // Comprehensive banned words list (with many variations, phrases, and extra entries)
   const bannedWords = [
     "anal", "anus", "arse", "ass", "asshole", "ballsack", "balls", "bastard", "bitch", "biatch", "bloody",
     "blowjob", "blow job", "bollock", "bollok", "boner", "boob", "bugger", "bum", "butt", "buttplug",
@@ -61,7 +61,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   // Build an array of regexes from the banned words.
   const bannedRegexes = bannedWords.map(createBannedRegex);
 
-  // Custom filter: if any banned regex matches the message, return "*****"
+  // Custom filter: if any banned regex matches, return "*****"; otherwise, return the original message.
   function filterMessage(message: string): string {
     for (const regex of bannedRegexes) {
       if (regex.test(message)) {
