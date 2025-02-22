@@ -26,17 +26,24 @@ export function CrashGame({
   const [hasCrashed, setHasCrashed] = useState(false);
   const requestRef = useRef<number>();
 
-  // Create refs for the images.
-  const rocketImg = useRef<HTMLImageElement>(new Image());
-  const explosionImg = useRef<HTMLImageElement>(new Image());
+  // Create refs for the images, initializing them as null.
+  const rocketImg = useRef<HTMLImageElement | null>(null);
+  const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load the images from the public folder.
+  // Load the images from the public folder in a client-side effect.
   useEffect(() => {
-    rocketImg.current.src = "/rocket.svg";
-    explosionImg.current.src = "/explode.svg";
+    if (typeof window !== "undefined") {
+      const rocket = new Image();
+      rocket.src = "/rocket.svg";
+      rocketImg.current = rocket;
+
+      const explosion = new Image();
+      explosion.src = "/explode.svg";
+      explosionImg.current = explosion;
+    }
   }, []);
 
-  // Use a ref for the crash point so it’s computed only once per round.
+  // Use a ref for the crash point so it's computed only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -113,9 +120,11 @@ export function CrashGame({
 
     // Choose the image: rocket while running, explosion when crashed.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
-    const imgSize = 40; // Size for the rocket/explosion image.
-    // Draw the image centered on the tip of the line.
-    ctx.drawImage(img, rocketX - imgSize / 2, lineY - imgSize / 2, imgSize, imgSize);
+    if (img) {
+      const imgSize = 40; // Size for the rocket/explosion image.
+      // Draw the image centered on the tip of the line.
+      ctx.drawImage(img, rocketX - imgSize / 2, lineY - imgSize / 2, imgSize, imgSize);
+    }
 
     // Optionally, display the multiplier text.
     ctx.font = "24px Arial";
