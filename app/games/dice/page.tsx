@@ -1,102 +1,58 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, Info } from "lucide-react"
-import Link from "next/link"
-import { SiteFooter } from "@/components/site-footer"
-import { DiceGame } from "./dice-game"
-import { DiceControls } from "./dice-controls"
-import { LiveChat } from "../mines/live-chat"
-import { LiveWins } from "../mines/live-wins"
-import { WalletConnection } from "@/components/wallet-connection"
-import { useWallet } from "@/contexts/WalletContext"
-import "./styles.css"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Info } from "lucide-react";
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { DiceGame } from "./dice-game";
+import { DiceControls } from "./dice-controls";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
+import { WalletConnection } from "@/components/wallet-connection";
+import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { Montserrat } from "next/font/google";
+import "./styles.css";
 
-export default function DicePage() {
-  const { isConnected, balance } = useWallet()
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [betAmount, setBetAmount] = useState("0.00")
-  const [showHowToPlay, setShowHowToPlay] = useState(false)
-  const [gameResult, setGameResult] = useState<string | null>(null)
-  const [winAmount, setWinAmount] = useState<number | null>(null)
-  const [selectedMultiplier, setSelectedMultiplier] = useState(2)
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
 
-  // useEffect(() => {
-  //   checkKaswareWallet()
-  // }, [])
-
-  // const checkKaswareWallet = async () => {
-  //   const kasware = (window as any).kasware
-  //   if (kasware) {
-  //     const accounts = await kasware.getAccounts()
-  //     if (accounts.length > 0) {
-  //       setIsWalletConnected(true)
-  //       setUser({ username: accounts[0] })
-  //       await getBalance()
-  //     }
-  //   }
-  // }
-
-  // const connectWallet = async () => {
-  //   try {
-  //     const kasware = (window as any).kasware
-  //     if (kasware) {
-  //       const accounts = await kasware.requestAccounts()
-  //       if (accounts.length > 0) {
-  //         setIsWalletConnected(true)
-  //         setUser({ username: accounts[0] })
-  //         await getBalance()
-  //       }
-  //     } else {
-  //       console.error("Kasware wallet not found")
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to connect wallet:", error)
-  //   }
-  // }
-
-  // const getBalance = async () => {
-  //   try {
-  //     const kasware = (window as any).kasware
-  //     if (kasware) {
-  //       const balanceData = await kasware.getBalance()
-  //       setBalance(Number(balanceData.total) / Math.pow(10, 8))
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to get balance:", error)
-  //   }
-  // }
+function DiceContent() {
+  const { isConnected, balance } = useWallet();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [betAmount, setBetAmount] = useState("0.00");
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [winAmount, setWinAmount] = useState<number | null>(null);
+  const [selectedMultiplier, setSelectedMultiplier] = useState(2);
 
   const handleRollDice = () => {
-    const bet = Number(betAmount)
+    const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount")
-      return
+      alert("Invalid bet amount");
+      return;
     }
-    // setBalance((prevBalance) => prevBalance - bet)
-    setIsPlaying(true)
-  }
+    setIsPlaying(true);
+  };
 
   const handleGameEnd = (result: string, winAmount: number) => {
-    setGameResult(result)
-    setWinAmount(winAmount)
-    setIsPlaying(false)
-    // if (winAmount > 0) {
-    //   setBalance((prevBalance) => prevBalance + winAmount)
-    // }
-  }
+    setGameResult(result);
+    setWinAmount(winAmount);
+    setIsPlaying(false);
+  };
 
   const resetGame = () => {
-    setIsPlaying(false)
-    setGameResult(null)
-    setWinAmount(null)
-  }
+    setIsPlaying(false);
+    setGameResult(null);
+    setWinAmount(null);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -108,21 +64,6 @@ export default function DicePage() {
               </Link>
             </motion.div>
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              {/* {!isWalletConnected ? (
-                <Button
-                  className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
-                  onClick={connectWallet}
-                >
-                  Connect Wallet
-                </Button>
-              ) : user ? (
-                <div className="text-[#49EACB]">
-                  <span>Welcome, {user.username}!</span>
-                  <span className="ml-4">Balance: {balance.toFixed(8)} KAS</span>
-                </div>
-              ) : (
-                <span className="text-[#49EACB]">Creating account...</span>
-              )} */}
               <WalletConnection />
             </motion.div>
           </header>
@@ -185,16 +126,20 @@ export default function DicePage() {
               <li>The game has the following odds:</li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the odds be in your favor!</p>
-            <Button
-              onClick={() => setShowHowToPlay(false)}
-              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-            >
+            <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
               Got it!
             </Button>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
+export default function DicePage() {
+  return (
+    <WalletProvider>
+      <DiceContent />
+    </WalletProvider>
+  );
+}
