@@ -148,9 +148,5 @@ function CoinFlipContent() {
 }
 
 export default function CoinFlipPage() {
-  return (
-    <WalletProvider>
-      <CoinFlipContent />
-    </WalletProvider>
-  );
+  return <CoinFlipContent />;
 }
