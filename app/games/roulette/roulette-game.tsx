@@ -170,7 +170,8 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     // We want the center of the winning segment to align with the pointer.
     // Assume pointer should be at 90° (top center).
     const pointerAngle = 90;
-    const targetRotation = rotations * 360 + (pointerAngle - (winningIndex + 0.5) * segmentAngle);
+    const targetRotation = rotations * 360 + (pointerAngle - (winningIndex + 0.5) * segmentAngle) - 120;
+
 
     const startTime = performance.now();
     setSpinning(true);
