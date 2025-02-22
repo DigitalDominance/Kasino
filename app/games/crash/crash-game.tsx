@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Camera offset ref for smooth following.
+  // Camera offset ref for positioning.
   const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Compute the crash multiplier only once per round.
@@ -82,7 +82,7 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Adjust growth rate as needed.
+    const growthRate = 0.5; // Unchanged multiplier growth.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -105,7 +105,7 @@ export function CrashGame({
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
     };
-  }, [isPlaying]);
+  }, [isPlaying, onGameEnd]);
 
   // Cubic Bézier helper.
   const cubicBezier = (
@@ -145,54 +145,68 @@ export function CrashGame({
     // Clear the entire canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // ---
-    // Draw the multiplier text first (as a background layer).
+    // --- Draw the multiplier text (background layer) ---
     ctx.save();
     ctx.resetTransform();
-    ctx.font = "48px Arial"; // Bigger font.
+    ctx.font = "48px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    // Center the text horizontally; position it at 50% of height.
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
-    // ---
+    // -------------------------------------------------------
 
     // Define the cubic Bézier curve points for the rocket path.
-    // The curve starts at the bottom left.
     const margin = 20;
     const P0 = { x: margin, y: height - margin };
-    // P1: Start by moving right (almost horizontal).
     const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
-    // P2: Then begin curving upward.
     const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
-    // P3: End toward the top right.
     const P3 = { x: width - margin, y: margin };
 
-    // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
-
-    // Determine the rocket tip along the curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
-    // --- Camera Transform with Dynamic Zoom ---
-    // We want the rocket to appear at a fixed "desired" position.
-    const desired = { x: width / 2, y: height * 0.7 };
-    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
-    // Smoothly interpolate the camera offset.
-    cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
-    cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
+    // --- Preset Zoom Factors ---
+    // Use if statements based on the multiplier to set a fixed zoom factor.
+    let zoom = 1;
+    if (multiplier < 1.5) {
+      zoom = 3; // very zoomed in
+    } else if (multiplier < 2) {
+      zoom = 2.5;
+    } else if (multiplier < 3) {
+      zoom = 2;
+    } else if (multiplier < 5) {
+      zoom = 1.8;
+    } else if (multiplier < 7.5) {
+      zoom = 1.5;
+    } else if (multiplier < 10) {
+      zoom = 1.2;
+    } else {
+      zoom = 1;
+    }
+    // --------------------------------------------------
+
+    // --- Camera Transform ---
+    // We want the rocket tip to always appear in the same fixed position inside the container.
+    // Here we choose the center of the container.
+    const desired = { x: width / 2, y: height / 2 };
+    // Since scaling is applied after translation, we want:
+    // zoom * (tip + offset) = desired  =>  offset = desired/zoom - tip.
+    const targetOffset = {
+      x: desired.x / zoom - tip.x,
+      y: desired.y / zoom - tip.y,
+    };
+
+    // Optionally, you could smooth the offset transition here.
+    cameraOffsetRef.current = targetOffset;
     const cameraOffset = cameraOffsetRef.current;
-    // Dynamic zoom: zoom in when progress is low, zoom out as progress increases.
-    const zoom = 3 - 1.5 * tProgress;
+    // --------------------------------------------------
+
     ctx.save();
-    // Apply camera translation and dynamic scaling.
     ctx.translate(cameraOffset.x, cameraOffset.y);
     ctx.scale(zoom, zoom);
-    // ---
 
-    // Draw the partial cubic Bézier curve.
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
@@ -206,14 +220,13 @@ export function CrashGame({
     ctx.lineCap = "round";
     ctx.stroke();
 
-    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
-    // ---
+    // --------------------------------------------------
   }, [multiplier, hasCrashed]);
 
   return (
