@@ -17,22 +17,22 @@ export default function Page() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Banner images array – add more image paths here as needed.
-  const banners = [
+  // Renamed to mainBanners for clarity – these images are loaded from your public folder.
+  const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
   ]
 
-  // Game cards for the Original Games section.
+  // Game cards for Original Games section with only the specified images.
   const gameCards = [
     { name: "Roulette", image: "/roulettecard.PNG" },
     { name: "Crash", image: "/crashcard.PNG" },
   ]
 
   const nextBanner = () =>
-    setCurrentBanner((prev) => (prev + 1) % banners.length)
+    setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
   const prevBanner = () =>
-    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
+    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length)
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -47,11 +47,7 @@ export default function Page() {
             className="text-[#49EACB] hover:bg-[#49EACB]/10"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            {isSidebarOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </MotionButton>
           <span className="text-2xl font-bold text-[#49EACB]">Kasino</span>
         </div>
@@ -90,7 +86,6 @@ export default function Page() {
                   className="w-full bg-[#49EACB]/5 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#49EACB]/30 border border-[#49EACB]/10 transition-all duration-300"
                 />
               </div>
-
               <div className="mt-4 space-y-2">
                 <Link
                   href="#"
@@ -113,7 +108,7 @@ export default function Page() {
             className="relative mb-12 h-[300px]"
           >
             <div className="relative w-full h-full overflow-hidden rounded-lg">
-              {banners.map((banner, index) => (
+              {mainBanners.map((banner, index) => (
                 <motion.div
                   key={index}
                   className="absolute inset-0"
@@ -123,7 +118,7 @@ export default function Page() {
                 >
                   <Image
                     src={banner}
-                    alt="Banner image"
+                    alt="Main Banner"
                     fill
                     className="object-cover"
                   />
@@ -156,7 +151,7 @@ export default function Page() {
               {gameCards.map((game, i) => (
                 <MotionCard
                   key={i}
-                  className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
+                  className="group relative overflow-hidden border border-[#49EACB]/10 bg-transparent"
                   whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73,234,203,0.15)" }}
                   transition={{ duration: 0.3 }}
                 >
@@ -167,7 +162,6 @@ export default function Page() {
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <MotionButton
                       className="absolute bottom-4 left-4 right-4 bg-[#49EACB] text-black font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
                       whileHover={{ scale: 1.02 }}
@@ -186,15 +180,13 @@ export default function Page() {
             </div>
           </motion.div>
 
-          {/* Live Wins */}
+          {/* Live Wins (remains unchanged) */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
-              Live Wins
-            </h2>
+            <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
             <ScrollArea>
               <div className="flex gap-4 pb-4">
                 {Array.from({ length: 12 }).map((_, i) => (
