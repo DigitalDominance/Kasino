@@ -10,11 +10,17 @@ import { RouletteGame } from "./roulette-game";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet } from "@/contexts/WalletContext";
+import { useWallet, WalletProvider } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
+import { Montserrat } from "next/font/google";
 import "./styles.css";
 
-export default function RoulettePage() {
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
+
+function RouletteContent() {
   const { isConnected, connectWallet, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
@@ -60,7 +66,7 @@ export default function RoulettePage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -149,5 +155,13 @@ export default function RoulettePage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function RoulettePage() {
+  return (
+    <WalletProvider>
+      <RouletteContent />
+    </WalletProvider>
   );
 }
