@@ -342,7 +342,8 @@ export function CrashGame({
       scale = 3 / multiplier; // Adjust zoom rate as needed.
       const desired = { x: width / 2, y: height * 0.7 };
       const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
-      cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
+      // Slow down horizontal camera movement by using a smaller interpolation factor.
+      cameraOffsetRef.current.x += 0.05 * (targetOffset.x - cameraOffsetRef.current.x);
       cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     }
     const cameraOffset = cameraOffsetRef.current;
