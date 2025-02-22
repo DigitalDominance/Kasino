@@ -59,7 +59,7 @@ export function CrashGame({
       console.log("Crash point:", crashPointRef.current);
     }
     const start = performance.now();
-    const growthRate = 0.01; // Use your working growth rate.
+    const growthRate = 0.05; // Use your working growth rate.
     const animate = (time: number) => {
       const elapsed = time - start; // elapsed in ms
       setTimeElapsed(elapsed);
