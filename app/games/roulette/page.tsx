@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { RouletteControls } from "./roulette-controls";
@@ -10,65 +10,22 @@ import { RouletteGame } from "./roulette-game";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
+import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import "./styles.css";
 
 export default function RoulettePage() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { isConnected, connectWallet, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
-  const [balance, setBalance] = useState(0);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   useEffect(() => {
-    checkKaswareWallet();
+    // You can perform additional wallet-related checks here if needed.
   }, []);
-
-  const checkKaswareWallet = async () => {
-    const kasware = (window as any).kasware;
-    if (kasware) {
-      const accounts = await kasware.getAccounts();
-      if (accounts.length > 0) {
-        setIsWalletConnected(true);
-        setUser({ username: accounts[0] });
-        await getBalance();
-      }
-    }
-  };
-
-  const connectWallet = async () => {
-    try {
-      const kasware = (window as any).kasware;
-      if (kasware) {
-        const accounts = await kasware.requestAccounts();
-        if (accounts.length > 0) {
-          setIsWalletConnected(true);
-          setUser({ username: accounts[0] });
-          await getBalance();
-        }
-      } else {
-        console.error("Kasware wallet not found");
-      }
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-    }
-  };
-
-  const getBalance = async () => {
-    try {
-      const kasware = (window as any).kasware;
-      if (kasware) {
-        const balanceData = await kasware.getBalance();
-        setBalance(Number(balanceData.total) / Math.pow(10, 8));
-      }
-    } catch (error) {
-      console.error("Failed to get balance:", error);
-    }
-  };
 
   const handleSpinRoulette = () => {
     if (!selectedBet) return;
@@ -78,7 +35,7 @@ export default function RoulettePage() {
       return;
     }
     // Deduct bet amount.
-    setBalance((prev) => prev - bet);
+    // (In a production app, you might want to update the balance after confirming the bet transaction.)
     setGameResult(null);
     setWinAmount(null);
     setIsPlaying(true);
@@ -89,7 +46,8 @@ export default function RoulettePage() {
     setWinAmount(winAmount);
     setIsPlaying(false);
     if (winAmount > 0) {
-      setBalance((prev) => prev + winAmount);
+      // Update balance if the player wins.
+      // (You might also re-fetch the balance from the wallet instead.)
     }
     setSelectedBet(null);
   };
@@ -111,7 +69,7 @@ export default function RoulettePage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Games
             </Link>
-            <WalletConnection onConnect={connectWallet} isConnected={isWalletConnected} />
+            <WalletConnection onConnect={connectWallet} isConnected={isConnected} />
           </motion.div>
 
           {/* Game Area */}
@@ -130,7 +88,7 @@ export default function RoulettePage() {
                 betAmount={betAmount}
                 setBetAmount={setBetAmount}
                 isPlaying={isPlaying}
-                isWalletConnected={isWalletConnected}
+                isWalletConnected={isConnected}
                 balance={balance}
                 onSpinRoulette={handleSpinRoulette}
                 gameResult={gameResult}
