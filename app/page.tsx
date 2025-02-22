@@ -45,6 +45,52 @@ export default function Page() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ]
 
+  // New liveWins array with several examples for Crash and Roulette
+  const liveWins = [
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "CrashPlayer1",
+      amount: "1,234.56",
+      time: "2 minutes ago",
+    },
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "CrashPlayer2",
+      amount: "2,345.67",
+      time: "5 minutes ago",
+    },
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "CrashPlayer3",
+      amount: "3,456.78",
+      time: "10 minutes ago",
+    },
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "RoulettePlayer1",
+      amount: "987.65",
+      time: "3 minutes ago",
+    },
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "RoulettePlayer2",
+      amount: "1,111.11",
+      time: "7 minutes ago",
+    },
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "RoulettePlayer3",
+      amount: "1,222.22",
+      time: "12 minutes ago",
+    },
+  ]
+
   const nextBanner = () =>
     setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
   const prevBanner = () =>
@@ -169,7 +215,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-12 h-[300px]"
+                  className="relative mb-12 h-[26vh]"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
                     {mainBanners.map((banner, index) => (
@@ -278,22 +324,28 @@ export default function Page() {
                       animate={{ x: 0 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
-                      {Array.from({ length: 12 }).map((_, i) => (
+                      {liveWins.map((win, i) => (
                         <MotionCard
                           key={i}
                           className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
-                          <div className="relative aspect-video">
-                            <Image src="/placeholder.svg" alt="Game thumbnail" layout="fill" objectFit="cover" />
+                          <div className="relative aspect-[4/3]">
+                            <Image
+                              src={win.image}
+                              alt={`${win.game} card`}
+                              layout="fill"
+                              objectFit="cover"
+                              className="object-cover"
+                            />
                             <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                               LIVE
                             </div>
                           </div>
                           <div className="p-4">
-                            <div className="font-semibold mb-2">Player123</div>
+                            <div className="font-semibold mb-2">{win.player}</div>
                             <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm text-[#49EACB]">Crash Game</div>
+                              <div className="text-sm text-[#49EACB]">{win.game} Game</div>
                               <div className="flex items-center gap-1.5">
                                 <Image
                                   src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -302,10 +354,10 @@ export default function Page() {
                                   height={16}
                                   className="rounded-full"
                                 />
-                                <span className="text-[#49EACB] font-bold">1,234.56</span>
+                                <span className="text-[#49EACB] font-bold">{win.amount}</span>
                               </div>
                             </div>
-                            <div className="text-sm text-gray-400">2 minutes ago</div>
+                            <div className="text-sm text-gray-400">{win.time}</div>
                           </div>
                         </MotionCard>
                       ))}
