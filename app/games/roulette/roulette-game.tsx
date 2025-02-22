@@ -131,16 +131,17 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     } else if (type === "even" && winningNumber !== 0 && winningNumber % 2 === 0) {
       winAmount = amount * 2;
     } else if (type === "1st12" && winningNumber >= 1 && winningNumber <= 12) {
-      winAmount = amount * 2.5;
+      winAmount = amount * 3;
     } else if (type === "2nd12" && winningNumber >= 13 && winningNumber <= 24) {
-      winAmount = amount * 2.5;
+      winAmount = amount * 3;
     } else if (type === "3rd12" && winningNumber >= 25 && winningNumber <= 36) {
-      winAmount = amount * 2.5;
+      winAmount = amount * 3;
     } else if (type === "green" && winningNumber === 0) {
       winAmount = amount * 10;
     }
     return winAmount;
   };
+
 
   useEffect(() => {
     if (!isPlaying) return;
