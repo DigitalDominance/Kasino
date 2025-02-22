@@ -12,6 +12,10 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
+// Custom icons from react-icons
+import { FaGamepad } from "react-icons/fa"
+import { GiTrophyCup } from "react-icons/gi"
+
 const glowAnimation = `
   @keyframes glow {
     0% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
@@ -210,9 +214,9 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 h-[26vh] sm:h-[45vh] -mt-4 sm:mt-0"
+                  className="relative mb-6 sm:mb-12 h-[26vh] sm:h-[45vh] -mt-6 sm:mt-0"
                 >
-                  <div className="relative w-full h-full overflow-hidden rounded-lg">
+                  <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
                     {mainBanners.map((banner, index) => (
                       <motion.div
                         key={index}
@@ -252,7 +256,9 @@ export default function Page() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
+                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
+                    <FaGamepad className="inline-block mr-2" /> Original Games
+                  </h2>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
                       <motion.div
@@ -263,7 +269,7 @@ export default function Page() {
                       >
                         <Link href={`/games/${game.slug}`} key={i}>
                           <MotionCard
-                            className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm max-md:bg-transparent"
+                            className="group relative overflow-hidden border-none bg-transparent"
                             whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
                             transition={{ duration: 0.3 }}
                           >
@@ -279,7 +285,7 @@ export default function Page() {
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="rounded-lg transition-transform duration-300 group-hover:scale-110"
+                                className="transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
@@ -311,7 +317,9 @@ export default function Page() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
+                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
+                    <GiTrophyCup className="inline-block mr-2" /> Live Wins
+                  </h2>
                   <ScrollArea>
                     <motion.div
                       className="flex gap-4 pb-4"
@@ -322,7 +330,7 @@ export default function Page() {
                       {liveWins.map((win, i) => (
                         <MotionCard
                           key={i}
-                          className="flex-shrink-0 w-[280px] max-md:w-[180px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm max-md:bg-transparent overflow-hidden"
+                          className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
                           <div className="relative aspect-[4/3]">
@@ -331,7 +339,7 @@ export default function Page() {
                               alt={`${win.game} card`}
                               layout="fill"
                               objectFit="cover"
-                              className="rounded-lg object-cover"
+                              className="object-cover"
                             />
                             <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                               LIVE
