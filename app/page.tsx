@@ -11,9 +11,15 @@ import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
+import { Montserrat } from "next/font/google"  // Import Montserrat font
 
 // Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
+
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+})
 
 const MotionCard = motion(Card)
 const MotionButton = motion(Button)
@@ -93,10 +99,10 @@ export default function Page() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className={`${montserrat.className} min-h-screen bg-black`}>
       {/* Global Styles: Gradient, glow, nav hover, and icon coloring */}
       <style jsx global>{`
-        /* Animated gradient for headings: from #49EACB to a contrasting #006D5B */
+        /* Animated gradient for headings: from #49EACB to #006D5B */
         @keyframes gradientAnimation {
           0% {
             background-position: 0% 50%;
