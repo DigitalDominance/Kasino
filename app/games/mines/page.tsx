@@ -348,9 +348,5 @@ function MinesContent() {
 }
 
 export default function MinesPage() {
-  return (
-    <WalletProvider>
-      <MinesContent />
-    </WalletProvider>
-  );
+  return <MinesContent />;
 }
