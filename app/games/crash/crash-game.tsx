@@ -30,7 +30,7 @@ export function CrashGame({
   const rocketImg = useRef<HTMLImageElement | null>(null);
   const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load images only in the browser.
+  // Load images on the client.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const rocket = new Image();
@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Use a ref so the crash point is computed only once per round.
+  // Compute the crash multiplier once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -51,7 +51,6 @@ export function CrashGame({
 
     setHasCrashed(false);
 
-    // Generate the crash point based on custom odds.
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
@@ -65,7 +64,7 @@ export function CrashGame({
         // 20% chance: Uniform between 2 and 3.
         crashPoint = 2 + Math.random();
       } else {
-        // Remaining 20%: Exponential between 3 and 100 (log-uniform).
+        // Remaining 20%: Log-uniform (exponential) between 3 and 100.
         const expR = Math.random();
         crashPoint = 3 * Math.exp(expR * Math.log(100 / 3));
       }
@@ -74,7 +73,7 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Adjust as needed.
+    const growthRate = 0.5;
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -99,7 +98,7 @@ export function CrashGame({
     };
   }, [isPlaying]);
 
-  // Cubic Bézier helper.
+  // Cubic Bézier helper function.
   const cubicBezier = (
     P0: { x: number; y: number },
     P1: { x: number; y: number },
@@ -121,35 +120,35 @@ export function CrashGame({
     return { x, y };
   };
 
-  // Draw the game on the canvas.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Handle device pixel ratio.
+    // Adjust for device pixel ratio.
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.clientWidth * dpr;
     canvas.height = canvas.clientHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear canvas (transparent background).
+    // Clear the canvas (transparent background).
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     const margin = 20;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Define cubic Bézier curve points.
+    // Define cubic Bézier curve points for the upward/rightward path.
     // P0: Bottom left of the container.
     const P0 = { x: margin, y: height - margin };
-    // P3: End point toward the right. Here we choose a point near the right edge, but not fully at the top.
-    const P3 = { x: width - margin, y: height * 0.4 };
-    // P1: A control point above P0 to direct the curve upward.
+    // P1: Control point to push the curve upward.
     const P1 = { x: margin, y: height * 0.6 };
-    // P2: A control point to bend the curve rightward.
-    const P2 = { x: width * 0.6, y: height * 0.2 };
+    // P2 and P3 have been reversed relative to the previous version:
+    // P2: Now with a higher y value (staying more upward).
+    const P2 = { x: width * 0.6, y: height * 0.4 };
+    // P3: End point is further right and higher (lower y) so the curve remains upward.
+    const P3 = { x: width - margin, y: height * 0.2 };
 
     // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
