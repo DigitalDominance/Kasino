@@ -320,7 +320,7 @@ export function CrashGame({
         tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
       } else {
         tProgress = 1.0;
-        extension = (multiplier - 3) * 50; // Adjust extension factor as needed.
+        extension = (multiplier - 3) * 80; // Adjust extension factor as needed.
       }
     }
 
