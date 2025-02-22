@@ -57,7 +57,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [spinning, setSpinning] = useState(false);
 
-  // Determine the winning number based on bet type and house edge.
+  // Determine the winning number (house-edge logic unchanged).
   const determineWinningNumber = (): number => {
     const r = Math.random();
     if (r < 0.6 && selectedBet) {
@@ -82,13 +82,11 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
         const other = ROULETTE_NUMBERS.filter((n) => n.num < range.min || n.num > range.max);
         return other[Math.floor(Math.random() * other.length)].num;
       }
-      if (!isNaN(Number(selectedBet.type))) {
-        let randomNum: number;
-        do {
-          randomNum = ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)].num;
-        } while (randomNum === Number(selectedBet.type));
-        return randomNum;
+      if (selectedBet.type === "green") {
+        // For green bet, only win if the number is 0.
+        return 0;
       }
+      // (No single number bet anymore)
     }
     if (selectedBet) {
       if (selectedBet.type === "red" || selectedBet.type === "black") {
@@ -112,14 +110,14 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
         const inRange = ROULETTE_NUMBERS.filter((n) => n.num >= range.min && n.num <= range.max);
         return inRange[Math.floor(Math.random() * inRange.length)].num;
       }
-      if (!isNaN(Number(selectedBet.type))) {
-        return Number(selectedBet.type);
+      if (selectedBet.type === "green") {
+        return 0;
       }
     }
     return ROULETTE_NUMBERS[Math.floor(Math.random() * ROULETTE_NUMBERS.length)].num;
   };
 
-  // Calculate winnings based on bet type.
+  // Calculate winnings with updated rewards.
   const calculateWinnings = (winningNumber: number): number => {
     let winAmount = 0;
     if (!selectedBet) return winAmount;
@@ -133,13 +131,13 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
     } else if (type === "even" && winningNumber !== 0 && winningNumber % 2 === 0) {
       winAmount = amount * 2;
     } else if (type === "1st12" && winningNumber >= 1 && winningNumber <= 12) {
-      winAmount = amount * 3;
+      winAmount = amount * 2.5;
     } else if (type === "2nd12" && winningNumber >= 13 && winningNumber <= 24) {
-      winAmount = amount * 3;
+      winAmount = amount * 2.5;
     } else if (type === "3rd12" && winningNumber >= 25 && winningNumber <= 36) {
-      winAmount = amount * 3;
-    } else if (!isNaN(Number(type)) && Number(type) === winningNumber) {
-      winAmount = amount * 35;
+      winAmount = amount * 2.5;
+    } else if (type === "green" && winningNumber === 0) {
+      winAmount = amount * 10;
     }
     return winAmount;
   };
@@ -147,29 +145,26 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
   useEffect(() => {
     if (!isPlaying) return;
     if (!canvasRef.current) return;
-
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Ensure the canvas is square.
+    // Keep the canvas square.
     const dpr = window.devicePixelRatio || 1;
     const size = canvas.clientWidth;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
-    // Use exactly 3 full rotations.
+    // Exactly 3 full rotations.
     const spinDuration = 6000; // ms
     const rotations = 3;
     const segmentAngle = 360 / ROULETTE_NUMBERS.length;
-    const pointerAngle = 270; // Top center in our coordinate system
+    const pointerAngle = 270; // Top center (canvas coordinate)
 
-    // Determine winning number and its index.
     const winningNumber = determineWinningNumber();
     const winningIndex = ROULETTE_NUMBERS.findIndex((n) => n.num === winningNumber);
-
-    // Compute final rotation so that the center of the winning segment aligns with pointerAngle.
+    // Final rotation so the center of the winning segment lands at pointerAngle.
     const finalRotation = rotations * 360 + ((winningIndex + 0.5) * segmentAngle - pointerAngle);
 
     const startTime = performance.now();
@@ -187,26 +182,25 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
         requestAnimationFrame(animate);
       } else {
         setSpinning(false);
-        const winAmount = calculateWinnings(winningNumber);
-        onGameEnd(winningNumber, winAmount);
+        const winAmt = calculateWinnings(winningNumber);
+        onGameEnd(winningNumber, winAmt);
       }
     };
 
     requestAnimationFrame(animate);
   }, [isPlaying]);
 
-  // Draw the roulette wheel.
+  // Draw the wheel with markers moved 15px up.
   const drawWheel = (ctx: CanvasRenderingContext2D, rotation: number, size: number) => {
     ctx.clearRect(0, 0, size, size);
     const radius = size / 2;
     const center = { x: radius, y: radius };
 
-    // Draw each segment with a marker.
     ROULETTE_NUMBERS.forEach((segment, i) => {
       const startAngle = ((i * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
       const endAngle = (((i + 1) * (360 / ROULETTE_NUMBERS.length) - rotation) * Math.PI) / 180;
       
-      // Draw the segment.
+      // Draw segment.
       ctx.beginPath();
       ctx.moveTo(center.x, center.y);
       ctx.arc(center.x, center.y, radius, startAngle, endAngle);
@@ -218,7 +212,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Draw the number text.
+      // Draw number text.
       const textAngle = (startAngle + endAngle) / 2;
       const textRadius = radius * 0.65;
       const textX = center.x + textRadius * Math.cos(textAngle);
@@ -229,10 +223,10 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.textBaseline = "middle";
       ctx.fillText(segment.num.toString(), textX, textY);
 
-      // Draw a marker along the outer edge.
+      // Draw marker along outer edge (move marker 15px up).
       const markerRadius = radius * 0.9;
       const markerX = center.x + markerRadius * Math.cos(textAngle);
-      const markerY = center.y + markerRadius * Math.sin(textAngle);
+      const markerY = center.y + markerRadius * Math.sin(textAngle) - 15;
       ctx.beginPath();
       ctx.arc(markerX, markerY, 4, 0, Math.PI * 2);
       ctx.closePath();
@@ -240,7 +234,7 @@ export function RouletteGame({ isPlaying, selectedBet, onGameEnd, betAmount }: R
       ctx.fill();
     });
 
-    // Draw the fixed pointer at the top.
+    // Draw fixed pointer at top center.
     ctx.fillStyle = "#49EACB";
     ctx.beginPath();
     ctx.moveTo(center.x - 12, 20);
