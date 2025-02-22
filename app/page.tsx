@@ -28,7 +28,8 @@ export default function Page() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // New mainBanners array using your public folder images (1920x500)
+  // mainBanners now holds your banner images (1920×500). The container is fixed at 300px height,
+  // and the images are scaled down (objectFit="contain") so the full image is visible.
   const mainBanners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
@@ -40,6 +41,24 @@ export default function Page() {
     { name: "Roulette", players: 765, slug: "roulette" },
     { name: "Dice", players: 543, slug: "dice" },
     { name: "Coin Flip", players: 321, slug: "coinflip" },
+  ]
+
+  // New liveWins array uses your card images as examples.
+  const liveWins = [
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "Player123",
+      amount: "1,234.56",
+      time: "2 minutes ago",
+    },
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "Player456",
+      amount: "987.65",
+      time: "3 minutes ago",
+    },
   ]
 
   const nextBanner = () =>
@@ -275,22 +294,28 @@ export default function Page() {
                       animate={{ x: 0 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
-                      {Array.from({ length: 12 }).map((_, i) => (
+                      {liveWins.map((win, i) => (
                         <MotionCard
                           key={i}
                           className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
                           whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                         >
                           <div className="relative aspect-video">
-                            <Image src="/placeholder.svg" alt="Game thumbnail" layout="fill" objectFit="cover" />
+                            <Image
+                              src={win.image}
+                              alt={`${win.game} card`}
+                              layout="fill"
+                              objectFit="contain"
+                              className="object-contain"
+                            />
                             <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                               LIVE
                             </div>
                           </div>
                           <div className="p-4">
-                            <div className="font-semibold mb-2">Player123</div>
+                            <div className="font-semibold mb-2">{win.player}</div>
                             <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm text-[#49EACB]">Crash Game</div>
+                              <div className="text-sm text-[#49EACB]">{win.game} Game</div>
                               <div className="flex items-center gap-1.5">
                                 <Image
                                   src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -299,10 +324,10 @@ export default function Page() {
                                   height={16}
                                   className="rounded-full"
                                 />
-                                <span className="text-[#49EACB] font-bold">1,234.56</span>
+                                <span className="text-[#49EACB] font-bold">{win.amount}</span>
                               </div>
                             </div>
-                            <div className="text-sm text-gray-400">2 minutes ago</div>
+                            <div className="text-sm text-gray-400">{win.time}</div>
                           </div>
                         </MotionCard>
                       ))}
