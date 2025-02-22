@@ -12,15 +12,28 @@ import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
-// Custom icons from react-icons (remember to install react-icons: npm install react-icons)
-import { FaGamepad } from "react-icons/fa"
-import { GiTrophyCup } from "react-icons/gi"
+// Custom icons from react-icons
+// Replaced FaGamepad with GiCheerful for Original Games
+// Replaced GiTrophyCup with GiStarFormation for Live Wins
+import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
 const glowAnimation = `
   @keyframes glow {
     0% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
     50% { box-shadow: 0 0 10px rgba(73, 234, 203, 0.5), 0 0 20px rgba(73, 234, 203, 0.5), 0 0 30px rgba(73, 234, 203, 0.5); }
     100% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
+  }
+`
+
+const gradientAnimation = `
+  @keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientAnimation 5s ease infinite;
   }
 `
 
@@ -209,6 +222,9 @@ export default function Page() {
 
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
+                {/* Inject gradient animation styles */}
+                <style jsx>{gradientAnimation}</style>
+
                 {/* Banner Carousel */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
@@ -257,8 +273,8 @@ export default function Page() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
-                    <FaGamepad className="inline-block mr-2" /> Original Games
+                  <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#49EACB] to-black bg-clip-text text-transparent animate-gradient hover:scale-105 transition-transform duration-300">
+                    <GiCheerful className="inline-block mr-2" /> Original Games
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
@@ -319,8 +335,8 @@ export default function Page() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">
-                    <GiTrophyCup className="inline-block mr-2" /> Live Wins
+                  <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#49EACB] to-black bg-clip-text text-transparent animate-gradient hover:scale-105 transition-transform duration-300">
+                    <GiStarFormation className="inline-block mr-2" /> Live Wins
                   </h2>
                   <ScrollArea>
                     <motion.div
