@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 
 import { useRef, useEffect, useState } from "react";
 
@@ -49,12 +49,21 @@ export function CrashGame({
   // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
 
-  // Ref for randomized control points for the rocket's path.
+  // Updated: Ref for composite control points for the rocket's path.
   const controlPointsRef = useRef<{
     P0: { x: number; y: number };
+    P0_1: { x: number; y: number };
     P1: { x: number; y: number };
     P2: { x: number; y: number };
     P3: { x: number; y: number };
+    CP0: { x: number; y: number };
+    CP1: { x: number; y: number };
+    CP0_2: { x: number; y: number };
+    CP1_2: { x: number; y: number };
+    CP0_3: { x: number; y: number };
+    CP1_3: { x: number; y: number };
+    CP0_4: { x: number; y: number };
+    CP1_4: { x: number; y: number };
   } | null>(null);
 
   useEffect(() => {
@@ -145,7 +154,7 @@ export function CrashGame({
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
-
+    
     // Clear canvas.
     ctx.clearRect(0, 0, width, height);
 
@@ -157,11 +166,8 @@ export function CrashGame({
     ctx.textBaseline = "middle";
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
-    // ---
 
-    // ----- Inside the canvas drawing useEffect -----
-
-    // Initialize composite curve if not already set.
+    // --- Initialize composite curve if not already set. ---
     if (!controlPointsRef.current) {
       const margin = 20;
       // Define key points with fixed vertical differences for a smooth upward curve.
@@ -252,7 +258,7 @@ export function CrashGame({
       CP0_4,
       CP1_4,
     } = controlPointsRef.current!;
-    
+
     // Composite Bézier helper – splits the overall parameter (t: 0 to 1) into 4 segments.
     const compositeBezier = (t: number) => {
       if (t <= 0.2) {
@@ -269,9 +275,8 @@ export function CrashGame({
         return cubicBezier(P2, CP0_4, CP1_4, P3, t1);
       }
     };
-    
+
     // --- Determine how far along the path to draw ---
-    // Updated to account for extra segments.
     // For crash points:
     // • 1x – 1.25x: follow segment 1 (P0 → P0_1)
     // • 1.25x – 1.5x: follow segments 1 & 2 (ending at P1)
@@ -318,15 +323,40 @@ export function CrashGame({
         extension = (multiplier - 3) * 50; // Adjust the extension factor as needed.
       }
     }
-    
-    // --- Draw the trajectory line using the composite curve ---
+
+    // --- Compute the rocket tip position using the composite curve ---
+    let tip = { x: 0, y: 0 };
+    if (cp > 3 && multiplier > 3) {
+      tip = { x: P3.x, y: P3.y - extension };
+    } else {
+      tip = compositeBezier(tProgress);
+    }
+
+    // --- Compute camera offset for dynamic zoom ---
+    let scale = 1;
+    if (multiplier > 3) {
+      scale = 3 / multiplier; // Adjust zoom rate as needed.
+      const desired = { x: width / 2, y: height * 0.7 };
+      const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
+      cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
+      cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
+    }
+    const cameraOffset = cameraOffsetRef.current;
+
+    // --- Begin drawing the world (trajectory & rocket) with camera transform ---
+    ctx.save();
+    if (multiplier > 3) {
+      // Apply scaling and translation to keep the rocket and line in view.
+      ctx.scale(scale, scale);
+      ctx.translate(cameraOffset.x / scale, cameraOffset.y / scale);
+    }
+
+    // Draw the trajectory line.
     ctx.save();
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.beginPath();
-    
-    // Increase segments for a smoother curve.
     const segments = 60;
     if (cp > 3 && multiplier > 3) {
       // Draw the full composite curve then the extension.
@@ -349,33 +379,8 @@ export function CrashGame({
     }
     ctx.stroke();
     ctx.restore();
-    
-    // --- Determine the rocket tip position using the composite curve ---
-    let tip = { x: 0, y: 0 };
-    if (cp > 3 && multiplier > 3) {
-      tip = { x: P3.x, y: P3.y - extension };
-    } else {
-      tip = compositeBezier(tProgress);
-    }
-    
-    // --- Adjust the camera transform for tracking & dynamic zoom ---
-    let scale = 1;
-    if (multiplier > 3) {
-      // For multipliers above 3, zoom out so the rocket and line remain visible.
-      scale = 3 / multiplier; // You can tweak this function to adjust the zoom rate.
-    }
-    const desired = { x: width / 2, y: height * 0.7 };
-    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
-    cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
-    cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
-    const cameraOffset = cameraOffsetRef.current;
-    
-    ctx.save();
-    // Apply scaling first, then translate (adjusting the translation by dividing by scale).
-    ctx.scale(scale, scale);
-    ctx.translate(cameraOffset.x / scale, cameraOffset.y / scale);
-    
-    // --- Draw the rocket or explosion image at the tip ---
+
+    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
