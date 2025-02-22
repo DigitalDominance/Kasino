@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 interface RouletteControlsProps {
@@ -17,6 +18,44 @@ interface RouletteControlsProps {
   winAmount: number | null;
   selectedBet: { type: string; amount: number } | null;
   setSelectedBet: (bet: { type: string; amount: number } | null) => void;
+}
+
+// A fancy bet type button with tooltip.
+interface BetTypeButtonProps {
+  bet: { name: string; type: string; description: string };
+  selected: boolean;
+  onClick: () => void;
+  disabled: boolean;
+}
+
+function BetTypeButton({ bet, selected, onClick, disabled }: BetTypeButtonProps) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div className="relative">
+      <Button
+        variant={selected ? "default" : "outline"}
+        className={`border-[#49EACB]/10 ${selected ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"}`}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onClick={onClick}
+        disabled={disabled}
+      >
+        {bet.name}
+      </Button>
+      <AnimatePresence>
+        {hover && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded"
+          >
+            {bet.description}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function RouletteControls({
@@ -53,14 +92,14 @@ export function RouletteControls({
   };
 
   const betTypes = [
-    { name: "Red", type: "red", description: "Win on red (2x)" },
-    { name: "Black", type: "black", description: "Win on black (2x)" },
-    { name: "Odd", type: "odd", description: "Win on odd (2x)" },
-    { name: "Even", type: "even", description: "Win on even (2x)" },
-    { name: "1-12", type: "1st12", description: "Win on numbers 1-12 (2.5x)" },
-    { name: "13-24", type: "2nd12", description: "Win on numbers 13-24 (2.5x)" },
-    { name: "25-36", type: "3rd12", description: "Win on numbers 25-36 (2.5x)" },
-    { name: "Green", type: "green", description: "Win on 0 (10x)" },
+    { name: "Red", type: "red", description: "2x reward" },
+    { name: "Black", type: "black", description: "2x reward" },
+    { name: "Odd", type: "odd", description: "2x reward" },
+    { name: "Even", type: "even", description: "2x reward" },
+    { name: "1-12", type: "1st12", description: "3x reward (1 in 5 chance)" },
+    { name: "13-24", type: "2nd12", description: "3x reward (1 in 5 chance)" },
+    { name: "25-36", type: "3rd12", description: "3x reward (1 in 5 chance)" },
+    { name: "Green", type: "green", description: "10x reward (1 in 37 chance)" },
   ];
 
   return (
@@ -93,17 +132,13 @@ export function RouletteControls({
           <label className="text-sm text-[#49EACB]">Bet Types</label>
           <div className="grid grid-cols-2 gap-2">
             {betTypes.map((bet) => (
-              <Button
+              <BetTypeButton
                 key={bet.type}
-                variant={selectedBet?.type === bet.type ? "default" : "outline"}
-                className={`border-[#49EACB]/10 ${
-                  selectedBet?.type === bet.type ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"
-                }`}
+                bet={bet}
+                selected={selectedBet?.type === bet.type}
                 onClick={() => handleBetTypeSelect(bet.type)}
                 disabled={isPlaying || !isWalletConnected}
-              >
-                {bet.name}
-              </Button>
+              />
             ))}
           </div>
         </div>
