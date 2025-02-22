@@ -54,11 +54,11 @@ export function CrashGame({
 
     // Generate the crash point only once per round.
     if (crashPointRef.current === null) {
-      crashPointRef.current = Math.max(1, 1 / (1 - Math.random() * 0.95));
+      crashPointRef.current = Math.max(1.5, 1 / (1 - Math.random() * 0.95));
       console.log("Crash point:", crashPointRef.current);
     }
     const start = performance.now();
-    const growthRate = 0.1; // Adjust growth rate as needed.
+    const growthRate = 0.5; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
@@ -84,6 +84,22 @@ export function CrashGame({
     };
   }, [isPlaying]);
 
+  // Cubic Bézier helper.
+  const cubicBezier = (P0: any, P1: any, P2: any, P3: any, t: number) => {
+    const mt = 1 - t;
+    const x =
+      mt * mt * mt * P0.x +
+      3 * mt * mt * t * P1.x +
+      3 * mt * t * t * P2.x +
+      t * t * t * P3.x;
+    const y =
+      mt * mt * mt * P0.y +
+      3 * mt * mt * t * P1.y +
+      3 * mt * t * t * P2.y +
+      t * t * t * P3.y;
+    return { x, y };
+  };
+
   // This effect handles drawing the game on the canvas.
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -100,54 +116,48 @@ export function CrashGame({
     // Clear the canvas (transparent background).
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-    // Define margin and full canvas dimensions.
+    // Set margin and dimensions.
     const margin = 20;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Define quadratic Bézier curve points:
-    // Start at bottom-left, end at top-right, with a control point at top-center.
-    const P0 = { x: margin, y: height - margin };
-    const P1 = { x: width / 2, y: margin };
-    const P2 = { x: width - margin, y: margin };
+    // Define cubic Bézier curve points for an upward path:
+    // Start at bottom center, end at top center.
+    const P0 = { x: width / 2, y: height - margin };
+    const P3 = { x: width / 2, y: margin };
+    // Control points offset to the right to create a smooth, upward curve.
+    const P1 = { x: width / 2 + 100, y: height - margin - 100 };
+    const P2 = { x: width / 2 + 100, y: margin + 100 };
 
     // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1.5;
-    const t = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+    const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
 
-    // Use de Casteljau's algorithm for a quadratic Bézier:
-    // A = lerp(P0, P1, t)
-    // B = lerp(P1, P2, t)
-    // C = lerp(A, B, t) -> Point on the curve at parameter t.
-    const A = {
-      x: (1 - t) * P0.x + t * P1.x,
-      y: (1 - t) * P0.y + t * P1.y,
-    };
-    const B = {
-      x: (1 - t) * P1.x + t * P2.x,
-      y: (1 - t) * P1.y + t * P2.y,
-    };
-    const C = {
-      x: (1 - t) * A.x + t * B.x,
-      y: (1 - t) * A.y + t * B.y,
-    };
-
-    // Draw the partial curve from t=0 to t using the subdivided quadratic curve.
+    // Draw the partial cubic Bézier curve by sampling points.
     ctx.beginPath();
-    ctx.moveTo(P0.x, P0.y);
-    // The partial curve can be drawn as a quadratic curve with control point A and endpoint C.
-    ctx.quadraticCurveTo(A.x, A.y, C.x, C.y);
-    ctx.strokeStyle = "#00FF00"; // A bright green.
+    const segments = 30;
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * tProgress;
+      const { x, y } = cubicBezier(P0, P1, P2, P3, t);
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.strokeStyle = "#00FF00"; // Bright green.
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.stroke();
 
+    // Compute the tip point along the curve.
+    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
+
     // Choose the image: rocket while running, explosion when crashed.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
-      const imgSize = 40; // Size for the rocket/explosion image.
-      // Draw the image centered at the point C (tip of the partial curve).
-      ctx.drawImage(img, C.x - imgSize / 2, C.y - imgSize / 2, imgSize, imgSize);
+      const imgSize = 40;
+      ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
 
     // Optionally, display the multiplier text at the bottom.
