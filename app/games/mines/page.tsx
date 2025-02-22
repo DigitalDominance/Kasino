@@ -237,7 +237,8 @@ export default function MinesPage() {
                   setSelectedMultiplier={setSelectedMultiplier}
                 />
               )}
-              <LiveChat textColor="#49EACB" />
+              {/* Updated LiveChat text color to grey (#B6B6B6) */}
+              <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
             </div>
           </div>
@@ -269,19 +270,19 @@ export default function MinesPage() {
                 <X className="h-4 w-4" />
               </Button>
               <h3 className="text-2xl font-bold text-[#49EACB] mb-4">Game Over</h3>
-              <p className="mb-4 flex items-center justify-center">
+              <p className="mb-4 flex items-center justify-center text-white">
                 {gameResult === "win" ? (
                   <>
+                    <span className="text-xl">
+                      You won {winAmount?.toFixed(2)}
+                    </span>
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                       alt="KAS"
                       width={20}
                       height={20}
-                      className="rounded-full mr-2"
+                      className="rounded-full ml-2"
                     />
-                    <span className="text-xl">
-                      You won {winAmount?.toFixed(2)}
-                    </span>
                   </>
                 ) : (
                   "You hit a mine! Better luck next time."
@@ -294,8 +295,8 @@ export default function MinesPage() {
                     min="1"
                     value={betAmount}
                     onChange={(e) => {
-                      const val = Math.max(1, Number(e.target.value))
-                      setBetAmount(val.toString())
+                      const val = Math.max(1, Number(e.target.value));
+                      setBetAmount(val.toString());
                     }}
                     placeholder="Enter bet amount"
                     className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full rounded-md py-2 pl-10 pr-3"
@@ -321,8 +322,6 @@ export default function MinesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-
 
       {/* How to Play Modal */}
       <AnimatePresence>
