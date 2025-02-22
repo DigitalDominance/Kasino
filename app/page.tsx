@@ -58,6 +58,34 @@ export default function Page() {
       amount: "987.65",
       time: "3 minutes ago",
     },
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "Player456",
+      amount: "987.65",
+      time: "3 minutes ago",
+    },
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "Player123",
+      amount: "1,234.56",
+      time: "2 minutes ago",
+    },
+    {
+      game: "Roulette",
+      image: "/roulettecard.PNG",
+      player: "Player123",
+      amount: "1,234.56",
+      time: "2 minutes ago",
+    },
+    {
+      game: "Crash",
+      image: "/crashcard.PNG",
+      player: "Player456",
+      amount: "987.65",
+      time: "3 minutes ago",
+    },
   ]
 
   const nextBanner = () =>
