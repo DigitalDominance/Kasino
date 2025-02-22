@@ -161,67 +161,63 @@ export function CrashGame({
 
     // ----- Inside the canvas drawing useEffect -----
 
-    // Initialize randomized composite curve if not already set.
+    // Initialize composite curve if not already set.
     if (!controlPointsRef.current) {
       const margin = 20;
-      // Define 5 key points.
+      // Define key points with fixed vertical differences for a smooth upward curve.
       const P0 = { x: margin, y: height - margin };
       const P0_1 = {
-        x: margin + (width - 2 * margin) * (0.1 + Math.random() * 0.1),
-        y: height - margin - Math.random() * 20,
+        x: margin + (width - 2 * margin) * (0.15 + Math.random() * 0.05),
+        y: height - margin - 80, // 80 pixels above P0
       };
       const P1 = {
-        x: margin + (width - 2 * margin) * (0.3 + Math.random() * 0.2),
-        y: height - margin - Math.random() * 30,
+        x: margin + (width - 2 * margin) * (0.35 + Math.random() * 0.1),
+        y: height - margin - 150, // 70 pixels above P0_1
       };
       const P2 = {
-        x: margin + (width - 2 * margin) * (0.6 + Math.random() * 0.2),
-        y: height * (0.3 + Math.random() * 0.3),
+        x: margin + (width - 2 * margin) * (0.65 + Math.random() * 0.1),
+        y: height - margin - 250, // 100 pixels above P1
       };
       const P3 = {
-        x: margin + (width - 2 * margin) * (0.9 + Math.random() * 0.1),
-        y: margin + Math.random() * 20,
+        x: margin + (width - 2 * margin) * (0.85 + Math.random() * 0.05),
+        y: margin, // reaches the top
       };
     
-      // Generate randomized control points for each segment.
-      // Segment 1: from P0 to P0_1.
+      // Define control points for each segment using fixed interpolation for smooth transitions.
       const CP0 = {
-        x: P0.x + (P0_1.x - P0.x) * (0.3 + Math.random() * 0.2),
-        y: P0.y - Math.random() * 10,
+        x: P0.x + (P0_1.x - P0.x) * 0.3,
+        y: P0.y - (P0.y - P0_1.y) * 0.3,
       };
       const CP1 = {
-        x: P0.x + (P0_1.x - P0.x) * (0.7 + Math.random() * 0.2),
-        y: P0_1.y + Math.random() * 10,
+        x: P0.x + (P0_1.x - P0.x) * 0.7,
+        y: P0.y - (P0.y - P0_1.y) * 0.7,
       };
     
-      // Segment 2: from P0_1 to P1.
       const CP0_2 = {
-        x: P0_1.x + (P1.x - P0_1.x) * (0.3 + Math.random() * 0.2),
-        y: P0_1.y - Math.random() * 10,
+        x: P0_1.x + (P1.x - P0_1.x) * 0.3,
+        y: P0_1.y - (P0_1.y - P1.y) * 0.3,
       };
       const CP1_2 = {
-        x: P0_1.x + (P1.x - P0_1.x) * (0.7 + Math.random() * 0.2),
-        y: P1.y + Math.random() * 10,
+        x: P0_1.x + (P1.x - P0_1.x) * 0.7,
+        y: P0_1.y - (P0_1.y - P1.y) * 0.7,
       };
     
-      // Segment 3: from P1 to P2.
       const CP0_3 = {
-        x: P1.x + (P2.x - P1.x) * (0.3 + Math.random() * 0.2),
-        y: P1.y - Math.random() * 10,
+        x: P1.x + (P2.x - P1.x) * 0.3,
+        y: P1.y - (P1.y - P2.y) * 0.3,
       };
       const CP1_3 = {
-        x: P1.x + (P2.x - P1.x) * (0.7 + Math.random() * 0.2),
-        y: P2.y + Math.random() * 10,
+        x: P1.x + (P2.x - P1.x) * 0.7,
+        y: P1.y - (P1.y - P2.y) * 0.7,
       };
     
-      // Segment 4: from P2 to P3.
       const CP0_4 = {
-        x: P2.x + (P3.x - P2.x) * (0.3 + Math.random() * 0.2),
-        y: P2.y - Math.random() * 10,
+        x: P2.x + (P3.x - P2.x) * 0.3,
+        y: P2.y - (P2.y - P3.y) * 0.3,
       };
       const CP1_4 = {
-        x: P2.x + (P3.x - P2.x) * (0.7 + Math.random() * 0.2),
-        y: P3.y + Math.random() * 10,
+        x: P2.x + (P3.x - P2.x) * 0.7,
+        y: P2.y - (P2.y - P3.y) * 0.7,
       };
     
       controlPointsRef.current = {
@@ -240,6 +236,7 @@ export function CrashGame({
         CP1_4,
       };
     }
+
     const {
       P0,
       P0_1,
