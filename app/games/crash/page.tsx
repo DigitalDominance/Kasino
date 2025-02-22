@@ -10,11 +10,17 @@ import { CrashControls } from "./crash-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet } from "@/contexts/WalletContext";
+import { useWallet, WalletProvider } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
+import { Montserrat } from "next/font/google";
 import "./styles.css";
 
-export default function CrashPage() {
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
+
+function CrashContent() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
@@ -23,7 +29,6 @@ export default function CrashPage() {
   const [crashPoint, setCrashPoint] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
-  // currentMultiplier is updated live by CrashGame via onMultiplierChange.
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
 
   const handlePlaceBet = () => {
@@ -84,7 +89,7 @@ export default function CrashPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -178,7 +183,6 @@ export default function CrashPage() {
                 hideModal={true}
                 currentMultiplier={currentMultiplier}
               />
-              {/* LiveChat now receives textColor "#B6B6B6" to render message text in grey */}
               <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
             </div>
@@ -210,5 +214,13 @@ export default function CrashPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CrashPage() {
+  return (
+    <WalletProvider>
+      <CrashContent />
+    </WalletProvider>
   );
 }
