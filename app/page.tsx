@@ -11,17 +11,15 @@ import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
+import { Montserrat } from "next/font/google" // Import the Montserrat font
 
 // Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
-const glowAnimation = `
-  @keyframes glow {
-    0% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
-    50% { box-shadow: 0 0 10px rgba(73, 234, 203, 0.5), 0 0 20px rgba(73, 234, 203, 0.5), 0 0 30px rgba(73, 234, 203, 0.5); }
-    100% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
-  }
-`
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+})
 
 const MotionCard = motion(Card)
 const MotionButton = motion(Button)
@@ -101,9 +99,26 @@ export default function Page() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Global Styles for gradient animation and hover effects */}
+    <div className={`${montserrat.className} min-h-screen bg-black`}>
+      {/* Global Styles: Gradient, glow, and hover effects */}
       <style jsx global>{`
+        @keyframes glow {
+          0% {
+            box-shadow: 0 0 5px rgba(73, 234, 203, 0.3),
+              0 0 10px rgba(73, 234, 203, 0.3),
+              0 0 15px rgba(73, 234, 203, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 10px rgba(73, 234, 203, 0.5),
+              0 0 20px rgba(73, 234, 203, 0.5),
+              0 0 30px rgba(73, 234, 203, 0.5);
+          }
+          100% {
+            box-shadow: 0 0 5px rgba(73, 234, 203, 0.3),
+              0 0 10px rgba(73, 234, 203, 0.3),
+              0 0 15px rgba(73, 234, 203, 0.3);
+          }
+        }
         @keyframes gradientAnimation {
           0% {
             background-position: 0% 50%;
@@ -116,7 +131,7 @@ export default function Page() {
           }
         }
         .animate-gradient {
-          background: linear-gradient(270deg, #49EACB, #2A7B68);
+          background: linear-gradient(270deg, #49eacb, #2a7b68);
           background-size: 200% 200%;
           animation: gradientAnimation 5s ease infinite;
           -webkit-background-clip: text;
@@ -124,7 +139,7 @@ export default function Page() {
         }
         .hover-effect:hover {
           transform: scale(1.1) rotate(3deg);
-          filter: drop-shadow(0 0 10px #49EACB);
+          filter: drop-shadow(0 0 10px #49eacb);
         }
       `}</style>
       <LoadingAnimation />
@@ -162,18 +177,11 @@ export default function Page() {
                 </MotionButton>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden hover:animate-glow"
+                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden hover:animate-[glow_2s_infinite]"
                   style={{
-                    animation: "none",
                     transition: "box-shadow 0.3s ease-in-out",
-                    "&:hover": {
-                      animation: "glow 2s infinite",
-                      boxShadow:
-                        "0 0 10px rgba(73, 234, 203, 0.5), 0 0 20px rgba(73, 234, 203, 0.5), 0 0 30px rgba(73, 234, 203, 0.5)",
-                    },
                   }}
                 >
-                  <style jsx>{glowAnimation}</style>
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
                     alt="Kasino Logo"
