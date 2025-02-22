@@ -215,7 +215,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-12 h-[40vh]"
+                  className="relative mb-12 h-[45vh]"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
                     {mainBanners.map((banner, index) => (
