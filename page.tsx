@@ -17,7 +17,7 @@ export default function Page() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Updated banners to use your images
+  // Banner images - add more paths to this array as needed
   const banners = [
     "/roulettebanner.PNG",
     "/crashbanner.PNG",
@@ -25,6 +25,12 @@ export default function Page() {
 
   const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % banners.length)
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
+
+  // Game cards for Original Games section with their respective images
+  const gameCards = [
+    { name: "Roulette", image: "/roulettecard.PNG" },
+    { name: "Crash", image: "/crashcard.PNG" },
+  ]
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -140,8 +146,8 @@ export default function Page() {
             className="mb-12"
           >
             <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {gameCards.map((game, i) => (
                 <MotionCard
                   key={i}
                   className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
@@ -150,8 +156,8 @@ export default function Page() {
                 >
                   <div className="relative aspect-[4/3]">
                     <Image
-                      src={i === 0 ? "/roulettecard.PNG" : "/placeholder.svg"}
-                      alt={i === 0 ? "Roulette Game" : "Game thumbnail"}
+                      src={game.image}
+                      alt={`${game.name} Game`}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
@@ -165,7 +171,7 @@ export default function Page() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                      {i === 0 ? "Roulette" : "Game Name"}
+                      {game.name}
                     </h3>
                     <p className="text-sm text-gray-400">1,234 Players</p>
                   </div>
