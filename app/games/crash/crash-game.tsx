@@ -26,11 +26,11 @@ export function CrashGame({
   const [hasCrashed, setHasCrashed] = useState(false);
   const requestRef = useRef<number>();
 
-  // Refs for the images.
+  // Refs for images.
   const rocketImg = useRef<HTMLImageElement | null>(null);
   const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load images on the client.
+  // Load images client-side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const rocket = new Image();
@@ -43,39 +43,39 @@ export function CrashGame({
     }
   }, []);
 
+  // Camera offset ref for smooth following.
+  const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isPlaying) return;
-
     setHasCrashed(false);
 
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
-      if (r < 0.5) {
-        // 50% chance: uniform between 1 and 1.5.
+      // Using adjusted odds:
+      if (r < 0.605) {
+        // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
-      } else if (r < 0.5 + 0.1) {
+      } else if (r < 0.705) {
         // 10% chance: uniform between 1.5 and 2.
         crashPoint = 1.5 + Math.random() * 0.5;
-      } else if (r < 0.5 + 0.1 + 0.2) {
+      } else if (r < 0.905) {
         // 20% chance: uniform between 2 and 3.
         crashPoint = 2 + Math.random() * 1;
-      } else if (r < 0.5 + 0.1 + 0.2 + 0.1) {
-        // 10% chance: uniform between 5 and 7.5.
+      } else if (r < 0.955) {
+        // 5% chance: uniform between 5 and 7.5.
         crashPoint = 5 + Math.random() * 2.5;
-      } else if (r < 0.5 + 0.1 + 0.2 + 0.1 + 0.05) {
-        // 5% chance: uniform between 7.5 and 10.
+      } else if (r < 0.995) {
+        // 4% chance: uniform between 7.5 and 10.
         crashPoint = 7.5 + Math.random() * 2.5;
-      } else if (r < 0.5 + 0.1 + 0.2 + 0.1 + 0.05 + 0.04) {
-        // 4% chance: uniform between 11 and 12.
-        crashPoint = 11 + Math.random() * 1;
       } else {
-        // 1% chance: exponential between 12 and 100.
+        // 0.5% chance: exponential (log‑uniform) above 10.
         const expR = Math.random();
-        crashPoint = 12 * Math.exp(expR * Math.log(100 / 12));
+        crashPoint = 10 * Math.exp(expR * Math.log(100 / 10));
       }
       crashPointRef.current = crashPoint;
       console.log("Crash point:", crashPointRef.current);
@@ -89,7 +89,7 @@ export function CrashGame({
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
-      console.log("Multiplier:", currentMultiplier.toFixed(2), "Elapsed:", elapsed);
+      // When the multiplier reaches the crash point, trigger crash.
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
         setMultiplier(crashPoint);
@@ -107,7 +107,7 @@ export function CrashGame({
     };
   }, [isPlaying]);
 
-  // Cubic Bézier helper function.
+  // Cubic Bézier helper.
   const cubicBezier = (
     P0: { x: number; y: number },
     P1: { x: number; y: number },
@@ -116,17 +116,18 @@ export function CrashGame({
     t: number
   ) => {
     const mt = 1 - t;
-    const x =
-      mt * mt * mt * P0.x +
-      3 * mt * mt * t * P1.x +
-      3 * mt * t * t * P2.x +
-      t * t * t * P3.x;
-    const y =
-      mt * mt * mt * P0.y +
-      3 * mt * mt * t * P1.y +
-      3 * mt * t * t * P2.y +
-      t * t * t * P3.y;
-    return { x, y };
+    return {
+      x:
+        mt * mt * mt * P0.x +
+        3 * mt * mt * t * P1.x +
+        3 * mt * t * t * P2.x +
+        t * t * t * P3.x,
+      y:
+        mt * mt * mt * P0.y +
+        3 * mt * mt * t * P1.y +
+        3 * mt * t * t * P2.y +
+        t * t * t * P3.y,
+    };
   };
 
   useEffect(() => {
@@ -134,33 +135,61 @@ export function CrashGame({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    // Adjust for device pixel ratio.
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvas.clientWidth * dpr;
-    canvas.height = canvas.clientHeight * dpr;
-    ctx.scale(dpr, dpr);
-
-    // Clear the canvas (transparent background).
-    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-    const margin = 20;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
 
-    // Define cubic Bézier curve points for the desired path.
-    // P0: Start at the bottom left.
+    // Clear the entire canvas.
+    ctx.clearRect(0, 0, width, height);
+
+    // ---
+    // Draw the multiplier text first (as a background layer).
+    ctx.save();
+    ctx.resetTransform();
+    ctx.font = "48px Arial"; // Bigger font.
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    // Center the text horizontally; position it at 50% of height.
+    ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
+    ctx.restore();
+    // ---
+
+    // Define the cubic Bézier curve points for the rocket path.
+    // The curve starts at the bottom left.
+    const margin = 20;
     const P0 = { x: margin, y: height - margin };
-    // P1: Move to the right from P0 with little vertical change (starting horizontally).
-    const P1 = { x: margin + (width - 2 * margin) * 0.25, y: height - margin };
-    // P2: Then begin curving upward with a moderate upward offset.
-    const P2 = { x: margin + (width - 2 * margin) * 0.6, y: height * 0.4 };
-    // P3: End at the top right.
+    // P1: Start by moving right (almost horizontal).
+    const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
+    // P2: Then begin curving upward.
+    const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
+    // P3: End toward the top right.
     const P3 = { x: width - margin, y: margin };
 
     // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+
+    // Determine the rocket tip along the curve.
+    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
+
+    // --- Camera Transform ---
+    // We want the rocket to appear at a fixed "desired" position.
+    const desired = { x: width / 2, y: height * 0.7 };
+    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
+
+    // Smoothly interpolate the camera offset.
+    cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
+    cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
+    const cameraOffset = cameraOffsetRef.current;
+
+    ctx.save();
+    // Apply the camera translation.
+    ctx.translate(cameraOffset.x, cameraOffset.y);
+    // ---
 
     // Draw the partial cubic Bézier curve.
     ctx.beginPath();
@@ -168,19 +197,13 @@ export function CrashGame({
     for (let i = 0; i <= segments; i++) {
       const t = (i / segments) * tProgress;
       const { x, y } = cubicBezier(P0, P1, P2, P3, t);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.stroke();
-
-    // Determine the tip of the curve.
-    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
     // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
@@ -188,13 +211,8 @@ export function CrashGame({
       const imgSize = 40;
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
-
-    // Draw the multiplier text.
-    ctx.font = "24px Arial";
-    ctx.fillStyle = "white";
-    const text = multiplier.toFixed(2) + "x";
-    const textWidth = ctx.measureText(text).width;
-    ctx.fillText(text, (width - textWidth) / 2, height - 30);
+    ctx.restore();
+    // ---
   }, [multiplier, hasCrashed]);
 
   return (
@@ -205,6 +223,7 @@ export function CrashGame({
         height: "100%",
         borderRadius: "8px",
         backgroundColor: "transparent",
+        // The canvas itself is the container; internal drawing order handles z-index.
       }}
     />
   );
