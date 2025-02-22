@@ -21,10 +21,10 @@ export default function RoulettePage() {
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
-  const [showHowToPlay, setShowHowToPlay] = useState(true);
+  const [showOverlay, setShowOverlay] = useState(true);
 
   useEffect(() => {
-    // Any additional wallet checks can be placed here.
+    // Additional wallet checks if needed.
   }, []);
 
   const handleSpinRoulette = () => {
@@ -34,12 +34,10 @@ export default function RoulettePage() {
       alert("Invalid bet amount");
       return;
     }
-    // Deduct bet amount (or update after transaction).
     setGameResult(null);
     setWinAmount(null);
     setIsPlaying(true);
-    // Hide the overlay once the game starts.
-    setShowHowToPlay(false);
+    setShowOverlay(false);
   };
 
   const handleGameEnd = (result: number, winAmount: number) => {
@@ -58,8 +56,7 @@ export default function RoulettePage() {
     setWinAmount(null);
     setSelectedBet(null);
     setBetAmount("0.00");
-    // Optionally, show the How to Play overlay again.
-    setShowHowToPlay(true);
+    setShowOverlay(true);
   };
 
   return (
@@ -78,19 +75,13 @@ export default function RoulettePage() {
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
             <div className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm rounded-lg overflow-hidden" style={{ height: "700px" }}>
-              {showHowToPlay && !isPlaying && (
+              {showOverlay && !isPlaying && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 p-4">
                   <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Roulette</h2>
                   <p className="text-lg text-white mb-6 text-center max-w-md">
-                    Place your bet, choose your bet type, and spin the wheel. If the wheel lands on your selection, you win!
+                    Place your bet, choose your bet type, and spin the wheel. The wheel will spin exactly three rotations to land on the winning number.
                   </p>
-                  <Button
-                    className="w-full max-w-xs bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                    onClick={handleSpinRoulette}
-                    disabled={!isConnected || !selectedBet}
-                  >
-                    {isConnected ? "Place Bet to Start" : "Connect Wallet to Play"}
-                  </Button>
+                  <p className="text-xl text-[#49EACB]">Place Bet to Start</p>
                 </div>
               )}
               <div className="p-6 flex flex-col h-full">
@@ -126,7 +117,4 @@ export default function RoulettePage() {
       </div>
       <SiteFooter />
 
-      {/* Optionally, you can add a "How to Play" modal here if needed */}
-    </div>
-  );
-}
+      {/* Optionally, include a re
