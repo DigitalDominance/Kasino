@@ -285,7 +285,7 @@ export default function Page() {
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="scale-105 transition-transform duration-300 group-hover:scale-110"
+                                className="scale-110 transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
