@@ -215,7 +215,7 @@ export default function Page() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-12 h-[45vh]"
+                  className="relative mb-12 h-[26vh] sm:h-[45vh]"
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-lg">
                     {mainBanners.map((banner, index) => (
@@ -230,8 +230,8 @@ export default function Page() {
                           src={banner}
                           alt="Main Banner"
                           layout="fill"
-                          objectFit="cover"
-                          className="object-cover"
+                          objectFit="contain"
+                          className="object-contain"
                         />
                       </motion.div>
                     ))}
@@ -284,7 +284,7 @@ export default function Page() {
                                 alt={`${game.name} thumbnail`}
                                 layout="fill"
                                 objectFit="cover"
-                                className="transition-transform duration-300 group-hover:scale-110"
+                                className="rounded-lg transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-x-0 -bottom-4 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
@@ -336,7 +336,7 @@ export default function Page() {
                               alt={`${win.game} card`}
                               layout="fill"
                               objectFit="cover"
-                              className="object-cover"
+                              className="rounded-lg object-cover"
                             />
                             <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                               LIVE
