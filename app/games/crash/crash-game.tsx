@@ -66,26 +66,19 @@ export function CrashGame({
       const r = Math.random();
       let crashPoint;
       if (r < 0.605) {
-        // Originally a 60.5% chance: now split into two parts:
-        // 20% of 60.5%: uniform between 1 and 1.2×,
-        // 80% of 60.5%: uniform between 1.2 and 1.5×.
-        const r1 = Math.random();
-        if (r1 < 0.2) {
-          crashPoint = 1 + Math.random() * 0.2; // 1 to 1.2x
-        } else {
-          crashPoint = 1.2 + Math.random() * 0.3; // 1.2 to 1.5x
-        }
+        // 60.5% chance: uniform between 1 and 1.5.
+        crashPoint = 1 + Math.random() * 0.5;
       } else if (r < 0.705) {
-        // 10% chance: uniform between 1.5 and 2×.
+        // 10% chance: uniform between 1.5 and 2.
         crashPoint = 1.5 + Math.random() * 0.5;
       } else if (r < 0.905) {
-        // 20% chance: uniform between 2 and 3×.
+        // 20% chance: uniform between 2 and 3.
         crashPoint = 2 + Math.random() * 1;
       } else if (r < 0.955) {
-        // 5% chance: uniform between 5 and 7.5×.
+        // 5% chance: uniform between 5 and 7.5.
         crashPoint = 5 + Math.random() * 2.5;
       } else if (r < 0.995) {
-        // 4% chance: uniform between 7.5 and 10×.
+        // 4% chance: uniform between 7.5 and 10.
         crashPoint = 7.5 + Math.random() * 2.5;
       } else {
         // 0.5% chance: exponential (log‑uniform) above 10.
@@ -145,20 +138,6 @@ export function CrashGame({
     };
   };
 
-  // Quadratic Bézier helper for the extension curve.
-  const quadraticBezier = (
-    Q0: { x: number; y: number },
-    Q1: { x: number; y: number },
-    Q2: { x: number; y: number },
-    t: number
-  ) => {
-    const mt = 1 - t;
-    return {
-      x: mt * mt * Q0.x + 2 * mt * t * Q1.x + t * t * Q2.x,
-      y: mt * mt * Q0.y + 2 * mt * t * Q1.y + t * t * Q2.y,
-    };
-  };
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -204,37 +183,46 @@ export function CrashGame({
     const { P0, P1, P2, P3 } = controlPointsRef.current!;
 
     // --- Determine the tip progress along the path based on crash point (cp) ---
-    // Mapping:
+    // New mapping:
     // • cp in [1, 1.2] → tip = P0 (no movement)
     // • cp in (1.2, 1.5] → tip goes to P1 (~33% along curve)
     // • cp in (1.5, 2] → tip goes to P2 (~66% along curve)
     // • cp in (2, 3] → tip goes to P3 (end of curve)
-    // • cp > 3 → follow full curve then a curved extension.
+    // • cp > 3 → full curve then upward extension.
     const cp = crashPointRef.current || 1;
-    let tProgress = 0; // progress along the cubic Bézier (0 to 1)
-    let inExtensionMode = false;
+    let tProgress = 0; // progress along cubic Bézier (0 to 1)
+    let extension = 0; // extra upward extension if multiplier > 3
     if (cp <= 1.2) {
+      // For crash multipliers between 1 and 1.2, stay at P0.
       tProgress = 0;
     } else if (cp <= 1.5) {
+      // Map multiplier from 1 to cp onto 0 to 0.33 (P1).
       const targetT = 0.33;
       tProgress =
-        multiplier <= cp ? ((multiplier - 1) / (cp - 1)) * targetT : targetT;
+        multiplier <= cp
+          ? ((multiplier - 1) / (cp - 1)) * targetT
+          : targetT;
     } else if (cp <= 2) {
+      // Map multiplier from 1 to cp onto 0 to 0.66 (P2).
       const targetT = 0.66;
       tProgress =
-        multiplier <= cp ? ((multiplier - 1) / (cp - 1)) * targetT : targetT;
+        multiplier <= cp
+          ? ((multiplier - 1) / (cp - 1)) * targetT
+          : targetT;
     } else if (cp <= 3) {
+      // Map multiplier from 1 to cp onto 0 to 1.0 (P3).
       const targetT = 1.0;
       tProgress =
-        multiplier <= cp ? ((multiplier - 1) / (cp - 1)) * targetT : targetT;
+        multiplier <= cp
+          ? ((multiplier - 1) / (cp - 1)) * targetT
+          : targetT;
     } else {
-      // For crash multipliers above 3, follow the full cubic curve until multiplier == 3,
-      // then enter extension mode.
+      // For crash multipliers above 3, follow curve until multiplier 3 then extend upward.
       if (multiplier <= 3) {
         tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
       } else {
         tProgress = 1.0;
-        inExtensionMode = true;
+        extension = (multiplier - 3) * 50; // Adjust extension factor as needed.
       }
     }
 
@@ -244,8 +232,8 @@ export function CrashGame({
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.beginPath();
-    // Draw the cubic curve from P0 to P3.
-    {
+    // For cp > 3 and multiplier > 3, draw the full curve plus extension.
+    if (cp > 3 && multiplier > 3) {
       const segments = 30;
       for (let i = 0; i <= segments; i++) {
         const t = i / segments;
@@ -253,65 +241,41 @@ export function CrashGame({
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-    }
-    // If in extension mode, append a curved extension.
-    if (inExtensionMode) {
-      // Compute extension progress along the quadratic extension.
-      // extProgress: 0 when multiplier==3, and 1 when multiplier==cp.
-      const extProgress = Math.min((multiplier - 3) / (cp - 3), 1);
-      // Compute a base extension length (you can adjust factor as needed).
-      const extension = (multiplier - 3) * 50;
-      // Define quadratic Bézier points for the extension:
-      const Q0 = P3; // start at P3
-      // Q2 is the final extension point; instead of a straight up line, we add a horizontal offset.
-      const Q2 = { x: P3.x + extension * 0.3, y: P3.y - extension };
-      // Q1 is the control point to create a smooth curve.
-      const Q1 = { x: P3.x + extension * 0.15, y: P3.y - extension * 0.5 };
-      // Draw the quadratic curve.
-      const extSegments = 20;
-      for (let i = 0; i <= extSegments; i++) {
-        const t = i / extSegments;
-        const pt = quadraticBezier(Q0, Q1, Q2, t);
-        if (i === 0) ctx.lineTo(pt.x, pt.y); // continue from the end of cubic curve
-        else ctx.lineTo(pt.x, pt.y);
+      // Draw extension upward from P3.
+      const extendedTip = { x: P3.x, y: P3.y - extension };
+      ctx.lineTo(extendedTip.x, extendedTip.y);
+    } else {
+      // Otherwise, draw only up to the current tProgress.
+      const segments = 30;
+      for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * tProgress;
+        const { x, y } = cubicBezier(P0, P1, P2, P3, t);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
     }
     ctx.stroke();
     ctx.restore();
 
-    // --- Compute the rocket tip position (for rocket/explosion) ---
+    // --- Compute the rocket tip position ---
     let tip = { x: 0, y: 0 };
-    if (inExtensionMode) {
-      // Compute extProgress as above.
-      const extProgress = Math.min((multiplier - 3) / (cp - 3), 1);
-      const extension = (multiplier - 3) * 50;
-      const Q0 = P3;
-      const Q2 = { x: P3.x + extension * 0.3, y: P3.y - extension };
-      const Q1 = { x: P3.x + extension * 0.15, y: P3.y - extension * 0.5 };
-      tip = quadraticBezier(Q0, Q1, Q2, extProgress);
+    if (cp > 3 && multiplier > 3) {
+      tip = { x: P3.x, y: P3.y - extension };
     } else {
       tip = cubicBezier(P0, P1, P2, P3, tProgress);
     }
 
-    // --- Camera transform (with smooth zoom out when in extension mode) ---
-    // Compute a zoom factor: start at 1 for multiplier<=3, then zoom out smoothly.
-    let zoom = 1;
-    if (inExtensionMode) {
-      zoom = 1 - Math.min((multiplier - 3) * 0.05, 0.5); // zoom will not go below 0.5
-    }
-    // Desired position for the tip.
+    // --- Apply camera transform to keep the rocket in view ---
     const desired = { x: width / 2, y: height * 0.7 };
     const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
-    // Smoothly interpolate camera offset.
     cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
     cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     const cameraOffset = cameraOffsetRef.current;
 
     ctx.save();
-    // Apply camera translation and zoom.
     ctx.translate(cameraOffset.x, cameraOffset.y);
-    ctx.scale(zoom, zoom);
-    // --- Draw the rocket or explosion image at the tip (unchanged logic) ---
+
+    // --- Draw the rocket or explosion image at the tip ---
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
