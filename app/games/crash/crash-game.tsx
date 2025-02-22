@@ -43,7 +43,7 @@ export function CrashGame({
     }
   }, []);
 
-  // Use a ref to compute the crash multiplier only once per round.
+  // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -148,15 +148,15 @@ export function CrashGame({
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
 
-    // Define the cubic Bézier curve points.
+    // Define cubic Bézier curve points for the desired path.
     // P0: Start at the bottom left.
     const P0 = { x: margin, y: height - margin };
-    // P1: Control point to push the path upward.
-    const P1 = { x: margin, y: height * 0.6 };
-    // P2: Adjusted to reverse the bend—higher up to keep the path upward/right.
-    const P2 = { x: width * 0.6, y: height * 0.2 };
-    // P3: End point toward the right.
-    const P3 = { x: width - margin, y: height * 0.2 };
+    // P1: Move to the right from P0 with little vertical change (starting horizontally).
+    const P1 = { x: margin + (width - 2 * margin) * 0.25, y: height - margin };
+    // P2: Then begin curving upward with a moderate upward offset.
+    const P2 = { x: margin + (width - 2 * margin) * 0.6, y: height * 0.4 };
+    // P3: End at the top right.
+    const P3 = { x: width - margin, y: margin };
 
     // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
