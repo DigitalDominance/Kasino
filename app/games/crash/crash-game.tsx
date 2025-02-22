@@ -82,7 +82,7 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Adjust growth rate as needed.
+    const growthRate = 0.1; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
