@@ -57,20 +57,20 @@ export function CrashGame({
       const r = Math.random();
       let crashPoint;
       // Using adjusted odds:
-      if (r < 0.605) {
+      if (r < 0.625) {
         // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
-      } else if (r < 0.705) {
+      } else if (r < 0.725) {
         // 10% chance: uniform between 1.5 and 2.
         crashPoint = 1.5 + Math.random() * 0.5;
-      } else if (r < 0.905) {
+      } else if (r < 0.925) {
         // 20% chance: uniform between 2 and 3.
         crashPoint = 2 + Math.random() * 1;
-      } else if (r < 0.955) {
+      } else if (r < 0.975) {
         // 5% chance: uniform between 5 and 7.5.
         crashPoint = 5 + Math.random() * 2.5;
       } else if (r < 0.995) {
-        // 4% chance: uniform between 7.5 and 10.
+        // 2% chance: uniform between 7.5 and 10.
         crashPoint = 7.5 + Math.random() * 2.5;
       } else {
         // 0.5% chance: exponential (log‑uniform) above 10.
