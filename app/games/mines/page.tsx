@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Info, X } from "lucide-react";
@@ -13,12 +13,13 @@ import { HowToPlay } from "./how-to-play";
 import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
 import { useRouter } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence as FramerPresence } from "framer-motion";
 import type { MinesGame, MinesTile } from "./mines-game";
 import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic";
 import { Bomb, Diamond } from "./icons";
 import "./styles.css";
 import Image from "next/image";
+import { MinesControls } from "./mines-controls"; // <-- import your new controls
 
 export default function MinesPage() {
   const { isConnected, balance } = useWallet();
@@ -76,7 +77,8 @@ export default function MinesPage() {
     }
     try {
       const betInRawUnits = bet * Math.pow(10, 8);
-      const newGame = initializeMinesGame(5, betInRawUnits, selectedMultiplier);
+      // Optionally update initializeMinesGame to accept the multiplier if needed.
+      const newGame = initializeMinesGame(5, betInRawUnits);
       const response = await fetch("/api/mines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -213,38 +215,30 @@ export default function MinesPage() {
                     </div>
                   </>
                 ) : (
-                  // Bet Controls (same as dice page)
-                  <div className="flex items-center space-x-4">
-                    <div className="relative flex-grow">
-                      <input
-                        type="number"
-                        value={betAmount}
-                        onChange={(e) => setBetAmount(e.target.value)}
-                        placeholder="Enter bet amount"
-                        className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full pr-16 rounded-md"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                        <Image
-                          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                          alt="KAS"
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                        <span className="ml-1 text-[#49EACB]">KAS</span>
-                      </div>
-                    </div>
-                    <Button onClick={startNewGame} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
-                      Start New Game
-                    </Button>
+                  // When no game is active, show a placeholder message
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-2xl text-[#49EACB]">Place your bet and start a new game!</p>
                   </div>
                 )}
               </div>
             </Card>
+
+            {/* Right-side Panel: MinesControls above LiveChat/LiveWins */}
             <div className="space-y-6">
+              {!game && (
+                <MinesControls
+                  betAmount={betAmount}
+                  setBetAmount={setBetAmount}
+                  isPlaying={isPlaying}
+                  isWalletConnected={isConnected}
+                  balance={balance}
+                  onStartGame={startNewGame}
+                  selectedMultiplier={selectedMultiplier}
+                  setSelectedMultiplier={setSelectedMultiplier}
+                />
+              )}
               <LiveChat textColor="#49EACB" />
               <LiveWins textColor="#49EACB" />
-              {/* Removed the PlayerList component */}
             </div>
           </div>
         </div>
@@ -281,6 +275,7 @@ export default function MinesPage() {
                   : "You hit a mine! Better luck next time."}
               </p>
               <div className="space-y-4">
+                {/* Optionally, you could reuse MinesControls here instead of a duplicate input */}
                 <div className="relative">
                   <input
                     type="number"
