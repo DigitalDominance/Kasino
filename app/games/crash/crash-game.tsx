@@ -74,33 +74,33 @@ export function CrashGame({
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
-      // Adjusted odds:
       if (r < 0.3) {
         // 30% chance: crash between 1.0 and 1.2x
         crashPoint = 1 + Math.random() * 0.2;
       } else if (r < 0.6) {
         // Next 30%: crash between 1.2 and 1.5x
         crashPoint = 1.2 + Math.random() * 0.3;
-      } else if (r < 0.8) {
-        // Next 20%: crash between 1.5 and 2.0x
+      } else if (r < 0.9) {
+        // Next 30%: crash between 1.5 and 2.0x
         crashPoint = 1.5 + Math.random() * 0.5;
-      } else if (r < 0.92) {
-        // Next 12%: crash between 2.0 and 3.0x
+      } else if (r < 0.96) {
+        // Next 6%: crash between 2.0 and 3.0x
         crashPoint = 2.0 + Math.random() * 1.0;
-      } else if (r < 0.97) {
-        // Next 5%: crash between 3.0 and 5.0x
+      } else if (r < 0.985) {
+        // Next 2.5%: crash between 3.0 and 5.0x
         crashPoint = 3.0 + Math.random() * 2.0;
-      } else if (r < 0.995) {
-        // Next 2.5%: crash between 5.0 and 7.5x
+      } else if (r < 0.9975) {
+        // Next 1.25%: crash between 5.0 and 7.5x
         crashPoint = 5.0 + Math.random() * 2.5;
       } else {
-        // Remaining 0.5%: crash above 7.5x (exponential growth)
+        // Last 0.25%: crash above 7.5x (exponential growth up to 100x)
         const expR = Math.random();
         crashPoint = 7.5 * Math.exp(expR * Math.log(100 / 7.5));
       }
       crashPointRef.current = crashPoint;
       console.log("Crash point:", crashPointRef.current);
     }
+
 
 
     const start = performance.now();
