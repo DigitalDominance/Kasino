@@ -11,7 +11,7 @@ import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
-import { Montserrat } from "next/font/google"  // Import Montserrat font
+import { Montserrat } from "next/font/google" // Import Montserrat font
 
 // Custom icons from react-icons
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
@@ -100,9 +100,9 @@ export default function Page() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
-      {/* Global Styles: Gradient, glow, nav hover, and icon coloring */}
+      {/* Global Styles: Updated animated gradient, glow, nav hover, and icon coloring */}
       <style jsx global>{`
-        /* Animated gradient for headings: from #49EACB to #006D5B */
+        /* Animated gradient for headings with a swirling paint effect */
         @keyframes gradientAnimation {
           0% {
             background-position: 0% 50%;
@@ -115,27 +115,34 @@ export default function Page() {
           }
         }
         .animate-gradient {
-          background: linear-gradient(270deg, #49EACB, #006D5B);
-          background-size: 200% 200%;
-          animation: gradientAnimation 5s ease infinite;
+          background: linear-gradient(
+            270deg,
+            #49eacb,
+            #006d5b,
+            #003f2f,
+            #006d5b,
+            #49eacb
+          );
+          background-size: 400% 400%;
+          animation: gradientAnimation 8s ease infinite;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
         /* Hover effect for headings */
         .hover-effect:hover {
-          filter: drop-shadow(0 0 8px #49EACB);
+          filter: drop-shadow(0 0 8px #49eacb);
         }
         /* Navigation image hover effect */
         .nav-hover {
           transition: filter 0.3s ease;
         }
         .nav-hover:hover {
-          filter: drop-shadow(0 0 8px #49EACB);
+          filter: drop-shadow(0 0 8px #49eacb);
         }
         /* Icon primary: force icons to use primary green */
         .icon-primary {
-          color: #49EACB;
-          fill: #49EACB;
+          color: #49eacb;
+          fill: #49eacb;
         }
       `}</style>
 
