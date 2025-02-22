@@ -58,34 +58,6 @@ export default function Page() {
       amount: "987.65",
       time: "3 minutes ago",
     },
-    {
-      game: "Crash",
-      image: "/crashcard.PNG",
-      player: "Player456",
-      amount: "987.65",
-      time: "3 minutes ago",
-    },
-    {
-      game: "Roulette",
-      image: "/roulettecard.PNG",
-      player: "Player123",
-      amount: "1,234.56",
-      time: "2 minutes ago",
-    },
-    {
-      game: "Roulette",
-      image: "/roulettecard.PNG",
-      player: "Player123",
-      amount: "1,234.56",
-      time: "2 minutes ago",
-    },
-    {
-      game: "Crash",
-      image: "/crashcard.PNG",
-      player: "Player456",
-      amount: "987.65",
-      time: "3 minutes ago",
-    },
   ]
 
   const nextBanner = () =>
@@ -206,7 +178,7 @@ export default function Page() {
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
                 {/* Banner Carousel */}
-                <div className="mx-auto max-w-screen-xl px-4">
+                <div className="mx-auto max-w-screen-xl w-full px-4">
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -252,112 +224,116 @@ export default function Page() {
                 </div>
 
                 {/* Original Games */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                  className="mb-12"
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {games.map((game, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
-                      >
-                        <Link href={`/games/${game.slug}`} key={i}>
-                          <MotionCard
-                            className="group relative overflow-hidden border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm"
-                            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <div className="relative aspect-[4/3]">
-                              <Image
-                                src={
-                                  game.slug === "crash"
-                                    ? "/crashcard.PNG"
-                                    : game.slug === "roulette"
-                                    ? "/roulettecard.PNG"
-                                    : "/placeholder.svg"
-                                }
-                                alt={`${game.name} thumbnail`}
-                                layout="fill"
-                                objectFit="cover"
-                                className="transition-transform duration-300 group-hover:scale-110"
-                              />
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                {game.name}
-                              </h3>
-                              <p className="text-sm text-gray-400">
-                                {game.players.toLocaleString()} Players
-                              </p>
-                            </div>
-                          </MotionCard>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
+                <div className="mx-auto max-w-screen-xl w-full px-4">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+                    className="mb-12"
+                  >
+                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Original Games</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {games.map((game, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                        >
+                          <Link href={`/games/${game.slug}`} key={i}>
+                            <MotionCard
+                              className="group relative overflow-hidden border border-[#49EACB]/10 bg-transparent"
+                              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="relative aspect-[3/2]">
+                                <Image
+                                  src={
+                                    game.slug === "crash"
+                                      ? "/crashcard.PNG"
+                                      : game.slug === "roulette"
+                                      ? "/roulettecard.PNG"
+                                      : "/placeholder.svg"
+                                  }
+                                  alt={`${game.name} thumbnail`}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  className="transition-transform duration-300 group-hover:scale-110"
+                                />
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                  {game.name}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  {game.players.toLocaleString()} Players
+                                </p>
+                              </div>
+                            </MotionCard>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>
 
                 {/* Live Wins */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-                >
-                  <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
-                  <ScrollArea>
-                    <motion.div
-                      className="flex gap-4 pb-4"
-                      initial={{ x: -20 }}
-                      animate={{ x: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                    >
-                      {liveWins.map((win, i) => (
-                        <MotionCard
-                          key={i}
-                          className="flex-shrink-0 w-[260px] border border-[#49EACB]/10 bg-[#49EACB]/5 backdrop-blur-sm overflow-hidden"
-                          whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
-                        >
-                          <div className="relative aspect-video">
-                            <Image
-                              src={win.image}
-                              alt={`${win.game} card`}
-                              layout="fill"
-                              objectFit="cover"
-                              className="object-cover"
-                            />
-                            <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
-                              LIVE
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <div className="font-semibold mb-2">{win.player}</div>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm text-[#49EACB]">{win.game} Game</div>
-                              <div className="flex items-center gap-1.5">
-                                <Image
-                                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                  alt="KAS"
-                                  width={16}
-                                  height={16}
-                                  className="rounded-full"
-                                />
-                                <span className="text-[#49EACB] font-bold">{win.amount}</span>
+                <div className="mx-auto max-w-screen-xl w-full px-4">
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
+                  >
+                    <h2 className="text-2xl font-bold mb-6 text-[#49EACB]">Live Wins</h2>
+                    <ScrollArea>
+                      <motion.div
+                        className="flex gap-4 pb-4"
+                        initial={{ x: -20 }}
+                        animate={{ x: 0 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      >
+                        {liveWins.map((win, i) => (
+                          <MotionCard
+                            key={i}
+                            className="flex-shrink-0 w-[280px] border border-[#49EACB]/10 bg-transparent overflow-hidden"
+                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                          >
+                            <div className="relative aspect-[3/2]">
+                              <Image
+                                src={win.image}
+                                alt={`${win.game} card`}
+                                layout="fill"
+                                objectFit="cover"
+                                className="object-cover"
+                              />
+                              <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
+                                LIVE
                               </div>
                             </div>
-                            <div className="text-sm text-gray-400">{win.time}</div>
-                          </div>
-                        </MotionCard>
-                      ))}
-                    </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
-                  </ScrollArea>
-                </motion.div>
+                            <div className="p-4">
+                              <div className="font-semibold mb-2">{win.player}</div>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-sm text-[#49EACB]">{win.game} Game</div>
+                                <div className="flex items-center gap-1.5">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-[#49EACB] font-bold">{win.amount}</span>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-400">{win.time}</div>
+                            </div>
+                          </MotionCard>
+                        ))}
+                      </motion.div>
+                      <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                    </ScrollArea>
+                  </motion.div>
+                </div>
               </main>
             </div>
 
