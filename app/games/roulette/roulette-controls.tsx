@@ -57,10 +57,10 @@ export function RouletteControls({
     { name: "Black", type: "black", description: "Win on black (2x)" },
     { name: "Odd", type: "odd", description: "Win on odd (2x)" },
     { name: "Even", type: "even", description: "Win on even (2x)" },
-    { name: "1st 12", type: "1st12", description: "Win on 1-12 (3x)" },
-    { name: "2nd 12", type: "2nd12", description: "Win on 13-24 (3x)" },
-    { name: "3rd 12", type: "3rd12", description: "Win on 25-36 (3x)" },
-    { name: "Number", type: "17", description: "Bet on a specific number (35x)" },
+    { name: "1-12", type: "1st12", description: "Win on numbers 1-12 (2.5x)" },
+    { name: "13-24", type: "2nd12", description: "Win on numbers 13-24 (2.5x)" },
+    { name: "25-36", type: "3rd12", description: "Win on numbers 25-36 (2.5x)" },
+    { name: "Green", type: "green", description: "Win on 0 (10x)" },
   ];
 
   return (
