@@ -17,12 +17,10 @@ export default function Page() {
   const [currentBanner, setCurrentBanner] = useState(0)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
+  // Updated banners to use your images
   const banners = [
-    { title: "Summer Jackpot", subtitle: "Win up to $100,000" },
-    { title: "New Slots", subtitle: "Try our latest games" },
-    { title: "VIP Experience", subtitle: "Exclusive rewards await" },
-    { title: "Live Casino", subtitle: "Real dealers, real action" },
-    { title: "Sports Betting", subtitle: "Bet on your favorite teams" },
+    "/roulettebanner.PNG",
+    "/crashbanner.PNG",
   ]
 
   const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % banners.length)
@@ -106,16 +104,17 @@ export default function Page() {
               {banners.map((banner, index) => (
                 <motion.div
                   key={index}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: index === currentBanner ? 1 : 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#49EACB]/20 to-[#49EACB]/5" />
-                  <div className="relative z-10 text-center">
-                    <h2 className="text-4xl font-bold mb-2">{banner.title}</h2>
-                    <p className="text-xl">{banner.subtitle}</p>
-                  </div>
+                  <Image
+                    src={banner}
+                    alt="Banner image"
+                    fill
+                    className="object-cover"
+                  />
                 </motion.div>
               ))}
             </div>
@@ -151,8 +150,8 @@ export default function Page() {
                 >
                   <div className="relative aspect-[4/3]">
                     <Image
-                      src="/placeholder.svg"
-                      alt="Game thumbnail"
+                      src={i === 0 ? "/roulettecard.PNG" : "/placeholder.svg"}
+                      alt={i === 0 ? "Roulette Game" : "Game thumbnail"}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
@@ -166,7 +165,7 @@ export default function Page() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                      Game Name
+                      {i === 0 ? "Roulette" : "Game Name"}
                     </h3>
                     <p className="text-sm text-gray-400">1,234 Players</p>
                   </div>
@@ -223,4 +222,3 @@ export default function Page() {
     </div>
   )
 }
-
