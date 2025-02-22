@@ -1,199 +1,392 @@
-// ----- Inside the canvas drawing useEffect -----
+"use client"; 
 
-// Initialize randomized composite curve if not already set.
-if (!controlPointsRef.current) {
-  const margin = 20;
-  // Define 5 key points.
-  const P0 = { x: margin, y: height - margin };
-  const P0_1 = {
-    x: margin + (width - 2 * margin) * (0.1 + Math.random() * 0.1),
-    y: height - margin - Math.random() * 20,
-  };
-  const P1 = {
-    x: margin + (width - 2 * margin) * (0.3 + Math.random() * 0.2),
-    y: height - margin - Math.random() * 30,
-  };
-  const P2 = {
-    x: margin + (width - 2 * margin) * (0.6 + Math.random() * 0.2),
-    y: height * (0.3 + Math.random() * 0.3),
-  };
-  const P3 = {
-    x: margin + (width - 2 * margin) * (0.9 + Math.random() * 0.1),
-    y: margin + Math.random() * 20,
-  };
+import { useRef, useEffect, useState } from "react";
 
-  // Generate randomized control points for each segment.
-  // Segment 1: from P0 to P0_1.
-  const CP0 = {
-    x: P0.x + (P0_1.x - P0.x) * (0.3 + Math.random() * 0.2),
-    y: P0.y - Math.random() * 10,
-  };
-  const CP1 = {
-    x: P0.x + (P0_1.x - P0.x) * (0.7 + Math.random() * 0.2),
-    y: P0_1.y + Math.random() * 10,
-  };
+export type GameStatus = "Waiting" | "Running" | "Crashed" | "CashedOut";
 
-  // Segment 2: from P0_1 to P1.
-  const CP0_2 = {
-    x: P0_1.x + (P1.x - P0_1.x) * (0.3 + Math.random() * 0.2),
-    y: P0_1.y - Math.random() * 10,
-  };
-  const CP1_2 = {
-    x: P0_1.x + (P1.x - P0_1.x) * (0.7 + Math.random() * 0.2),
-    y: P1.y + Math.random() * 10,
-  };
-
-  // Segment 3: from P1 to P2.
-  const CP0_3 = {
-    x: P1.x + (P2.x - P1.x) * (0.3 + Math.random() * 0.2),
-    y: P1.y - Math.random() * 10,
-  };
-  const CP1_3 = {
-    x: P1.x + (P2.x - P1.x) * (0.7 + Math.random() * 0.2),
-    y: P2.y + Math.random() * 10,
-  };
-
-  // Segment 4: from P2 to P3.
-  const CP0_4 = {
-    x: P2.x + (P3.x - P2.x) * (0.3 + Math.random() * 0.2),
-    y: P2.y - Math.random() * 10,
-  };
-  const CP1_4 = {
-    x: P2.x + (P3.x - P2.x) * (0.7 + Math.random() * 0.2),
-    y: P3.y + Math.random() * 10,
-  };
-
-  controlPointsRef.current = {
-    P0,
-    P0_1,
-    P1,
-    P2,
-    P3,
-    CP0,
-    CP1,
-    CP0_2,
-    CP1_2,
-    CP0_3,
-    CP1_3,
-    CP0_4,
-    CP1_4,
-  };
-}
-const {
-  P0,
-  P0_1,
-  P1,
-  P2,
-  P3,
-  CP0,
-  CP1,
-  CP0_2,
-  CP1_2,
-  CP0_3,
-  CP1_3,
-  CP0_4,
-  CP1_4,
-} = controlPointsRef.current!;
-
-// Composite Bézier helper – splits the overall parameter (t: 0 to 1) into 4 segments.
-const compositeBezier = (t: number) => {
-  if (t <= 0.2) {
-    const t1 = t / 0.2;
-    return cubicBezier(P0, CP0, CP1, P0_1, t1);
-  } else if (t <= 0.33) {
-    const t1 = (t - 0.2) / (0.33 - 0.2);
-    return cubicBezier(P0_1, CP0_2, CP1_2, P1, t1);
-  } else if (t <= 0.66) {
-    const t1 = (t - 0.33) / (0.66 - 0.33);
-    return cubicBezier(P1, CP0_3, CP1_3, P2, t1);
-  } else {
-    const t1 = (t - 0.66) / (1 - 0.66);
-    return cubicBezier(P2, CP0_4, CP1_4, P3, t1);
-  }
-};
-
-// --- Determine how far along the path to draw ---
-// Updated to account for extra segments.
-// For crash points:
-// • 1x – 1.25x: follow segment 1 (P0 → P0_1)
-// • 1.25x – 1.5x: follow segments 1 & 2 (ending at P1)
-// • 1.5x – 2x: map to segment 3 (ending at P2)
-// • 2x – 3x: map to segment 4 (ending at P3)
-// • >3x: follow full curve then extend upward.
-const cp = crashPointRef.current || 1;
-let tProgress = 0;
-let extension = 0;
-if (cp <= 1.25) {
-  const targetT = 0.2;
-  if (multiplier <= cp) {
-    tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
-  } else {
-    tProgress = targetT;
-  }
-} else if (cp <= 1.5) {
-  const baseT = 0.2;
-  const targetT = 0.33;
-  if (multiplier <= cp) {
-    tProgress = baseT + ((multiplier - 1.25) / (cp - 1.25)) * (targetT - baseT);
-  } else {
-    tProgress = targetT;
-  }
-} else if (cp <= 2) {
-  const targetT = 0.66;
-  if (multiplier <= cp) {
-    tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
-  } else {
-    tProgress = targetT;
-  }
-} else if (cp <= 3) {
-  const targetT = 1.0;
-  if (multiplier <= cp) {
-    tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
-  } else {
-    tProgress = targetT;
-  }
-} else {
-  if (multiplier <= 3) {
-    tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
-  } else {
-    tProgress = 1.0;
-    extension = (multiplier - 3) * 50; // Adjust the extension factor as needed.
-  }
+interface CrashGameProps {
+  isPlaying: boolean;
+  betAmount: number;
+  onGameEnd: (finalMultiplier: number, winAmount: number) => void;
+  onCashoutSuccess: (cashoutMultiplier: number, winAmount: number) => void;
+  onManualCashout: () => void;
+  onMultiplierChange?: (multiplier: number) => void;
 }
 
-// --- Draw the trajectory line using the composite curve ---
-ctx.save();
-ctx.strokeStyle = "#00FF00";
-ctx.lineWidth = 4;
-ctx.lineCap = "round";
-ctx.beginPath();
-const segments = 30;
-if (cp > 3 && multiplier > 3) {
-  // Draw the full composite curve then the extension.
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
-    const { x, y } = compositeBezier(t);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  const extendedTip = { x: P3.x, y: P3.y - extension };
-  ctx.lineTo(extendedTip.x, extendedTip.y);
-} else {
-  // Draw only the composite curve up to tProgress.
-  for (let i = 0; i <= segments; i++) {
-    const t = (i / segments) * tProgress;
-    const { x, y } = compositeBezier(t);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-}
-ctx.stroke();
-ctx.restore();
+export function CrashGame({
+  isPlaying,
+  betAmount,
+  onGameEnd,
+  onCashoutSuccess,
+  onManualCashout,
+  onMultiplierChange,
+}: CrashGameProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [multiplier, setMultiplier] = useState(1);
+  const [hasCrashed, setHasCrashed] = useState(false);
+  const requestRef = useRef<number>();
 
-// --- Determine the rocket tip position using the composite curve ---
-let tip = { x: 0, y: 0 };
-if (cp > 3 && multiplier > 3) {
-  tip = { x: P3.x, y: P3.y - extension };
-} else {
-  tip = compositeBezier(tProgress);
+  // Refs for images.
+  const rocketImg = useRef<HTMLImageElement | null>(null);
+  const explosionImg = useRef<HTMLImageElement | null>(null);
+
+  // Load images client-side.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const rocket = new Image();
+      rocket.src = "/rocket.svg";
+      rocketImg.current = rocket;
+
+      const explosion = new Image();
+      explosion.src = "/explode.svg";
+      explosionImg.current = explosion;
+    }
+  }, []);
+
+  // Camera offset ref for smooth following.
+  const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Compute the crash multiplier only once per round.
+  const crashPointRef = useRef<number | null>(null);
+
+  // Ref for randomized control points for the rocket's path.
+  const controlPointsRef = useRef<{
+    P0: { x: number; y: number };
+    P1: { x: number; y: number };
+    P2: { x: number; y: number };
+    P3: { x: number; y: number };
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    setHasCrashed(false);
+
+    // Generate crash point only once per round.
+    if (crashPointRef.current === null) {
+      const r = Math.random();
+      let crashPoint;
+      // Adjusted odds:
+      if (r < 0.605) {
+        crashPoint = 1 + Math.random() * 0.5; // 1 to 1.5
+      } else if (r < 0.705) {
+        crashPoint = 1.5 + Math.random() * 0.5; // 1.5 to 2
+      } else if (r < 0.905) {
+        crashPoint = 2 + Math.random() * 1; // 2 to 3
+      } else if (r < 0.955) {
+        crashPoint = 5 + Math.random() * 2.5; // 5 to 7.5
+      } else if (r < 0.995) {
+        crashPoint = 7.5 + Math.random() * 2.5; // 7.5 to 10
+      } else {
+        const expR = Math.random();
+        crashPoint = 10 * Math.exp(expR * Math.log(100 / 10)); // above 10
+      }
+      crashPointRef.current = crashPoint;
+      console.log("Crash point:", crashPointRef.current);
+    }
+
+    const start = performance.now();
+    const growthRate = 0.5; // Adjust as needed
+
+    const animate = (time: number) => {
+      const elapsed = time - start;
+      const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
+      setMultiplier(currentMultiplier);
+      if (onMultiplierChange) onMultiplierChange(currentMultiplier);
+      // Crash when multiplier reaches crash point.
+      const cp = crashPointRef.current;
+      if (cp && currentMultiplier >= cp) {
+        setMultiplier(cp);
+        setHasCrashed(true);
+        onGameEnd(cp, 0);
+        return;
+      }
+      requestRef.current = requestAnimationFrame(animate);
+    };
+
+    requestRef.current = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(requestRef.current);
+      crashPointRef.current = null;
+      controlPointsRef.current = null; // Reset curve for next round.
+    };
+  }, [isPlaying]);
+
+  // Cubic Bézier helper.
+  const cubicBezier = (
+    P0: { x: number; y: number },
+    P1: { x: number; y: number },
+    P2: { x: number; y: number },
+    P3: { x: number; y: number },
+    t: number
+  ) => {
+    const mt = 1 - t;
+    return {
+      x:
+        mt * mt * mt * P0.x +
+        3 * mt * mt * t * P1.x +
+        3 * mt * t * t * P2.x +
+        t * t * t * P3.x,
+      y:
+        mt * mt * mt * P0.y +
+        3 * mt * mt * t * P1.y +
+        3 * mt * t * t * P2.y +
+        t * t * t * P3.y,
+    };
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Clear canvas.
+    ctx.clearRect(0, 0, width, height);
+
+    // --- Draw multiplier text (centered) ---
+    ctx.save();
+    ctx.font = "48px Arial";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
+    ctx.restore();
+    // ---
+
+    // ----- Inside the canvas drawing useEffect -----
+
+    // Initialize randomized composite curve if not already set.
+    if (!controlPointsRef.current) {
+      const margin = 20;
+      // Define 5 key points.
+      const P0 = { x: margin, y: height - margin };
+      const P0_1 = {
+        x: margin + (width - 2 * margin) * (0.1 + Math.random() * 0.1),
+        y: height - margin - Math.random() * 20,
+      };
+      const P1 = {
+        x: margin + (width - 2 * margin) * (0.3 + Math.random() * 0.2),
+        y: height - margin - Math.random() * 30,
+      };
+      const P2 = {
+        x: margin + (width - 2 * margin) * (0.6 + Math.random() * 0.2),
+        y: height * (0.3 + Math.random() * 0.3),
+      };
+      const P3 = {
+        x: margin + (width - 2 * margin) * (0.9 + Math.random() * 0.1),
+        y: margin + Math.random() * 20,
+      };
+    
+      // Generate randomized control points for each segment.
+      // Segment 1: from P0 to P0_1.
+      const CP0 = {
+        x: P0.x + (P0_1.x - P0.x) * (0.3 + Math.random() * 0.2),
+        y: P0.y - Math.random() * 10,
+      };
+      const CP1 = {
+        x: P0.x + (P0_1.x - P0.x) * (0.7 + Math.random() * 0.2),
+        y: P0_1.y + Math.random() * 10,
+      };
+    
+      // Segment 2: from P0_1 to P1.
+      const CP0_2 = {
+        x: P0_1.x + (P1.x - P0_1.x) * (0.3 + Math.random() * 0.2),
+        y: P0_1.y - Math.random() * 10,
+      };
+      const CP1_2 = {
+        x: P0_1.x + (P1.x - P0_1.x) * (0.7 + Math.random() * 0.2),
+        y: P1.y + Math.random() * 10,
+      };
+    
+      // Segment 3: from P1 to P2.
+      const CP0_3 = {
+        x: P1.x + (P2.x - P1.x) * (0.3 + Math.random() * 0.2),
+        y: P1.y - Math.random() * 10,
+      };
+      const CP1_3 = {
+        x: P1.x + (P2.x - P1.x) * (0.7 + Math.random() * 0.2),
+        y: P2.y + Math.random() * 10,
+      };
+    
+      // Segment 4: from P2 to P3.
+      const CP0_4 = {
+        x: P2.x + (P3.x - P2.x) * (0.3 + Math.random() * 0.2),
+        y: P2.y - Math.random() * 10,
+      };
+      const CP1_4 = {
+        x: P2.x + (P3.x - P2.x) * (0.7 + Math.random() * 0.2),
+        y: P3.y + Math.random() * 10,
+      };
+    
+      controlPointsRef.current = {
+        P0,
+        P0_1,
+        P1,
+        P2,
+        P3,
+        CP0,
+        CP1,
+        CP0_2,
+        CP1_2,
+        CP0_3,
+        CP1_3,
+        CP0_4,
+        CP1_4,
+      };
+    }
+    const {
+      P0,
+      P0_1,
+      P1,
+      P2,
+      P3,
+      CP0,
+      CP1,
+      CP0_2,
+      CP1_2,
+      CP0_3,
+      CP1_3,
+      CP0_4,
+      CP1_4,
+    } = controlPointsRef.current!;
+    
+    // Composite Bézier helper – splits the overall parameter (t: 0 to 1) into 4 segments.
+    const compositeBezier = (t: number) => {
+      if (t <= 0.2) {
+        const t1 = t / 0.2;
+        return cubicBezier(P0, CP0, CP1, P0_1, t1);
+      } else if (t <= 0.33) {
+        const t1 = (t - 0.2) / (0.33 - 0.2);
+        return cubicBezier(P0_1, CP0_2, CP1_2, P1, t1);
+      } else if (t <= 0.66) {
+        const t1 = (t - 0.33) / (0.66 - 0.33);
+        return cubicBezier(P1, CP0_3, CP1_3, P2, t1);
+      } else {
+        const t1 = (t - 0.66) / (1 - 0.66);
+        return cubicBezier(P2, CP0_4, CP1_4, P3, t1);
+      }
+    };
+    
+    // --- Determine how far along the path to draw ---
+    // Updated to account for extra segments.
+    // For crash points:
+    // • 1x – 1.25x: follow segment 1 (P0 → P0_1)
+    // • 1.25x – 1.5x: follow segments 1 & 2 (ending at P1)
+    // • 1.5x – 2x: map to segment 3 (ending at P2)
+    // • 2x – 3x: map to segment 4 (ending at P3)
+    // • >3x: follow full curve then extend upward.
+    const cp = crashPointRef.current || 1;
+    let tProgress = 0;
+    let extension = 0;
+    if (cp <= 1.25) {
+      const targetT = 0.2;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else if (cp <= 1.5) {
+      const baseT = 0.2;
+      const targetT = 0.33;
+      if (multiplier <= cp) {
+        tProgress = baseT + ((multiplier - 1.25) / (cp - 1.25)) * (targetT - baseT);
+      } else {
+        tProgress = targetT;
+      }
+    } else if (cp <= 2) {
+      const targetT = 0.66;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else if (cp <= 3) {
+      const targetT = 1.0;
+      if (multiplier <= cp) {
+        tProgress = ((multiplier - 1) / (cp - 1)) * targetT;
+      } else {
+        tProgress = targetT;
+      }
+    } else {
+      if (multiplier <= 3) {
+        tProgress = ((multiplier - 1) / (3 - 1)) * 1.0;
+      } else {
+        tProgress = 1.0;
+        extension = (multiplier - 3) * 50; // Adjust the extension factor as needed.
+      }
+    }
+    
+    // --- Draw the trajectory line using the composite curve ---
+    ctx.save();
+    ctx.strokeStyle = "#00FF00";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    const segments = 30;
+    if (cp > 3 && multiplier > 3) {
+      // Draw the full composite curve then the extension.
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const { x, y } = compositeBezier(t);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      const extendedTip = { x: P3.x, y: P3.y - extension };
+      ctx.lineTo(extendedTip.x, extendedTip.y);
+    } else {
+      // Draw only the composite curve up to tProgress.
+      for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * tProgress;
+        const { x, y } = compositeBezier(t);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+    
+    // --- Determine the rocket tip position using the composite curve ---
+    let tip = { x: 0, y: 0 };
+    if (cp > 3 && multiplier > 3) {
+      tip = { x: P3.x, y: P3.y - extension };
+    } else {
+      tip = compositeBezier(tProgress);
+    }
+
+    // --- Apply camera transform to keep the rocket in view ---
+    const desired = { x: width / 2, y: height * 0.7 };
+    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
+    cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
+    cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
+    const cameraOffset = cameraOffsetRef.current;
+
+    ctx.save();
+    ctx.translate(cameraOffset.x, cameraOffset.y);
+
+    // --- Draw the rocket or explosion image at the tip ---
+    const img = hasCrashed ? explosionImg.current : rocketImg.current;
+    if (img) {
+      const imgSize = 40;
+      ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
+    }
+    ctx.restore();
+  }, [multiplier, hasCrashed]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        borderRadius: "8px",
+        backgroundColor: "transparent",
+      }}
+    />
+  );
 }
