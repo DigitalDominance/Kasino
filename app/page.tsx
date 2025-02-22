@@ -13,7 +13,6 @@ import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
 
 // Custom icons from react-icons
-// Using GiCheerful for Original Games and GiStarFormation for Live Wins
 import { GiCheerful, GiStarFormation } from "react-icons/gi"
 
 const glowAnimation = `
@@ -21,21 +20,6 @@ const glowAnimation = `
     0% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
     50% { box-shadow: 0 0 10px rgba(73, 234, 203, 0.5), 0 0 20px rgba(73, 234, 203, 0.5), 0 0 30px rgba(73, 234, 203, 0.5); }
     100% { box-shadow: 0 0 5px rgba(73, 234, 203, 0.3), 0 0 10px rgba(73, 234, 203, 0.3), 0 0 15px rgba(73, 234, 203, 0.3); }
-  }
-`
-
-const gradientAnimation = `
-  @keyframes gradientAnimation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  .animate-gradient {
-    background: linear-gradient(270deg, #49EACB, #2A7B68);
-    background-size: 200% 200%;
-    animation: gradientAnimation 5s ease infinite;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
 `
 
@@ -48,10 +32,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Banner images
-  const mainBanners = [
-    "/roulettebanner.webp",
-    "/crashbanner.webp",
-  ]
+  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp"]
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -121,6 +102,31 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Global Styles for gradient animation and hover effects */}
+      <style jsx global>{`
+        @keyframes gradientAnimation {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .animate-gradient {
+          background: linear-gradient(270deg, #49EACB, #2A7B68);
+          background-size: 200% 200%;
+          animation: gradientAnimation 5s ease infinite;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .hover-effect:hover {
+          transform: scale(1.1) rotate(3deg);
+          filter: drop-shadow(0 0 10px #49EACB);
+        }
+      `}</style>
       <LoadingAnimation />
       <AnimatePresence mode="wait">
         {!isLoading && (
@@ -148,7 +154,11 @@ export default function Page() {
                   className="text-[#49EACB] hover:bg-[#49EACB]/10"
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 >
-                  {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  {isSidebarOpen ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <Menu className="w-5 h-5" />
+                  )}
                 </MotionButton>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -224,9 +234,6 @@ export default function Page() {
 
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
-                {/* Inject gradient animation styles */}
-                <style jsx>{gradientAnimation}</style>
-
                 {/* Banner Carousel */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
@@ -275,8 +282,8 @@ export default function Page() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient">
-                    <GiCheerful className="inline-block mr-2" style={{ fill: "currentColor" }} /> 
+                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient hover-effect transition-all duration-500">
+                    <GiCheerful className="inline-block mr-2" style={{ fill: "currentColor" }} />
                     <span>Original Games</span>
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -338,8 +345,8 @@ export default function Page() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient">
-                    <GiStarFormation className="inline-block mr-2" style={{ fill: "currentColor" }} /> 
+                  <h2 className="text-2xl font-bold mb-6 flex items-center animate-gradient hover-effect transition-all duration-500">
+                    <GiStarFormation className="inline-block mr-2" style={{ fill: "currentColor" }} />
                     <span>Live Wins</span>
                   </h2>
                   <ScrollArea>
