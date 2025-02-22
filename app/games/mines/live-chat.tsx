@@ -24,12 +24,11 @@ function escapeRegExp(text: string): string {
 }
 
 // Generate a regex that matches the banned word even if there are spaces between its letters.
+// Before generating the regex, remove all spaces from the banned word.
 function createBannedRegex(word: string): RegExp {
-  // Escape the word first.
-  const escaped = escapeRegExp(word);
-  // Insert \s* between each character.
+  const trimmed = word.replace(/\s+/g, "");
+  const escaped = escapeRegExp(trimmed);
   const pattern = escaped.split("").join("\\s*");
-  // Use word boundaries.
   return new RegExp(`\\b${pattern}\\b`, "i");
 }
 
@@ -62,7 +61,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   // Build an array of regexes from the banned words.
   const bannedRegexes = bannedWords.map(createBannedRegex);
 
-  // Filter function: only if one of our banned regexes matches the message, return "*****"
+  // Custom filter: if any banned regex matches the message, return "*****"
   function filterMessage(message: string): string {
     for (const regex of bannedRegexes) {
       if (regex.test(message)) {
@@ -86,7 +85,6 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     e.preventDefault();
     if (newMessage.trim() === "") return;
     if (!isConnected || !username) return;
-
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
