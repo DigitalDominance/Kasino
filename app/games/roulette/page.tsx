@@ -21,10 +21,10 @@ export default function RoulettePage() {
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(true);
 
   useEffect(() => {
-    // You can perform additional wallet-related checks here if needed.
+    // Any additional wallet checks can be placed here.
   }, []);
 
   const handleSpinRoulette = () => {
@@ -34,11 +34,12 @@ export default function RoulettePage() {
       alert("Invalid bet amount");
       return;
     }
-    // Deduct bet amount.
-    // (In a production app, you might want to update the balance after confirming the bet transaction.)
+    // Deduct bet amount (or update after transaction).
     setGameResult(null);
     setWinAmount(null);
     setIsPlaying(true);
+    // Hide the overlay once the game starts.
+    setShowHowToPlay(false);
   };
 
   const handleGameEnd = (result: number, winAmount: number) => {
@@ -46,8 +47,7 @@ export default function RoulettePage() {
     setWinAmount(winAmount);
     setIsPlaying(false);
     if (winAmount > 0) {
-      // Update balance if the player wins.
-      // (You might also re-fetch the balance from the wallet instead.)
+      // Update balance if needed.
     }
     setSelectedBet(null);
   };
@@ -57,6 +57,9 @@ export default function RoulettePage() {
     setGameResult(null);
     setWinAmount(null);
     setSelectedBet(null);
+    setBetAmount("0.00");
+    // Optionally, show the How to Play overlay again.
+    setShowHowToPlay(true);
   };
 
   return (
@@ -74,13 +77,32 @@ export default function RoulettePage() {
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <div className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden" style={{ height: "700px" }}>
-              <RouletteGame
-                isPlaying={isPlaying}
-                betAmount={Number(betAmount)}
-                selectedBet={selectedBet}
-                onGameEnd={handleGameEnd}
-              />
+            <div className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm rounded-lg overflow-hidden" style={{ height: "700px" }}>
+              {showHowToPlay && !isPlaying && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 p-4">
+                  <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Roulette</h2>
+                  <p className="text-lg text-white mb-6 text-center max-w-md">
+                    Place your bet, choose your bet type, and spin the wheel. If the wheel lands on your selection, you win!
+                  </p>
+                  <Button
+                    className="w-full max-w-xs bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                    onClick={handleSpinRoulette}
+                    disabled={!isConnected || !selectedBet}
+                  >
+                    {isConnected ? "Place Bet to Start" : "Connect Wallet to Play"}
+                  </Button>
+                </div>
+              )}
+              <div className="p-6 flex flex-col h-full">
+                <div className="flex-grow flex items-center justify-center">
+                  <RouletteGame
+                    isPlaying={isPlaying}
+                    betAmount={Number(betAmount)}
+                    selectedBet={selectedBet}
+                    onGameEnd={handleGameEnd}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -104,27 +126,7 @@ export default function RoulettePage() {
       </div>
       <SiteFooter />
 
-      {showHowToPlay && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Roulette</h3>
-            <ol className="list-decimal list-inside space-y-2 text-white">
-              <li>Enter your bet amount.</li>
-              <li>Choose a bet type (e.g., Red, Black, Odd, Even, etc.).</li>
-              <li>Click "Spin Roulette" to start the game.</li>
-              <li>Watch the wheel spin and land on a number.</li>
-              <li>If the result matches your bet, you win!</li>
-            </ol>
-            <p className="mt-4 text-white">Payouts vary depending on your bet. Good luck!</p>
-            <Button
-              onClick={() => setShowHowToPlay(false)}
-              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-            >
-              Got it!
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Optionally, you can add a "How to Play" modal here if needed */}
     </div>
   );
 }
