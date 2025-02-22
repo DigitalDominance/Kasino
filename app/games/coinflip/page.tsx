@@ -1,103 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ArrowLeft, Info } from "lucide-react"
-import Link from "next/link"
-import { SiteFooter } from "@/components/site-footer"
-import { CoinFlipGame } from "./coinflip-game"
-import { CoinFlipControls } from "./coinflip-controls"
-import { LiveChat } from "../mines/live-chat"
-import { LiveWins } from "../mines/live-wins"
-import { WalletConnection } from "@/components/wallet-connection"
-import { useWallet } from "@/contexts/WalletContext"
-import "./styles.css"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Info } from "lucide-react";
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { CoinFlipGame } from "./coinflip-game";
+import { CoinFlipControls } from "./coinflip-controls";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
+import { WalletConnection } from "@/components/wallet-connection";
+import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { Montserrat } from "next/font/google";
+import "./styles.css";
 
-export default function CoinFlipPage() {
-  const { isConnected, balance } = useWallet()
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [betAmount, setBetAmount] = useState("0.00")
-  const [showHowToPlay, setShowHowToPlay] = useState(false)
-  const [gameResult, setGameResult] = useState<string | null>(null)
-  const [winAmount, setWinAmount] = useState<number | null>(null)
-  const [selectedMultiplier, setSelectedMultiplier] = useState(2)
-  const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun")
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
 
-  // useEffect(() => {
-  //   checkKaswareWallet()
-  // }, [])
-
-  // const checkKaswareWallet = async () => {
-  //   const kasware = (window as any).kasware
-  //   if (kasware) {
-  //     const accounts = await kasware.getAccounts()
-  //     if (accounts.length > 0) {
-  //       setIsWalletConnected(true)
-  //       setUser({ username: accounts[0] })
-  //       await getBalance()
-  //     }
-  //   }
-  // }
-
-  // const connectWallet = async () => {
-  //   try {
-  //     const kasware = (window as any).kasware
-  //     if (kasware) {
-  //       const accounts = await kasware.requestAccounts()
-  //       if (accounts.length > 0) {
-  //         setIsWalletConnected(true)
-  //         setUser({ username: accounts[0] })
-  //         await getBalance()
-  //       }
-  //     } else {
-  //       console.error("Kasware wallet not found")
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to connect wallet:", error)
-  //   }
-  // }
-
-  // const getBalance = async () => {
-  //   try {
-  //     const kasware = (window as any).kasware
-  //     if (kasware) {
-  //       const balanceData = await kasware.getBalance()
-  //       setBalance(Number(balanceData.total) / Math.pow(10, 8))
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to get balance:", error)
-  //   }
-  // }
+function CoinFlipContent() {
+  const { isConnected, balance } = useWallet();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [betAmount, setBetAmount] = useState("0.00");
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [winAmount, setWinAmount] = useState<number | null>(null);
+  const [selectedMultiplier, setSelectedMultiplier] = useState(2);
+  const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
 
   const handleFlipCoin = () => {
-    const bet = Number(betAmount)
+    const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount")
-      return
+      alert("Invalid bet amount");
+      return;
     }
-    // setBalance((prevBalance) => prevBalance - bet)
-    setIsPlaying(true)
-  }
+    setIsPlaying(true);
+  };
 
   const handleGameEnd = (result: string, winAmount: number) => {
-    setGameResult(result)
-    setWinAmount(winAmount)
-    setIsPlaying(false)
-    // if (winAmount > 0) {
-    //   setBalance((prevBalance) => prevBalance + winAmount)
-    // }
-  }
+    setGameResult(result);
+    setWinAmount(winAmount);
+    setIsPlaying(false);
+  };
 
   const resetGame = () => {
-    setIsPlaying(false)
-    setGameResult(null)
-    setWinAmount(null)
-  }
+    setIsPlaying(false);
+    setGameResult(null);
+    setWinAmount(null);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -181,16 +137,20 @@ export default function CoinFlipPage() {
               </ul>
             </ol>
             <p className="mt-4 text-white">Good luck and may the odds be in your favor!</p>
-            <Button
-              onClick={() => setShowHowToPlay(false)}
-              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-            >
+            <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
               Got it!
             </Button>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
+export default function CoinFlipPage() {
+  return (
+    <WalletProvider>
+      <CoinFlipContent />
+    </WalletProvider>
+  );
+}
