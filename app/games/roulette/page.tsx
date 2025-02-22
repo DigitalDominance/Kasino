@@ -117,4 +117,7 @@ export default function RoulettePage() {
       </div>
       <SiteFooter />
 
-      {/* Optionally, include a re
+      {/* Optionally, include a reset button or modal as needed */}
+    </div>
+  );
+}
