@@ -49,28 +49,37 @@ export function CrashGame({
   // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
 
+  // Ref for randomized control points for the rocket's path.
+  const controlPointsRef = useRef<{
+    P0: { x: number; y: number };
+    P1: { x: number; y: number };
+    P2: { x: number; y: number };
+    P3: { x: number; y: number };
+  } | null>(null);
+
   useEffect(() => {
     if (!isPlaying) return;
     setHasCrashed(false);
 
+    // Compute crash point only once per round.
     if (crashPointRef.current === null) {
       const r = Math.random();
       let crashPoint;
       // Using adjusted odds:
-      if (r < 0.625) {
+      if (r < 0.605) {
         // 60.5% chance: uniform between 1 and 1.5.
         crashPoint = 1 + Math.random() * 0.5;
-      } else if (r < 0.725) {
+      } else if (r < 0.705) {
         // 10% chance: uniform between 1.5 and 2.
         crashPoint = 1.5 + Math.random() * 0.5;
-      } else if (r < 0.925) {
+      } else if (r < 0.905) {
         // 20% chance: uniform between 2 and 3.
         crashPoint = 2 + Math.random() * 1;
-      } else if (r < 0.975) {
+      } else if (r < 0.955) {
         // 5% chance: uniform between 5 and 7.5.
         crashPoint = 5 + Math.random() * 2.5;
       } else if (r < 0.995) {
-        // 2% chance: uniform between 7.5 and 10.
+        // 4% chance: uniform between 7.5 and 10.
         crashPoint = 7.5 + Math.random() * 2.5;
       } else {
         // 0.5% chance: exponential (log‑uniform) above 10.
@@ -82,14 +91,14 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.1; // Adjust growth rate as needed.
+    const growthRate = 0.5; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
-      // When the multiplier reaches the crash point, trigger crash.
+      // Trigger crash when reaching the crash point.
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
         setMultiplier(crashPoint);
@@ -104,6 +113,7 @@ export function CrashGame({
     return () => {
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
+      controlPointsRef.current = null; // Reset the curve for the next round.
     };
   }, [isPlaying]);
 
@@ -142,42 +152,49 @@ export function CrashGame({
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear the entire canvas.
+    // Clear the canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // ---
-    // Draw the multiplier text first (as a background layer).
+    // --- Multiplier text (drawn before any camera transform) ---
     ctx.save();
-    ctx.resetTransform();
-    ctx.font = "48px Arial"; // Bigger font.
+    // Removed resetTransform() so the canvas scaling is maintained.
+    ctx.font = "48px Arial";
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    // Center the text horizontally; position it at 50% of height.
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
     // ---
 
-    // Define the cubic Bézier curve points for the rocket path.
-    // The curve starts at the bottom left.
-    const margin = 20;
-    const P0 = { x: margin, y: height - margin };
-    // P1: Start by moving right (almost horizontal).
-    const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
-    // P2: Then begin curving upward.
-    const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
-    // P3: End toward the top right.
-    const P3 = { x: width - margin, y: margin };
+    // Initialize a randomized curve if not set for this round.
+    if (!controlPointsRef.current) {
+      const margin = 20;
+      const P0 = { x: margin, y: height - margin };
+      const P1 = {
+        x: margin + (width - 2 * margin) * (0.2 + Math.random() * 0.2),
+        y: height - margin - Math.random() * 30,
+      };
+      const P2 = {
+        x: margin + (width - 2 * margin) * (0.5 + Math.random() * 0.3),
+        y: height * (0.2 + Math.random() * 0.3),
+      };
+      const P3 = {
+        x: margin + (width - 2 * margin) * (0.8 + Math.random() * 0.2),
+        y: margin + Math.random() * 20,
+      };
+      controlPointsRef.current = { P0, P1, P2, P3 };
+    }
+    const { P0, P1, P2, P3 } = controlPointsRef.current!;
 
     // Compute progress (t) based on multiplier relative to crash point.
     const crashPoint = crashPointRef.current || 1;
     const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
 
-    // Determine the rocket tip along the curve.
+    // Determine the rocket tip along the randomized curve.
     const tip = cubicBezier(P0, P1, P2, P3, tProgress);
 
     // --- Camera Transform ---
-    // We want the rocket to appear at a fixed "desired" position.
+    // Keep the rocket in a desired position.
     const desired = { x: width / 2, y: height * 0.7 };
     const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
 
@@ -187,11 +204,10 @@ export function CrashGame({
     const cameraOffset = cameraOffsetRef.current;
 
     ctx.save();
-    // Apply the camera translation.
     ctx.translate(cameraOffset.x, cameraOffset.y);
     // ---
 
-    // Draw the partial cubic Bézier curve.
+    // Draw the partial Bézier curve.
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
@@ -212,7 +228,6 @@ export function CrashGame({
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
-    // ---
   }, [multiplier, hasCrashed]);
 
   return (
@@ -223,7 +238,6 @@ export function CrashGame({
         height: "100%",
         borderRadius: "8px",
         backgroundColor: "transparent",
-        // The canvas itself is the container; internal drawing order handles z-index.
       }}
     />
   );
