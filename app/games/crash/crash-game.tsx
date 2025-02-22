@@ -30,7 +30,7 @@ export function CrashGame({
   const rocketImg = useRef<HTMLImageElement | null>(null);
   const explosionImg = useRef<HTMLImageElement | null>(null);
 
-  // Load images on the client.
+  // Load images client-side.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const rocket = new Image();
@@ -43,24 +43,12 @@ export function CrashGame({
     }
   }, []);
 
-  // For smooth camera following.
+  // Camera offset ref for smooth following.
   const cameraOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  // Generate random offsets for the control points per game.
-  const curveControlRef = useRef<{
-    P1Offset: { x: number; y: number };
-    P2Offset: { x: number; y: number };
-  } | null>(null);
-  useEffect(() => {
-    // Each new game gets its own random offsets.
-    curveControlRef.current = {
-      P1Offset: { x: (Math.random() - 0.5) * 40, y: (Math.random() - 0.5) * 40 },
-      P2Offset: { x: (Math.random() - 0.5) * 40, y: (Math.random() - 0.5) * 40 },
-    };
-  }, [isPlaying]);
 
   // Compute the crash multiplier only once per round.
   const crashPointRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!isPlaying) return;
     setHasCrashed(false);
@@ -94,13 +82,14 @@ export function CrashGame({
     }
 
     const start = performance.now();
-    const growthRate = 0.5; // Unchanged multiplier growth.
+    const growthRate = 0.5; // Adjust growth rate as needed.
 
     const animate = (time: number) => {
       const elapsed = time - start;
       const currentMultiplier = Math.exp(growthRate * (elapsed / 1000));
       setMultiplier(currentMultiplier);
       if (onMultiplierChange) onMultiplierChange(currentMultiplier);
+      // When the multiplier reaches the crash point, trigger crash.
       const crashPoint = crashPointRef.current;
       if (crashPoint && currentMultiplier >= crashPoint) {
         setMultiplier(crashPoint);
@@ -116,7 +105,7 @@ export function CrashGame({
       cancelAnimationFrame(requestRef.current);
       crashPointRef.current = null;
     };
-  }, [isPlaying, onGameEnd]);
+  }, [isPlaying]);
 
   // Cubic Bézier helper.
   const cubicBezier = (
@@ -156,76 +145,54 @@ export function CrashGame({
     // Clear the entire canvas.
     ctx.clearRect(0, 0, width, height);
 
-    // --- Draw the multiplier text (background layer) ---
+    // ---
+    // Draw the multiplier text first (as a background layer).
     ctx.save();
     ctx.resetTransform();
-    ctx.font = "48px Arial";
+    ctx.font = "48px Arial"; // Bigger font.
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    // Center the text horizontally; position it at 50% of height.
     ctx.fillText(multiplier.toFixed(2) + "x", width / 2, height / 2);
     ctx.restore();
-    // -------------------------------------------------------
+    // ---
 
-    // --- Dynamic Bézier Curve ---
+    // Define the cubic Bézier curve points for the rocket path.
+    // The curve starts at the bottom left.
     const margin = 20;
     const P0 = { x: margin, y: height - margin };
-    // Compute P3 based on crash multiplier.
-    const maxMultiplier = 100;
-    const crashPoint = crashPointRef.current || 1;
-    const norm = Math.min((crashPoint - 1) / (maxMultiplier - 1), 1); // 0 to 1
-    const P3 = {
-      x: margin + (width - 2 * margin) * (0.3 + 0.7 * norm),
-      y: margin + (height - 2 * margin) * (1 - norm),
-    };
-    // Base control points as fractions along the line.
-    const baseP1 = {
-      x: P0.x + 0.3 * (P3.x - P0.x),
-      y: P0.y + 0.3 * (P3.y - P0.y),
-    };
-    const baseP2 = {
-      x: P0.x + 0.6 * (P3.x - P0.x),
-      y: P0.y + 0.6 * (P3.y - P0.y),
-    };
-    // Apply random offsets (generated per game) so the curve changes each game.
-    const randomOffsets = curveControlRef.current || {
-      P1Offset: { x: 0, y: 0 },
-      P2Offset: { x: 0, y: 0 },
-    };
-    const P1 = {
-      x: baseP1.x + randomOffsets.P1Offset.x,
-      y: baseP1.y + randomOffsets.P1Offset.y,
-    };
-    const P2 = {
-      x: baseP2.x + randomOffsets.P2Offset.x,
-      y: baseP2.y + randomOffsets.P2Offset.y,
-    };
-    // tProgress based on current multiplier.
-    const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
-    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
-    // --------------------------------------------------
+    // P1: Start by moving right (almost horizontal).
+    const P1 = { x: margin + (width - 2 * margin) * 0.3, y: height - margin };
+    // P2: Then begin curving upward.
+    const P2 = { x: margin + (width - 2 * margin) * 0.65, y: height * 0.4 };
+    // P3: End toward the top right.
+    const P3 = { x: width - margin, y: margin };
 
-    // --- Dynamic Zoom & Camera Follow ---
-    // Define a zoom that decreases (zooms out) as tProgress increases.
-    const zoom = 3 - 1.5 * tProgress; // When tProgress=0, zoom=3; when tProgress=1, zoom=1.5.
-    // Desired on-screen position for the rocket tip.
+    // Compute progress (t) based on multiplier relative to crash point.
+    const crashPoint = crashPointRef.current || 1;
+    const tProgress = Math.min((multiplier - 1) / (crashPoint - 1), 1);
+
+    // Determine the rocket tip along the curve.
+    const tip = cubicBezier(P0, P1, P2, P3, tProgress);
+
+    // --- Camera Transform with Dynamic Zoom ---
+    // We want the rocket to appear at a fixed "desired" position.
     const desired = { x: width / 2, y: height * 0.7 };
-    // Compute target offset so that after scaling the tip appears at 'desired'.
-    const targetOffset = {
-      x: desired.x - tip.x * zoom,
-      y: desired.y - tip.y * zoom,
-    };
-    // Smoothly interpolate camera offset.
+    const targetOffset = { x: desired.x - tip.x, y: desired.y - tip.y };
+    // Smoothly interpolate the camera offset.
     cameraOffsetRef.current.x += 0.1 * (targetOffset.x - cameraOffsetRef.current.x);
     cameraOffsetRef.current.y += 0.1 * (targetOffset.y - cameraOffsetRef.current.y);
     const cameraOffset = cameraOffsetRef.current;
-
+    // Dynamic zoom: zoom in when progress is low, zoom out as progress increases.
+    const zoom = 3 - 1.5 * tProgress;
     ctx.save();
+    // Apply camera translation and dynamic scaling.
     ctx.translate(cameraOffset.x, cameraOffset.y);
     ctx.scale(zoom, zoom);
-    // --------------------------------------------------
+    // ---
 
-    // --- Draw the Bézier Curve & Rocket ---
+    // Draw the partial cubic Bézier curve.
     ctx.beginPath();
     const segments = 30;
     for (let i = 0; i <= segments; i++) {
@@ -239,13 +206,14 @@ export function CrashGame({
     ctx.lineCap = "round";
     ctx.stroke();
 
+    // Draw the rocket (or explosion) image at the tip.
     const img = hasCrashed ? explosionImg.current : rocketImg.current;
     if (img) {
       const imgSize = 40;
       ctx.drawImage(img, tip.x - imgSize / 2, tip.y - imgSize / 2, imgSize, imgSize);
     }
     ctx.restore();
-    // --------------------------------------------------
+    // ---
   }, [multiplier, hasCrashed]);
 
   return (
