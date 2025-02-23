@@ -27,7 +27,7 @@ export function SiteFooter() {
             }}
             className="relative w-56 h-16 hover:drop-shadow-[0_0_15px_rgba(73,234,203,0.3)]"
           >
-            <Link href="https://www.kaspercoin.net/" target="_blank" rel="noopener noreferrer">
+            <Link href="https://www.kascasino.xyz/" target="_blank" rel="noopener noreferrer">
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
                 alt="Kasino Logo"
