@@ -213,7 +213,7 @@ function CrashContent() {
                   <div className="bg-[#49EACB] bg-opacity-80 border border-[#49EACB] rounded-lg p-6 text-center shadow-xl">
                     <h2 className="text-4xl font-bold text-black mb-4">Crash</h2>
                     <p className="text-lg text-black mb-6 max-w-md">
-                      Place your bet and choose your desired multiplier. The game will run until you cash out—if you wait too long, you lose your bet.
+                      Place your bet and choose your desired multiplier. The game will run until you cash out but if you wait too long, you lose your bet.
                     </p>
                     <p className="text-xl font-semibold text-black">Place Bet to Start</p>
                   </div>
