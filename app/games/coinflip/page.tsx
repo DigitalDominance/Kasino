@@ -12,8 +12,10 @@ import { CoinFlipControls } from "./coinflip-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { Montserrat } from "next/font/google";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 import "./styles.css";
 
 const montserrat = Montserrat({
@@ -22,7 +24,7 @@ const montserrat = Montserrat({
 });
 
 function CoinFlipContent() {
-  const { isConnected, balance } = useWallet();
+  const { isConnected, balance, walletAddress } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
   const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -30,26 +32,83 @@ function CoinFlipContent() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedMultiplier, setSelectedMultiplier] = useState(2);
   const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
+  const [gameId, setGameId] = useState<string | null>(null);
+  // Use NEXT_PUBLIC_API_URL for frontend API calls
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  const handleFlipCoin = () => {
+  const handleFlipCoin = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
       alert("Invalid bet amount");
       return;
     }
-    setIsPlaying(true);
+    if (!isConnected) {
+      alert("Please connect your wallet");
+      return;
+    }
+    try {
+      // Generate a unique game identifier
+      const uniqueHash = uuidv4();
+
+      // Send the deposit transaction from the user's wallet to the treasury.
+      // Treasury address is exposed as NEXT_PUBLIC_TREASURY_ADDRESS.
+      const treasuryAddress = process.env.NEXT_PUBLIC_TREASURY_ADDRESS;
+      if (!treasuryAddress) {
+        alert("Treasury address not configured");
+        return;
+      }
+      const depositTx = await window.kasware.sendKaspa(
+        treasuryAddress,
+        bet * 1e8,
+        { priorityFee: 10000 }
+      );
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const txidString = parsedTx.id;
+      
+      // Call backend API to start the game.
+      const startRes = await axios.post(`${apiUrl}/api/game/start`, {
+        gameName: "coinflip",
+        uniqueHash,
+        walletAddress,
+        betAmount: bet,
+        txid: txidString,
+      });
+      if (startRes.data.success) {
+        setGameId(startRes.data.gameId);
+      } else {
+        alert("Failed to start game on backend");
+        return;
+      }
+      setIsPlaying(true);
+    } catch (error: any) {
+      console.error(error);
+      alert("Error starting game: " + error.message);
+    }
   };
 
-  const handleGameEnd = (result: string, winAmount: number) => {
+  const handleGameEnd = async (result: string, winAmt: number) => {
     setGameResult(result);
-    setWinAmount(winAmount);
+    setWinAmount(winAmt);
     setIsPlaying(false);
+    // Call backend API to end the game and disperse prize if applicable.
+    if (gameId) {
+      try {
+        await axios.post(`${apiUrl}/api/game/end`, {
+          gameId,
+          result: result === "You Win" ? "win" : "lose",
+          winAmount: winAmt,
+        });
+      } catch (error) {
+        console.error("Error ending game on backend:", error);
+      }
+    }
   };
 
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
     setWinAmount(null);
+    setGameId(null);
   };
 
   return (
@@ -129,12 +188,13 @@ function CoinFlipContent() {
               <li>Your coin is on the left, and the house's coin is on the right.</li>
               <li>If your coin shows your chosen symbol, you win!</li>
               <li>If you win, you'll receive your bet amount multiplied by the selected multiplier.</li>
-              <li>The game has the following odds:</li>
-              <ul className="list-disc list-inside ml-4">
-                <li>2x multiplier: 40% chance to win</li>
-                <li>5x multiplier: 10% chance to win</li>
-                <li>10x multiplier: 5% chance to win</li>
-              </ul>
+              <li>The game odds are as follows:
+                <ul className="list-disc list-inside ml-4">
+                  <li>2x multiplier: 40% chance to win</li>
+                  <li>5x multiplier: 10% chance to win</li>
+                  <li>10x multiplier: 5% chance to win</li>
+                </ul>
+              </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the odds be in your favor!</p>
             <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
