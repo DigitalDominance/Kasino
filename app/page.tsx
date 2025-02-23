@@ -36,6 +36,7 @@ function MainPageContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [liveWins, setLiveWins] = useState<Win[]>([]);
+  const [winCounter, setWinCounter] = useState<any[]>([]);
 
   // Use full backend URL from env variable
   const apiUrl =
@@ -75,8 +76,8 @@ function MainPageContent() {
     return win;
   };
 
+  // Fetch live wins for the ticker (limited to the 10 most recent wins)
   useEffect(() => {
-    // Fetch live wins from the API, resolve usernames and only keep the 10 latest wins.
     const fetchWins = async () => {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
@@ -84,7 +85,6 @@ function MainPageContent() {
           const resolvedWins = await Promise.all(
             res.data.wins.map(resolveUsername)
           );
-          // Keep only the 10 most recent wins
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -97,6 +97,24 @@ function MainPageContent() {
       fetchWins();
     }, 8000);
 
+    return () => clearInterval(interval);
+  }, [apiUrl]);
+
+  // Fetch win counter data from the new API endpoint
+  useEffect(() => {
+    const fetchWinCounter = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/win-counter`);
+        if (res.data.success) {
+          setWinCounter(res.data.winCounter);
+        }
+      } catch (error) {
+        console.error("Error fetching win counter:", error);
+      }
+    };
+
+    fetchWinCounter();
+    const interval = setInterval(fetchWinCounter, 10000);
     return () => clearInterval(interval);
   }, [apiUrl]);
 
@@ -336,9 +354,11 @@ function MainPageContent() {
                               </h3>
                               <p className="text-sm text-gray-400">
                                 {
-                                  liveWins.filter(
-                                    (win) => win.game.toLowerCase() === game.slug
-                                  ).length
+                                  // Use winCounter data from the new API. If no data found, default to 0.
+                                  winCounter.find(
+                                    (counter) =>
+                                      counter._id.toLowerCase() === game.slug
+                                  )?.totalWins || 0
                                 }{" "}
                                 Wins
                               </p>
