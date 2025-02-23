@@ -34,7 +34,7 @@ function CoinFlipContent() {
   const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
   const [gameId, setGameId] = useState<string | null>(null);
   // Use a relative API URL for backend calls
-  const apiUrl = "/api";
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   // Treasury wallet addresses (for deposit) set in your environment (do not expose private keys)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
