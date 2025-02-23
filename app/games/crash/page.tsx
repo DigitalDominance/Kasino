@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Info } from "lucide-react";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Info, X } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { CrashGame } from "./crash-game";
@@ -10,9 +10,11 @@ import { CrashControls } from "./crash-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Montserrat } from "next/font/google";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 import "./styles.css";
 
 const montserrat = Montserrat({
@@ -24,68 +26,136 @@ function CrashContent() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [crashPoint, setCrashPoint] = useState<number | null>(null);
-  const [winAmount, setWinAmount] = useState(0);
+  const [gameResult, setGameResult] = useState<number | null>(null);
+  const [winAmount, setWinAmount] = useState<number | null>(0);
+  const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
+  const [showOverlay, setShowOverlay] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
+  // New states for deposit TXID and backend general game ID
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [generalGameId, setGeneralGameId] = useState<string | null>(null);
+  
+  // API URL for backend calls
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+  // Treasury wallet addresses (for deposit) from public env variables (addresses only)
+  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  const handlePlaceBet = () => {
-    const bet = Number(betAmount);
+  // Function to retrieve the connected wallet address
+  const getConnectedAddress = useCallback(async () => {
+    try {
+      const accounts = await window.kasware.getAccounts();
+      return accounts[0];
+    } catch (err) {
+      console.error("Error fetching connected account:", err);
+      return null;
+    }
+  }, []);
+
+  // Handle placing a bet and starting the Crash game.
+  const handlePlaceBet = async () => {
+    if (!selectedBet) return;
+    const bet = selectedBet.amount;
     if (isNaN(bet) || bet <= 0 || bet > balance) {
       alert("Invalid bet amount");
       return;
     }
-    setShowHowToPlay(false);
-    setModalVisible(false);
-    setGameOver(false);
-    setCrashPoint(null);
-    setWinAmount(0);
-    setIsPlaying(true);
-    console.log("Bet placed, starting game");
+    try {
+      // Generate a unique game hash.
+      const uniqueHash = uuidv4();
+      // Retrieve the connected wallet address.
+      const accounts = await window.kasware.getAccounts();
+      const currentWalletAddress = accounts[0];
+      if (!currentWalletAddress) {
+        alert("No wallet address found");
+        return;
+      }
+      // Randomly select one treasury address.
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      if (!chosenTreasury) {
+        alert("Treasury address not configured");
+        return;
+      }
+      // Send the deposit transaction.
+      const depositTx = await window.kasware.sendKaspa(
+        chosenTreasury,
+        bet * 1e8,
+        { priorityFee: 10000 }
+      );
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const txidString = parsedTx.id;
+      setDepositTxid(txidString);
+
+      // Call the backend to start the general game.
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
+        gameName: "crash",
+        uniqueHash,
+        walletAddress: currentWalletAddress,
+        betAmount: bet,
+        txid: txidString,
+      });
+      if (startRes.data.success) {
+        setGeneralGameId(startRes.data.gameId);
+      } else {
+        alert("Failed to start game on backend");
+        return;
+      }
+      // Start the Crash game.
+      setIsPlaying(true);
+      setShowOverlay(false);
+    } catch (error: any) {
+      console.error("Error starting game:", error);
+      alert("Error starting game: " + error.message);
+    }
   };
 
+  // Handle cashout (manual) success.
   const handleCashout = () => {
     if (isPlaying) {
       const m = currentMultiplier;
       const amount = Number(betAmount) * m;
       setWinAmount(amount);
-      setCrashPoint(m);
+      setGameResult(m);
       setIsPlaying(false);
-      setGameOver(true);
       setModalVisible(true);
+      // End the game on the backend.
+      if (generalGameId) {
+        axios.post(`${apiUrl}/game/end`, {
+          gameId: generalGameId,
+          result: "win",
+          winAmount: amount,
+        }).catch((error) => console.error("Error ending game on backend:", error));
+      }
     }
   };
 
-  const handleCashoutSuccess = (multiplier: number, amount: number) => {
-    setCrashPoint(multiplier);
-    setWinAmount(amount);
+  const handleGameEnd = (result: number, winAmt: number) => {
+    setGameResult(result);
+    setWinAmount(winAmt);
     setIsPlaying(false);
-    setGameOver(true);
     setModalVisible(true);
-  };
-
-  const handleGameEnd = (result: number, winAmountParam: number) => {
-    console.log("Game ended with result:", result, "and win amount:", winAmountParam);
-    setCrashPoint(result);
-    setWinAmount(0);
-    setIsPlaying(false);
-    setGameOver(true);
-    setModalVisible(true);
+    // End the game on the backend.
+    if (generalGameId) {
+      axios.post(`${apiUrl}/game/end`, {
+        gameId: generalGameId,
+        result: winAmt > 0 ? "win" : "lose",
+        winAmount: winAmt || 0,
+      }).catch((error) => console.error("Error ending game on backend:", error));
+    }
   };
 
   const resetGame = () => {
     setIsPlaying(false);
-    setGameOver(false);
-    setCrashPoint(null);
+    setGameResult(null);
     setWinAmount(0);
     setModalVisible(false);
     setCurrentMultiplier(1);
-  };
-
-  const hideModal = () => {
-    resetGame();
+    setSelectedBet(null);
+    setBetAmount("0.00");
+    setShowOverlay(true);
+    setDepositTxid(null);
+    setGeneralGameId(null);
   };
 
   return (
@@ -101,72 +171,58 @@ function CrashContent() {
             <WalletConnection />
           </motion.div>
 
+          {/* Display deposit TXID so the user can monitor their transaction */}
+          {depositTxid && (
+            <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
+              Deposit TXID:{" "}
+              <a
+                className="txid-link"
+                style={{
+                  background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+                href={`https://kas.fyi/transaction/${depositTxid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {depositTxid}
+              </a>
+            </p>
+          )}
+
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            {/* Game Container */}
             <div
               className="relative bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden"
               style={{ height: "700px" }}
             >
-              <div className="p-6 flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-[#49EACB]">Crash Game</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-[#49EACB]"
-                    onClick={() => setShowHowToPlay(true)}
-                  >
-                    <Info className="w-4 h-4 mr-2" />
-                    How to Play
-                  </Button>
+              {showOverlay && !isPlaying && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
+                  <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg p-6 text-center">
+                    <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Crash</h2>
+                    <p className="text-lg text-white mb-6 max-w-md">
+                      Place your bet and choose your desired multiplier. The game will run until you cash out—if you wait too long, you lose your bet.
+                    </p>
+                    <p className="text-xl text-[#49EACB]">Place Bet to Start</p>
+                  </div>
                 </div>
-                <div className="flex-grow relative bg-transparent rounded-lg mb-6" style={{ height: "100%" }}>
+              )}
+              <div className="p-6 flex flex-col h-full">
+                <div className="flex-grow relative bg-transparent rounded-lg mb-6">
                   <CrashGame
                     isPlaying={isPlaying}
                     betAmount={Number(betAmount)}
                     onGameEnd={handleGameEnd}
-                    onCashoutSuccess={handleCashoutSuccess}
+                    onCashoutSuccess={handleCashout}
                     onManualCashout={handleCashout}
                     onMultiplierChange={setCurrentMultiplier}
                   />
                 </div>
               </div>
-              {/* Win/Loss Modal */}
-              {modalVisible && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 flex items-center justify-center z-50"
-                  style={{ transform: "translateY(-15%)" }}
-                >
-                  <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <img
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                        alt="KAS"
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                      />
-                      <span className="text-xl text-[#49EACB]">
-                        {winAmount > 0
-                          ? `You Won ${winAmount.toFixed(2)} KAS!`
-                          : `You Lost ${Number(betAmount).toFixed(2)} KAS!`}
-                      </span>
-                    </div>
-                    <Button
-                      className="mt-4 w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                      onClick={hideModal}
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
             </div>
 
-            {/* Controls & Other Components */}
+            {/* Right-side Panel */}
             <div className="space-y-6">
               <CrashControls
                 betAmount={betAmount}
@@ -176,12 +232,14 @@ function CrashContent() {
                 balance={balance}
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
-                resetGame={hideModal}
-                gameOver={gameOver}
-                crashPoint={crashPoint ?? 0}
+                resetGame={resetGame}
+                gameOver={!!gameResult}
+                crashPoint={currentMultiplier}
                 winAmount={winAmount}
                 hideModal={true}
                 currentMultiplier={currentMultiplier}
+                selectedBet={selectedBet}
+                setSelectedBet={setSelectedBet}
               />
               <LiveChat textColor="#B6B6B6" />
               <LiveWins textColor="#49EACB" />
@@ -191,28 +249,53 @@ function CrashContent() {
       </div>
       <SiteFooter />
 
-      {showHowToPlay && !isPlaying && !gameOver && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Crash</h3>
-            <ol className="list-decimal list-inside space-y-2 text-white">
-              <li>Enter your bet amount and click "Place Bet" to start the game.</li>
-              <li>Watch the multiplier increase as the rocket flies higher.</li>
-              <li>Click "Cash Out" to secure your winnings before the rocket crashes.</li>
-              <li>If you don't cash out before the crash, you lose your bet.</li>
-            </ol>
-            <p className="mt-4 text-white">
-              The longer you wait, the higher the potential payout, but also the higher the risk!
-            </p>
-            <Button
-              onClick={() => setShowHowToPlay(false)}
-              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+      {/* Result Modal Popup */}
+      <AnimatePresence>
+        {modalVisible && !isPlaying && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4"
+          >
+            <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg p-6 text-center">
+              {winAmount && winAmount > 0 ? (
+                <h3 className="text-3xl font-bold text-green-500 mb-4">
+                  You won {winAmount.toFixed(2)} KAS!
+                </h3>
+              ) : (
+                <h3 className="text-3xl font-bold text-red-500 mb-4">
+                  You lost your bet.
+                </h3>
+              )}
+              <Button onClick={resetGame} className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                Play Again
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* How to Play Modal */}
+      <AnimatePresence>
+        {showHowToPlay && !isPlaying && !gameResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full"
             >
-              Got it!
-            </Button>
-          </div>
-        </div>
-      )}
+              <HowToPlay onClose={() => setShowHowToPlay(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
