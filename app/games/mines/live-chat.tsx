@@ -54,7 +54,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     "dumbass", "fanny", "flamer", "fuckwit", "gash", "git", "gobshite", "goddammit", "gook",
     "honeybunch", "junglebungle", "kike", "minger", "muffdiver", "numpty", "paki",
     "plonker", "prat", "puto", "randy", "scrote", "shite", "slag", "spastic", "sod", "tosspot",
-    "twatwaffle", "wazzock",
+    "twatwaffle", "wazzock", "niggaballs",
     "cum", "porn", "no links allowed"
   ];
 
