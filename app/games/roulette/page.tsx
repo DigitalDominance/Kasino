@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { RouletteControls } from "./roulette-controls";
@@ -10,9 +10,11 @@ import { RouletteGame } from "./roulette-game";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Montserrat } from "next/font/google";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 import "./styles.css";
 
 const montserrat = Montserrat({
@@ -21,38 +23,101 @@ const montserrat = Montserrat({
 });
 
 function RouletteContent() {
-  const { isConnected, connectWallet, balance } = useWallet();
+  const { isConnected, balance, walletAddress } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
+  // New states for deposit TXID and backend game ID
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [generalGameId, setGeneralGameId] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [showResultModal, setShowResultModal] = useState(false);
+  // API URL for backend calls
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+  // Treasury wallet addresses (for deposit) set as public env variables (addresses only)
+  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  useEffect(() => {
-    // Additional wallet checks if needed.
-  }, []);
-
-  const handleSpinRoulette = () => {
+  // When the user clicks to spin the roulette, we initiate a deposit transaction and start the game.
+  const handleSpinRoulette = async () => {
     if (!selectedBet) return;
     const bet = selectedBet.amount;
     if (isNaN(bet) || bet <= 0 || bet > balance) {
       alert("Invalid bet amount");
       return;
     }
+    // Reset previous game result and deposit txid.
     setGameResult(null);
     setWinAmount(null);
-    setIsPlaying(true);
-    setShowOverlay(false);
+    try {
+      // Generate a unique game hash.
+      const uniqueHash = uuidv4();
+      // Get the connected wallet address via kasware.
+      const accounts = await window.kasware.getAccounts();
+      const currentWalletAddress = accounts[0];
+      if (!currentWalletAddress) {
+        alert("No wallet address found");
+        return;
+      }
+      // Randomly pick one of the two treasury addresses for deposit.
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      if (!chosenTreasury) {
+        alert("Treasury address not configured");
+        return;
+      }
+      // Send the deposit transaction.
+      const depositTx = await window.kasware.sendKaspa(
+        chosenTreasury,
+        bet * 1e8,
+        { priorityFee: 10000 }
+      );
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const txidString = parsedTx.id;
+      setDepositTxid(txidString);
+
+      // Call backend API to start the general game.
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
+        gameName: "roulette",
+        uniqueHash,
+        walletAddress: currentWalletAddress,
+        betAmount: bet,
+        txid: txidString,
+      });
+      if (startRes.data.success) {
+        setGeneralGameId(startRes.data.gameId);
+      } else {
+        alert("Failed to start game on backend");
+        return;
+      }
+      // Start the roulette game.
+      setIsPlaying(true);
+      setShowOverlay(false);
+    } catch (error: any) {
+      console.error("Error starting game:", error);
+      alert("Error starting game: " + error.message);
+    }
   };
 
-  const handleGameEnd = (result: number, winAmt: number) => {
+  const handleGameEnd = async (result: number, winAmt: number) => {
     setGameResult(result);
     setWinAmount(winAmt);
     setIsPlaying(false);
     setSelectedBet(null);
     setShowResultModal(true);
+    // Call backend API to end the game.
+    if (generalGameId) {
+      try {
+        await axios.post(`${apiUrl}/game/end`, {
+          gameId: generalGameId,
+          result: winAmt > 0 ? "win" : "lose",
+          winAmount: winAmt || 0,
+        });
+      } catch (error) {
+        console.error("Error ending game on backend:", error);
+      }
+    }
   };
 
   const resetGame = () => {
@@ -63,6 +128,8 @@ function RouletteContent() {
     setBetAmount("0.00");
     setShowOverlay(true);
     setShowResultModal(false);
+    setDepositTxid(null);
+    setGeneralGameId(null);
   };
 
   return (
@@ -75,8 +142,28 @@ function RouletteContent() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Games
             </Link>
-            <WalletConnection onConnect={connectWallet} isConnected={isConnected} />
+            <WalletConnection />
           </motion.div>
+
+          {/* Display deposit TXID so the user can monitor their transaction */}
+          {depositTxid && (
+            <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
+              Deposit TXID:{" "}
+              <a
+                className="txid-link"
+                style={{
+                  background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+                href={`https://kas.fyi/transaction/${depositTxid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {depositTxid}
+              </a>
+            </p>
+          )}
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
