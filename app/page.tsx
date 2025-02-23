@@ -309,6 +309,10 @@ function MainPageContent() {
                                     ? "/crashcard.webp"
                                     : game.slug === "roulette"
                                     ? "/roulettecard.webp"
+                                    : game.slug === "dice"
+                                    ? "/dicecard.webp"
+                                    : game.slug === "mines"
+                                    ? "/minescard.webp"
                                     : "/placeholder.svg"
                                 }
                                 alt={`${game.name} thumbnail`}
