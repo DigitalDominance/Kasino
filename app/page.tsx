@@ -300,8 +300,8 @@ function MainPageContent() {
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="icon-primary inline-block mr-2">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
                       <GiCheerful />
                     </span>
                     <span className="animate-gradient">Original Games</span>
@@ -354,7 +354,6 @@ function MainPageContent() {
                               </h3>
                               <p className="text-sm text-gray-400">
                                 {
-                                  // Use winCounter data from the new API. If no data found, default to 0.
                                   winCounter.find(
                                     (counter) =>
                                       counter._id.toLowerCase() === game.slug
@@ -376,8 +375,8 @@ function MainPageContent() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                 >
-                  <h2 className="text-2xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="icon-primary inline-block mr-2">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
                       <GiStarFormation />
                     </span>
                     <span className="animate-gradient">Live Wins</span>
