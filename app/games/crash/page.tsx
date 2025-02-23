@@ -27,7 +27,7 @@ function CrashContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0.00");
   const [gameResult, setGameResult] = useState<number | null>(null);
-  const [winAmount, setWinAmount] = useState<number | null>(0);
+  const [winAmount, setWinAmount] = useState<number>(0);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -35,14 +35,17 @@ function CrashContent() {
   // New states for deposit TXID and backend general game ID
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [generalGameId, setGeneralGameId] = useState<string | null>(null);
-  
+  // Add missing state variables:
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+
   // API URL for backend calls
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   // Treasury wallet addresses (for deposit) from public env variables (addresses only)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Function to retrieve the connected wallet address
+  // Retrieve connected wallet address
   const getConnectedAddress = useCallback(async () => {
     try {
       const accounts = await window.kasware.getAccounts();
@@ -65,8 +68,7 @@ function CrashContent() {
       // Generate a unique game hash.
       const uniqueHash = uuidv4();
       // Retrieve the connected wallet address.
-      const accounts = await window.kasware.getAccounts();
-      const currentWalletAddress = accounts[0];
+      const currentWalletAddress = await getConnectedAddress();
       if (!currentWalletAddress) {
         alert("No wallet address found");
         return;
@@ -87,7 +89,7 @@ function CrashContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Call the backend to start the general game.
+      // Call backend API to start the general game.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "crash",
         uniqueHash,
@@ -110,7 +112,6 @@ function CrashContent() {
     }
   };
 
-  // Handle cashout (manual) success.
   const handleCashout = () => {
     if (isPlaying) {
       const m = currentMultiplier;
@@ -118,8 +119,9 @@ function CrashContent() {
       setWinAmount(amount);
       setGameResult(m);
       setIsPlaying(false);
+      setGameOver(true);
       setModalVisible(true);
-      // End the game on the backend.
+      // End game on backend.
       if (generalGameId) {
         axios.post(`${apiUrl}/game/end`, {
           gameId: generalGameId,
@@ -134,8 +136,9 @@ function CrashContent() {
     setGameResult(result);
     setWinAmount(winAmt);
     setIsPlaying(false);
+    setGameOver(true);
     setModalVisible(true);
-    // End the game on the backend.
+    // End game on backend.
     if (generalGameId) {
       axios.post(`${apiUrl}/game/end`, {
         gameId: generalGameId,
@@ -156,6 +159,7 @@ function CrashContent() {
     setShowOverlay(true);
     setDepositTxid(null);
     setGeneralGameId(null);
+    setGameOver(false);
   };
 
   return (
@@ -171,7 +175,7 @@ function CrashContent() {
             <WalletConnection />
           </motion.div>
 
-          {/* Display deposit TXID so the user can monitor their transaction */}
+          {/* Display deposit TXID */}
           {depositTxid && (
             <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
               Deposit TXID:{" "}
@@ -233,7 +237,7 @@ function CrashContent() {
                 onPlaceBet={handlePlaceBet}
                 onCashout={handleCashout}
                 resetGame={resetGame}
-                gameOver={!!gameResult}
+                gameOver={gameOver}
                 crashPoint={currentMultiplier}
                 winAmount={winAmount}
                 hideModal={true}
@@ -278,7 +282,7 @@ function CrashContent() {
 
       {/* How to Play Modal */}
       <AnimatePresence>
-        {showHowToPlay && !isPlaying && !gameResult && (
+        {showHowToPlay && !isPlaying && !gameOver && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
