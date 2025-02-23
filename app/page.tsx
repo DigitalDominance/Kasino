@@ -43,7 +43,7 @@ function MainPageContent() {
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   // Banner images
-  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp"];
+  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp", "/dicecoinflipcombobanner.webp", "/minesbanner.webp"];
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -372,6 +372,10 @@ function MainPageContent() {
                           cardImage = "/crashcard.webp";
                         } else if (win.game.toLowerCase() === "roulette") {
                           cardImage = "/roulettecard.webp";
+                        } else if (win.game.toLowerCase() === "dice") {
+                          cardImage = "/dicecard.webp";
+                        } else if (win.game.toLowerCase() === "mines") {
+                          cardImage = "/minescard.webp";
                         }
                         return (
                           <MotionCard
