@@ -271,13 +271,14 @@ function CrashContent() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#49EACB] border border-[#49EACB] rounded-lg p-6 max-w-md w-full z-50"
+              className="bg-[#49EACB] bg-opacity-100 border border-[#49EACB] rounded-lg p-6 max-w-md w-full z-50"
             >
               <HowToPlay onClose={() => setShowHowToPlay(false)} />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
 
       {/* Result Modal Popup */}
