@@ -1,45 +1,44 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import axios from "axios";
+import Image from "next/image";
 
 interface Win {
-  username: string
-  amount: number
-  game: string
-  timestamp: Date
+  username: string;
+  amount: number;
+  game: string;
+  timestamp: string;
 }
 
 interface LiveWinsProps {
-  textColor?: string
+  textColor?: string;
 }
 
 export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
-  const [wins, setWins] = useState<Win[]>([])
+  const [wins, setWins] = useState<Win[]>([]);
 
   useEffect(() => {
-    // Simulated wins
-    const simulatedWins: Win[] = [
-      { username: "LuckyPlayer", amount: 100, game: "Mines", timestamp: new Date() },
-      { username: "CryptoKing", amount: 500, game: "Crash", timestamp: new Date() },
-      { username: "MinesExpert", amount: 250, game: "Mines", timestamp: new Date() },
-    ]
-    setWins(simulatedWins)
-
-    // Simulated new wins every 8 seconds
-    const interval = setInterval(() => {
-      const newSimulatedWin: Win = {
-        username: `Player${Math.floor(Math.random() * 100)}`,
-        amount: Math.floor(Math.random() * 1000),
-        game: Math.random() > 0.5 ? "Mines" : "Crash",
-        timestamp: new Date(),
+    const fetchWins = async () => {
+      try {
+        const res = await axios.get("/api/latest-wins");
+        if (res.data.success) {
+          setWins(res.data.wins);
+        }
+      } catch (error) {
+        console.error("Error fetching latest wins:", error);
       }
-      setWins((prevWins) => [...prevWins.slice(-9), newSimulatedWin])
-    }, 8000)
+    };
 
-    return () => clearInterval(interval)
-  }, [])
+    fetchWins();
+    const interval = setInterval(() => {
+      fetchWins();
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
@@ -51,7 +50,16 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
               <span className="font-bold" style={{ color: textColor }}>
                 {win.username}
               </span>
-              <span style={{ color: textColor }}>{win.amount.toFixed(2)} KAS</span>
+              <span style={{ color: textColor, display: "flex", alignItems: "center" }}>
+                {win.amount.toFixed(2)}{" "}
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="ml-1"
+                />
+              </span>
               <span className="text-sm" style={{ color: `${textColor}80` }}>
                 {win.game}
               </span>
@@ -60,6 +68,5 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         </ScrollArea>
       </div>
     </Card>
-  )
+  );
 }
-
