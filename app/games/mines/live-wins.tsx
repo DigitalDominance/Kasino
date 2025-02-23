@@ -23,7 +23,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
   useEffect(() => {
     const fetchWins = async () => {
       try {
-        const res = await axios.get("/api/latest-wins");
+        const res = await axios.get("https://kasino-backend-4818b4b69870.herokuapp.com/api/latest-wins");
         if (res.data.success) {
           setWins(res.data.wins);
         }
