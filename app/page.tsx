@@ -336,10 +336,10 @@ function MainPageContent() {
                                 alt={`${game.name} thumbnail`}
                                 fill
                                 objectFit="cover"
-                                // Remove style={{ bottom: "10px" }} so the image fills the container entirely
+                                style={{ bottom: "10px" }}
                                 className="scale-100 transition-transform duration-300 group-hover:scale-110"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end">
+                              <div className="absolute inset-x-0 -bottom-8 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
                                   className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
                                   whileHover={{ scale: 1.02 }}
