@@ -1,35 +1,49 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react"
-import { SiteFooter } from "@/components/site-footer"
-import { LoadingAnimation } from "@/components/loading-animation"
-import { WalletConnection } from "@/components/wallet-connection"
-import { Montserrat } from "next/font/google"
-import { WalletProvider, Notification } from "@/contexts/WalletContext"
-import { GiCheerful, GiStarFormation } from "react-icons/gi"
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { SiteFooter } from "@/components/site-footer";
+import { LoadingAnimation } from "@/components/loading-animation";
+import { WalletConnection } from "@/components/wallet-connection";
+import { Montserrat } from "next/font/google";
+import { WalletProvider, Notification } from "@/contexts/WalletContext";
+import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import axios from "axios";
 
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
-})
+});
 
-const MotionCard = motion(Card)
-const MotionButton = motion(Button)
+const MotionCard = motion(Card);
+const MotionButton = motion(Button);
+
+interface Win {
+  username: string;
+  amount: number;
+  game: string;
+  timestamp: string;
+}
 
 function MainPageContent() {
-  const [currentBanner, setCurrentBanner] = useState(0)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [currentBanner, setCurrentBanner] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [liveWins, setLiveWins] = useState<Win[]>([]);
+
+  // Use full backend URL from env variable
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   // Banner images
-  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp"]
+  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp"];
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -37,64 +51,61 @@ function MainPageContent() {
     { name: "Roulette", players: 765, slug: "roulette" },
     { name: "Dice", players: 543, slug: "dice" },
     { name: "Coin Flip", players: 321, slug: "coinflip" },
-  ]
-
-  const liveWins = [
-    {
-      game: "Crash",
-      image: "/crashcard.webp",
-      player: "CrashPlayer1",
-      amount: "1,234.56",
-      time: "2 minutes ago",
-    },
-    {
-      game: "Crash",
-      image: "/crashcard.webp",
-      player: "CrashPlayer2",
-      amount: "2,345.67",
-      time: "5 minutes ago",
-    },
-    {
-      game: "Crash",
-      image: "/crashcard.webp",
-      player: "CrashPlayer3",
-      amount: "3,456.78",
-      time: "10 minutes ago",
-    },
-    {
-      game: "Roulette",
-      image: "/roulettecard.webp",
-      player: "RoulettePlayer1",
-      amount: "987.65",
-      time: "3 minutes ago",
-    },
-    {
-      game: "Roulette",
-      image: "/roulettecard.webp",
-      player: "RoulettePlayer2",
-      amount: "1,111.11",
-      time: "7 minutes ago",
-    },
-    {
-      game: "Roulette",
-      image: "/roulettecard.webp",
-      player: "RoulettePlayer3",
-      amount: "1,222.22",
-      time: "12 minutes ago",
-    },
-  ]
+  ];
 
   const nextBanner = () =>
-    setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
+    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
-    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length)
+    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
+
+  // Helper: For each win, if the username looks like a wallet address, try to resolve it.
+  const resolveUsername = async (win: Win): Promise<Win> => {
+    if (win.username.startsWith("kaspa:")) {
+      try {
+        const res = await axios.get(
+          `/api/user?walletAddress=${encodeURIComponent(win.username)}`
+        );
+        if (res.data && res.data.username) {
+          return { ...win, username: res.data.username };
+        }
+      } catch (err) {
+        console.error("Error resolving username for wallet", win.username, err);
+      }
+    }
+    return win;
+  };
+
+  useEffect(() => {
+    // Fetch live wins from the API, resolve usernames and only keep the 10 latest wins.
+    const fetchWins = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/latest-wins`);
+        if (res.data.success) {
+          const resolvedWins = await Promise.all(
+            res.data.wins.map(resolveUsername)
+          );
+          // Keep only the first 10 wins (assumed to be the most recent)
+          setLiveWins(resolvedWins.slice(0, 10));
+        }
+      } catch (error) {
+        console.error("Error fetching latest wins:", error);
+      }
+    };
+
+    fetchWins();
+    const interval = setInterval(() => {
+      fetchWins();
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [apiUrl]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [])
+      setIsLoading(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
@@ -349,44 +360,55 @@ function MainPageContent() {
                       animate={{ x: 0 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
-                      {liveWins.map((win, i) => (
-                        <MotionCard
-                          key={i}
-                          className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                          whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
-                        >
-                          <div className="relative aspect-[4/3] mt-1">
-                            <Image
-                              src={win.image}
-                              alt={`${win.game} card`}
-                              fill
-                              objectFit="cover"
-                              style={{ bottom: "10px" }}
-                              className="rounded-none scale-100 object-cover"
-                            />
-                            <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
-                              LIVE
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <div className="font-semibold mb-2">{win.player}</div>
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="text-sm text-[#49EACB]">{win.game} Game</div>
-                              <div className="flex items-center gap-1.5">
-                                <Image
-                                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                  alt="KAS"
-                                  width={16}
-                                  height={16}
-                                  className="rounded-full"
-                                />
-                                <span className="text-[#49EACB] font-bold">{win.amount}</span>
+                      {liveWins.map((win, i) => {
+                        // Determine the card image based on the game name
+                        let cardImage = "/placeholder.svg";
+                        if (win.game.toLowerCase() === "crash") {
+                          cardImage = "/crashcard.webp";
+                        } else if (win.game.toLowerCase() === "roulette") {
+                          cardImage = "/roulettecard.webp";
+                        }
+                        return (
+                          <MotionCard
+                            key={i}
+                            className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
+                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                          >
+                            <div className="relative aspect-[4/3] mt-1">
+                              <Image
+                                src={cardImage}
+                                alt={`${win.game} card`}
+                                fill
+                                objectFit="cover"
+                                style={{ bottom: "10px" }}
+                                className="rounded-none scale-100 object-cover"
+                              />
+                              <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
+                                LIVE
                               </div>
                             </div>
-                            <div className="text-sm text-gray-400">{win.time}</div>
-                          </div>
-                        </MotionCard>
-                      ))}
+                            <div className="p-4">
+                              <div className="font-semibold mb-2">{win.username}</div>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="text-sm text-[#49EACB]">{win.game} Game</div>
+                                <div className="flex items-center gap-1.5">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-[#49EACB] font-bold">
+                                    {win.amount.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-sm text-gray-400">{win.timestamp}</div>
+                            </div>
+                          </MotionCard>
+                        );
+                      })}
                     </motion.div>
                     <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
                   </ScrollArea>
@@ -400,10 +422,9 @@ function MainPageContent() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
 
 export default function MainPage() {
   return <MainPageContent />;
 }
-
