@@ -331,7 +331,12 @@ function MainPageContent() {
                                 {game.name}
                               </h3>
                               <p className="text-sm text-gray-400">
-                                {game.players.toLocaleString()} Players
+                                {
+                                  liveWins.filter(
+                                    (win) => win.game.toLowerCase() === game.slug
+                                  ).length
+                                }{" "}
+                                Wins
                               </p>
                             </div>
                           </MotionCard>
