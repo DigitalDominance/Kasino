@@ -146,10 +146,15 @@ function CoinFlipContent() {
 
         {/* Display deposit TXID so the user can monitor their transaction */}
         {depositTxid && (
-          <p className="mb-4 text-sm text-[#49EACB]">
+          <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
             <a
               className="txid-link"
+              style={{
+                background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
               href={`https://kas.fyi/transaction/${depositTxid}`}
               target="_blank"
               rel="noopener noreferrer"
