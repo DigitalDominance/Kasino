@@ -84,7 +84,7 @@ function MainPageContent() {
           const resolvedWins = await Promise.all(
             res.data.wins.map(resolveUsername)
           );
-          // Keep only the first 10 wins (assumed to be the most recent)
+          // Keep only the 10 most recent wins
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -388,9 +388,10 @@ function MainPageContent() {
                               </div>
                             </div>
                             <div className="p-4">
-                              <div className="font-semibold mb-2">{win.username}</div>
                               <div className="flex items-center justify-between mb-1">
-                                <div className="text-sm text-[#49EACB]">{win.game} Game</div>
+                                <div className="text-sm text-[#49EACB]">
+                                  {win.game.toUpperCase()}
+                                </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -404,7 +405,7 @@ function MainPageContent() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-sm text-gray-400">{win.timestamp}</div>
+                              <div className="text-sm text-gray-400">{win.username}</div>
                             </div>
                           </MotionCard>
                         );
