@@ -33,8 +33,11 @@ function CoinFlipContent() {
   const [selectedMultiplier, setSelectedMultiplier] = useState(2);
   const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
   const [gameId, setGameId] = useState<string | null>(null);
-  // Use NEXT_PUBLIC_API_URL for frontend API calls
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  // Use a relative API URL for backend calls
+  const apiUrl = "/api";
+  // Treasury wallet addresses (for deposit) set in your environment (do not expose private keys)
+  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
   const handleFlipCoin = async () => {
     const bet = Number(betAmount);
@@ -50,15 +53,17 @@ function CoinFlipContent() {
       // Generate a unique game identifier
       const uniqueHash = uuidv4();
 
-      // Send the deposit transaction from the user's wallet to the treasury.
-      // Treasury address is exposed as NEXT_PUBLIC_TREASURY_ADDRESS.
-      const treasuryAddress = process.env.NEXT_PUBLIC_TREASURY_ADDRESS;
-      if (!treasuryAddress) {
+      // Randomly pick one of the two treasury wallet addresses for the deposit.
+      const chosenTreasury =
+        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
+
+      // Send the deposit transaction from the user's wallet to the chosen treasury.
       const depositTx = await window.kasware.sendKaspa(
-        treasuryAddress,
+        chosenTreasury,
         bet * 1e8,
         { priorityFee: 10000 }
       );
@@ -66,7 +71,7 @@ function CoinFlipContent() {
       const txidString = parsedTx.id;
       
       // Call backend API to start the game.
-      const startRes = await axios.post(`${apiUrl}/api/game/start`, {
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "coinflip",
         uniqueHash,
         walletAddress,
@@ -93,7 +98,7 @@ function CoinFlipContent() {
     // Call backend API to end the game and disperse prize if applicable.
     if (gameId) {
       try {
-        await axios.post(`${apiUrl}/api/game/end`, {
+        await axios.post(`${apiUrl}/game/end`, {
           gameId,
           result: result === "You Win" ? "win" : "lose",
           winAmount: winAmt,
@@ -188,7 +193,8 @@ function CoinFlipContent() {
               <li>Your coin is on the left, and the house's coin is on the right.</li>
               <li>If your coin shows your chosen symbol, you win!</li>
               <li>If you win, you'll receive your bet amount multiplied by the selected multiplier.</li>
-              <li>The game odds are as follows:
+              <li>
+                The game odds are as follows:
                 <ul className="list-disc list-inside ml-4">
                   <li>2x multiplier: 40% chance to win</li>
                   <li>5x multiplier: 10% chance to win</li>
