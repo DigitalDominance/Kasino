@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { LiveChat } from "./live-chat";
 import { LiveWins } from "./live-wins";
 import { HowToPlay } from "./how-to-play";
 import { WalletConnection } from "@/components/wallet-connection";
-import { useWallet, WalletProvider } from "@/contexts/WalletContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { useRouter } from "next/navigation";
 import type { MinesGame, MinesTile } from "./mines-game";
 import { initializeMinesGame, revealTile, calculatePayout } from "./mines-logic";
@@ -20,6 +20,8 @@ import "./styles.css";
 import Image from "next/image";
 import { MinesControls } from "./mines-controls";
 import { Montserrat } from "next/font/google";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -37,11 +39,93 @@ function MinesContent() {
   const [game, setGame] = useState<MinesGame | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    // WalletContext handles wallet connection.
+  // API URL for backend calls (for general game endpoints)
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+  // Treasury wallet addresses (for deposit) set as public env variables (addresses only)
+  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+
+  // Helper: Get connected Kasware address.
+  const getConnectedAddress = useCallback(async () => {
+    try {
+      const accounts = await window.kasware.getAccounts();
+      return accounts[0];
+    } catch (err) {
+      console.error("Error fetching connected account:", err);
+      return null;
+    }
   }, []);
+
+  // Start a new Mines game with deposit and backend integration.
+  const startNewGame = async () => {
+    const bet = Number.parseFloat(betAmount);
+    if (isNaN(bet) || bet <= 0 || bet > balance) {
+      alert("Invalid bet amount");
+      return;
+    }
+    try {
+      const betInRawUnits = bet * Math.pow(10, 8);
+      // Generate a unique game identifier.
+      const uniqueHash = uuidv4();
+      // Get wallet address via kasware.
+      const currentWalletAddress = await getConnectedAddress();
+      if (!currentWalletAddress) {
+        alert("Could not retrieve wallet address.");
+        return;
+      }
+      // Randomly pick one treasury address for deposit.
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      if (!chosenTreasury) {
+        alert("Treasury address not configured");
+        return;
+      }
+      // Send deposit transaction.
+      const depositTx = await window.kasware.sendKaspa(
+        chosenTreasury,
+        betInRawUnits,
+        { priorityFee: 10000 }
+      );
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const txidString = parsedTx.id;
+      setDepositTxid(txidString);
+      
+      // Call backend API to start the general game.
+      const startGameRes = await axios.post(`${apiUrl}/game/start`, {
+        gameName: "mines",
+        uniqueHash,
+        walletAddress: currentWalletAddress,
+        betAmount: bet,
+        txid: txidString,
+      });
+      if (!startGameRes.data.success) {
+        alert("Failed to start game on backend");
+        return;
+      }
+      // Now initialize Mines game state.
+      const newGame = initializeMinesGame(5, betInRawUnits);
+      const minesRes = await fetch("/api/mines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "startGame",
+          gameData: newGame,
+        }),
+      });
+      if (minesRes.ok) {
+        setGame(newGame);
+        setIsPlaying(true);
+        setShowGameOver(false);
+      } else {
+        throw new Error("Failed to start Mines game");
+      }
+    } catch (error) {
+      console.error("Failed to start new game:", error);
+      setGame(null);
+    }
+  };
 
   const handleTileClick = async (index: number) => {
     if (!isConnected || isLoading || !game || game.isGameOver) {
@@ -63,6 +147,12 @@ function MinesContent() {
         if (updatedGame.isGameOver) {
           setShowGameOver(true);
           await endGame(updatedGame);
+          // Also call backend to end general game.
+          await axios.post(`${apiUrl}/game/end`, {
+            gameId: /* you can store the general gameId when starting the game */,
+            result: updatedGame.winAmount > 0 ? "win" : "lose",
+            winAmount: updatedGame.winAmount || 0,
+          });
         }
       } else {
         throw new Error("Failed to update game");
@@ -71,36 +161,6 @@ function MinesContent() {
       console.error("Error revealing tile:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const startNewGame = async () => {
-    const bet = Number.parseFloat(betAmount);
-    if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount");
-      return;
-    }
-    try {
-      const betInRawUnits = bet * Math.pow(10, 8);
-      const newGame = initializeMinesGame(5, betInRawUnits);
-      const response = await fetch("/api/mines", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "startGame",
-          gameData: newGame,
-        }),
-      });
-      if (response.ok) {
-        setGame(newGame);
-        setIsPlaying(true);
-        setShowGameOver(false);
-      } else {
-        throw new Error("Failed to start game");
-      }
-    } catch (error) {
-      console.error("Failed to start new game:", error);
-      setGame(null);
     }
   };
 
@@ -121,6 +181,12 @@ function MinesContent() {
         setGameResult("win");
         setWinAmount(payout);
         setShowGameOver(true);
+        // Also notify backend about game end
+        await axios.post(`${apiUrl}/game/end`, {
+          gameId: /* general game id if stored */,
+          result: "win",
+          winAmount: payout,
+        });
       } else {
         throw new Error("Failed to cash out");
       }
@@ -151,6 +217,7 @@ function MinesContent() {
     setGameResult(null);
     setWinAmount(null);
     setIsPlaying(false);
+    setDepositTxid(null);
     router.refresh();
   };
 
@@ -168,6 +235,26 @@ function MinesContent() {
             </motion.div>
             <WalletConnection />
           </header>
+
+          {/* Display deposit TXID */}
+          {depositTxid && (
+            <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
+              Deposit TXID:{" "}
+              <a
+                className="txid-link"
+                style={{
+                  background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+                href={`https://kas.fyi/transaction/${depositTxid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {depositTxid}
+              </a>
+            </p>
+          )}
 
           {/* Game Area */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
