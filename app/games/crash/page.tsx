@@ -209,16 +209,17 @@ function CrashContent() {
               style={{ height: "700px" }}
             >
               {showOverlay && !isPlaying && (
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
-                  <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 backdrop-blur-lg rounded-lg p-6 text-center">
-                    <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Crash</h2>
-                    <p className="text-lg text-white mb-6 max-w-md">
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/50 backdrop-blur-3xl">
+                  <div className="bg-[#49EACB] bg-opacity-100 border border-[#49EACB] rounded-lg p-6 text-center shadow-xl">
+                    <h2 className="text-4xl font-bold text-black mb-4">Crash</h2>
+                    <p className="text-lg text-black mb-6 max-w-md">
                       Place your bet and choose your desired multiplier. The game will run until you cash out—if you wait too long, you lose your bet.
                     </p>
-                    <p className="text-xl text-[#49EACB]">Place Bet to Start</p>
+                    <p className="text-xl font-semibold text-black">Place Bet to Start</p>
                   </div>
                 </div>
               )}
+
               <div className="p-6 flex flex-col h-full">
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6">
                   <CrashGame
