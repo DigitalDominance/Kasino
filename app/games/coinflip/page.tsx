@@ -33,9 +33,11 @@ function CoinFlipContent() {
   const [selectedMultiplier, setSelectedMultiplier] = useState(2);
   const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
   const [gameId, setGameId] = useState<string | null>(null);
-  // Use a relative API URL for backend calls
+  // State to hold the deposit transaction ID so the user can monitor it
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  // API URL for backend calls
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
-  // Treasury wallet addresses (for deposit) set in your environment (do not expose private keys)
+  // Treasury wallet addresses (for deposit) exposed as public env variables (only addresses)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
@@ -53,7 +55,15 @@ function CoinFlipContent() {
       // Generate a unique game identifier
       const uniqueHash = uuidv4();
 
-      // Randomly pick one of the two treasury wallet addresses for the deposit.
+      // Get the connected wallet address directly using kasware
+      const accounts = await window.kasware.getAccounts();
+      const currentWalletAddress = accounts[0];
+      if (!currentWalletAddress) {
+        alert("No wallet address found");
+        return;
+      }
+
+      // Randomly pick one of the two treasury wallet addresses for deposit
       const chosenTreasury =
         Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
@@ -62,6 +72,7 @@ function CoinFlipContent() {
       }
 
       // Send the deposit transaction from the user's wallet to the chosen treasury.
+      // (This transaction sends the bet amount in KAS.)
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
         bet * 1e8,
@@ -69,12 +80,13 @@ function CoinFlipContent() {
       );
       const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
-      
+      setDepositTxid(txidString);
+
       // Call backend API to start the game.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "coinflip",
         uniqueHash,
-        walletAddress,
+        walletAddress: currentWalletAddress,
         betAmount: bet,
         txid: txidString,
       });
@@ -86,7 +98,7 @@ function CoinFlipContent() {
       }
       setIsPlaying(true);
     } catch (error: any) {
-      console.error(error);
+      console.error("Error starting game:", error);
       alert("Error starting game: " + error.message);
     }
   };
@@ -114,66 +126,79 @@ function CoinFlipContent() {
     setGameResult(null);
     setWinAmount(null);
     setGameId(null);
+    setDepositTxid(null);
   };
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-6">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Games
-              </Link>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              <WalletConnection />
-            </motion.div>
-          </header>
+        <header className="flex items-center justify-between mb-6">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Games
+            </Link>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <WalletConnection />
+          </motion.div>
+        </header>
 
-          {/* Game Area */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-              <div className="p-6 flex flex-col h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-[#49EACB]">Coin Flip Game</h2>
-                  <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={() => setShowHowToPlay(true)}>
-                    <Info className="w-4 h-4 mr-2" />
-                    How to Play
-                  </Button>
-                </div>
-                <div className="flex-grow relative aspect-[16/9] bg-[#49EACB]/5 rounded-lg mb-6 overflow-hidden p-4">
-                  <CoinFlipGame
-                    isPlaying={isPlaying}
-                    onGameEnd={handleGameEnd}
-                    betAmount={Number(betAmount)}
-                    selectedMultiplier={selectedMultiplier}
-                    selectedSymbol={selectedSymbol}
-                  />
-                </div>
+        {/* Display deposit TXID so the user can monitor their transaction */}
+        {depositTxid && (
+          <p className="mb-4 text-sm text-[#49EACB]">
+            Deposit TXID:{" "}
+            <a
+              className="txid-link"
+              href={`https://kas.fyi/transaction/${depositTxid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {depositTxid}
+            </a>
+          </p>
+        )}
+
+        {/* Game Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-[#49EACB]">Coin Flip Game</h2>
+                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={() => setShowHowToPlay(true)}>
+                  <Info className="w-4 h-4 mr-2" />
+                  How to Play
+                </Button>
               </div>
-            </Card>
-            <div className="space-y-6">
-              <CoinFlipControls
-                betAmount={betAmount}
-                setBetAmount={setBetAmount}
-                isPlaying={isPlaying}
-                isWalletConnected={isConnected}
-                balance={balance}
-                onFlipCoin={handleFlipCoin}
-                resetGame={resetGame}
-                gameResult={gameResult}
-                winAmount={winAmount}
-                selectedMultiplier={selectedMultiplier}
-                setSelectedMultiplier={setSelectedMultiplier}
-                selectedSymbol={selectedSymbol}
-                setSelectedSymbol={setSelectedSymbol}
-              />
-              <LiveChat textColor="#49EACB" />
-              <LiveWins textColor="#49EACB" />
+              <div className="flex-grow relative aspect-[16/9] bg-[#49EACB]/5 rounded-lg mb-6 overflow-hidden p-4">
+                <CoinFlipGame
+                  isPlaying={isPlaying}
+                  onGameEnd={handleGameEnd}
+                  betAmount={Number(betAmount)}
+                  selectedMultiplier={selectedMultiplier}
+                  selectedSymbol={selectedSymbol}
+                />
+              </div>
             </div>
+          </Card>
+          <div className="space-y-6">
+            <CoinFlipControls
+              betAmount={betAmount}
+              setBetAmount={setBetAmount}
+              isPlaying={isPlaying}
+              isWalletConnected={isConnected}
+              balance={balance}
+              onFlipCoin={handleFlipCoin}
+              resetGame={resetGame}
+              gameResult={gameResult}
+              winAmount={winAmount}
+              selectedMultiplier={selectedMultiplier}
+              setSelectedMultiplier={setSelectedMultiplier}
+              selectedSymbol={selectedSymbol}
+              setSelectedSymbol={setSelectedSymbol}
+            />
+            <LiveChat textColor="#49EACB" />
+            <LiveWins textColor="#49EACB" />
           </div>
         </div>
       </div>
