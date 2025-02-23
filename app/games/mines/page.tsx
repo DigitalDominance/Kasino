@@ -40,6 +40,8 @@ function MinesContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  // Store the general gameId returned by the backend (/api/game/start)
+  const [generalGameId, setGeneralGameId] = useState<string | null>(null);
   const router = useRouter();
 
   // API URL for backend calls (for general game endpoints)
@@ -104,7 +106,9 @@ function MinesContent() {
         alert("Failed to start game on backend");
         return;
       }
-      // Now initialize Mines game state.
+      setGeneralGameId(startGameRes.data.gameId);
+      
+      // Initialize Mines game state.
       const newGame = initializeMinesGame(5, betInRawUnits);
       const minesRes = await fetch("/api/mines", {
         method: "POST",
@@ -148,11 +152,13 @@ function MinesContent() {
           setShowGameOver(true);
           await endGame(updatedGame);
           // Also call backend to end general game.
-          await axios.post(`${apiUrl}/game/end`, {
-            gameId: /* you can store the general gameId when starting the game */,
-            result: updatedGame.winAmount > 0 ? "win" : "lose",
-            winAmount: updatedGame.winAmount || 0,
-          });
+          if (generalGameId) {
+            await axios.post(`${apiUrl}/game/end`, {
+              gameId: generalGameId,
+              result: updatedGame.winAmount > 0 ? "win" : "lose",
+              winAmount: updatedGame.winAmount || 0,
+            });
+          }
         }
       } else {
         throw new Error("Failed to update game");
@@ -181,12 +187,14 @@ function MinesContent() {
         setGameResult("win");
         setWinAmount(payout);
         setShowGameOver(true);
-        // Also notify backend about game end
-        await axios.post(`${apiUrl}/game/end`, {
-          gameId: /* general game id if stored */,
-          result: "win",
-          winAmount: payout,
-        });
+        // Also notify backend about game end.
+        if (generalGameId) {
+          await axios.post(`${apiUrl}/game/end`, {
+            gameId: generalGameId,
+            result: "win",
+            winAmount: payout,
+          });
+        }
       } else {
         throw new Error("Failed to cash out");
       }
@@ -218,6 +226,7 @@ function MinesContent() {
     setWinAmount(null);
     setIsPlaying(false);
     setDepositTxid(null);
+    setGeneralGameId(null);
     router.refresh();
   };
 
@@ -236,7 +245,7 @@ function MinesContent() {
             <WalletConnection />
           </header>
 
-          {/* Display deposit TXID */}
+          {/* Display deposit TXID so the user can monitor their transaction */}
           {depositTxid && (
             <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
               Deposit TXID:{" "}
