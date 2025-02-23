@@ -219,7 +219,6 @@ function CrashContent() {
                   </div>
                 </div>
               )}
-
               <div className="p-6 flex flex-col h-full">
                 <div className="flex-grow relative bg-transparent rounded-lg mb-6">
                   <CrashGame
