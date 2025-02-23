@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Info, X } from "lucide-react";
@@ -35,14 +37,16 @@ function CrashContent() {
   // New states for deposit TXID and backend general game ID
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [generalGameId, setGeneralGameId] = useState<string | null>(null);
+  // State to control the overlay; default to true.
+  const [showOverlay, setShowOverlay] = useState(true);
 
   // API URL for backend calls
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
-  // Treasury wallet addresses (for deposit) from public env variables (addresses only)
+  // Treasury wallet addresses from public env variables (addresses only)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Retrieve the connected wallet address via kasware
+  // Helper: Retrieve the connected wallet address via kasware.
   const getConnectedAddress = useCallback(async () => {
     try {
       const accounts = await window.kasware.getAccounts();
@@ -53,7 +57,7 @@ function CrashContent() {
     }
   }, []);
 
-  // Handle placing the bet and starting the Crash game.
+  // Handle placing a bet and starting the Crash game.
   const handlePlaceBet = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
@@ -67,22 +71,19 @@ function CrashContent() {
     try {
       // Generate a unique game identifier.
       const uniqueHash = uuidv4();
-
-      // Retrieve the connected wallet address.
+      // Retrieve connected wallet address.
       const currentWalletAddress = await getConnectedAddress();
       if (!currentWalletAddress) {
         alert("No wallet address found");
         return;
       }
-
       // Randomly select one treasury address.
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-
-      // Send deposit transaction from user's wallet to chosen treasury.
+      // Send deposit transaction.
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
         bet * 1e8,
@@ -92,7 +93,7 @@ function CrashContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Call backend API to start the game.
+      // Call backend API to start the general game.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "crash",
         uniqueHash,
@@ -120,7 +121,7 @@ function CrashContent() {
     }
   };
 
-  // Handle cash out (either manually or automatically).
+  // Handle cash out.
   const handleCashout = () => {
     if (isPlaying) {
       const m = currentMultiplier;
@@ -132,17 +133,16 @@ function CrashContent() {
       setModalVisible(true);
       // End the game on backend.
       if (generalGameId) {
-        axios
-          .post(`${apiUrl}/game/end`, {
-            gameId: generalGameId,
-            result: "win",
-            winAmount: amount,
-          })
-          .catch((error) => console.error("Error ending game on backend:", error));
+        axios.post(`${apiUrl}/game/end`, {
+          gameId: generalGameId,
+          result: "win",
+          winAmount: amount,
+        }).catch((error) => console.error("Error ending game on backend:", error));
       }
     }
   };
 
+  // Handle game end (if auto-crash, etc.).
   const handleGameEnd = (result: number, winAmt: number) => {
     console.log("Game ended with result:", result, "and win amount:", winAmt);
     setCrashPoint(result);
@@ -152,13 +152,11 @@ function CrashContent() {
     setModalVisible(true);
     // End game on backend.
     if (generalGameId) {
-      axios
-        .post(`${apiUrl}/game/end`, {
-          gameId: generalGameId,
-          result: winAmt > 0 ? "win" : "lose",
-          winAmount: winAmt || 0,
-        })
-        .catch((error) => console.error("Error ending game on backend:", error));
+      axios.post(`${apiUrl}/game/end`, {
+        gameId: generalGameId,
+        result: winAmt > 0 ? "win" : "lose",
+        winAmount: winAmt || 0,
+      }).catch((error) => console.error("Error ending game on backend:", error));
     }
   };
 
@@ -184,7 +182,7 @@ function CrashContent() {
             <WalletConnection />
           </motion.div>
 
-          {/* Display deposit TXID so the user can monitor their transaction */}
+          {/* Display deposit TXID */}
           {depositTxid && (
             <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
               Deposit TXID:{" "}
