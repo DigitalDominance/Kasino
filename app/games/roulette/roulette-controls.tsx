@@ -92,13 +92,25 @@ export function RouletteControls({
   setSelectedBet,
 }: RouletteControlsProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
+  // Auto-dismiss error after 3 seconds
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
+
+  // Countdown effect for cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const intervalId = setInterval(() => {
+        setCooldown(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(intervalId);
+    }
+  }, [cooldown]);
 
   const showError = (msg: string) => {
     setErrorMessage(msg);
@@ -109,17 +121,18 @@ export function RouletteControls({
       showError("Please connect your wallet first");
       return;
     }
-    if (!selectedBet || selectedBet.amount < 1 || selectedBet.amount > 500 || selectedBet.amount > balance) {
-      showError("Invalid bet amount or bet type");
+    if (!selectedBet || selectedBet.amount < 1 || selectedBet.amount > 1000 || selectedBet.amount > balance) {
+      showError("Bet amount must be between 1 and 1000");
       return;
     }
     onSpinRoulette();
+    setCooldown(10);
   };
 
   const handleBetTypeSelect = (betType: string) => {
     const amount = Number(betAmount);
-    if (isNaN(amount) || amount < 1 || amount > 500) {
-      showError("Bet amount must be between 1 and 500");
+    if (isNaN(amount) || amount < 1 || amount > 1000) {
+      showError("Bet amount must be between 1 and 1000");
       return;
     }
     setSelectedBet({ type: betType, amount });
@@ -193,9 +206,13 @@ export function RouletteControls({
               <Button
                 className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
                 onClick={handleSpinRoulette}
-                disabled={!isWalletConnected || !selectedBet}
+                disabled={!isWalletConnected || !selectedBet || cooldown > 0}
               >
-                {!isWalletConnected ? "Connect Wallet to Play" : "Spin Roulette"}
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Spin Roulette (${cooldown}s)`
+                  : "Spin Roulette"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
