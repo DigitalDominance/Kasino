@@ -407,17 +407,13 @@ function MinesContent() {
                     />
                   </div>
                 </div>
-                <Button
-                  onClick={startNewGame}
-                  className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80 py-3"
-                >
-                  Play Again
-                </Button>
+                {/* Removed the Play Again button */}
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* How to Play Modal */}
       <AnimatePresence>
