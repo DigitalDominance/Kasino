@@ -1,27 +1,57 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { motion } from "framer-motion"
-import Image from "next/image"
-import { Sun, Moon } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { Sun, Moon } from "lucide-react";
 
 interface CoinFlipControlsProps {
-  betAmount: string
-  setBetAmount: (amount: string) => void
-  isPlaying: boolean
-  isWalletConnected: boolean
-  balance: number
-  onFlipCoin: () => void
-  resetGame: () => void
-  gameResult: string | null
-  winAmount: number | null
-  selectedMultiplier: number
-  setSelectedMultiplier: (multiplier: number) => void
-  selectedSymbol: "sun" | "moon"
-  setSelectedSymbol: (symbol: "sun" | "moon") => void
+  betAmount: string;
+  setBetAmount: (amount: string) => void;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
+  onFlipCoin: () => void;
+  resetGame: () => void;
+  gameResult: string | null;
+  winAmount: number | null;
+  selectedMultiplier: number;
+  setSelectedMultiplier: (multiplier: number) => void;
+  selectedSymbol: "sun" | "moon";
+  setSelectedSymbol: (symbol: "sun" | "moon") => void;
 }
+
+const ErrorAlert = ({
+  message,
+  onDismiss,
+}: {
+  message: string;
+  onDismiss: () => void;
+}) => {
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ x: -300, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -300, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="fixed bottom-4 left-4 bg-gradient-to-r from-red-700 to-black text-white px-4 py-2 rounded shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <span>{message}</span>
+            <button onClick={onDismiss} className="ml-4 font-bold text-white">
+              X
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export function CoinFlipControls({
   betAmount,
@@ -38,154 +68,227 @@ export function CoinFlipControls({
   selectedSymbol,
   setSelectedSymbol,
 }: CoinFlipControlsProps) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  // Auto-dismiss error alert after 3 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  // Countdown effect for cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const intervalId = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(intervalId);
+    }
+  }, [cooldown]);
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg);
+  };
+
   const handleFlipCoin = () => {
     if (!isWalletConnected) {
-      alert("Please connect your wallet first")
-      return
+      showError("Please connect your wallet first");
+      return;
     }
-
-    if (Number(betAmount) > balance) {
-      alert("Insufficient balance")
-      return
+    const bet = Number(betAmount);
+    if (isNaN(bet)) {
+      showError("Invalid bet amount");
+      return;
     }
-
-    onFlipCoin()
-  }
+    if (bet < 1 || bet > 1000) {
+      showError("Bet amount must be between 1 and 1000");
+      return;
+    }
+    if (bet > balance) {
+      showError("Insufficient balance");
+      return;
+    }
+    onFlipCoin();
+    setCooldown(10);
+  };
 
   return (
-    <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
-      <div className="p-6 space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm text-[#49EACB]">Bet Amount</label>
-          <div className="relative">
-            <Input
-              type="number"
-              value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
-              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
-              placeholder="0.00"
-              disabled={isPlaying || !isWalletConnected}
-            />
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                alt="KAS"
-                width={16}
-                height={16}
-                className="rounded-full"
+    <>
+      <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
+        <div className="p-6 space-y-4">
+          {/* Bet Amount */}
+          <div className="space-y-2">
+            <label className="text-sm text-[#49EACB]">Bet Amount</label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={betAmount}
+                onChange={(e) => {
+                  let value = Number(e.target.value);
+                  if (isNaN(value)) value = 1;
+                  // Enforce minimum of 1 and maximum of 1000
+                  value = Math.max(1, Math.min(1000, value));
+                  setBetAmount(value.toString());
+                }}
+                className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+                placeholder="0.00"
+                disabled={isPlaying || !isWalletConnected}
               />
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) / 2).toString())}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              ½
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount((Number(betAmount) * 2).toString())}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              2×
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount("0.00")}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              Min
-            </Button>
-            <Button
-              variant="outline"
-              className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-              onClick={() => setBetAmount(balance.toString())}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              Max
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-[#49EACB]">Multiplier</label>
-          <div className="grid grid-cols-3 gap-2">
-            {[2, 5, 10].map((multiplier) => (
+            <div className="grid grid-cols-4 gap-2">
               <Button
-                key={multiplier}
-                variant={selectedMultiplier === multiplier ? "default" : "outline"}
-                className={`border-[#49EACB]/10 ${
-                  selectedMultiplier === multiplier ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"
-                }`}
-                onClick={() => setSelectedMultiplier(multiplier)}
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => {
+                  let current = Number(betAmount);
+                  if (isNaN(current)) current = 1;
+                  setBetAmount((current / 2).toString());
+                }}
                 disabled={isPlaying || !isWalletConnected}
               >
-                {multiplier}x
+                ½
               </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-[#49EACB]">Choose Your Symbol</label>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={selectedSymbol === "sun" ? "default" : "outline"}
-              className={`border-[#49EACB]/10 ${
-                selectedSymbol === "sun" ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"
-              }`}
-              onClick={() => setSelectedSymbol("sun")}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              <Sun className="w-5 h-5 mr-2" />
-              Sun
-            </Button>
-            <Button
-              variant={selectedSymbol === "moon" ? "default" : "outline"}
-              className={`border-[#49EACB]/10 ${
-                selectedSymbol === "moon" ? "bg-[#49EACB] text-black" : "hover:bg-[#49EACB]/10"
-              }`}
-              onClick={() => setSelectedSymbol("moon")}
-              disabled={isPlaying || !isWalletConnected}
-            >
-              <Moon className="w-5 h-5 mr-2" />
-              Moon
-            </Button>
-          </div>
-        </div>
-
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          {gameResult !== null ? (
-            <div className="text-center mb-4">
-              <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
-              {winAmount !== null && winAmount > 0 ? (
-                <div className="text-xl text-green-500">You won {winAmount.toFixed(8)} KAS!</div>
-              ) : (
-                <div className="text-xl text-red-500">You lost your bet.</div>
-              )}
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => {
+                  let current = Number(betAmount);
+                  if (isNaN(current)) current = 1;
+                  setBetAmount((current * 2).toString());
+                }}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                2×
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => setBetAmount("1")}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                Min
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => setBetAmount(Math.min(1000, balance).toString())}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                Max
+              </Button>
             </div>
-          ) : null}
-          {!isPlaying ? (
-            <Button
-              className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-              onClick={handleFlipCoin}
-              disabled={!isWalletConnected}
-            >
-              {!isWalletConnected ? "Connect Wallet to Play" : "Flip Coin"}
-            </Button>
-          ) : (
-            <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
-              Flipping...
-            </Button>
-          )}
-        </motion.div>
-      </div>
-    </Card>
-  )
-}
+          </div>
 
+          {/* Multiplier */}
+          <div className="space-y-2">
+            <label className="text-sm text-[#49EACB]">Multiplier</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[2, 5, 10].map((multiplier) => (
+                <Button
+                  key={multiplier}
+                  variant={selectedMultiplier === multiplier ? "default" : "outline"}
+                  className={`border-[#49EACB]/10 ${
+                    selectedMultiplier === multiplier
+                      ? "bg-[#49EACB] text-black"
+                      : "hover:bg-[#49EACB]/10"
+                  }`}
+                  onClick={() => setSelectedMultiplier(multiplier)}
+                  disabled={isPlaying || !isWalletConnected}
+                >
+                  {multiplier}x
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Symbol Selection */}
+          <div className="space-y-2">
+            <label className="text-sm text-[#49EACB]">Choose Your Symbol</label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={selectedSymbol === "sun" ? "default" : "outline"}
+                className={`border-[#49EACB]/10 ${
+                  selectedSymbol === "sun"
+                    ? "bg-[#49EACB] text-black"
+                    : "hover:bg-[#49EACB]/10"
+                }`}
+                onClick={() => setSelectedSymbol("sun")}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                <Sun className="w-5 h-5 mr-2" />
+                Sun
+              </Button>
+              <Button
+                variant={selectedSymbol === "moon" ? "default" : "outline"}
+                className={`border-[#49EACB]/10 ${
+                  selectedSymbol === "moon"
+                    ? "bg-[#49EACB] text-black"
+                    : "hover:bg-[#49EACB]/10"
+                }`}
+                onClick={() => setSelectedSymbol("moon")}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                <Moon className="w-5 h-5 mr-2" />
+                Moon
+              </Button>
+            </div>
+          </div>
+
+          {/* Flip Coin Button & Game Result */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            {gameResult !== null && (
+              <div className="text-center mb-4">
+                <div className="text-2xl font-bold text-[#49EACB]">
+                  Result: {gameResult}
+                </div>
+                {winAmount !== null && winAmount > 0 ? (
+                  <div className="text-xl text-green-500">
+                    You won {winAmount.toFixed(8)} KAS!
+                  </div>
+                ) : (
+                  <div className="text-xl text-red-500">You lost your bet.</div>
+                )}
+              </div>
+            )}
+            {!isPlaying ? (
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                onClick={handleFlipCoin}
+                disabled={!isWalletConnected || cooldown > 0}
+              >
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Flip Coin (${cooldown}s)`
+                  : "Flip Coin"}
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                disabled
+              >
+                Flipping...
+              </Button>
+            )}
+          </motion.div>
+        </div>
+      </Card>
+      <ErrorAlert
+        message={errorMessage || ""}
+        onDismiss={() => setErrorMessage(null)}
+      />
+    </>
+  );
+}
