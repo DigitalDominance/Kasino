@@ -384,35 +384,11 @@ function MinesContent() {
                   "You hit a mine! Better luck next time."
                 )}
               </p>
-              <div className="space-y-4">
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="1"
-                    value={betAmount}
-                    onChange={(e) => {
-                      const val = Math.max(1, Number(e.target.value));
-                      setBetAmount(val.toString());
-                    }}
-                    placeholder="Enter bet amount"
-                    className="bg-[#003B2D] border-[#49EACB]/10 text-white w-full rounded-md py-2 pl-10 pr-3"
-                  />
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                      alt="KAS"
-                      width={20}
-                      height={20}
-                      className="rounded-full"
-                    />
-                  </div>
-                </div>
-                {/* Removed the Play Again button */}
-              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
 
       {/* How to Play Modal */}
