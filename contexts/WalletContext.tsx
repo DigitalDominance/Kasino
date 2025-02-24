@@ -284,6 +284,12 @@ export const WalletStatus: React.FC = () => {
 };
 
 export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({ message, type }) => {
+  // Determine the notification type: if the type is "error" OR the message includes "error", then use error styling.
+  const notifType =
+    type === "error" || message.toLowerCase().includes("error")
+      ? "error"
+      : "success";
+
   return (
     <AnimatePresence>
       <motion.div
@@ -292,7 +298,7 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         exit={{ opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
         className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
-          ${type === "success"
+          ${notifType === "success"
             ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black bg-success-notif"
             : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white bg-error-notif"}`}
         style={{
