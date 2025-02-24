@@ -297,7 +297,6 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
             : "bg-gradient-to-r from-red-600 via-black to-red-800 text-white"}`}
         style={{
           backgroundSize: "400% 400%",
-          animation: "gradientMessage 8s ease infinite",
         }}
       >
         {message}
