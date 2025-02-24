@@ -293,8 +293,8 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         transition={{ duration: 0.5 }}
         className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
           ${type === "success"
-            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black"
-            : "bg-gradient-to-r from-red-600 via-black to-red-800 text-white"}`}
+            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black bg-success-notif"
+            : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white bg-error-notif"}`}
         style={{
           backgroundSize: "400% 400%",
         }}
