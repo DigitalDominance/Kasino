@@ -29,16 +29,25 @@ function RouletteContent() {
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [selectedBet, setSelectedBet] = useState<{ type: string; amount: number } | null>(null);
-  // New states for deposit TXID and backend game ID
+  // New states for deposit TXID, backend game ID, and custom alert message.
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [generalGameId, setGeneralGameId] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
   // API URL for backend calls
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   // Treasury wallet addresses (for deposit) set as public env variables (addresses only)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+
+  // Helper function to display custom alerts.
+  const showAlert = (msg: string) => {
+    setAlertMessage(msg);
+    // Optionally, auto-dismiss after a few seconds:
+    setTimeout(() => setAlertMessage(null), 5000);
+  };
 
   // When the user clicks to spin the roulette, we initiate a deposit transaction and start the game.
   const handleSpinRoulette = async () => {
@@ -46,7 +55,7 @@ function RouletteContent() {
     const bet = selectedBet.amount;
     // Check that bet is a number, between 1 and 500, and does not exceed the user's balance.
     if (isNaN(bet) || bet < 1 || bet > 500 || bet > balance) {
-      alert("Bet amount must be between 1 and 500 and not exceed your balance");
+      showAlert("Bet amount must be between 1 and 500 and not exceed your balance");
       return;
     }
     // Reset previous game result and deposit txid.
@@ -59,13 +68,13 @@ function RouletteContent() {
       const accounts = await window.kasware.getAccounts();
       const currentWalletAddress = accounts[0];
       if (!currentWalletAddress) {
-        alert("No wallet address found");
+        showAlert("No wallet address found");
         return;
       }
       // Randomly pick one of the two treasury addresses for deposit.
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
-        alert("Treasury address not configured");
+        showAlert("Treasury address not configured");
         return;
       }
       // Send the deposit transaction.
@@ -89,7 +98,7 @@ function RouletteContent() {
       if (startRes.data.success) {
         setGeneralGameId(startRes.data.gameId);
       } else {
-        alert("Failed to start game on backend");
+        showAlert("Failed to start game on backend");
         return;
       }
       // Start the roulette game.
@@ -97,7 +106,7 @@ function RouletteContent() {
       setShowOverlay(false);
     } catch (error: any) {
       console.error("Error starting game:", error);
-      alert("Error starting game: " + error.message);
+      showAlert("Error starting game: " + error.message);
     }
   };
 
@@ -135,6 +144,21 @@ function RouletteContent() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+      {/* Custom Alert Component */}
+      {alertMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-red-600 text-white px-4 py-2 rounded shadow-lg flex items-center space-x-4">
+            <span>{alertMessage}</span>
+            <button
+              onClick={() => setAlertMessage(null)}
+              className="font-bold hover:text-gray-300"
+            >
+              X
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
