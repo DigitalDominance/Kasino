@@ -14,6 +14,7 @@ import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import { WalletProvider, Notification } from "@/contexts/WalletContext";
 import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import { FaTelegramPlane } from "react-icons/fa";
 import axios from "axios";
 
 const montserrat = Montserrat({
@@ -244,6 +245,28 @@ function MainPageContent() {
                       >
                         <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
                         <span className="group-hover:text-[#8a2be2]">Raffles</span>
+                      </Link>
+                      <Link
+                        href="https://t.me/KasCasinoXYZ/2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
+                        <span className="group-hover:text-[#8b0000]">Support</span>
+                      </Link>
+                    </div>
+                    {/* Telegram Icon at the bottom of the sidebar */}
+                    <div className="absolute bottom-4 left-0 w-full px-4">
+                      <Link
+                        href="https://t.me/KasCasinoXYZ"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center"
+                      >
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
+                          <FaTelegramPlane size={20} color="black" />
+                        </div>
                       </Link>
                     </div>
                   </motion.aside>
