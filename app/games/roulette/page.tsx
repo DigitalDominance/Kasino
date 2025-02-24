@@ -44,8 +44,9 @@ function RouletteContent() {
   const handleSpinRoulette = async () => {
     if (!selectedBet) return;
     const bet = selectedBet.amount;
-    if (isNaN(bet) || bet <= 0 || bet > balance) {
-      alert("Invalid bet amount");
+    // Check that bet is a number, between 1 and 500, and does not exceed the user's balance.
+    if (isNaN(bet) || bet < 1 || bet > 500 || bet > balance) {
+      alert("Bet amount must be between 1 and 500 and not exceed your balance");
       return;
     }
     // Reset previous game result and deposit txid.
