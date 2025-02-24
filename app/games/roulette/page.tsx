@@ -78,7 +78,7 @@ function RouletteContent() {
       setDepositTxid(txidString);
 
       // Call backend API to start the general game.
-      const startRes = await axios.post(${apiUrl}/game/start, {
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "roulette",
         uniqueHash,
         walletAddress: currentWalletAddress,
@@ -109,7 +109,7 @@ function RouletteContent() {
     // Call backend API to end the game.
     if (generalGameId) {
       try {
-        await axios.post(${apiUrl}/game/end, {
+        await axios.post(`${apiUrl}/game/end`, {
           gameId: generalGameId,
           result: winAmt > 0 ? "win" : "lose",
           winAmount: winAmt || 0,
@@ -133,7 +133,7 @@ function RouletteContent() {
   };
 
   return (
-    <div className={${montserrat.className} min-h-screen bg-black text-white flex flex-col}>
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         <div className="space-y-6">
           {/* Header */}
@@ -156,7 +156,7 @@ function RouletteContent() {
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
-                href={https://kas.fyi/transaction/${depositTxid}}
+                href={`https://kas.fyi/transaction/${depositTxid}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
