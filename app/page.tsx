@@ -487,7 +487,7 @@ function MainPageContent() {
                             }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
-                              <Imagehttps://www.kascasino.xyz/games/coinflip
+                              <Image
                                 src={cardImage}
                                 alt={`${win.game} card`}
                                 fill
