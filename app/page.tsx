@@ -47,10 +47,10 @@ function MainPageContent() {
 
   // Banner images
   const mainBanners = [
+    "/minesbanner.webp",
     "/roulettebanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
-    "/minesbanner.webp",
   ];
 
   const games = [
