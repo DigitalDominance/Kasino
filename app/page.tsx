@@ -47,8 +47,8 @@ function MainPageContent() {
 
   // Banner images
   const mainBanners = [
-    "/minesbanner.webp",
     "/roulettebanner.webp",
+    "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
   ];
