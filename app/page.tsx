@@ -178,6 +178,12 @@ function MainPageContent() {
           color: #49eacb;
           fill: #49eacb;
         }
+        /* Move the telegram icon higher on mobile */
+        @media (max-width: 768px) {
+          .telegram-icon {
+            bottom: 15vh !important;
+          }
+        }
       `}</style>
 
       <LoadingAnimation />
@@ -280,8 +286,8 @@ function MainPageContent() {
                         <span className="group-hover:text-[#8b0000]">Support</span>
                       </Link>
                     </div>
-                    {/* Telegram Icon at the bottom of the sidebar */}
-                    <div className="absolute bottom-4 left-0 w-full px-4">
+                    {/* Telegram Icon at the sidebar (moved up on mobile via CSS) */}
+                    <div className="absolute telegram-icon left-0 w-full px-4" style={{ bottom: "1rem" }}>
                       <Link
                         href="https://t.me/KasCasinoXYZ"
                         target="_blank"
@@ -353,7 +359,8 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {/* Use grid-cols-1 for mobile */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
@@ -406,7 +413,8 @@ function MainPageContent() {
                                 Wins:{" "}
                                 <span className="text-[#49EACB] font-bold">
                                   {winCounter.find(
-                                    (counter) => counter._id.toLowerCase() === game.slug
+                                    (counter) =>
+                                      counter._id.toLowerCase() === game.slug
                                   )?.totalWins || 0}
                                 </span>
                               </p>
@@ -421,7 +429,9 @@ function MainPageContent() {
                                     className="rounded-full"
                                   />
                                   <span className="text-sm text-[#49EACB] font-bold">
-                                    {highScores[game.slug] ? highScores[game.slug].toFixed(2) : "N/A"}
+                                    {highScores[game.slug]
+                                      ? highScores[game.slug].toFixed(2)
+                                      : "N/A"}
                                   </span>
                                 </div>
                               </div>
@@ -453,7 +463,6 @@ function MainPageContent() {
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
                       {liveWins.map((win, i) => {
-                        // Determine the card image based on the game name
                         let cardImage = "/placeholder.svg";
                         if (win.game.toLowerCase() === "crash") {
                           cardImage = "/crashcard.webp";
