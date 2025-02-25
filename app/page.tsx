@@ -54,8 +54,8 @@ function MainPageContent() {
   ];
 
   const games = [
-    { name: "Crash", players: 1234, slug: "crash" },
     { name: "Mines", players: 987, slug: "mines" },
+    { name: "Crash", players: 1234, slug: "crash" },
     { name: "Roulette", players: 765, slug: "roulette" },
     { name: "Dice", players: 543, slug: "dice" },
     { name: "Coin Flip", players: 321, slug: "coinflip" },
