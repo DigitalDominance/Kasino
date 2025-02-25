@@ -38,6 +38,7 @@ function MainPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [liveWins, setLiveWins] = useState<Win[]>([]);
   const [winCounter, setWinCounter] = useState<any[]>([]);
+  const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
 
   // Use full backend URL from env variable
   const apiUrl =
@@ -45,7 +46,12 @@ function MainPageContent() {
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   // Banner images
-  const mainBanners = ["/roulettebanner.webp", "/crashbanner.webp", "/dicecoinflipcombobanner.webp", "/minesbanner.webp"];
+  const mainBanners = [
+    "/roulettebanner.webp",
+    "/crashbanner.webp",
+    "/dicecoinflipcombobanner.webp",
+    "/minesbanner.webp",
+  ];
 
   const games = [
     { name: "Crash", players: 1234, slug: "crash" },
@@ -116,6 +122,24 @@ function MainPageContent() {
 
     fetchWinCounter();
     const interval = setInterval(fetchWinCounter, 10000);
+    return () => clearInterval(interval);
+  }, [apiUrl]);
+
+  // Fetch high score data for each game
+  useEffect(() => {
+    const fetchHighScores = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/highscores`);
+        if (res.data.success) {
+          setHighScores(res.data.highscores);
+        }
+      } catch (error) {
+        console.error("Error fetching high scores:", error);
+      }
+    };
+
+    fetchHighScores();
+    const interval = setInterval(fetchHighScores, 10000);
     return () => clearInterval(interval);
   }, [apiUrl]);
 
@@ -340,7 +364,10 @@ function MainPageContent() {
                         <Link href={`/games/${game.slug}`} key={i}>
                           <MotionCard
                             className="group relative overflow-hidden border-none bg-transparent"
-                            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)" }}
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                            }}
                             transition={{ duration: 0.3 }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
@@ -384,6 +411,23 @@ function MainPageContent() {
                                 }{" "}
                                 Wins
                               </p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <span className="text-sm text-gray-400">High Score:</span>
+                                <div className="flex items-center gap-1">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-sm text-[#49EACB] font-bold">
+                                    {highScores[game.slug]
+                                      ? highScores[game.slug].toFixed(2) + " KAS"
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </MotionCard>
                         </Link>
@@ -427,7 +471,10 @@ function MainPageContent() {
                           <MotionCard
                             key={i}
                             className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                            whileHover={{
+                              scale: 1.02,
+                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)",
+                            }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
                               <Image
