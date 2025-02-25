@@ -422,9 +422,7 @@ function MainPageContent() {
                                     className="rounded-full"
                                   />
                                   <span className="text-sm text-[#49EACB] font-bold">
-                                    {highScores[game.slug]
-                                      ? highScores[game.slug].toFixed(2) + " KAS"
-                                      : "N/A"}
+                                    {highScores[game.slug] ? highScores[game.slug].toFixed(2) : "N/A"}
                                   </span>
                                 </div>
                               </div>
