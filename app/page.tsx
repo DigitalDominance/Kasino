@@ -403,13 +403,12 @@ function MainPageContent() {
                                 {game.name}
                               </h3>
                               <p className="text-sm text-gray-400">
-                                {
-                                  winCounter.find(
-                                    (counter) =>
-                                      counter._id.toLowerCase() === game.slug
-                                  )?.totalWins || 0
-                                }{" "}
-                                Wins
+                                Wins:{" "}
+                                <span className="text-[#49EACB] font-bold">
+                                  {winCounter.find(
+                                    (counter) => counter._id.toLowerCase() === game.slug
+                                  )?.totalWins || 0}
+                                </span>
                               </p>
                               <div className="mt-1 flex items-center gap-1">
                                 <span className="text-sm text-gray-400">High Score:</span>
