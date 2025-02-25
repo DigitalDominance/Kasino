@@ -468,6 +468,8 @@ function MainPageContent() {
                           cardImage = "/crashcard.webp";
                         } else if (win.game.toLowerCase() === "roulette") {
                           cardImage = "/roulettecard.webp";
+                        } else if (win.game.toLowerCase() === "coinflip") {
+                          cardImage = "/coinflipcard.webp";  
                         } else if (win.game.toLowerCase() === "dice") {
                           cardImage = "/dicecard.webp";
                         } else if (win.game.toLowerCase() === "mines") {
