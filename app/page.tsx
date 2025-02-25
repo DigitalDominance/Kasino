@@ -384,6 +384,8 @@ function MainPageContent() {
                                     ? "/crashcard.webp"
                                     : game.slug === "roulette"
                                     ? "/roulettecard.webp"
+                                    : game.slug === "coinflip"
+                                    ? "/coinflipcard.webp"
                                     : game.slug === "dice"
                                     ? "/dicecard.webp"
                                     : game.slug === "mines"
@@ -485,7 +487,7 @@ function MainPageContent() {
                             }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
-                              <Image
+                              <Imagehttps://www.kascasino.xyz/games/coinflip
                                 src={cardImage}
                                 alt={`${win.game} card`}
                                 fill
