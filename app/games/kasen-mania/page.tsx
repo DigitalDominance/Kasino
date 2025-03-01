@@ -65,7 +65,7 @@ function SlotsContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Change gameName to "kasen-mania"
+      // Use game name "kasen-mania"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "kasen-mania",
         uniqueHash,
@@ -155,7 +155,7 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* Slot machine container with deep‑red to black background */}
+              {/* Slot machine container with a deep‑red to black gradient */}
               <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
                 <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
               </div>
@@ -239,15 +239,16 @@ function SlotsContent() {
               <li>
                 Outcomes are determined fairly:
                 <ul className="list-disc list-inside ml-4">
-                  <li>40% chance to lose (0× payout)</li>
                   <li>40% chance for a modest win (1.1× payout)</li>
-                  <li>20% chance for a higher multiplier win (randomly 2×, 3×, 4×, or 5×)</li>
+                  <li>20% chance for a 2× win</li>
+                  <li>10% chance for a 3× win</li>
+                  <li>30% chance to lose</li>
                 </ul>
               </li>
               <li>
-                <strong>Winning Patterns:</strong>
+                <strong>Winning Patterns (Examples):</strong>
                 <div className="mt-2">
-                  <p className="mb-1">Center Horizontal (5 matching symbols):</p>
+                  <p className="mb-1">Center Horizontal (All same, 1.1× win):</p>
                   <div className="flex space-x-1">
                     {Array(5)
                       .fill(0)
@@ -258,14 +259,25 @@ function SlotsContent() {
                   </div>
                 </div>
                 <div className="mt-2">
-                  <p className="mb-1">Diagonal (Top Left → Bottom Right):</p>
+                  <p className="mb-1">Diagonal (Top Left → Bottom Right, 2× win):</p>
                   <div className="flex space-x-1">
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
                         <Image key={i} src="/placeholder2.svg" alt="Symbol" width={40} height={40} />
                       ))}
-                    <span className="ml-2 text-sm">Higher multipliers</span>
+                    <span className="ml-2 text-sm">2× win</span>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="mb-1">Top Horizontal (All same, 3× win):</p>
+                  <div className="flex space-x-1">
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image key={i} src="/placeholder3.svg" alt="Symbol" width={40} height={40} />
+                      ))}
+                    <span className="ml-2 text-sm">3× win</span>
                   </div>
                 </div>
               </li>
@@ -287,11 +299,50 @@ interface SlotsGameProps {
   betAmount: number;
 }
 
+// Helper function to generate a winning grid based on the outcome multiplier.
+function generateFinalGrid(multiplier: number, symbolImagesCount: number): number[][] {
+  const grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
+  // For a win, force a winning pattern.
+  // For 1.1× win, force center row (row 2) to be uniform.
+  if (multiplier === 1.1) {
+    const winSymbol = Math.floor(Math.random() * symbolImagesCount);
+    grid[2] = grid[2].map(() => winSymbol);
+  }
+  // For 2× win, force diagonal TL-BR to be uniform.
+  if (multiplier === 2) {
+    const winSymbol = Math.floor(Math.random() * symbolImagesCount);
+    for (let i = 0; i < 5; i++) {
+      grid[i][i] = winSymbol;
+    }
+  }
+  // For 3× win, force top row (row 0) to be uniform.
+  if (multiplier === 3) {
+    const winSymbol = Math.floor(Math.random() * symbolImagesCount);
+    grid[0] = grid[0].map(() => winSymbol);
+  }
+  return grid;
+}
+
+// Helper function to generate a losing grid (ensuring no obvious winning pattern).
+function generateLosingGrid(symbolImagesCount: number): number[][] {
+  let grid: number[][];
+  // Generate until no uniform row, diagonal, or center win exists.
+  do {
+    grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
+  } while (
+    // Check center row uniformity.
+    grid[2].every((val) => val === grid[2][0]) ||
+    // Check top row uniformity.
+    grid[0].every((val) => val === grid[0][0]) ||
+    // Check diagonal uniformity.
+    [0,1,2,3,4].every((i) => grid[i][i] === grid[0][0])
+  );
+  return grid;
+}
+
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
-  // Generate final 5×5 grid outcome.
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
-
   // Array of eight distinct symbol images.
   const symbolImages = [
     "/placeholder.svg",
@@ -303,31 +354,31 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     "/placeholder7.svg",
     "/placeholder8.svg"
   ];
+  const symbolImagesCount = symbolImages.length;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isPlaying) {
       setSpinning(true);
       setFinalGrid(null);
-      // Simulate reel spinning for 3 seconds.
+      // Determine outcome before starting animation.
+      const r = Math.random();
+      let multiplier = 0;
+      if (r < 0.3) {
+        multiplier = 0;
+      } else if (r < 0.3 + 0.4) {
+        multiplier = 1.1;
+      } else if (r < 0.3 + 0.4 + 0.2) {
+        multiplier = 2;
+      } else {
+        multiplier = 3;
+      }
+      // Pre-calculate final grid based on outcome.
+      const grid = multiplier === 0 ? generateLosingGrid(symbolImagesCount) : generateFinalGrid(multiplier, symbolImagesCount);
+      // After 3 seconds, reveal the final grid and trigger game end.
       timer = setTimeout(() => {
-        const grid = Array.from({ length: 5 }, () =>
-          Array.from({ length: 5 }, () => Math.floor(Math.random() * 8))
-        );
         setFinalGrid(grid);
         setSpinning(false);
-        // Determine outcome using probabilities:
-        // 40% lose, 40% win 1.1×, 20% win higher multiplier (2×,3×,4×,5×).
-        const r = Math.random();
-        let multiplier = 0;
-        if (r < 0.4) {
-          multiplier = 0;
-        } else if (r < 0.8) {
-          multiplier = 1.1;
-        } else {
-          const highMultipliers = [2, 3, 4, 5];
-          multiplier = highMultipliers[Math.floor(Math.random() * highMultipliers.length)];
-        }
         const result = multiplier > 0 ? "You Win" : "House Wins";
         const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
         onGameEnd(result, winAmt);
@@ -338,9 +389,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   // Reel component: each column spins as a unit.
   const Reel = ({ isSpinning, finalSymbols }: { isSpinning: boolean; finalSymbols?: number[] }) => {
-    const cellHeight = 80; // in px
+    const cellHeight = 80;
     if (isSpinning) {
-      const reelArray = Array.from({ length: 20 }, () => Math.floor(Math.random() * 8));
+      const reelArray = Array.from({ length: 20 }, () => Math.floor(Math.random() * symbolImagesCount));
       return (
         <div className="w-full h-full overflow-hidden relative">
           <motion.div
@@ -373,14 +424,18 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="w-full h-full relative flex justify-center items-center">
-      {/* Background placeholder for slot machine cabinet (800px x 400px) */}
+      {/* Slot machine cabinet background */}
       <Image
-        src="/slot_machine_placeholder.svg"
+        src="/placeholder.svg"
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="absolute inset-0 object-cover opacity-50"
+        className="absolute inset-0 object-cover"
       />
+      {/* Female character placeholder positioned to overlap top-center */}
+      <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
+        <Image src="/placeholder.svg" alt="Female Character" width={120} height={120} />
+      </div>
       {/* Pre-spin overlay with animated title and "Place bet to spin" */}
       {!isPlaying && !finalGrid && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
