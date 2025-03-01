@@ -529,7 +529,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     <div className="w-full h-full relative flex justify-center items-center">
       {/* Centered background */}
       <Image
-        src="/placeholder.svg"
+        src="/slot_placeholder.svg"
         alt="Slot Machine Background"
         width={800}
         height={400}
@@ -542,7 +542,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}
       >
         <Image
-          src="/placeholder.svg"
+          src="/female_placeholder.svg"
           alt="Female Character"
           width={120}
           height={120}
