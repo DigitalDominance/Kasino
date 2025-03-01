@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
+import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -67,7 +68,7 @@ function SlotsContent() {
 
       // Use game name "kasen-mania"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "kasen-mania",
+        gameName: "Kasen Mania",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
@@ -248,7 +249,7 @@ function SlotsContent() {
               <li>
                 <strong>Winning Patterns (Examples):</strong>
                 <div className="mt-2">
-                  <p className="mb-1">Center Horizontal (All same, 1.1× win):</p>
+                  <p className="mb-1">Center Horizontal (1.1× win):</p>
                   <div className="flex space-x-1">
                     {Array(5)
                       .fill(0)
@@ -259,7 +260,7 @@ function SlotsContent() {
                   </div>
                 </div>
                 <div className="mt-2">
-                  <p className="mb-1">Diagonal (Top Left → Bottom Right, 2× win):</p>
+                  <p className="mb-1">Diagonal (2× win):</p>
                   <div className="flex space-x-1">
                     {Array(5)
                       .fill(0)
@@ -270,7 +271,7 @@ function SlotsContent() {
                   </div>
                 </div>
                 <div className="mt-2">
-                  <p className="mb-1">Top Horizontal (All same, 3× win):</p>
+                  <p className="mb-1">Top Horizontal (3× win):</p>
                   <div className="flex space-x-1">
                     {Array(5)
                       .fill(0)
@@ -299,43 +300,37 @@ interface SlotsGameProps {
   betAmount: number;
 }
 
-// Helper function to generate a winning grid based on the outcome multiplier.
+// Helper function to generate a winning grid based on outcome multiplier.
 function generateFinalGrid(multiplier: number, symbolImagesCount: number): number[][] {
   const grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
-  // For a win, force a winning pattern.
-  // For 1.1× win, force center row (row 2) to be uniform.
+  // For a win, force a winning pattern:
   if (multiplier === 1.1) {
+    // Force center row (row 2) to be uniform.
     const winSymbol = Math.floor(Math.random() * symbolImagesCount);
     grid[2] = grid[2].map(() => winSymbol);
-  }
-  // For 2× win, force diagonal TL-BR to be uniform.
-  if (multiplier === 2) {
+  } else if (multiplier === 2) {
+    // Force main diagonal (TL-BR) to be uniform.
     const winSymbol = Math.floor(Math.random() * symbolImagesCount);
     for (let i = 0; i < 5; i++) {
       grid[i][i] = winSymbol;
     }
-  }
-  // For 3× win, force top row (row 0) to be uniform.
-  if (multiplier === 3) {
+  } else if (multiplier === 3) {
+    // Force top row (row 0) to be uniform.
     const winSymbol = Math.floor(Math.random() * symbolImagesCount);
     grid[0] = grid[0].map(() => winSymbol);
   }
   return grid;
 }
 
-// Helper function to generate a losing grid (ensuring no obvious winning pattern).
+// Helper function to generate a losing grid.
 function generateLosingGrid(symbolImagesCount: number): number[][] {
   let grid: number[][];
-  // Generate until no uniform row, diagonal, or center win exists.
   do {
     grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
   } while (
-    // Check center row uniformity.
     grid[2].every((val) => val === grid[2][0]) ||
-    // Check top row uniformity.
     grid[0].every((val) => val === grid[0][0]) ||
-    // Check diagonal uniformity.
-    [0,1,2,3,4].every((i) => grid[i][i] === grid[0][0])
+    [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
   );
   return grid;
 }
@@ -343,7 +338,7 @@ function generateLosingGrid(symbolImagesCount: number): number[][] {
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
-  // Array of eight distinct symbol images.
+  const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
   const symbolImages = [
     "/placeholder.svg",
     "/placeholder2.svg",
@@ -361,7 +356,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     if (isPlaying) {
       setSpinning(true);
       setFinalGrid(null);
-      // Determine outcome before starting animation.
+      setOutcomeMultiplier(null);
+      // Pre-determine outcome:
       const r = Math.random();
       let multiplier = 0;
       if (r < 0.3) {
@@ -373,9 +369,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       } else {
         multiplier = 3;
       }
-      // Pre-calculate final grid based on outcome.
+      setOutcomeMultiplier(multiplier);
+      // Generate final grid based on outcome.
       const grid = multiplier === 0 ? generateLosingGrid(symbolImagesCount) : generateFinalGrid(multiplier, symbolImagesCount);
-      // After 3 seconds, reveal the final grid and trigger game end.
       timer = setTimeout(() => {
         setFinalGrid(grid);
         setSpinning(false);
@@ -422,15 +418,59 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   };
 
+  // Calculate overlay line styles for winning patterns.
+  // The reel container height is 5 * 80 = 400px.
+  let overlayElement = null;
+  if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
+    if (outcomeMultiplier === 1.1) {
+      // Center row horizontal line: center = row 2 (top: 2*80+40 = 200px)
+      overlayElement = (
+        <div
+          className="absolute bg-green-500"
+          style={{ top: 200, left: 0, width: "100%", height: 4 }}
+        />
+      );
+    } else if (outcomeMultiplier === 3) {
+      // Top row horizontal line: center = row 0 (top: 40px)
+      overlayElement = (
+        <div
+          className="absolute bg-green-500"
+          style={{ top: 40, left: 0, width: "100%", height: 4 }}
+        />
+      );
+    } else if (outcomeMultiplier === 2) {
+      // Diagonal from first cell of column 0, row 0 to last cell of column 4, row 4.
+      // Approximate coordinates: first cell center: (48,40); last cell center: (464,360)
+      // Compute length and angle.
+      const xDiff = 464 - 48; // 416
+      const yDiff = 360 - 40; // 320
+      const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+      const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
+      overlayElement = (
+        <div
+          className="absolute bg-green-500"
+          style={{
+            top: 40,
+            left: 48,
+            width: length,
+            height: 4,
+            transform: `rotate(${angle}deg)`,
+            transformOrigin: "left center"
+          }}
+        />
+      );
+    }
+  }
+
   return (
     <div className="w-full h-full relative flex justify-center items-center">
-      {/* Slot machine cabinet background */}
+      {/* Slot machine cabinet background - centered */}
       <Image
         src="/placeholder.svg"
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="absolute inset-0 object-cover"
+        className="absolute inset-0 object-cover object-center"
       />
       {/* Female character placeholder positioned to overlap top-center */}
       <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
@@ -460,6 +500,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             <Reel isSpinning={spinning} finalSymbols={finalGrid ? finalGrid.map(row => row[colIndex]) : undefined} />
           </div>
         ))}
+        {/* Overlay winning line, if any */}
+        {overlayElement}
       </div>
     </div>
   );
