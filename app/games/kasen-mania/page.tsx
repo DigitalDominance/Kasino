@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
-//import "./styles.css";
+import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -33,7 +33,7 @@ function SlotsContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
-  // API URL and treasury addresses (set via env vars)
+  // API URL and treasury addresses.
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
@@ -49,7 +49,6 @@ function SlotsContent() {
       return;
     }
     try {
-      // Generate a unique game hash and get the current wallet address.
       const uniqueHash = uuidv4();
       const accounts = await window.kasware.getAccounts();
       const currentWalletAddress = accounts[0];
@@ -57,19 +56,16 @@ function SlotsContent() {
         alert("No wallet address found");
         return;
       }
-      // Randomly choose one treasury address.
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-      // Send deposit transaction via Kasware.
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, { priorityFee: 10000 });
       const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Start the game on the backend.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "slots",
         uniqueHash,
@@ -94,7 +90,6 @@ function SlotsContent() {
     setGameResult(result);
     setWinAmount(winAmt);
     setIsPlaying(false);
-    // End the game on the backend.
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
@@ -160,8 +155,8 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* Slot machine container with a deep‑red background */}
-              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-[#FF0000] rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
+              {/* Slot machine container with a deep‑red to black background */}
+              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
                 <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
               </div>
             </div>
@@ -183,7 +178,7 @@ function SlotsContent() {
           </div>
         </div>
 
-        {/* Kasen Promo Card with Social Links (full width) */}
+        {/* Kasen Promo Card (full width) with social links */}
         <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
@@ -196,7 +191,7 @@ function SlotsContent() {
           >
             KASEN Mania
           </motion.h2>
-          <img src="/placeholder.svg" alt="Kasen Collab" className="w-1/2 h-auto mb-4" />
+          <img src="/placeholder.svg" alt="Kasen Collab" className="w-24 h-auto mb-4" />
           <p className="text-sm text-white mb-4">
             This game is a collaborative effort with KASEN, a pioneer in KRC721 &amp; KRC20. Their creative vision and innovative approach have added extra fun to our casino experience.
           </p>
@@ -241,8 +236,10 @@ function SlotsContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet amount.</li>
               <li>Click "Spin Slots" to start the game.</li>
-              <li>The reels will spin as each column scrolls vertically.</li>
-              <li>The game checks several paylines and awards payouts based on matching patterns.</li>
+              <li>The reels will spin with each column scrolling vertically.</li>
+              <li>
+                Outcomes are determined by RNG: a 50% chance to lose, a 30% chance to hit a 1.1× win, and a 20% chance to win one of the higher multipliers.
+              </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
             <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
@@ -262,20 +259,9 @@ interface SlotsGameProps {
 }
 
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
-  // We'll generate a final 5x5 grid outcome when the spin ends.
+  // For a 5×5 grid outcome.
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
-
-  // Define paylines for a 5×5 grid.
-  const payLines = [
-    { positions: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], multiplier: 2 }, // Middle horizontal
-    { positions: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], multiplier: 2 }, // Top horizontal
-    { positions: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], multiplier: 2 }, // Bottom horizontal
-    { positions: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]], multiplier: 3 }, // Diagonal TL-BR
-    { positions: [[4, 0], [3, 1], [2, 2], [1, 3], [0, 4]], multiplier: 3 }, // Diagonal BL-TR
-    // Rare bonus: if the entire grid shows the same symbol.
-    { positions: "all", multiplier: 20 }
-  ];
 
   // Array of eight distinct symbol images.
   const symbolImages = [
@@ -294,36 +280,27 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     if (isPlaying) {
       setSpinning(true);
       setFinalGrid(null);
-      // After 3 seconds, generate the final outcome for the 5×5 grid.
+      // Simulate reel spinning for 3 seconds.
       timer = setTimeout(() => {
         const grid = Array.from({ length: 5 }, () =>
           Array.from({ length: 5 }, () => Math.floor(Math.random() * 8))
         );
         setFinalGrid(grid);
         setSpinning(false);
-        // Evaluate paylines.
-        let totalMultiplier = 0;
-        if (grid) {
-          payLines.forEach((line) => {
-            if (line.positions === "all") {
-              const firstSymbol = grid[0][0];
-              const allSame = grid.every((row) => row.every((cell) => cell === firstSymbol));
-              if (allSame) totalMultiplier += line.multiplier;
-            } else {
-              const [firstRow, firstCol] = line.positions[0];
-              const symbol = grid[firstRow][firstCol];
-              const isWinningLine = line.positions.every(([r, c]) => grid[r][c] === symbol);
-              if (isWinningLine) totalMultiplier += line.multiplier;
-            }
-          });
-          // Additional bonus: if the center column (col 2) is uniform.
-          const centerCol = grid.map(row => row[2]);
-          if (centerCol.every(sym => sym === centerCol[0])) {
-            totalMultiplier += 5;
-          }
+        // Determine win using fair RNG:
+        // 50% chance to lose, 30% chance to win 1.1×, and 20% chance for a higher multiplier.
+        const r = Math.random();
+        let multiplier = 0;
+        if (r < 0.5) {
+          multiplier = 0;
+        } else if (r < 0.8) {
+          multiplier = 1.1;
+        } else {
+          const highMultipliers = [2, 3, 4, 5];
+          multiplier = highMultipliers[Math.floor(Math.random() * highMultipliers.length)];
         }
-        const result = totalMultiplier > 0 ? "You Win" : "House Wins";
-        const winAmt = totalMultiplier > 0 ? betAmount * totalMultiplier : 0;
+        const result = multiplier > 0 ? "You Win" : "House Wins";
+        const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
         onGameEnd(result, winAmt);
       }, 3000);
     }
@@ -332,9 +309,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   // Reel component: each column spins as a unit.
   const Reel = ({ isSpinning, finalSymbols }: { isSpinning: boolean; finalSymbols?: number[] }) => {
-    const cellHeight = 80; // each symbol cell height (in pixels)
+    const cellHeight = 80; // each symbol cell height in px
     if (isSpinning) {
-      // Generate a temporary reel array (simulate continuous scrolling).
       const reelArray = Array.from({ length: 20 }, () => Math.floor(Math.random() * 8));
       return (
         <div className="w-full h-full overflow-hidden relative">
@@ -368,7 +344,19 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="w-full h-full relative flex justify-center items-center">
-      {/* The visible area is 5 cells tall (5 * 80px) */}
+      {/* Pre-spin overlay: if not playing and no outcome yet, show "Place bet to spin" */}
+      {!isPlaying && !finalGrid && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <Card className="bg-white text-black p-4">
+            <h3 className="text-xl font-bold">Place bet to spin</h3>
+          </Card>
+        </div>
+      )}
+      {/* Female character placeholder, overlapping top-center of the slot machine */}
+      <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
+        <Image src="/placeholder.svg" alt="Female Character" width={120} height={120} />
+      </div>
+      {/* The visible reel area is 5 cells tall */}
       <div className="flex space-x-2" style={{ height: 5 * 80 }}>
         {Array.from({ length: 5 }, (_, colIndex) => (
           <div key={colIndex} className="w-24 h-full overflow-hidden">
@@ -415,9 +403,7 @@ export function SlotsControls({
 
   useEffect(() => {
     if (cooldown > 0) {
-      const intervalId = setInterval(() => {
-        setCooldown((prev) => prev - 1);
-      }, 1000);
+      const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
       return () => clearInterval(intervalId);
     }
   }, [cooldown]);
