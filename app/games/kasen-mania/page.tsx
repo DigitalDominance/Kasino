@@ -44,7 +44,7 @@ export default function KasenManiaPage() {
                   backgroundSize: "200% 200%",
                 }}
               >
-                KASEN Project
+                KASEN Mania
               </motion.h2>
               <img
                 src="/placeholder.svg"
@@ -52,9 +52,9 @@ export default function KasenManiaPage() {
                 className="w-1/2 h-auto mb-4 rounded"
               />
               <p className="text-sm text-white mb-4">
-                This game is a collaborative effort with KASEN, a pioneer in digital
-                gaming. Their creative vision and innovative approach have redefined
-                our casino experience. Discover more about their work through the links
+                This game is a collaborative effort with KASEN, a pioneer in KRC721 &
+                KRC20. Their creative vision and innovative approach have added extra fun
+                to our casino experience. Discover more about their project through the links
                 below.
               </p>
               <div className="flex justify-center space-x-4 text-xl">
