@@ -65,8 +65,9 @@ function SlotsContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
+      // Change gameName to "kasen-mania"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "slots",
+        gameName: "kasen-mania",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
@@ -154,7 +155,7 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* Slot machine container with a deep‑red to black background */}
+              {/* Slot machine container with deep‑red to black background */}
               <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
                 <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
               </div>
@@ -227,17 +228,46 @@ function SlotsContent() {
       </div>
       <SiteFooter />
 
-      {/* How To Play Modal */}
+      {/* How To Play Popup */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Slots</h3>
+            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Kasen Mania</h3>
             <ol className="list-decimal list-inside space-y-2 text-white">
-              <li>Enter your bet amount.</li>
-              <li>Click "Spin Slots" to start the game.</li>
-              <li>The reels will spin with each column scrolling vertically.</li>
+              <li>Enter your bet amount and click "Spin Kasen Mania" to play.</li>
+              <li>The reels (5 columns by 5 rows) will spin as each column scrolls vertically.</li>
               <li>
-                Outcomes are determined by RNG: a 50% chance to lose, a 30% chance to hit a 1.1× win, and a 20% chance to win one of the higher multipliers.
+                Outcomes are determined fairly:
+                <ul className="list-disc list-inside ml-4">
+                  <li>40% chance to lose (0× payout)</li>
+                  <li>40% chance for a modest win (1.1× payout)</li>
+                  <li>20% chance for a higher multiplier win (randomly 2×, 3×, 4×, or 5×)</li>
+                </ul>
+              </li>
+              <li>
+                <strong>Winning Patterns:</strong>
+                <div className="mt-2">
+                  <p className="mb-1">Center Horizontal (5 matching symbols):</p>
+                  <div className="flex space-x-1">
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image key={i} src="/placeholder.svg" alt="Symbol" width={40} height={40} />
+                      ))}
+                    <span className="ml-2 text-sm">1.1× win</span>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="mb-1">Diagonal (Top Left → Bottom Right):</p>
+                  <div className="flex space-x-1">
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image key={i} src="/placeholder2.svg" alt="Symbol" width={40} height={40} />
+                      ))}
+                    <span className="ml-2 text-sm">Higher multipliers</span>
+                  </div>
+                </div>
               </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
@@ -258,7 +288,7 @@ interface SlotsGameProps {
 }
 
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
-  // For a 5×5 grid outcome.
+  // Generate final 5×5 grid outcome.
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
 
@@ -286,11 +316,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         );
         setFinalGrid(grid);
         setSpinning(false);
-        // Determine win using fair RNG:
-        // 50% chance to lose, 30% chance to win 1.1×, and 20% chance for a higher multiplier.
+        // Determine outcome using probabilities:
+        // 40% lose, 40% win 1.1×, 20% win higher multiplier (2×,3×,4×,5×).
         const r = Math.random();
         let multiplier = 0;
-        if (r < 0.5) {
+        if (r < 0.4) {
           multiplier = 0;
         } else if (r < 0.8) {
           multiplier = 1.1;
@@ -308,7 +338,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   // Reel component: each column spins as a unit.
   const Reel = ({ isSpinning, finalSymbols }: { isSpinning: boolean; finalSymbols?: number[] }) => {
-    const cellHeight = 80; // each symbol cell height in px
+    const cellHeight = 80; // in px
     if (isSpinning) {
       const reelArray = Array.from({ length: 20 }, () => Math.floor(Math.random() * 8));
       return (
@@ -343,20 +373,33 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="w-full h-full relative flex justify-center items-center">
-      {/* Pre-spin overlay: if not playing and no outcome yet, show "Place bet to spin" */}
+      {/* Background placeholder for slot machine cabinet (800px x 400px) */}
+      <Image
+        src="/slot_machine_placeholder.svg"
+        alt="Slot Machine Background"
+        width={800}
+        height={400}
+        className="absolute inset-0 object-cover opacity-50"
+      />
+      {/* Pre-spin overlay with animated title and "Place bet to spin" */}
       {!isPlaying && !finalGrid && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+          <h1
+            className="text-5xl font-bold mb-4 bg-clip-text text-transparent"
+            style={{
+              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+              animation: "gradientShift 1.5s linear infinite",
+            }}
+          >
+            KASEN MANIA
+          </h1>
           <Card className="bg-white text-black p-4">
             <h3 className="text-xl font-bold">Place bet to spin</h3>
           </Card>
         </div>
       )}
-      {/* Female character placeholder, overlapping top-center of the slot machine */}
-      <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
-        <Image src="/placeholder.svg" alt="Female Character" width={120} height={120} />
-      </div>
-      {/* The visible reel area is 5 cells tall */}
-      <div className="flex space-x-2" style={{ height: 5 * 80 }}>
+      {/* Visible reel area (5 cells tall) */}
+      <div className="flex space-x-2" style={{ height: 5 * 80, zIndex: 1 }}>
         {Array.from({ length: 5 }, (_, colIndex) => (
           <div key={colIndex} className="w-24 h-full overflow-hidden">
             <Reel isSpinning={spinning} finalSymbols={finalGrid ? finalGrid.map(row => row[colIndex]) : undefined} />
@@ -518,8 +561,8 @@ export function SlotsControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Spin Slots (${cooldown}s)`
-                  : "Spin Slots"}
+                  ? `Spin Kasen Mania (${cooldown}s)`
+                  : "Spin Kasen Mania"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
