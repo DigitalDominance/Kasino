@@ -2584,10 +2584,7 @@ function or(l, r)
 
 self.C3_ExpressionFuncs = [
 		() => "%",
-	
-	    // Updated initial credit value: returns window.kasenManiaCredits if defined, otherwise 0.
-		() => (window.kasenManiaCredits != null ? window.kasenManiaCredits : 0),
-	
+		() => 0,
 		() => "",
 		() => 1,
 		p => {
@@ -3443,4 +3440,3 @@ self.C3_ExpressionFuncs = [
 
 
 }
-
