@@ -15,6 +15,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
+import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -167,13 +168,9 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* Enlarged game container */}
-              <div className="relative h-[70vh] bg-[#49EACB]/5 rounded-lg mb-6 overflow-hidden p-4">
-                <SlotsGame
-                  isPlaying={isPlaying}
-                  onGameEnd={handleGameEnd}
-                  betAmount={Number(betAmount)}
-                />
+              {/* Enlarged slot machine container with a slot‑machine–style background */}
+              <div className="relative h-[70vh] bg-gradient-to-b from-gray-800 to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
+                <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
               </div>
             </div>
           </Card>
@@ -225,7 +222,7 @@ function SlotsContent() {
               <li>Place your bet and spin the slots.</li>
               <li>The reels will spin and display random symbols.</li>
               <li>
-                Win if any of the paylines match—a variety of patterns pay out different multipliers.
+                The game checks several paylines. If symbols along any payline match, you win a payout based on that line’s multiplier.
               </li>
             </ol>
           </Card>
@@ -243,7 +240,7 @@ function SlotsContent() {
               <li>Click "Spin Slots" to start the game.</li>
               <li>The reels will spin and display random symbols.</li>
               <li>
-                The game checks several paylines. If symbols along any payline match, you win a payout based on that line’s multiplier.
+                The game checks several paylines and awards payouts based on matching patterns.
               </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
@@ -266,7 +263,7 @@ interface SlotsGameProps {
 }
 
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
-  // A 3x5 grid representing the slot machine.
+  // Create a 3x5 grid (rows x columns) for the reels.
   const [grid, setGrid] = useState<number[][]>(
     Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => 0))
   );
@@ -286,12 +283,24 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     { positions: [[2, 0], [1, 1], [2, 2], [1, 3], [2, 4]], multiplier: 3 }  // Zigzag bottom
   ];
 
+  // Array of symbol images – using your eight distinct placeholders.
+  const symbolImages = [
+    "/placeholder.svg",
+    "/placeholder2.svg",
+    "/placeholder3.svg",
+    "/placeholder4.svg",
+    "/placeholder5.svg",
+    "/placeholder6.svg",
+    "/placeholder7.svg",
+    "/placeholder8.svg"
+  ];
+
   useEffect(() => {
     let spinInterval: NodeJS.Timeout;
     if (isPlaying) {
       setSpinning(true);
       setShowResult(false);
-      // Update the grid every 100ms to simulate spinning.
+      // Update the grid every 100ms to simulate reel spinning.
       spinInterval = setInterval(() => {
         setGrid(
           Array.from({ length: 3 }, () =>
@@ -339,12 +348,17 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
         <h2 className="text-4xl font-bold text-[#49EACB]">KASEN MANIA</h2>
       </div>
-      {/* Enlarged slots grid */}
+      {/* Enlarged slots grid with animated (spinning) symbols */}
       <div className="mt-32 grid grid-cols-5 grid-rows-3 gap-4">
         {grid.flat().map((symbol, idx) => (
-          <div key={idx} className="w-24 h-24 bg-[#49EACB]/20 flex items-center justify-center rounded">
-            <Image src="/placeholder.svg" alt={`Symbol ${symbol}`} width={60} height={60} />
-          </div>
+          <motion.div
+            key={idx}
+            className="w-24 h-24 bg-[#49EACB]/20 flex items-center justify-center rounded"
+            animate={spinning ? { rotate: 360 } : { rotate: 0 }}
+            transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: "linear" }}
+          >
+            <Image src={symbolImages[symbol]} alt={`Symbol ${symbol}`} width={60} height={60} />
+          </motion.div>
         ))}
       </div>
       {showResult && (
