@@ -296,7 +296,9 @@ interface SlotsGameProps {
 
 // Helper function to generate a winning grid based on outcome multiplier.
 function generateFinalGrid(multiplier: number, symbolImagesCount: number): number[][] {
-  const grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
+  const grid = Array.from({ length: 5 }, () =>
+    Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount))
+  );
   if (multiplier === 1.1) {
     const winSymbol = Math.floor(Math.random() * symbolImagesCount);
     grid[2] = grid[2].map(() => winSymbol);
@@ -316,7 +318,9 @@ function generateFinalGrid(multiplier: number, symbolImagesCount: number): numbe
 function generateLosingGrid(symbolImagesCount: number): number[][] {
   let grid: number[][];
   do {
-    grid = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount)));
+    grid = Array.from({ length: 5 }, () =>
+      Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolImagesCount))
+    );
   } while (
     grid[2].every((val) => val === grid[2][0]) ||
     grid[0].every((val) => val === grid[0][0]) ||
@@ -347,6 +351,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       setSpinning(true);
       setFinalGrid(null);
       setOutcomeMultiplier(null);
+      // Pre-determine outcome:
       const r = Math.random();
       let multiplier = 0;
       if (r < 0.3) {
@@ -371,7 +376,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     return () => clearTimeout(timer);
   }, [isPlaying]);
 
-  // Wrap the reel area in a container with fixed width and relative position.
+  // Fixed container for reels (512px by 400px)
   const reelContainerStyle = { width: "512px", height: "400px", position: "relative", zIndex: 1 };
 
   // Reel component: each column spins as a unit.
@@ -409,11 +414,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   };
 
-  // Compute overlay line styles based on outcome.
+  // Compute overlay line for winning patterns.
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
-      // Center row: row index 2; center y = 2*80 + 40 = 200. Place line at y = 200 - 2 = 198.
+      // Center horizontal line at row 2: center at 2*80+40=200; adjust upward by 2px.
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -421,7 +426,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 3) {
-      // Top row: row index 0; center y = 0*80 + 40 = 40. Place line at y = 40 - 2 = 38.
+      // Top horizontal line at row 0: center at 0*80+40=40; adjust upward by 2px.
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -429,19 +434,23 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal from (col0 center, row0 center) to (col4 center, row4 center).
-      // col0 center: x = 0*96 + 48 = 48, y = 0*80 + 40 = 40.
-      // col4 center: x = 4*96 + 48 = 432, y = 4*80 + 40 = 360.
-      const xDiff = 432 - 48; // 384
-      const yDiff = 360 - 40; // 320
+      // Diagonal line from (col0 center, row0 center) to (col4 center, row4 center).
+      // For our reels: each reel width is 96px; center of col0: x = 48, y = 40; col4: x = 48+4*96=432, y = 40+4*80=360.
+      // Adjust the starting y a bit upward (from 40 to 32) so the line angles slightly upward.
+      const startX = 48;
+      const startY = 32;
+      const endX = 432;
+      const endY = 360;
+      const xDiff = endX - startX; // 384
+      const yDiff = endY - startY; // 360 - 32 = 328
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
       const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
       overlayElement = (
         <div
           className="absolute bg-green-500"
           style={{
-            top: 38,
-            left: 48,
+            top: startY,
+            left: startX,
             width: length,
             height: 4,
             transform: `rotate(${angle}deg)`,
@@ -454,19 +463,19 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="w-full h-full relative flex justify-center items-center">
-      {/* Slot machine cabinet background - use /placeholder.svg (centered) */}
+      {/* Slot machine cabinet background - centered manually */}
       <Image
         src="/placeholder.svg"
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="absolute inset-0 object-cover object-center"
+        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover object-center"
       />
       {/* Female character placeholder positioned to overlap top-center */}
       <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
         <Image src="/placeholder.svg" alt="Female Character" width={120} height={120} />
       </div>
-      {/* Reel area container with fixed dimensions */}
+      {/* Reel area container */}
       <div style={reelContainerStyle}>
         <div className="flex space-x-2 h-full">
           {Array.from({ length: 5 }, (_, colIndex) => (
