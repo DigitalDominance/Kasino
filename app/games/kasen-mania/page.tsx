@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export default function KasenManiaPage() {
   const { isConnected } = useWallet();
-  // Input for deposit amount
+  const [userWallet, setUserWallet] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [isDeposited, setIsDeposited] = useState(false);
@@ -25,15 +25,45 @@ export default function KasenManiaPage() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Initialize global credits for Kasen Mania if not already defined
+  // Initialize global credits for Kasen Mania if not already defined.
   useEffect(() => {
     if (typeof window !== "undefined" && window.kasenManiaCredits == null) {
       window.kasenManiaCredits = 0;
     }
   }, []);
 
+  // When the wallet connects, set the wallet address.
+  useEffect(() => {
+    async function getWallet() {
+      if (isConnected && window.kasware) {
+        const accounts = await window.kasware.getAccounts();
+        setUserWallet(accounts[0] || null);
+      }
+    }
+    getWallet();
+  }, [isConnected]);
+
+  // When the page loads (or when the wallet changes), fetch the persistent credits from your backend.
+  useEffect(() => {
+    async function fetchCredits() {
+      if (isConnected && userWallet) {
+        try {
+          const res = await axios.get(`${apiUrl}/credits`, {
+            params: { wallet: userWallet },
+          });
+          // Assume your API returns { credits: <number> }
+          window.kasenManiaCredits = res.data.credits || 0;
+        } catch (err) {
+          console.error("Error fetching credits:", err);
+          window.kasenManiaCredits = 0;
+        }
+      }
+    }
+    fetchCredits();
+  }, [isConnected, userWallet]);
+
   // Deposit function using your Kasware logic.
-  // On success, update window.kasenManiaCredits with the deposit amount.
+  // On success, update the backend and global credits.
   const handleDeposit = async () => {
     const amount = Number(depositAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -58,7 +88,6 @@ export default function KasenManiaPage() {
         alert("Treasury address not configured");
         return;
       }
-      // Send deposit transaction
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
         amount * 1e8,
@@ -69,7 +98,7 @@ export default function KasenManiaPage() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Record deposit on backend (optional)
+      // Record deposit on your backend (which updates MongoDB).
       await axios.post(`${apiUrl}/deposit`, {
         gameName: "kasenmania",
         uniqueHash,
@@ -78,7 +107,7 @@ export default function KasenManiaPage() {
         txid: txidString,
       });
 
-      // Update global credits for Kasen Mania
+      // Update global credits for Kasen Mania.
       window.kasenManiaCredits = amount;
       setIsDeposited(true);
     } catch (error: any) {
@@ -130,12 +159,16 @@ export default function KasenManiaPage() {
           {/* Left Column: Game Area */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm flex flex-col overflow-hidden">
             <div className="p-6 flex flex-col h-full">
-              <h2 className="text-2xl font-bold text-[#49EACB] mb-4">Kasen Mania</h2>
+              <h2 className="text-2xl font-bold text-[#49EACB] mb-4">
+                Kasen Mania
+              </h2>
 
-              {/* Show deposit UI if no credits yet */}
+              {/* Show deposit UI if credits are zero */}
               {window.kasenManiaCredits === 0 && (
                 <div className="mb-4">
-                  <p className="mb-2">You have 0 credits. Please deposit funds to start playing.</p>
+                  <p className="mb-2">
+                    You have 0 credits. Please deposit funds to start playing.
+                  </p>
                   <div className="flex items-center space-x-2">
                     <input
                       type="number"
