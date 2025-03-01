@@ -63,7 +63,7 @@ export default function KasenManiaPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2 }}
-                  className="text-[#49EACB] hover:text-red-500"
+                  className="text-[#FF0000] hover:text-[#FF7373]"
                 >
                   <FaTwitter />
                 </motion.a>
@@ -72,7 +72,7 @@ export default function KasenManiaPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2 }}
-                  className="text-[#49EACB] hover:text-red-500"
+                  className="text-[#FF0000] hover:text-[#FF7373]"
                 >
                   <FaTelegramPlane />
                 </motion.a>
@@ -81,7 +81,7 @@ export default function KasenManiaPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2 }}
-                  className="text-[#49EACB] hover:text-red-500"
+                  className="text-[#FF0000] hover:text-[#FF7373]"
                 >
                   <FaGlobe />
                 </motion.a>
@@ -135,7 +135,7 @@ export default function KasenManiaPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.2 }}
-                    className="text-[#49EACB] hover:text-red-500"
+                    className="text-[#FF0000] hover:text-[#FF7373]"
                   >
                     <FaTwitter />
                   </motion.a>
@@ -144,7 +144,7 @@ export default function KasenManiaPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.2 }}
-                    className="text-[#49EACB] hover:text-red-500"
+                    className="text-[#FF0000] hover:text-[#FF7373]"
                   >
                     <FaTelegramPlane />
                   </motion.a>
@@ -153,7 +153,7 @@ export default function KasenManiaPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.2 }}
-                    className="text-[#49EACB] hover:text-red-500"
+                    className="text-[#FF0000] hover:text-[#FF7373]"
                   >
                     <FaGlobe />
                   </motion.a>
