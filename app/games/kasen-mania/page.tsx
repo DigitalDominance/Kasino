@@ -15,13 +15,13 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
+import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
+import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
-
-/* ---------------------------- Main Game Content --------------------------- */
 
 function SlotsContent() {
   const { isConnected, balance } = useWallet();
@@ -49,32 +49,27 @@ function SlotsContent() {
       return;
     }
     try {
-      // Generate a unique game hash
+      // Generate a unique game hash and get the current wallet address.
       const uniqueHash = uuidv4();
-      // Get connected wallet address
       const accounts = await window.kasware.getAccounts();
       const currentWalletAddress = accounts[0];
       if (!currentWalletAddress) {
         alert("No wallet address found");
         return;
       }
-      // Randomly choose one treasury address
+      // Randomly choose one treasury address.
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-      // Send deposit tx via Kasware
-      const depositTx = await window.kasware.sendKaspa(
-        chosenTreasury,
-        bet * 1e8,
-        { priorityFee: 10000 }
-      );
+      // Send deposit transaction via Kasware.
+      const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, { priorityFee: 10000 });
       const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Call backend API to start the game (using gameName "slots")
+      // Start the game on the backend.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "slots",
         uniqueHash,
@@ -99,7 +94,7 @@ function SlotsContent() {
     setGameResult(result);
     setWinAmount(winAmt);
     setIsPlaying(false);
-    // End the game on backend and disperse prize if applicable
+    // End the game on the backend.
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
@@ -128,8 +123,7 @@ function SlotsContent() {
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Games
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
@@ -137,7 +131,6 @@ function SlotsContent() {
           </motion.div>
         </header>
 
-        {/* Deposit TXID display */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -157,7 +150,7 @@ function SlotsContent() {
           </p>
         )}
 
-        {/* Game Area */}
+        {/* Main Game and Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full">
@@ -167,8 +160,8 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* Enlarged slot machine container with a slot‑machine–style background */}
-              <div className="relative h-[70vh] bg-gradient-to-b from-gray-800 to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
+              {/* Slot machine container with a deep‑red background */}
+              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-[#FF0000] rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
                 <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
               </div>
             </div>
@@ -190,42 +183,53 @@ function SlotsContent() {
           </div>
         </div>
 
-        {/* Kasen Collab Promo & How To Play Cards */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
-            <motion.h2
-              className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
-              animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-              style={{
-                backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
-                backgroundSize: "200% 200%",
-              }}
+        {/* Kasen Promo Card with Social Links (full width) */}
+        <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+          <motion.h2
+            className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            style={{
+              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+              backgroundSize: "200% 200%",
+            }}
+          >
+            KASEN Mania
+          </motion.h2>
+          <img src="/placeholder.svg" alt="Kasen Collab" className="w-1/2 h-auto mb-4" />
+          <p className="text-sm text-white mb-4">
+            This game is a collaborative effort with KASEN, a pioneer in KRC721 &amp; KRC20. Their creative vision and innovative approach have added extra fun to our casino experience.
+          </p>
+          <div className="flex justify-center space-x-4 text-xl">
+            <motion.a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#FF0000] hover:text-[#FF7373]"
             >
-              KASEN Mania
-            </motion.h2>
-            <img src="/placeholder.svg" alt="Kasen Collab" className="w-1/2 h-auto mb-4" />
-            <p className="text-sm text-white mb-4">
-              This game is a collaborative effort with KASEN, a pioneer in KRC721 & KRC20. Their creative vision and innovative approach have added extra fun to our casino experience.
-            </p>
-            <div className="flex justify-center space-x-4 text-xl">
-              {/* Add social icons here if needed */}
-            </div>
-          </Card>
-
-          <Card className="bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-4">
-            <h2 className="text-xl font-bold text-[#49EACB] mb-2">How to Play</h2>
-            <ol className="list-decimal list-inside text-sm text-white space-y-1">
-              <li>Connect your wallet.</li>
-              <li>Deposit credits with Kasware.</li>
-              <li>Place your bet and spin the slots.</li>
-              <li>The reels will spin and display random symbols.</li>
-              <li>
-                The game checks several paylines. If symbols along any payline match, you win a payout based on that line’s multiplier.
-              </li>
-            </ol>
-          </Card>
-        </div>
+              <FaTwitter />
+            </motion.a>
+            <motion.a
+              href="https://telegram.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#FF0000] hover:text-[#FF7373]"
+            >
+              <FaTelegramPlane />
+            </motion.a>
+            <motion.a
+              href="https://example.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#FF0000] hover:text-[#FF7373]"
+            >
+              <FaGlobe />
+            </motion.a>
+          </div>
+        </Card>
       </div>
       <SiteFooter />
 
@@ -237,10 +241,8 @@ function SlotsContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet amount.</li>
               <li>Click "Spin Slots" to start the game.</li>
-              <li>The reels will spin and display random symbols.</li>
-              <li>
-                The game checks several paylines and awards payouts based on matching patterns.
-              </li>
+              <li>The reels will spin as each column scrolls vertically.</li>
+              <li>The game checks several paylines and awards payouts based on matching patterns.</li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
             <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
@@ -253,8 +255,6 @@ function SlotsContent() {
   );
 }
 
-/* ------------------------------ Slots Game ------------------------------ */
-
 interface SlotsGameProps {
   isPlaying: boolean;
   onGameEnd: (result: string, winAmt: number) => void;
@@ -262,27 +262,22 @@ interface SlotsGameProps {
 }
 
 export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
-  // Create a 3x5 grid (rows x columns) for the reels.
-  const [grid, setGrid] = useState<number[][]>(
-    Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => 0))
-  );
+  // We'll generate a final 5x5 grid outcome when the spin ends.
+  const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const [showResult, setShowResult] = useState(false);
 
-  // Define paylines with positions (row, col) and associated multipliers.
+  // Define paylines for a 5×5 grid.
   const payLines = [
-    { positions: [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4]], multiplier: 2 }, // Middle horizontal
+    { positions: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], multiplier: 2 }, // Middle horizontal
     { positions: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], multiplier: 2 }, // Top horizontal
-    { positions: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], multiplier: 2 }, // Bottom horizontal
-    { positions: [[0, 0], [1, 1], [2, 2], [1, 3], [0, 4]], multiplier: 3 }, // Diagonal wave
-    { positions: [[2, 0], [1, 1], [0, 2], [1, 3], [2, 4]], multiplier: 3 }, // Opposite diagonal wave
-    { positions: [[0, 0], [0, 1], [1, 2], [2, 3], [2, 4]], multiplier: 4 }, // V shape
-    { positions: [[2, 0], [2, 1], [1, 2], [0, 3], [0, 4]], multiplier: 4 }, // Inverted V
-    { positions: [[0, 0], [1, 1], [0, 2], [1, 3], [0, 4]], multiplier: 3 }, // Zigzag top
-    { positions: [[2, 0], [1, 1], [2, 2], [1, 3], [2, 4]], multiplier: 3 }  // Zigzag bottom
+    { positions: [[4, 0], [4, 1], [4, 2], [4, 3], [4, 4]], multiplier: 2 }, // Bottom horizontal
+    { positions: [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]], multiplier: 3 }, // Diagonal TL-BR
+    { positions: [[4, 0], [3, 1], [2, 2], [1, 3], [0, 4]], multiplier: 3 }, // Diagonal BL-TR
+    // Rare bonus: if the entire grid shows the same symbol.
+    { positions: "all", multiplier: 20 }
   ];
 
-  // Array of symbol images – using your eight distinct placeholders.
+  // Array of eight distinct symbol images.
   const symbolImages = [
     "/placeholder.svg",
     "/placeholder2.svg",
@@ -295,89 +290,95 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   ];
 
   useEffect(() => {
-    let spinInterval: NodeJS.Timeout;
+    let timer: NodeJS.Timeout;
     if (isPlaying) {
       setSpinning(true);
-      setShowResult(false);
-      // Update the grid every 100ms to simulate reel spinning.
-      spinInterval = setInterval(() => {
-        setGrid(
-          Array.from({ length: 3 }, () =>
-            Array.from({ length: 5 }, () => Math.floor(Math.random() * 8))
-          )
-        );
-      }, 100);
-
-      // Stop spinning after 3 seconds.
-      setTimeout(() => {
-        clearInterval(spinInterval);
-        const finalGrid = Array.from({ length: 3 }, () =>
+      setFinalGrid(null);
+      // After 3 seconds, generate the final outcome for the 5×5 grid.
+      timer = setTimeout(() => {
+        const grid = Array.from({ length: 5 }, () =>
           Array.from({ length: 5 }, () => Math.floor(Math.random() * 8))
         );
-        setGrid(finalGrid);
+        setFinalGrid(grid);
         setSpinning(false);
-        // Check all paylines for wins.
+        // Evaluate paylines.
         let totalMultiplier = 0;
-        payLines.forEach((line) => {
-          const [firstRow, firstCol] = line.positions[0];
-          const symbol = finalGrid[firstRow][firstCol];
-          const isWinningLine = line.positions.every(
-            ([row, col]) => finalGrid[row][col] === symbol
-          );
-          if (isWinningLine) {
-            totalMultiplier += line.multiplier;
+        if (grid) {
+          payLines.forEach((line) => {
+            if (line.positions === "all") {
+              const firstSymbol = grid[0][0];
+              const allSame = grid.every((row) => row.every((cell) => cell === firstSymbol));
+              if (allSame) totalMultiplier += line.multiplier;
+            } else {
+              const [firstRow, firstCol] = line.positions[0];
+              const symbol = grid[firstRow][firstCol];
+              const isWinningLine = line.positions.every(([r, c]) => grid[r][c] === symbol);
+              if (isWinningLine) totalMultiplier += line.multiplier;
+            }
+          });
+          // Additional bonus: if the center column (col 2) is uniform.
+          const centerCol = grid.map(row => row[2]);
+          if (centerCol.every(sym => sym === centerCol[0])) {
+            totalMultiplier += 5;
           }
-        });
+        }
         const result = totalMultiplier > 0 ? "You Win" : "House Wins";
         const winAmt = totalMultiplier > 0 ? betAmount * totalMultiplier : 0;
-        setShowResult(true);
         onGameEnd(result, winAmt);
       }, 3000);
     }
-    return () => clearInterval(spinInterval);
+    return () => clearTimeout(timer);
   }, [isPlaying]);
 
-  return (
-    <div className="flex flex-col items-center justify-center h-full relative">
-      {/* Girl image placeholder at the top */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <Image src="/placeholder.svg" alt="Girl Placeholder" width={120} height={120} />
-      </div>
-      {/* "KASEN MANIA" title above the reels */}
-      <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
-        <h2 className="text-4xl font-bold text-[#49EACB]">KASEN MANIA</h2>
-      </div>
-      {/* Enlarged slots grid with animated (spinning) symbols */}
-      <div className="mt-32 grid grid-cols-5 grid-rows-3 gap-4">
-        {grid.flat().map((symbol, idx) => (
+  // Reel component: each column spins as a unit.
+  const Reel = ({ isSpinning, finalSymbols }: { isSpinning: boolean; finalSymbols?: number[] }) => {
+    const cellHeight = 80; // each symbol cell height (in pixels)
+    if (isSpinning) {
+      // Generate a temporary reel array (simulate continuous scrolling).
+      const reelArray = Array.from({ length: 20 }, () => Math.floor(Math.random() * 8));
+      return (
+        <div className="w-full h-full overflow-hidden relative">
           <motion.div
-            key={idx}
-            className="w-24 h-24 bg-[#49EACB]/20 flex items-center justify-center rounded"
-            animate={spinning ? { rotate: 360 } : { rotate: 0 }}
-            transition={{ duration: 0.5, repeat: spinning ? Infinity : 0, ease: "linear" }}
+            className="w-full"
+            animate={{ y: -cellHeight * reelArray.length }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
-            <Image src={symbolImages[symbol]} alt={`Symbol ${symbol}`} width={60} height={60} />
+            {reelArray.map((sym, i) => (
+              <div key={i} style={{ height: cellHeight }} className="w-full flex items-center justify-center">
+                <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={80} height={80} />
+              </div>
+            ))}
           </motion.div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="w-full h-full overflow-hidden relative">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            {finalSymbols && finalSymbols.map((sym, i) => (
+              <div key={i} style={{ height: cellHeight }} className="w-full flex items-center justify-center">
+                <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={80} height={80} />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="w-full h-full relative flex justify-center items-center">
+      {/* The visible area is 5 cells tall (5 * 80px) */}
+      <div className="flex space-x-2" style={{ height: 5 * 80 }}>
+        {Array.from({ length: 5 }, (_, colIndex) => (
+          <div key={colIndex} className="w-24 h-full overflow-hidden">
+            <Reel isSpinning={spinning} finalSymbols={finalGrid ? finalGrid.map(row => row[colIndex]) : undefined} />
+          </div>
         ))}
       </div>
-      {showResult && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-center">
-          <h3 className="text-3xl font-bold text-[#49EACB] mb-4">{/* Result shown in controls */}</h3>
-          <Button
-            onClick={() => {
-              setShowResult(false);
-            }}
-            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 text-xl px-8 py-3"
-          >
-            Play Again
-          </Button>
-        </motion.div>
-      )}
     </div>
   );
 }
-
-/* ---------------------------- Slots Controls ---------------------------- */
 
 interface SlotsControlsProps {
   betAmount: string;
@@ -405,7 +406,6 @@ export function SlotsControls({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
-  // Auto-dismiss error after 3 seconds.
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
@@ -413,7 +413,6 @@ export function SlotsControls({
     }
   }, [errorMessage]);
 
-  // Cooldown timer.
   useEffect(() => {
     if (cooldown > 0) {
       const intervalId = setInterval(() => {
@@ -423,9 +422,7 @@ export function SlotsControls({
     }
   }, [cooldown]);
 
-  const showError = (msg: string) => {
-    setErrorMessage(msg);
-  };
+  const showError = (msg: string) => setErrorMessage(msg);
 
   const handleSpinSlots = () => {
     if (!isWalletConnected) {
@@ -516,17 +513,12 @@ export function SlotsControls({
               </Button>
             </div>
           </div>
-
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult !== null && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  Result: {gameResult}
-                </div>
+                <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
                 {winAmount !== null && winAmount > 0 ? (
-                  <div className="text-xl text-green-500">
-                    You won {winAmount.toFixed(8)} KAS!
-                  </div>
+                  <div className="text-xl text-green-500">You won {winAmount.toFixed(8)} KAS!</div>
                 ) : (
                   <div className="text-xl text-red-500">You lost your bet.</div>
                 )}
@@ -573,8 +565,6 @@ export function SlotsControls({
     </>
   );
 }
-
-/* ------------------------ Main Page Export ------------------------ */
 
 export default function KasenManiaSlotsPage() {
   return <SlotsContent />;
