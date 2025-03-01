@@ -149,7 +149,7 @@ export default function KasenManiaPage() {
           {/* Game Area: Load your HTML5 game via an iframe */}
           <div className="aspect-video bg-[#49EACB]/5 rounded-lg overflow-hidden mb-6">
             <iframe
-              src="/games/kasen-mania/index.html"
+              src="/kasen-mania/index.html"
               title="Kasen Mania Game"
               className="w-full h-full"
               frameBorder="0"
