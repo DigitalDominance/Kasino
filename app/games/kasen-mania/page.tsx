@@ -13,7 +13,7 @@ import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import "./styles.css";
+//import "./styles.css";
 
 export default function KasenManiaPage() {
   const { isConnected, balance } = useWallet();
