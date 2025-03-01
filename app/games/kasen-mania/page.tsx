@@ -35,6 +35,7 @@ function SlotsContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
+  // API URL and treasury addresses.
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
@@ -67,6 +68,7 @@ function SlotsContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
+      // Use game name "Kasen Mania"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kasen Mania",
         uniqueHash,
@@ -371,7 +373,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     "/placeholder8.svg"
   ];
 
-  // Decide outcome and build final grid
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isPlaying) {
@@ -410,7 +411,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     return () => clearTimeout(timer);
   }, [isPlaying]);
 
-  // Each reel is 80px tall per cell => total 400px high
   const reelWidth = 512;
   const reelHeight = 400;
 
@@ -499,13 +499,13 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal => start from col0 center => x=48,y=28 => end col4 => x=432,y=360
+      // Diagonal => start from col0 center => x=48,y=15 => end col4 => x=432,y=360
       const startX = 48;
-      const startY = 28;
+      const startY = 10;
       const endX = 432;
-      const endY = 380;
+      const endY = 360;
       const xDiff = endX - startX;
-      const yDiff = endY - startY; // 332
+      const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
       const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
 
@@ -536,27 +536,20 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover object-center"
       />
 
-      {/* Pre-spin overlay with faster gradient for KASEN MANIA */}
-      {!isPlaying && !finalGrid && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
-          <motion.h1
-            className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
-              backgroundSize: "200% 200%",
-            }}
-          >
-            KASEN MANIA
-          </motion.h1>
-          <Card className="bg-white text-black p-4">
-            <h3 className="text-xl font-bold">Place bet to spin</h3>
-          </Card>
-        </div>
-      )}
+      {/* Female placeholder at top-center */}
+      <div
+        className="absolute"
+        style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}
+      >
+        <Image
+          src="/placeholder.svg"
+          alt="Female Character"
+          width={120}
+          height={120}
+        />
+      </div>
 
-      {/* The reel container (512x400) */}
+      {/* Reel container (512x400) */}
       <div style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}>
         <div className="flex space-x-2 h-full">
           {Array.from({ length: 5 }, (_, colIndex) => (
@@ -568,7 +561,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             </div>
           ))}
         </div>
-        {/* The winning line overlay if needed */}
+        {/* Winning overlay line if needed */}
         {overlayElement}
       </div>
     </div>
@@ -713,9 +706,7 @@ export function SlotsControls({
               <div className="text-center mb-4">
                 <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
                 {winAmount !== null && winAmount > 0 ? (
-                  <div className="text-xl text-green-500">
-                    You won {winAmount.toFixed(8)} KAS!
-                  </div>
+                  <div className="text-xl text-green-500">You won {winAmount.toFixed(8)} KAS!</div>
                 ) : (
                   <div className="text-xl text-red-500">You lost your bet.</div>
                 )}
