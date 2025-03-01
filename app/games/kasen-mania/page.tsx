@@ -630,7 +630,7 @@ export function SlotsControls({
                 disabled={isPlaying || !isWalletConnected}
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image src="/placeholder.svg" alt="KAS" width={16} height={16} className="rounded-full" />
+                <Image src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp" alt="KAS" width={16} height={16} className="rounded-full" />
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
