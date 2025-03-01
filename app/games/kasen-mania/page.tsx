@@ -501,9 +501,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     } else if (outcomeMultiplier === 2) {
       // Diagonal => start from col0 center => x=48,y=28 => end col4 => x=432,y=360
       const startX = 48;
-      const startY = 15;
+      const startY = 28;
       const endX = 432;
-      const endY = 360;
+      const endY = 380;
       const xDiff = endX - startX;
       const yDiff = endY - startY; // 332
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
