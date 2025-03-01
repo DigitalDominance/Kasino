@@ -45,7 +45,7 @@ export default function KasenManiaPage() {
                   backgroundSize: "200% 200%",
                 }}
               >
-                KASEN Project
+                KASEN Mania
               </motion.h2>
               <img
                 src="/placeholder.svg"
