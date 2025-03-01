@@ -15,7 +15,6 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
-//import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -31,7 +30,6 @@ function SlotsContent() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [winAmount, setWinAmount] = useState<number | null>(null);
-  const [selectedMultiplier, setSelectedMultiplier] = useState(2);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
@@ -139,7 +137,7 @@ function SlotsContent() {
           </motion.div>
         </header>
 
-        {/* Display deposit TXID for user monitoring */}
+        {/* Deposit TXID display */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -169,12 +167,12 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              <div className="relative aspect-[16/9] bg-[#49EACB]/5 rounded-lg mb-6 overflow-hidden p-4">
+              {/* Enlarged game container */}
+              <div className="relative h-[70vh] bg-[#49EACB]/5 rounded-lg mb-6 overflow-hidden p-4">
                 <SlotsGame
                   isPlaying={isPlaying}
                   onGameEnd={handleGameEnd}
                   betAmount={Number(betAmount)}
-                  selectedMultiplier={selectedMultiplier}
                 />
               </div>
             </div>
@@ -190,8 +188,6 @@ function SlotsContent() {
               resetGame={resetGame}
               gameResult={gameResult}
               winAmount={winAmount}
-              selectedMultiplier={selectedMultiplier}
-              setSelectedMultiplier={setSelectedMultiplier}
             />
             <LiveChat textColor="#49EACB" />
             <LiveWins textColor="#49EACB" />
@@ -217,7 +213,7 @@ function SlotsContent() {
               This game is a collaborative effort with KASEN, a pioneer in KRC721 & KRC20. Their creative vision and innovative approach have added extra fun to our casino experience.
             </p>
             <div className="flex justify-center space-x-4 text-xl">
-              {/* Social icons can be added here */}
+              {/* Add social icons here if needed */}
             </div>
           </Card>
 
@@ -226,8 +222,11 @@ function SlotsContent() {
             <ol className="list-decimal list-inside text-sm text-white space-y-1">
               <li>Connect your wallet.</li>
               <li>Deposit credits with Kasware.</li>
-              <li>Place your bet and select a multiplier.</li>
-              <li>Spin the slots and win if the middle row symbols match.</li>
+              <li>Place your bet and spin the slots.</li>
+              <li>The reels will spin and display random symbols.</li>
+              <li>
+                Win if any of the paylines match—a variety of patterns pay out different multipliers.
+              </li>
             </ol>
           </Card>
         </div>
@@ -241,10 +240,11 @@ function SlotsContent() {
             <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Slots</h3>
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet amount.</li>
-              <li>Select a multiplier (2x, 5x, or 10x).</li>
               <li>Click "Spin Slots" to start the game.</li>
               <li>The reels will spin and display random symbols.</li>
-              <li>If all symbols in the middle row match, you win!</li>
+              <li>
+                The game checks several paylines. If symbols along any payline match, you win a payout based on that line’s multiplier.
+              </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
             <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
@@ -263,21 +263,35 @@ interface SlotsGameProps {
   isPlaying: boolean;
   onGameEnd: (result: string, winAmt: number) => void;
   betAmount: number;
-  selectedMultiplier: number;
 }
 
-export function SlotsGame({ isPlaying, onGameEnd, betAmount, selectedMultiplier }: SlotsGameProps) {
-  // A 3x5 grid representing the slot machine. Each cell is a number (0–7) representing one of 8 features.
-  const [grid, setGrid] = useState<number[][]>([ [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0] ]);
+export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
+  // A 3x5 grid representing the slot machine.
+  const [grid, setGrid] = useState<number[][]>(
+    Array.from({ length: 3 }, () => Array.from({ length: 5 }, () => 0))
+  );
   const [spinning, setSpinning] = useState(false);
   const [showResult, setShowResult] = useState(false);
+
+  // Define paylines with positions (row, col) and associated multipliers.
+  const payLines = [
+    { positions: [[1, 0], [1, 1], [1, 2], [1, 3], [1, 4]], multiplier: 2 }, // Middle horizontal
+    { positions: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], multiplier: 2 }, // Top horizontal
+    { positions: [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4]], multiplier: 2 }, // Bottom horizontal
+    { positions: [[0, 0], [1, 1], [2, 2], [1, 3], [0, 4]], multiplier: 3 }, // Diagonal wave
+    { positions: [[2, 0], [1, 1], [0, 2], [1, 3], [2, 4]], multiplier: 3 }, // Opposite diagonal wave
+    { positions: [[0, 0], [0, 1], [1, 2], [2, 3], [2, 4]], multiplier: 4 }, // V shape
+    { positions: [[2, 0], [2, 1], [1, 2], [0, 3], [0, 4]], multiplier: 4 }, // Inverted V
+    { positions: [[0, 0], [1, 1], [0, 2], [1, 3], [0, 4]], multiplier: 3 }, // Zigzag top
+    { positions: [[2, 0], [1, 1], [2, 2], [1, 3], [2, 4]], multiplier: 3 }  // Zigzag bottom
+  ];
 
   useEffect(() => {
     let spinInterval: NodeJS.Timeout;
     if (isPlaying) {
       setSpinning(true);
       setShowResult(false);
-      // Start updating the grid every 100ms to simulate spinning
+      // Update the grid every 100ms to simulate spinning.
       spinInterval = setInterval(() => {
         setGrid(
           Array.from({ length: 3 }, () =>
@@ -286,7 +300,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount, selectedMultiplier 
         );
       }, 100);
 
-      // Stop spinning after 3 seconds and set final grid
+      // Stop spinning after 3 seconds.
       setTimeout(() => {
         clearInterval(spinInterval);
         const finalGrid = Array.from({ length: 3 }, () =>
@@ -294,11 +308,20 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount, selectedMultiplier 
         );
         setGrid(finalGrid);
         setSpinning(false);
-        // Check win condition: if all symbols in the middle row match
-        const middleRow = finalGrid[1];
-        const win = middleRow.every(symbol => symbol === middleRow[0]);
-        const result = win ? "You Win" : "House Wins";
-        const winAmt = win ? betAmount * selectedMultiplier : 0;
+        // Check all paylines for wins.
+        let totalMultiplier = 0;
+        payLines.forEach((line) => {
+          const [firstRow, firstCol] = line.positions[0];
+          const symbol = finalGrid[firstRow][firstCol];
+          const isWinningLine = line.positions.every(
+            ([row, col]) => finalGrid[row][col] === symbol
+          );
+          if (isWinningLine) {
+            totalMultiplier += line.multiplier;
+          }
+        });
+        const result = totalMultiplier > 0 ? "You Win" : "House Wins";
+        const winAmt = totalMultiplier > 0 ? betAmount * totalMultiplier : 0;
         setShowResult(true);
         onGameEnd(result, winAmt);
       }, 3000);
@@ -310,28 +333,23 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount, selectedMultiplier 
     <div className="flex flex-col items-center justify-center h-full relative">
       {/* Girl image placeholder at the top */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <Image src="/placeholder.svg" alt="Girl Placeholder" width={100} height={100} />
+        <Image src="/placeholder.svg" alt="Girl Placeholder" width={120} height={120} />
       </div>
       {/* "KASEN MANIA" title above the reels */}
-      <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
-        <h2 className="text-3xl font-bold text-[#49EACB]">KASEN MANIA</h2>
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
+        <h2 className="text-4xl font-bold text-[#49EACB]">KASEN MANIA</h2>
       </div>
-      {/* The slots grid: 3 rows x 5 columns */}
-      <div className="mt-20 grid grid-cols-5 grid-rows-3 gap-2">
+      {/* Enlarged slots grid */}
+      <div className="mt-32 grid grid-cols-5 grid-rows-3 gap-4">
         {grid.flat().map((symbol, idx) => (
-          <div key={idx} className="w-16 h-16 bg-[#49EACB]/20 flex items-center justify-center rounded">
-            <Image src="/placeholder.svg" alt={`Symbol ${symbol}`} width={40} height={40} />
+          <div key={idx} className="w-24 h-24 bg-[#49EACB]/20 flex items-center justify-center rounded">
+            <Image src="/placeholder.svg" alt={`Symbol ${symbol}`} width={60} height={60} />
           </div>
         ))}
       </div>
       {showResult && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-8 text-center"
-        >
-          {/* The result text is set via onGameEnd */}
-          <h3 className="text-3xl font-bold text-[#49EACB] mb-4">{/* Result displayed in controls */}</h3>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-center">
+          <h3 className="text-3xl font-bold text-[#49EACB] mb-4">{/* Result shown in controls */}</h3>
           <Button
             onClick={() => {
               setShowResult(false);
@@ -358,8 +376,6 @@ interface SlotsControlsProps {
   resetGame: () => void;
   gameResult: string | null;
   winAmount: number | null;
-  selectedMultiplier: number;
-  setSelectedMultiplier: (multiplier: number) => void;
 }
 
 export function SlotsControls({
@@ -372,13 +388,11 @@ export function SlotsControls({
   resetGame,
   gameResult,
   winAmount,
-  selectedMultiplier,
-  setSelectedMultiplier,
 }: SlotsControlsProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
-  // Auto-dismiss error alert after 3 seconds
+  // Auto-dismiss error after 3 seconds.
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
@@ -386,7 +400,7 @@ export function SlotsControls({
     }
   }, [errorMessage]);
 
-  // Cooldown timer effect
+  // Cooldown timer.
   useEffect(() => {
     if (cooldown > 0) {
       const intervalId = setInterval(() => {
@@ -435,7 +449,6 @@ export function SlotsControls({
                 onChange={(e) => {
                   let value = Number(e.target.value);
                   if (isNaN(value)) value = 1;
-                  // Ensure bet is between 1 and 1000
                   value = Math.max(1, Math.min(1000, value));
                   setBetAmount(value.toString());
                 }}
@@ -488,27 +501,6 @@ export function SlotsControls({
               >
                 Max
               </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm text-[#49EACB]">Multiplier</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[2, 5, 10].map((multiplier) => (
-                <Button
-                  key={multiplier}
-                  variant={selectedMultiplier === multiplier ? "default" : "outline"}
-                  className={`border-[#49EACB]/10 ${
-                    selectedMultiplier === multiplier
-                      ? "bg-[#49EACB] text-black"
-                      : "hover:bg-[#49EACB]/10"
-                  }`}
-                  onClick={() => setSelectedMultiplier(multiplier)}
-                  disabled={isPlaying || !isWalletConnected}
-                >
-                  {multiplier}x
-                </Button>
-              ))}
             </div>
           </div>
 
