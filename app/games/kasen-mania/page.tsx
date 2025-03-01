@@ -38,10 +38,10 @@ export default function KasenManiaPage() {
               <motion.h2
                 className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
                 animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
                 style={{
                   backgroundImage:
-                    "linear-gradient(270deg, #8B0000, #B22222, #FF7373)",
+                    "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
                   backgroundSize: "200% 200%",
                 }}
               >
@@ -102,7 +102,7 @@ export default function KasenManiaPage() {
             </Card>
           </div>
 
-          {/* Mobile Left Column: Stack cards naturally */}
+          {/* Mobile Left Column: Stack cards normally */}
           <div className="lg:hidden order-2">
             <div className="space-y-6">
               {/* KASEN Promo Card */}
@@ -110,10 +110,10 @@ export default function KasenManiaPage() {
                 <motion.h2
                   className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
                   animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
                   style={{
                     backgroundImage:
-                      "linear-gradient(270deg, #8B0000, #B22222, #FF7373)",
+                      "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
                     backgroundSize: "200% 200%",
                   }}
                 >
