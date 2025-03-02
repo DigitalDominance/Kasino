@@ -510,62 +510,67 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       </div>
 
       {!isPlaying && !finalGrid && (
-      <div
-        style={{ width: reelWidth, height: reelHeight, position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)" }}
-        className="z-10 flex flex-col items-center justify-center"
-      >
-        {/* Glass overlay covering entire container */}
+      <div className="absolute inset-0 z-10">
+        {/* Glass overlay covering the entire container */}
         <div
-          className="absolute inset-0 z-0"
+          className="absolute inset-0"
           style={{
             background: "linear-gradient(270deg, #600000, #000000)",
             opacity: 0.6,
           }}
-        ></div>
+        />
     
-        {/* Preview reel layer (static reels matching actual slot spacing) */}
-        <div className="absolute inset-0 z-[-1] flex justify-center items-center">
-          <div className="flex space-x-14 h-full">
-            {Array.from({ length: 5 }).map((_, colIndex) => (
-              <div key={colIndex} className="w-24 h-full overflow-hidden">
-                <div className="w-full">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      style={{ height: 80 }}
-                      className="w-full flex items-center justify-center"
-                    >
-                      <Image
-                        src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                        alt={`Symbol preview ${i}`}
-                        width={80}
-                        height={80}
-                      />
-                    </div>
-                  ))}
+        {/* Centered content matching main reels placement */}
+        <div className="w-full h-full relative flex justify-center items-center">
+          {/* Preview reels container (same size/position as main reels) */}
+          <div
+            style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}
+          >
+            <div className="flex space-x-14 h-full">
+              {Array.from({ length: 5 }).map((_, colIndex) => (
+                <div key={colIndex} className="w-24 h-full overflow-hidden">
+                  <div className="w-full h-full">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        style={{ height: 80 }}
+                        className="w-full flex items-center justify-center"
+                      >
+                        <Image
+                          src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
+                          alt={`Symbol preview ${i}`}
+                          width={80}
+                          height={80}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+    
+          {/* Centered text overlay */}
+          <div className="absolute flex flex-col items-center">
+            <motion.h1
+              className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
+              animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              style={{
+                backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+                backgroundSize: "200% 200%",
+              }}
+            >
+              KASEN MANIA
+            </motion.h1>
+            <Card className="bg-white text-black p-4 relative z-10">
+              <h3 className="text-xl font-bold">Place bet to spin</h3>
+            </Card>
           </div>
         </div>
-    
-        {/* Content layer */}
-        <motion.h1
-          className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
-          animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          style={{
-            backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
-            backgroundSize: "200% 200%",
-          }}
-        >
-          KASEN MANIA
-        </motion.h1>
-        <Card className="bg-white text-black p-4 relative z-10">
-          <h3 className="text-xl font-bold">Place bet to spin</h3>
-        </Card>
       </div>
     )}
+
 
 
 
