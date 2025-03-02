@@ -65,7 +65,7 @@ function SlotsContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      const startRes = await axios.post(${apiUrl}/game/start, {
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kasen Mania",
         uniqueHash,
         walletAddress: currentWalletAddress,
@@ -91,7 +91,7 @@ function SlotsContent() {
     setIsPlaying(false);
     if (gameId) {
       try {
-        await axios.post(${apiUrl}/game/end, {
+        await axios.post(`${apiUrl}/game/end`, {
           gameId,
           result: result === "You Win" ? "win" : "lose",
           winAmount: winAmt,
@@ -111,7 +111,7 @@ function SlotsContent() {
   };
 
   return (
-    <div className={${montserrat.className} min-h-screen bg-black text-white flex flex-col}>
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
@@ -135,7 +135,7 @@ function SlotsContent() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}
-              href={https://kas.fyi/transaction/${depositTxid}}
+              href={`https://kas.fyi/transaction/${depositTxid}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -418,7 +418,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
               >
                 <Image
                   src={symbolImages[sym]}
-                  alt={Symbol ${sym}}
+                  alt={`Symbol ${sym}`}
                   width={80}
                   height={80}
                 />
@@ -439,7 +439,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
               >
                 <Image
                   src={symbolImages[sym]}
-                  alt={Symbol ${sym}}
+                  alt={`Symbol ${sym}`}
                   width={80}
                   height={80}
                 />
@@ -484,7 +484,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             left: startX,
             width: length,
             height: 4,
-            transform: rotate(${angle}deg),
+            transform: `rotate(${angle}deg)`,
             transformOrigin: "left center",
           }}
         />
@@ -503,31 +503,34 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         className="absolute top-[20px] left-1/2 transform translate-x-[calc(-50%+1px)] object-cover object-center"
       />
 
-
       {/* Female placeholder at top-center (using /female_placeholder.svg) */}
       <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
         <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
       </div>
 
+      {/* Preview if not playing */}
       {!isPlaying && !finalGrid && (
-      // Negative offsets to stretch beyond the parent's p-4 padding
-      <div
-        style={{
-          position: "absolute",
-          top: "-1rem",
-          left: "-1rem",
-          right: "-1rem",
-          bottom: "-1rem",
-        }}
-      >
-        {/* Preview reels behind the glass */}
-        <div className="absolute inset-0 z-0 flex justify-center items-center">
-          <div style={{ width: reelWidth, height: reelHeight }}>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center -mt-5">
+          {/* Glass overlay */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              background: "linear-gradient(270deg, #600000, #000000)",
+              opacity: 0.6,
+            }}
+          ></div>
+
+          {/* Preview reels (spaced like main reels) */}
+          <div className="absolute inset-0 z-[-1] flex justify-center items-center">
             <div className="flex space-x-14 h-full">
               {Array.from({ length: 5 }).map((_, colIndex) => (
                 <div key={colIndex} className="w-24 h-full overflow-hidden">
-                  <div className="w-full h-full">
-                    {Array.from({ length: 5 }).map((_, i) => (
+                  <motion.div
+                    className="w-full"
+                    animate={{ y: -80 * 20 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    {Array.from({ length: 20 }).map((_, i) => (
                       <div
                         key={i}
                         style={{ height: 80 }}
@@ -535,32 +538,21 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
                       >
                         <Image
                           src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                          alt={Symbol preview ${i}}
+                          alt={`Symbol preview ${i}`}
                           width={80}
                           height={80}
                         />
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-    
-        {/* Glass overlay covering the entire container (no gaps) */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            background: "linear-gradient(270deg, #600000, #000000)",
-            opacity: 0.6,
-          }}
-        />
-    
-        {/* Text overlay above the glass */}
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+
+          {/* Text overlay */}
           <motion.h1
-            className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
+            className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             style={{
@@ -570,13 +562,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           >
             KASEN MANIA
           </motion.h1>
-          <Card className="bg-white text-black p-4">
+          <Card className="bg-white text-black p-4 relative z-10">
             <h3 className="text-xl font-bold">Place bet to spin</h3>
           </Card>
         </div>
-      </div>
-    )}
-
+      )}
 
       {/* Reel container */}
       <div style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}>
@@ -683,7 +673,13 @@ export function SlotsControls({
                 disabled={isPlaying || !isWalletConnected}
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp" alt="KAS" width={16} height={16} className="rounded-full" />
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -749,7 +745,7 @@ export function SlotsControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? Spin Kasen Mania (${cooldown}s)
+                  ? `Spin Kasen Mania (${cooldown}s)`
                   : "Spin Kasen Mania"}
               </Button>
             ) : (
