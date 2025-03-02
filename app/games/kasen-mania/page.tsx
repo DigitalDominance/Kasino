@@ -497,7 +497,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 object-cover object-center"
+        className="absolute top-[20px] left-1/2 transform -translate-x-1/2 object-cover object-center"
       />
 
       {/* Female placeholder at top-center (using /female_placeholder.svg) */}
@@ -527,7 +527,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
       {/* Reel container */}
       <div style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}>
-        <div className="flex space-x-2 h-full">
+        <div className="flex space-x-4 h-full">
           {Array.from({ length: 5 }, (_, colIndex) => (
             <div key={colIndex} className="w-24 h-full overflow-hidden">
               <Reel
