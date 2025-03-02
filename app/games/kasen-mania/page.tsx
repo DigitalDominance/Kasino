@@ -189,7 +189,7 @@ function SlotsContent() {
           >
             KASEN Mania
           </motion.h2>
-          <img src="/placeholder.svg" alt="Kasen Collab" className="w-24 h-auto mb-4" />
+          <img src="/kasenmaniabanner.webp" alt="Kasen Collab" className="w-24 h-auto mb-4" />
           <p className="text-sm text-white mb-4">
             This game is a collaborative effort with KASEN, a pioneer in KRC721 & KRC20. Their creative vision and
             innovative approach have added extra fun to our casino experience.
