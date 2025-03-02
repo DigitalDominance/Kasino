@@ -528,7 +528,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
       {/* Reel container */}
       <div style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}>
-        <div className="flex space-x-10 h-full">
+        <div className="flex space-x-12 h-full">
           {Array.from({ length: 5 }, (_, colIndex) => (
             <div key={colIndex} className="w-24 h-full overflow-hidden">
               <Reel
