@@ -179,7 +179,7 @@ function SlotsContent() {
         {/* Kasen Promo Card */}
         <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
-            className="text-2xl font-bold mb-4 text-transparent bg-clip-text"
+            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
             style={{
@@ -189,14 +189,18 @@ function SlotsContent() {
           >
             KASEN Mania
           </motion.h2>
-          <img src="/kasenmaniabanner.webp" alt="Kasen Collab" className="w-24 h-auto mb-4" />
+          <img
+            src="/kasenmaniabanner.webp"
+            alt="Kasen Collab"
+            className="w-full h-auto mb-4"
+          />
           <p className="text-sm text-white mb-4">
             This game is a collaborative effort with KASEN, a pioneer in KRC721 & KRC20. Their creative vision and
             innovative approach have added extra fun to our casino experience.
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
-              href="https://twitter.com"
+              href="https://x.com/KasenOnKaspa"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
@@ -205,7 +209,7 @@ function SlotsContent() {
               <FaTwitter />
             </motion.a>
             <motion.a
-              href="https://telegram.org"
+              href="https://t.co/W4YDM1cUpY"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
@@ -214,7 +218,7 @@ function SlotsContent() {
               <FaTelegramPlane />
             </motion.a>
             <motion.a
-              href="https://example.com"
+              href="https://kasenonkas.com"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
