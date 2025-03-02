@@ -497,8 +497,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="absolute top-[20px] left-1/2 transform -translate-x-1/2 object-cover object-center"
+        className="absolute top-[20px] left-1/2 transform translate-x-[calc(-50%+1px)] object-cover object-center"
       />
+
 
       {/* Female placeholder at top-center (using /female_placeholder.svg) */}
       <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
