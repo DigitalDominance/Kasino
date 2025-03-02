@@ -195,8 +195,7 @@ function SlotsContent() {
             className="w-full h-auto mb-4"
           />
           <p className="text-sm text-white mb-4">
-            This game is a collaborative effort with KASEN, a pioneer in KRC721 & KRC20. Their creative vision and
-            innovative approach have added extra fun to our casino experience.
+            KASEN MANIA is an electrifying online slot machine game set in the adventurous world of KASEN! As a pioneer in the NFT space on Kaspa, KASEN brings you a thrilling experience where every spin uncovers legendary treasures, rare artifacts, and powerful rewards. Join Valen, Vira, and Ghost as they unlock hidden bonuses and chase massive wins. Will you strike gold or unleash chaos? Play now and let the adventure begin!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
