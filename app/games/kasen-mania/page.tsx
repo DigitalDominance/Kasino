@@ -510,22 +510,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       </div>
 
       {!isPlaying && !finalGrid && (
-      <div className="absolute inset-0 z-10">
-        {/* Glass overlay covering the entire container */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(270deg, #600000, #000000)",
-            opacity: 0.6,
-          }}
-        />
-    
-        {/* Centered content matching main reels placement */}
-        <div className="w-full h-full relative flex justify-center items-center">
-          {/* Preview reels container (same size/position as main reels) */}
-          <div
-            style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}
-          >
+      <div className="absolute inset-0">
+        {/* Preview reels behind the glass */}
+        <div className="absolute inset-0 z-0 flex justify-center items-center">
+          <div style={{ width: reelWidth, height: reelHeight }}>
             <div className="flex space-x-14 h-full">
               {Array.from({ length: 5 }).map((_, colIndex) => (
                 <div key={colIndex} className="w-24 h-full overflow-hidden">
@@ -549,27 +537,37 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
               ))}
             </div>
           </div>
+        </div>
     
-          {/* Centered text overlay */}
-          <div className="absolute flex flex-col items-center">
-            <motion.h1
-              className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
-              animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              style={{
-                backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
-                backgroundSize: "200% 200%",
-              }}
-            >
-              KASEN MANIA
-            </motion.h1>
-            <Card className="bg-white text-black p-4 relative z-10">
-              <h3 className="text-xl font-bold">Place bet to spin</h3>
-            </Card>
-          </div>
+        {/* Glass overlay covering the entire container */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            background: "linear-gradient(270deg, #600000, #000000)",
+            opacity: 0.6,
+          }}
+        />
+    
+        {/* Text overlay above the glass */}
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+          <motion.h1
+            className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            style={{
+              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+              backgroundSize: "200% 200%",
+            }}
+          >
+            KASEN MANIA
+          </motion.h1>
+          <Card className="bg-white text-black p-4">
+            <h3 className="text-xl font-bold">Place bet to spin</h3>
+          </Card>
         </div>
       </div>
     )}
+
 
 
 
