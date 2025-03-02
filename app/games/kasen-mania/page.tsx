@@ -510,7 +510,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       </div>
 
       {!isPlaying && !finalGrid && (
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center -mt-5">
+      <div
+        style={{ width: reelWidth, height: reelHeight, position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)" }}
+        className="z-10 flex flex-col items-center justify-center"
+      >
         {/* Glass overlay covering entire container */}
         <div
           className="absolute inset-0 z-0"
@@ -520,17 +523,13 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           }}
         ></div>
     
-        {/* Preview reel layer (matches actual slot spacing) */}
+        {/* Preview reel layer (static reels matching actual slot spacing) */}
         <div className="absolute inset-0 z-[-1] flex justify-center items-center">
           <div className="flex space-x-14 h-full">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <div key={colIndex} className="w-24 h-full overflow-hidden">
-                <motion.div
-                  className="w-full"
-                  animate={{ y: -80 * 20 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  {Array.from({ length: 20 }).map((_, i) => (
+                <div className="w-full">
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <div
                       key={i}
                       style={{ height: 80 }}
@@ -544,7 +543,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
                       />
                     </div>
                   ))}
-                </motion.div>
+                </div>
               </div>
             ))}
           </div>
@@ -567,6 +566,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </Card>
       </div>
     )}
+
 
 
 
