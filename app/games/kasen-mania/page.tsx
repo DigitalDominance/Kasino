@@ -493,7 +493,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     <div className="w-full h-full relative flex justify-center items-center">
       {/* Centered slot machine background */}
       <Image
-        src="/slotmachine.svg"
+        src="/slotmachine.webp"
         alt="Slot Machine Background"
         width={800}
         height={400}
