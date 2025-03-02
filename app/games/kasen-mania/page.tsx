@@ -510,31 +510,18 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       </div>
 
       {!isPlaying && !finalGrid && (
-      <div
-        className="absolute z-10 flex flex-col items-center justify-center"
-        style={{
-          width: 512,
-          height: 400,
-          top: "20px",            // Match your slot machine’s top offset
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
-      >
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center -mt-5">
         {/* Glass overlay covering entire container */}
         <div
-          className="absolute z-0"
+          className="absolute inset-0 z-0"
           style={{
-            width: "100%",
-            height: "100%",
             background: "linear-gradient(270deg, #600000, #000000)",
             opacity: 0.6,
           }}
-        />
+        ></div>
     
-        {/* Preview reel layer (matches the 512×400 space) */}
-        <div className="absolute z-[-1] flex justify-center items-center"
-             style={{ width: "100%", height: "100%" }}
-        >
+        {/* Preview reel layer (matches actual slot spacing) */}
+        <div className="absolute inset-0 z-[-1] flex justify-center items-center">
           <div className="flex space-x-14 h-full">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <div key={colIndex} className="w-24 h-full overflow-hidden">
