@@ -509,45 +509,51 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
       </div>
 
-      {/* Pre-spin overlay with animated heading, glass preview reel, & bet card */}
+      {/* Pre-spin overlay with animated heading, glass overlay, preview reel & bet card */}
       {!isPlaying && !finalGrid && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center relative">
-          {/* Glass card preview of the slot machine reels */}
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center relative">
+          {/* Preview Reel layer (matches the actual game reel spacing) */}
           <div className="absolute inset-0 z-0 flex items-center justify-center">
-            <Card
-              className="bg-white/80 backdrop-blur-md p-2"
-              style={{ width: reelWidth, height: reelHeight }}
-            >
-              <div className="flex space-x-14 h-full">
-                {Array.from({ length: 5 }).map((_, colIndex) => (
-                  <div key={colIndex} className="w-24 h-full overflow-hidden">
-                    <motion.div
-                      className="w-full"
-                      animate={{ y: -80 * 20 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      {Array.from({ length: 20 }).map((_, i) => (
-                        <div
-                          key={i}
-                          style={{ height: 80 }}
-                          className="w-full flex items-center justify-center"
-                        >
-                          <Image
-                            src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                            alt={`Symbol preview ${i}`}
-                            width={80}
-                            height={80}
-                          />
-                        </div>
-                      ))}
-                    </motion.div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <div className="flex space-x-14 h-full">
+              {Array.from({ length: 5 }).map((_, colIndex) => (
+                <div key={colIndex} className="w-24 h-full overflow-hidden">
+                  <motion.div
+                    className="w-full"
+                    animate={{ y: -80 * 20 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div
+                        key={i}
+                        style={{ height: 80 }}
+                        className="w-full flex items-center justify-center"
+                      >
+                        <Image
+                          src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
+                          alt={`Symbol preview ${i}`}
+                          width={80}
+                          height={80}
+                        />
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+              ))}
+            </div>
           </div>
+      
+          {/* Glass overlay layer with red-black gradient at 60% opacity */}
+          <div
+            className="absolute inset-0 z-10"
+            style={{
+              background: "linear-gradient(270deg, #600000, #000000)",
+              opacity: 0.6,
+            }}
+          />
+      
+          {/* Content layer: Heading and bet card */}
           <motion.h1
-            className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
+            className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-20"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             style={{
@@ -557,11 +563,12 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           >
             KASEN MANIA
           </motion.h1>
-          <Card className="bg-white text-black p-4 relative z-10">
+          <Card className="bg-white text-black p-4 relative z-20">
             <h3 className="text-xl font-bold">Place bet to spin</h3>
           </Card>
         </div>
       )}
+
 
 
       {/* Reel container */}
