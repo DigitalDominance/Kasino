@@ -510,7 +510,16 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       </div>
 
       {!isPlaying && !finalGrid && (
-      <div className="absolute inset-0">
+      // Negative offsets to stretch beyond the parent's p-4 padding
+      <div
+        style={{
+          position: "absolute",
+          top: "-1rem",
+          left: "-1rem",
+          right: "-1rem",
+          bottom: "-1rem",
+        }}
+      >
         {/* Preview reels behind the glass */}
         <div className="absolute inset-0 z-0 flex justify-center items-center">
           <div style={{ width: reelWidth, height: reelHeight }}>
@@ -539,7 +548,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           </div>
         </div>
     
-        {/* Glass overlay covering the entire container */}
+        {/* Glass overlay covering the entire container (no gaps) */}
         <div
           className="absolute inset-0 z-10"
           style={{
@@ -567,13 +576,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       </div>
     )}
-
-
-
-
-
-
-
 
 
       {/* Reel container */}
