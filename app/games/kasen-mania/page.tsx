@@ -509,11 +509,20 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
       </div>
 
-      {/* Pre-spin overlay with animated heading, glass overlay, preview reel & bet card */}
+      {/* Pre-spin overlay with full glass covering, preview reels, & content */}
       {!isPlaying && !finalGrid && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center relative">
-          {/* Preview Reel layer (matches the actual game reel spacing) */}
-          <div className="absolute inset-0 z-0 flex items-center justify-center">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+          {/* Glass overlay covering entire container */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              background: "linear-gradient(270deg, #600000, #000000)",
+              opacity: 0.6,
+            }}
+          ></div>
+      
+          {/* Preview reel layer (matches actual slot spacing) */}
+          <div className="absolute inset-0 z-0 flex justify-center items-center">
             <div className="flex space-x-14 h-full">
               {Array.from({ length: 5 }).map((_, colIndex) => (
                 <div key={colIndex} className="w-24 h-full overflow-hidden">
@@ -542,18 +551,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             </div>
           </div>
       
-          {/* Glass overlay layer with red-black gradient at 60% opacity */}
-          <div
-            className="absolute inset-0 z-10"
-            style={{
-              background: "linear-gradient(270deg, #600000, #000000)",
-              opacity: 0.6,
-            }}
-          />
-      
-          {/* Content layer: Heading and bet card */}
+          {/* Content layer */}
           <motion.h1
-            className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-20"
+            className="text-5xl font-bold mb-4 text-transparent bg-clip-text relative z-10"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
             style={{
@@ -563,11 +563,12 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           >
             KASEN MANIA
           </motion.h1>
-          <Card className="bg-white text-black p-4 relative z-20">
+          <Card className="bg-white text-black p-4 relative z-10">
             <h3 className="text-xl font-bold">Place bet to spin</h3>
           </Card>
         </div>
       )}
+
 
 
 
