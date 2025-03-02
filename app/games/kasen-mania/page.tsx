@@ -373,8 +373,12 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       }
       setOutcomeMultiplier(multiplier);
 
-      const grid = multiplier === 0 ? generateLosingGrid(symbolImages.length) : generateFinalGrid(multiplier, symbolImages.length);
+      const grid =
+        multiplier === 0
+          ? generateLosingGrid(symbolImages.length)
+          : generateFinalGrid(multiplier, symbolImages.length);
 
+      // Simulate a 3-second spin, then finalize
       timer = setTimeout(() => {
         setFinalGrid(grid);
         setSpinning(false);
@@ -387,70 +391,140 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     return () => clearTimeout(timer);
   }, [isPlaying]);
 
-  const reelWidth = 512;
-  const reelHeight = 400;
+  // Here’s the main layout fix:
+  return (
+    <div className="relative flex flex-col items-center justify-center">
+      {/* 
+        1) Remove the old absolute positioning. 
+        2) Place the slot machine image as a normal block inside a relative parent.
+      */}
+      <div className="relative">
+        <Image
+          src="/slotmachine.webp"
+          alt="Slot Machine Background"
+          width={800}
+          height={400}
+          className="block mx-auto object-cover object-center"
+        />
 
-  // Named subcomponent for the reel
-  function Reel({
-    isSpinning,
-    finalSymbols,
-  }: {
-    isSpinning: boolean;
-    finalSymbols?: number[];
-  }) {
-    const cellHeight = 80;
-    if (isSpinning) {
-      const reelArray = Array.from({ length: 20 }, () =>
-        Math.floor(Math.random() * symbolImages.length)
-      );
-      return (
-        <div className="w-full h-full overflow-hidden relative">
-          <motion.div
-            className="w-full"
-            animate={{ y: -cellHeight * reelArray.length }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            {reelArray.map((sym, i) => (
-              <div
-                key={i}
-                style={{ height: cellHeight }}
-                className="w-full flex items-center justify-center"
-              >
-                <Image
-                  src={symbolImages[sym]}
-                  alt={`Symbol ${sym}`}
-                  width={80}
-                  height={80}
-                />
-              </div>
-            ))}
-          </motion.div>
+        {/* 
+          Female placeholder pinned near the top center of the same container 
+          (adjust top/left as needed).
+        */}
+        <div
+          className="absolute"
+          style={{
+            top: "-20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <Image
+            src="/female_placeholder.svg"
+            alt="Female Character"
+            width={120}
+            height={120}
+          />
         </div>
-      );
-    } else {
-      return (
-        <div className="w-full h-full overflow-hidden relative">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-            {finalSymbols?.map((sym, i) => (
-              <div
-                key={i}
-                style={{ height: cellHeight }}
-                className="w-full flex items-center justify-center"
-              >
-                <Image
-                  src={symbolImages[sym]}
-                  alt={`Symbol ${sym}`}
-                  width={80}
-                  height={80}
+
+        {/* 
+          3) Reels container absolutely centered over the machine. 
+             Adjust top/left or inset to place them in the “window” area. 
+        */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {/* You can size this inner div to match the machine’s window. */}
+          <div style={{ width: 500, height: 250 }} className="relative">
+            {/* The reels themselves */}
+            <div className="w-full h-full flex space-x-6">
+              {Array.from({ length: 5 }, (_, colIndex) => (
+                <Reel
+                  key={colIndex}
+                  isSpinning={spinning}
+                  finalSymbols={
+                    finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined
+                  }
+                  symbolImages={symbolImages}
                 />
-              </div>
-            ))}
-          </motion.div>
+              ))}
+            </div>
+
+            {/* If you have an overlay (for highlighting win lines), place it here. */}
+            {/* {overlayElement} */}
+          </div>
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A simple Reel subcomponent that you can reuse. 
+ * Pass in `symbolImages` so we don't redeclare them inside.
+ */
+function Reel({
+  isSpinning,
+  finalSymbols,
+  symbolImages,
+}: {
+  isSpinning: boolean;
+  finalSymbols?: number[];
+  symbolImages: string[];
+}) {
+  const cellHeight = 80;
+
+  if (isSpinning) {
+    // Show spinning animation
+    const reelArray = Array.from({ length: 20 }, () =>
+      Math.floor(Math.random() * symbolImages.length)
+    );
+    return (
+      <div className="w-24 h-full overflow-hidden relative">
+        <motion.div
+          className="w-full"
+          animate={{ y: -cellHeight * reelArray.length }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          {reelArray.map((sym, i) => (
+            <div
+              key={i}
+              style={{ height: cellHeight }}
+              className="flex items-center justify-center"
+            >
+              <Image
+                src={symbolImages[sym]}
+                alt={`Symbol ${sym}`}
+                width={80}
+                height={80}
+              />
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    );
+  } else {
+    // Show final symbols
+    return (
+      <div className="w-24 h-full overflow-hidden relative">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+          {finalSymbols?.map((sym, i) => (
+            <div
+              key={i}
+              style={{ height: 80 }}
+              className="flex items-center justify-center"
+            >
+              <Image
+                src={symbolImages[sym]}
+                alt={`Symbol ${sym}`}
+                width={80}
+                height={80}
+              />
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    );
   }
-
+}
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
