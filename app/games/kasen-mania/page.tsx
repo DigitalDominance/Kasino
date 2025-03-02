@@ -339,14 +339,14 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   // Symbol images
   const symbolImages = [
-    "/kasen1.svg",
-    "/kasen2.svg",
-    "/kasen3.svg",
-    "/kasen4.svg",
-    "/kasen5.svg",
-    "/kasen6.svg",
-    "/kasen7.svg",
-    "/kasen8.svg"
+    "/kasen1.webp",
+    "/kasen2.webp",
+    "/kasen3.webp",
+    "/kasen4.webp",
+    "/kasen5.webp",
+    "/kasen6.webp",
+    "/kasen7.webp",
+    "/kasen8.webp"
   ];
 
   useEffect(() => {
