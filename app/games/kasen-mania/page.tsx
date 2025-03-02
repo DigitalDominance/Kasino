@@ -190,7 +190,7 @@ function SlotsContent() {
             KASEN Mania
           </motion.h2>
           <img
-            src="/kasenmaniabanner.webp"
+            src="/kasenpromo.PNG"
             alt="Kasen Collab"
             className="w-full h-auto mb-4"
           />
