@@ -578,6 +578,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
                 key={colIndex}
                 isSpinning={spinning}
                 finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
+                reelIndex={colIndex}
               />
             ))}
           </div>
@@ -595,14 +596,28 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 function Reel({
   isSpinning,
   finalSymbols,
+  reelIndex,
 }: {
   isSpinning: boolean;
   finalSymbols?: number[];
+  reelIndex: number;
 }) {
   const cellHeight = 75;
   const imageSize = 65;
+  const [stopped, setStopped] = useState(false);
 
-  if (isSpinning) {
+  useEffect(() => {
+    if (!isSpinning) {
+      const delay = reelIndex * 500; // Each reel stops 500ms after the previous one
+      const timer = setTimeout(() => setStopped(true), delay);
+      return () => clearTimeout(timer);
+    } else {
+      // Reset if spinning starts again
+      setStopped(false);
+    }
+  }, [isSpinning, reelIndex]);
+
+  if (!stopped) {
     const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
@@ -627,7 +642,6 @@ function Reel({
     );
   }
 
-  // If not spinning, show final symbols
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
