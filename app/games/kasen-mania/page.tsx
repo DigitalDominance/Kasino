@@ -627,13 +627,12 @@ function Reel({
       () => Array.from({ length: 20 }, () => Math.floor(Math.random() * symbolImages.length)),
       [isSpinning]
     );
-    // Reverse the order for a downward spinning effect and duplicate for continuous loop
-    const reversedArray = useMemo(() => [...reelArray].reverse(), [reelArray]);
-    const continuousArray = [...reversedArray, ...reversedArray];
+    const continuousArray = [...reelArray, ...reelArray];
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
+          // Changed the y animation from negative (upward) to positive (downward)
           animate={{ y: cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
