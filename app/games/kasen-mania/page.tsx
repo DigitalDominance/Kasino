@@ -630,9 +630,11 @@ function Reel({
   }, [isSpinning, reelIndex]);
 
   if (!stopped) {
+    // Create a continuous list by duplicating the reel array
     const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
+    const continuousReel = [...reelArray, ...reelArray];
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
@@ -640,7 +642,7 @@ function Reel({
           animate={{ y: -cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          {reelArray.map((sym, i) => (
+          {continuousReel.map((sym, i) => (
             <div
               key={i}
               style={{ height: cellHeight }}
