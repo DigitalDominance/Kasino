@@ -396,13 +396,16 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    let overlayTimer: NodeJS.Timeout;
     if (isPlaying) {
       setSpinning(true);
       setFinalGrid(null);
       setOutcomeMultiplier(null);
+      setShowOverlay(false);
 
       // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
       const r = Math.random();
@@ -423,20 +426,27 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           ? generateLosingGrid(symbolImages.length)
           : generateFinalGrid(multiplier, symbolImages.length);
 
+      // Stop spinning and set final grid after 3000ms...
       timer = setTimeout(() => {
         setFinalGrid(grid);
         setSpinning(false);
-
-        const result = multiplier > 0 ? "You Win" : "House Wins";
-        const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
-        onGameEnd(result, winAmt);
+        // ...then wait an extra 5000ms before showing the overlay and result.
+        overlayTimer = setTimeout(() => {
+          setShowOverlay(true);
+          const result = multiplier > 0 ? "You Win" : "House Wins";
+          const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
+          onGameEnd(result, winAmt);
+        }, 5000);
       }, 3000);
     }
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(overlayTimer);
+    };
   }, [isPlaying, betAmount, onGameEnd]);
 
   let overlayElement = null;
-  if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
+  if (showOverlay && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
       // Middle row: same Y, but shorten right side
       overlayElement = (
@@ -569,22 +579,24 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
-      {/* Actual reels */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
-          <div className="w-full h-full flex space-x-5">
-            {Array.from({ length: 5 }).map((_, colIndex) => (
-              <Reel
-                key={colIndex}
-                isSpinning={spinning}
-                finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
-                reelIndex={colIndex}
-              />
-            ))}
+      {/* Actual reels – only render when NOT showing the preview overlay */}
+      {!showPreviewOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
+            <div className="w-full h-full flex space-x-5">
+              {Array.from({ length: 5 }).map((_, colIndex) => (
+                <Reel
+                  key={colIndex}
+                  isSpinning={spinning}
+                  finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
+                  reelIndex={colIndex}
+                />
+              ))}
+            </div>
+            {overlayElement}
           </div>
-          {overlayElement}
         </div>
-      </div>
+      )}
     </div>
   );
 }
