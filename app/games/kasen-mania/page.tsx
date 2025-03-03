@@ -41,6 +41,9 @@ function SlotsContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
+  // NEW: New state to delay win overlay (line and win message)
+  const [showWinOverlay, setShowWinOverlay] = useState(false);
+
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
@@ -119,6 +122,60 @@ function SlotsContent() {
     setGameId(null);
     setDepositTxid(null);
   };
+
+  // Updated useEffect in SlotsContent to split the delay:
+  // • At 3000ms, set the final grid and stop spinning (so reels begin to stop).
+  // • At 6000ms (i.e. 3 seconds later), trigger the win overlay and call onGameEnd.
+  useEffect(() => {
+    let timer1: NodeJS.Timeout;
+    let timer2: NodeJS.Timeout;
+    if (isPlaying) {
+      // Reset win overlay state on new spin
+      setShowWinOverlay(false);
+      setSpinning(true);
+      setFinalGrid(null);
+      setOutcomeMultiplier(null);
+
+      // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
+      const r = Math.random();
+      let multiplier = 0;
+      if (r < 0.3) {
+        multiplier = 0;
+      } else if (r < 0.7) {
+        multiplier = 1.1;
+      } else if (r < 0.9) {
+        multiplier = 2;
+      } else {
+        multiplier = 3;
+      }
+      setOutcomeMultiplier(multiplier);
+
+      const grid =
+        multiplier === 0
+          ? generateLosingGrid(symbolImages.length)
+          : generateFinalGrid(multiplier, symbolImages.length);
+
+      timer1 = setTimeout(() => {
+        setFinalGrid(grid);
+        setSpinning(false);
+      }, 3000);
+
+      // NEW: Extra delay (3 seconds after reels stop) before showing win overlay and triggering game end
+      timer2 = setTimeout(() => {
+        const result = multiplier > 0 ? "You Win" : "House Wins";
+        const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
+        onGameEnd(result, winAmt);
+        setShowWinOverlay(true);
+      }, 6000);
+    }
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [isPlaying, betAmount, onGameEnd]);
+
+  // Determine whether to show the static preview overlay.
+  const showPreviewOverlay = !isPlaying && !finalGrid;
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
@@ -396,57 +453,18 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    let overlayTimer: NodeJS.Timeout;
     if (isPlaying) {
-      setSpinning(true);
-      setFinalGrid(null);
-      setOutcomeMultiplier(null);
-      setShowOverlay(false);
-
-      // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
-      const r = Math.random();
-      let multiplier = 0;
-      if (r < 0.3) {
-        multiplier = 0;
-      } else if (r < 0.7) {
-        multiplier = 1.1;
-      } else if (r < 0.9) {
-        multiplier = 2;
-      } else {
-        multiplier = 3;
-      }
-      setOutcomeMultiplier(multiplier);
-
-      const grid =
-        multiplier === 0
-          ? generateLosingGrid(symbolImages.length)
-          : generateFinalGrid(multiplier, symbolImages.length);
-
-      // Stop spinning and set final grid after 3000ms...
-      timer = setTimeout(() => {
-        setFinalGrid(grid);
-        setSpinning(false);
-        // ...then wait an extra 5000ms before showing the overlay and result.
-        overlayTimer = setTimeout(() => {
-          setShowOverlay(true);
-          const result = multiplier > 0 ? "You Win" : "House Wins";
-          const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
-          onGameEnd(result, winAmt);
-        }, 5000);
-      }, 3000);
+      // The timers are now managed in the parent SlotsContent useEffect.
     }
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(overlayTimer);
-    };
+    return () => clearTimeout(timer);
   }, [isPlaying, betAmount, onGameEnd]);
 
+  // Updated: Now the win line overlay is only shown when showWinOverlay is true.
   let overlayElement = null;
-  if (showOverlay && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
+  if (showWinOverlay && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
       // Middle row: same Y, but shorten right side
       overlayElement = (
@@ -466,9 +484,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <div
           className="absolute bg-green-500"
           style={{
-            top: 30, // down 15px
+            top: 30,
             left: 0,
-            width: reelWidth - 150, // shorten on right side
+            width: reelWidth - 150,
             height: 4,
           }}
         />
@@ -476,9 +494,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     } else if (outcomeMultiplier === 2) {
       // Diagonal: start lower & end higher for more downward angle, also shorter
       const startX = 0;
-      const startY = 0; // move down a bit
-      const endX = reelWidth - 150; // shorten on right side
-      const endY = reelHeight - 20; // end a bit above the bottom
+      const startY = 0;
+      const endX = reelWidth - 150;
+      const endY = reelHeight - 20;
       const xDiff = endX - startX;
       const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -500,8 +518,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   }
 
-  const showPreviewOverlay = !isPlaying && !finalGrid;
-
+  // NEW: Only show animated reels if not in preview.
   return (
     <div className="relative w-full h-full flex items-center justify-center">
       {/* The slot machine image is the same */}
@@ -579,7 +596,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
-      {/* Actual reels – only render when NOT showing the preview overlay */}
+      {/* Actual reels – only render these when not showing the preview */}
       {!showPreviewOverlay && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
@@ -620,7 +637,7 @@ function Reel({
 
   useEffect(() => {
     if (!isSpinning) {
-      const delay = reelIndex * 500; // Each reel stops 500ms after the previous one
+      const delay = reelIndex * 500; // Each reel stops sequentially (0ms, 500ms, ... 2000ms)
       const timer = setTimeout(() => setStopped(true), delay);
       return () => clearTimeout(timer);
     } else {
@@ -629,15 +646,17 @@ function Reel({
     }
   }, [isSpinning, reelIndex]);
 
+  // Updated: Make the spinning reel continuous by duplicating the first 5 symbols.
   if (!stopped) {
-    const reelArray = Array.from({ length: 20 }, () =>
+    const baseReelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
+    const reelArray = [...baseReelArray, ...baseReelArray.slice(0, 5)];
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
-          animate={{ y: -cellHeight * reelArray.length }}
+          animate={{ y: -cellHeight * baseReelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
           {reelArray.map((sym, i) => (
@@ -658,11 +677,7 @@ function Reel({
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         {finalSymbols?.map((sym, i) => (
-          <div
-            key={i}
-            style={{ height: 75 }}
-            className="flex items-center justify-center"
-          >
+          <div key={i} style={{ height: 75 }} className="flex items-center justify-center">
             <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
           </div>
         ))}
