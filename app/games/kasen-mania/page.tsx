@@ -396,7 +396,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
-  // <-- Added new state to track each reel’s stop status
+  // State to track each reel’s stop status
   const [stoppedReels, setStoppedReels] = useState<boolean[]>([false, false, false, false, false]);
 
   useEffect(() => {
@@ -430,26 +430,24 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       // it shows the final symbols.
       setFinalGrid(grid);
 
-      // Sequentially stop each reel in reverse order (from reel 4 down to 0)
+      // Sequentially stop each reel in order (from left to right)
       const delayBetween = 500; // 500ms between reels stopping
-      const reversedIndices = [4, 3, 2, 1, 0];
-      for (let j = 0; j < reversedIndices.length; j++) {
-        const reelIndex = reversedIndices[j];
+      for (let i = 0; i < 5; i++) {
         timers.push(
           setTimeout(() => {
             setStoppedReels((prev) => {
               const newStopped = [...prev];
-              newStopped[reelIndex] = true;
+              newStopped[i] = true;
               return newStopped;
             });
-            if (j === reversedIndices.length - 1) {
+            if (i === 4) {
               // When the last reel stops, end spinning and call onGameEnd.
               setSpinning(false);
               const result = multiplier > 0 ? "You Win" : "House Wins";
               const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
               onGameEnd(result, winAmt);
             }
-          }, 3000 + delayBetween * j)
+          }, 3000 + delayBetween * i)
         );
       }
     }
@@ -651,20 +649,16 @@ function Reel({
     );
   }
 
-  // If not spinning, show final symbols with a smooth slide-in from below (down-to-up)
+  // When not spinning, simply fade in the final symbols (no vertical slide)
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div
-        initial={{ y: 75, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         {finalSymbols?.map((sym, i) => (
-          <div
-            key={i}
-            style={{ height: cellHeight }}
-            className="flex items-center justify-center"
-          >
+          <div key={i} style={{ height: cellHeight }} className="flex items-center justify-center">
             <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
           </div>
         ))}
