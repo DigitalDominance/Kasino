@@ -173,10 +173,7 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
-              {/* 
-                1) Remove the p-4 so glass can fill entire container.
-                2) Make the container "relative" with h-[70vh].
-              */}
+              {/* Container for the slot machine and preview glass */}
               <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl p-0">
                 <SlotsGame
                   isPlaying={isPlaying}
@@ -412,10 +409,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
 
-  // We'll use these for the reel container
-  // Make them tall enough to fill the slot machine
+  // Reels container dimensions
   const reelWidth = 720;
-  const reelHeight = 360;
+  // Updated to 380
+  const reelHeight = 380;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -524,7 +521,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         className="block mx-auto object-cover object-center"
       />
 
-      {/* Move her up a bit more so it doesn't cut off the bottom */}
       <div
         className="absolute"
         style={{
@@ -548,14 +544,14 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
                         key={i}
-                        style={{ height: 90 }}
+                        style={{ height: 75 }} // cellHeight for preview
                         className="flex items-center justify-center"
                       >
                         <Image
                           src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
                           alt={`Symbol preview ${i}`}
-                          width={80}
-                          height={80}
+                          width={65} // slightly smaller for preview
+                          height={65}
                         />
                       </div>
                     ))}
@@ -624,9 +620,9 @@ function Reel({
   isSpinning: boolean;
   finalSymbols?: number[];
 }) {
-  // Make these bigger
-  const cellHeight = 90;
-  const imageSize = 80;
+  // Now 5 rows of 75 = 375 total, fits in 380
+  const cellHeight = 75;
+  const imageSize = 65;
 
   if (isSpinning) {
     // Generate random symbols for animation
@@ -666,14 +662,14 @@ function Reel({
         {finalSymbols?.map((sym, i) => (
           <div
             key={i}
-            style={{ height: 90 }}
+            style={{ height: 75 }}
             className="flex items-center justify-center"
           >
             <Image
               src={symbolImages[sym]}
               alt={`Symbol ${sym}`}
-              width={80}
-              height={80}
+              width={65}
+              height={65}
             />
           </div>
         ))}
