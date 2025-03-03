@@ -412,7 +412,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   // Reels container dimensions
   const reelWidth = 720;
   // Updated to 380
-  const reelHeight = 380;
+  const reelHeight = 390;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -538,7 +538,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           {/* Reels preview behind glass */}
           <div className="absolute inset-0 flex justify-center items-center">
             <div style={{ width: reelWidth, height: reelHeight }}>
-              <div className="flex space-x-14 h-full">
+              <div className="flex space-x-5 h-full">
                 {Array.from({ length: 5 }).map((_, colIndex) => (
                   <div key={colIndex} className="w-24 h-full overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -593,7 +593,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       {/* Actual reels container (centered over the machine) */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div style={{ width: reelWidth, height: reelHeight }} className="relative">
-          <div className="w-full h-full flex space-x-14">
+          <div className="w-full h-full flex space-x-5">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <Reel
                 key={colIndex}
