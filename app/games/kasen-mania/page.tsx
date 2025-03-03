@@ -445,7 +445,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           style={{
             top: reelHeight / 2 - 2,
             left: 0,
-            width: reelWidth - 80, // shorten on right side
+            width: reelWidth - 150, // shorten on right side
             height: 4,
           }}
         />
@@ -458,7 +458,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           style={{
             top: 15, // down 15px
             left: 0,
-            width: reelWidth - 80, // shorten on right side
+            width: reelWidth - 150, // shorten on right side
             height: 4,
           }}
         />
@@ -467,8 +467,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       // Diagonal: start lower & end higher for more downward angle, also shorter
       const startX = 0;
       const startY = 40; // move down a bit
-      const endX = reelWidth - 80; // shorten on right side
-      const endY = reelHeight - 10; // end a bit above the bottom
+      const endX = reelWidth - 150; // shorten on right side
+      const endY = reelHeight - 20; // end a bit above the bottom
       const xDiff = endX - startX;
       const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
