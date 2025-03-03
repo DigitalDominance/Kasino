@@ -532,7 +532,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div className="absolute inset-0 flex justify-center items-center">
-            <div style={{ width: reelWidth, height: reelHeight, marginLeft: "60px" }}>
+            <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }}>
               {/*
                 3) Spacing changed from space-x-14 -> space-x-5
               */}
@@ -586,7 +586,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       )}
 
       <div className="absolute inset-0 flex items-center justify-center">
-        <div style={{ width: reelWidth, height: reelHeight, marginLeft: "60px" }} className="relative">
+        <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
           <div className="w-full h-full flex space-x-5">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <Reel
