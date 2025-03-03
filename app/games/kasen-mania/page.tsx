@@ -430,24 +430,26 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       // it shows the final symbols.
       setFinalGrid(grid);
 
-      // Sequentially stop each reel after a base delay of 3000ms plus an additional 500ms per reel.
+      // Sequentially stop each reel in reverse order (from reel 4 down to 0)
       const delayBetween = 500; // 500ms between reels stopping
-      for (let i = 0; i < 5; i++) {
+      const reversedIndices = [4, 3, 2, 1, 0];
+      for (let j = 0; j < reversedIndices.length; j++) {
+        const reelIndex = reversedIndices[j];
         timers.push(
           setTimeout(() => {
             setStoppedReels((prev) => {
               const newStopped = [...prev];
-              newStopped[i] = true;
+              newStopped[reelIndex] = true;
               return newStopped;
             });
-            if (i === 4) {
+            if (j === reversedIndices.length - 1) {
               // When the last reel stops, end spinning and call onGameEnd.
               setSpinning(false);
               const result = multiplier > 0 ? "You Win" : "House Wins";
               const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
               onGameEnd(result, winAmt);
             }
-          }, 3000 + delayBetween * i)
+          }, 3000 + delayBetween * j)
         );
       }
     }
@@ -632,8 +634,7 @@ function Reel({
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
-          // Changed the y animation from negative (upward) to positive (downward)
-          animate={{ y: cellHeight * reelArray.length }}
+          animate={{ y: -cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
           {continuousArray.map((sym, i) => (
@@ -650,10 +651,14 @@ function Reel({
     );
   }
 
-  // If not spinning, show final symbols
+  // If not spinning, show final symbols with a smooth slide-in from below (down-to-up)
   return (
     <div className="w-24 h-full overflow-hidden relative">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      <motion.div
+        initial={{ y: 75, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
         {finalSymbols?.map((sym, i) => (
           <div
             key={i}
