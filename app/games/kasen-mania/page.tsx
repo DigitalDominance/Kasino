@@ -466,7 +466,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     } else if (outcomeMultiplier === 2) {
       // Diagonal: start lower & end higher for more downward angle, also shorter
       const startX = 0;
-      const startY = 40; // move down a bit
+      const startY = 0; // move down a bit
       const endX = reelWidth - 150; // shorten on right side
       const endY = reelHeight - 20; // end a bit above the bottom
       const xDiff = endX - startX;
