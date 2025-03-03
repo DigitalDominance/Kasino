@@ -23,6 +23,14 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
+/* ------------------------------------------------------------------ */
+/*                          Main Page                                 */
+/* ------------------------------------------------------------------ */
+
+export default function KasenManiaSlotsPage() {
+  return <SlotsContent />;
+}
+
 function SlotsContent() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -60,7 +68,9 @@ function SlotsContent() {
         alert("Treasury address not configured");
         return;
       }
-      const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, { priorityFee: 10000 });
+      const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
+        priorityFee: 10000,
+      });
       const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
@@ -120,7 +130,11 @@ function SlotsContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <WalletConnection />
           </motion.div>
         </header>
@@ -150,15 +164,25 @@ function SlotsContent() {
             <div className="p-6 flex flex-col h-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-[#49EACB]">KASEN MANIA</h2>
-                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={() => setShowHowToPlay(true)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#49EACB]"
+                  onClick={() => setShowHowToPlay(true)}
+                >
                   How to Play
                 </Button>
               </div>
               <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
-                <SlotsGame isPlaying={isPlaying} onGameEnd={handleGameEnd} betAmount={Number(betAmount)} />
+                <SlotsGame
+                  isPlaying={isPlaying}
+                  onGameEnd={handleGameEnd}
+                  betAmount={Number(betAmount)}
+                />
               </div>
             </div>
           </Card>
+
           <div className="space-y-6">
             <SlotsControls
               betAmount={betAmount}
@@ -189,13 +213,13 @@ function SlotsContent() {
           >
             KASEN Mania
           </motion.h2>
-          <img
-            src="/kasenpromo.png"
-            alt="Kasen Collab"
-            className="w-full h-auto mb-4"
-          />
+          <img src="/kasenpromo.png" alt="Kasen Collab" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            KASEN MANIA is an electrifying online slot machine game set in the adventurous world of KASEN! As a pioneer in the NFT space on Kaspa, KASEN brings you a thrilling experience where every spin uncovers legendary treasures, rare artifacts, and powerful rewards. Join Valen, Vira, and Ghost as they unlock hidden bonuses and chase massive wins. Will you strike gold or unleash chaos? Play now and let the adventure begin!
+            KASEN MANIA is an electrifying online slot machine game set in the adventurous world of
+            KASEN! As a pioneer in the NFT space on Kaspa, KASEN brings you a thrilling experience
+            where every spin uncovers legendary treasures, rare artifacts, and powerful rewards.
+            Join Valen, Vira, and Ghost as they unlock hidden bonuses and chase massive wins. Will
+            you strike gold or unleash chaos? Play now and let the adventure begin!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -228,6 +252,7 @@ function SlotsContent() {
           </div>
         </Card>
       </div>
+
       <SiteFooter />
 
       {showHowToPlay && (
@@ -251,34 +276,55 @@ function SlotsContent() {
                 <div className="mt-2">
                   <p className="mb-1">Center Horizontal (1.1× win):</p>
                   <div className="flex space-x-1">
-                    {Array(5).fill(0).map((_, i) => (
-                      <Image key={i} src="/placeholder.svg" alt="Symbol" width={40} height={40} />
-                    ))}
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image key={i} src="/placeholder.svg" alt="Symbol" width={40} height={40} />
+                      ))}
                     <span className="ml-2 text-sm">1.1× win</span>
                   </div>
                 </div>
                 <div className="mt-2">
                   <p className="mb-1">Diagonal (2× win):</p>
                   <div className="flex space-x-1">
-                    {Array(5).fill(0).map((_, i) => (
-                      <Image key={i} src="/placeholder2.svg" alt="Symbol" width={40} height={40} />
-                    ))}
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image
+                          key={i}
+                          src="/placeholder2.svg"
+                          alt="Symbol"
+                          width={40}
+                          height={40}
+                        />
+                      ))}
                     <span className="ml-2 text-sm">2× win</span>
                   </div>
                 </div>
                 <div className="mt-2">
                   <p className="mb-1">Top Horizontal (3× win):</p>
                   <div className="flex space-x-1">
-                    {Array(5).fill(0).map((_, i) => (
-                      <Image key={i} src="/placeholder3.svg" alt="Symbol" width={40} height={40} />
-                    ))}
+                    {Array(5)
+                      .fill(0)
+                      .map((_, i) => (
+                        <Image
+                          key={i}
+                          src="/placeholder3.svg"
+                          alt="Symbol"
+                          width={40}
+                          height={40}
+                        />
+                      ))}
                     <span className="ml-2 text-sm">3× win</span>
                   </div>
                 </div>
               </li>
             </ol>
             <p className="mt-4 text-white">Good luck and may the reels favor you!</p>
-            <Button onClick={() => setShowHowToPlay(false)} className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+            <Button
+              onClick={() => setShowHowToPlay(false)}
+              className="w-full mt-6 bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+            >
               Got it!
             </Button>
           </div>
@@ -288,13 +334,27 @@ function SlotsContent() {
   );
 }
 
-/* ---------------------------- Slots Game ---------------------------- */
+/* ------------------------------------------------------------------ */
+/*                           Slots Game                               */
+/* ------------------------------------------------------------------ */
 
 interface SlotsGameProps {
   isPlaying: boolean;
   onGameEnd: (result: string, winAmt: number) => void;
   betAmount: number;
 }
+
+// Symbol images
+const symbolImages = [
+  "/kasen1.webp",
+  "/kasen2.webp",
+  "/kasen3.webp",
+  "/kasen4.webp",
+  "/kasen5.webp",
+  "/kasen6.webp",
+  "/kasen7.webp",
+  "/kasen8.webp",
+];
 
 /**
  * Helper to generate a winning grid based on the multiplier
@@ -303,18 +363,23 @@ function generateFinalGrid(multiplier: number, symbolCount: number): number[][] 
   const grid = Array.from({ length: 5 }, () =>
     Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
   );
+
   if (multiplier === 1.1) {
+    // Middle row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[2] = grid[2].map(() => winSymbol);
   } else if (multiplier === 2) {
+    // Main diagonal
     const winSymbol = Math.floor(Math.random() * symbolCount);
     for (let i = 0; i < 5; i++) {
       grid[i][i] = winSymbol;
     }
   } else if (multiplier === 3) {
+    // Top row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[0] = grid[0].map(() => winSymbol);
   }
+
   return grid;
 }
 
@@ -328,8 +393,11 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
+    // Middle row all the same?
     grid[2].every((val) => val === grid[2][0]) ||
+    // Top row all the same?
     grid[0].every((val) => val === grid[0][0]) ||
+    // Main diagonal all the same?
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
   );
   return grid;
@@ -340,17 +408,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
 
-  // Symbol images
-  const symbolImages = [
-    "/kasen1.webp",
-    "/kasen2.webp",
-    "/kasen3.webp",
-    "/kasen4.webp",
-    "/kasen5.webp",
-    "/kasen6.webp",
-    "/kasen7.webp",
-    "/kasen8.webp"
-  ];
+  // Dimensions for the reels
+  const reelWidth = 500;
+  const reelHeight = 250;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -389,15 +449,56 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       }, 3000);
     }
     return () => clearTimeout(timer);
-  }, [isPlaying]);
+  }, [isPlaying, betAmount, onGameEnd]);
 
-  // Here’s the main layout fix:
+  // Optionally highlight winning lines
+  let overlayElement = null;
+  if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
+    if (outcomeMultiplier === 1.1) {
+      // Middle row highlight
+      overlayElement = (
+        <div
+          className="absolute bg-green-500"
+          style={{ top: reelHeight / 2 - 2, left: 0, width: reelWidth, height: 4 }}
+        />
+      );
+    } else if (outcomeMultiplier === 3) {
+      // Top row highlight
+      overlayElement = (
+        <div className="absolute bg-green-500" style={{ top: 0, left: 0, width: reelWidth, height: 4 }} />
+      );
+    } else if (outcomeMultiplier === 2) {
+      // Diagonal highlight
+      const startX = 0;
+      const startY = 0;
+      const endX = reelWidth;
+      const endY = reelHeight;
+      const xDiff = endX - startX;
+      const yDiff = endY - startY;
+      const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+      const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
+      overlayElement = (
+        <div
+          className="absolute bg-green-500"
+          style={{
+            top: startY,
+            left: startX,
+            width: length,
+            height: 4,
+            transform: `rotate(${angle}deg)`,
+            transformOrigin: "0 0",
+          }}
+        />
+      );
+    }
+  }
+
+  // If we want the "preview reels behind frosted glass" while not spinning:
+  const showPreviewOverlay = !isPlaying && !finalGrid;
+
   return (
     <div className="relative flex flex-col items-center justify-center">
-      {/* 
-        1) Remove the old absolute positioning. 
-        2) Place the slot machine image as a normal block inside a relative parent.
-      */}
+      {/* Slot machine as a normal block element */}
       <div className="relative">
         <Image
           src="/slotmachine.webp"
@@ -407,10 +508,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           className="block mx-auto object-cover object-center"
         />
 
-        {/* 
-          Female placeholder pinned near the top center of the same container 
-          (adjust top/left as needed).
-        */}
+        {/* Female placeholder pinned near the top center */}
         <div
           className="absolute"
           style={{
@@ -419,37 +517,92 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             transform: "translateX(-50%)",
           }}
         >
-          <Image
-            src="/female_placeholder.svg"
-            alt="Female Character"
-            width={120}
-            height={120}
-          />
+          <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
         </div>
 
-        {/* 
-          3) Reels container absolutely centered over the machine. 
-             Adjust top/left or inset to place them in the “window” area. 
-        */}
+        {/* Optional frosted-glass preview if not spinning yet */}
+        {showPreviewOverlay && (
+          <div
+            style={{
+              position: "absolute",
+              top: "0",
+              left: "0",
+              right: "0",
+              bottom: "0",
+            }}
+          >
+            {/* Reels preview behind glass */}
+            <div className="absolute inset-0 z-0 flex justify-center items-center">
+              <div style={{ width: reelWidth, height: reelHeight }}>
+                <div className="flex space-x-6 h-full">
+                  {Array.from({ length: 5 }).map((_, colIndex) => (
+                    <div key={colIndex} className="w-24 h-full overflow-hidden">
+                      <div className="w-full h-full">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div
+                            key={i}
+                            style={{ height: 50 }}
+                            className="w-full flex items-center justify-center"
+                          >
+                            <Image
+                              src={
+                                symbolImages[Math.floor(Math.random() * symbolImages.length)]
+                              }
+                              alt={`Symbol preview ${i}`}
+                              width={50}
+                              height={50}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Glass overlay covering everything */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: "linear-gradient(270deg, #600000, #000000)",
+                opacity: 0.6,
+              }}
+            />
+
+            {/* Text overlay above the glass */}
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+              <motion.h1
+                className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
+                animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                style={{
+                  backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+                  backgroundSize: "200% 200%",
+                }}
+              >
+                KASEN MANIA
+              </motion.h1>
+              <Card className="bg-white text-black p-4">
+                <h3 className="text-xl font-bold">Place bet to spin</h3>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Actual reels container, absolutely centered over the machine window */}
         <div className="absolute inset-0 flex items-center justify-center">
-          {/* You can size this inner div to match the machine’s window. */}
-          <div style={{ width: 500, height: 250 }} className="relative">
-            {/* The reels themselves */}
+          <div style={{ width: reelWidth, height: reelHeight }} className="relative">
             <div className="w-full h-full flex space-x-6">
-              {Array.from({ length: 5 }, (_, colIndex) => (
+              {Array.from({ length: 5 }).map((_, colIndex) => (
                 <Reel
                   key={colIndex}
                   isSpinning={spinning}
-                  finalSymbols={
-                    finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined
-                  }
-                  symbolImages={symbolImages}
+                  finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
                 />
               ))}
             </div>
-
-            {/* If you have an overlay (for highlighting win lines), place it here. */}
-            {/* {overlayElement} */}
+            {overlayElement}
           </div>
         </div>
       </div>
@@ -457,23 +610,21 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   );
 }
 
-/**
- * A simple Reel subcomponent that you can reuse. 
- * Pass in `symbolImages` so we don't redeclare them inside.
- */
+/* ------------------------------------------------------------------ */
+/*                       Reel Subcomponent                            */
+/* ------------------------------------------------------------------ */
+
 function Reel({
   isSpinning,
   finalSymbols,
-  symbolImages,
 }: {
   isSpinning: boolean;
   finalSymbols?: number[];
-  symbolImages: string[];
 }) {
-  const cellHeight = 80;
+  const cellHeight = 60; // adjust as you like
 
   if (isSpinning) {
-    // Show spinning animation
+    // Generate random symbols for animation
     const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
@@ -490,187 +641,35 @@ function Reel({
               style={{ height: cellHeight }}
               className="flex items-center justify-center"
             >
-              <Image
-                src={symbolImages[sym]}
-                alt={`Symbol ${sym}`}
-                width={80}
-                height={80}
-              />
+              <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={50} height={50} />
             </div>
           ))}
         </motion.div>
       </div>
     );
-  } else {
-    // Show final symbols
-    return (
-      <div className="w-24 h-full overflow-hidden relative">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-          {finalSymbols?.map((sym, i) => (
-            <div
-              key={i}
-              style={{ height: 80 }}
-              className="flex items-center justify-center"
-            >
-              <Image
-                src={symbolImages[sym]}
-                alt={`Symbol ${sym}`}
-                width={80}
-                height={80}
-              />
-            </div>
-          ))}
-        </motion.div>
-      </div>
-    );
-  }
-}
-  let overlayElement = null;
-  if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
-    if (outcomeMultiplier === 1.1) {
-      overlayElement = (
-        <div
-          className="absolute bg-green-500"
-          style={{ top: 198, left: 0, width: reelWidth, height: 4 }}
-        />
-      );
-    } else if (outcomeMultiplier === 3) {
-      overlayElement = (
-        <div
-          className="absolute bg-green-500"
-          style={{ top: 38, left: 0, width: reelWidth, height: 4 }}
-        />
-      );
-    } else if (outcomeMultiplier === 2) {
-      const startX = 48;
-      const startY = 15;
-      const endX = 432;
-      const endY = 350; // Adjusted to 350 to angle upward slightly
-      const xDiff = endX - startX;
-      const yDiff = endY - startY;
-      const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-      const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
-      overlayElement = (
-        <div
-          className="absolute bg-green-500"
-          style={{
-            top: startY,
-            left: startX,
-            width: length,
-            height: 4,
-            transform: `rotate(${angle}deg)`,
-            transformOrigin: "left center",
-          }}
-        />
-      );
-    }
   }
 
+  // If not spinning, show the final symbols
   return (
-    <div className="w-full h-full relative flex justify-center items-center">
-      {/* Centered slot machine background */}
-      <Image
-        src="/slotmachine.webp"
-        alt="Slot Machine Background"
-        width={800}
-        height={400}
-        className="absolute top-[20px] left-1/2 transform translate-x-[calc(-50%+1px)] object-cover object-center"
-      />
-
-
-      {/* Female placeholder at top-center (using /female_placeholder.svg) */}
-      <div className="absolute" style={{ top: "-20px", left: "50%", transform: "translateX(-50%)" }}>
-        <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
-      </div>
-
-      {!isPlaying && !finalGrid && (
-      // Negative offsets to stretch beyond the parent's p-4 padding
-      <div
-        style={{
-          position: "absolute",
-          top: "-1rem",
-          left: "-1rem",
-          right: "-1rem",
-          bottom: "-1rem",
-        }}
-      >
-        {/* Preview reels behind the glass */}
-        <div className="absolute inset-0 z-0 flex justify-center items-center">
-          <div style={{ width: reelWidth, height: reelHeight }}>
-            <div className="flex space-x-14 h-full">
-              {Array.from({ length: 5 }).map((_, colIndex) => (
-                <div key={colIndex} className="w-24 h-full overflow-hidden">
-                  <div className="w-full h-full">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        style={{ height: 80 }}
-                        className="w-full flex items-center justify-center"
-                      >
-                        <Image
-                          src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                          alt={`Symbol preview ${i}`}
-                          width={80}
-                          height={80}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-    
-        {/* Glass overlay covering the entire container (no gaps) */}
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            background: "linear-gradient(270deg, #600000, #000000)",
-            opacity: 0.6,
-          }}
-        />
-    
-        {/* Text overlay above the glass */}
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
-          <motion.h1
-            className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
-              backgroundSize: "200% 200%",
-            }}
+    <div className="w-24 h-full overflow-hidden relative">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        {finalSymbols?.map((sym, i) => (
+          <div
+            key={i}
+            style={{ height: 60 }}
+            className="flex items-center justify-center"
           >
-            KASEN MANIA
-          </motion.h1>
-          <Card className="bg-white text-black p-4">
-            <h3 className="text-xl font-bold">Place bet to spin</h3>
-          </Card>
-        </div>
-      </div>
-    )}
-
-
-      {/* Reel container */}
-      <div style={{ width: reelWidth, height: reelHeight, position: "relative", zIndex: 1 }}>
-        <div className="flex space-x-14 h-full">
-          {Array.from({ length: 5 }, (_, colIndex) => (
-            <div key={colIndex} className="w-24 h-full overflow-hidden">
-              <Reel
-                isSpinning={spinning}
-                finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
-              />
-            </div>
-          ))}
-        </div>
-        {overlayElement}
-      </div>
+            <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={50} height={50} />
+          </div>
+        ))}
+      </motion.div>
     </div>
   );
 }
 
-/* -------------------------- Slots Controls -------------------------- */
+/* ------------------------------------------------------------------ */
+/*                          Slots Controls                            */
+/* ------------------------------------------------------------------ */
 
 interface SlotsControlsProps {
   betAmount: string;
@@ -757,7 +756,13 @@ export function SlotsControls({
                 disabled={isPlaying || !isWalletConnected}
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp" alt="KAS" width={16} height={16} className="rounded-full" />
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -803,17 +808,23 @@ export function SlotsControls({
               </Button>
             </div>
           </div>
+
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult !== null && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
+                <div className="text-2xl font-bold text-[#49EACB]">
+                  Result: {gameResult}
+                </div>
                 {winAmount !== null && winAmount > 0 ? (
-                  <div className="text-xl text-green-500">You won {winAmount.toFixed(8)} KAS!</div>
+                  <div className="text-xl text-green-500">
+                    You won {winAmount.toFixed(8)} KAS!
+                  </div>
                 ) : (
                   <div className="text-xl text-red-500">You lost your bet.</div>
                 )}
               </div>
             )}
+
             {!isPlaying ? (
               <Button
                 className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -827,13 +838,17 @@ export function SlotsControls({
                   : "Spin Kasen Mania"}
               </Button>
             ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                disabled
+              >
                 Spinning...
               </Button>
             )}
           </motion.div>
         </div>
       </Card>
+
       <AnimatePresence>
         {errorMessage && (
           <motion.div
@@ -845,7 +860,10 @@ export function SlotsControls({
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
-              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="ml-4 font-bold text-white"
+              >
                 X
               </button>
             </div>
@@ -854,8 +872,4 @@ export function SlotsControls({
       </AnimatePresence>
     </>
   );
-}
-
-export default function KasenManiaSlotsPage() {
-  return <SlotsContent />;
 }
