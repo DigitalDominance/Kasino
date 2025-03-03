@@ -290,13 +290,7 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image
-                          key={i}
-                          src="/placeholder2.svg"
-                          alt="Symbol"
-                          width={40}
-                          height={40}
-                        />
+                        <Image key={i} src="/placeholder2.svg" alt="Symbol" width={40} height={40} />
                       ))}
                     <span className="ml-2 text-sm">2× win</span>
                   </div>
@@ -307,13 +301,7 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image
-                          key={i}
-                          src="/placeholder3.svg"
-                          alt="Symbol"
-                          width={40}
-                          height={40}
-                        />
+                        <Image key={i} src="/placeholder3.svg" alt="Symbol" width={40} height={40} />
                       ))}
                     <span className="ml-2 text-sm">3× win</span>
                   </div>
@@ -620,46 +608,34 @@ function Reel({
 }) {
   const cellHeight = 75;
   const imageSize = 65;
+  // Generate a set of random symbols once when the reel mounts.
+  // This array remains constant during the spin.
+  const [randomSymbols] = useState(() =>
+    Array.from({ length: 40 }, () => Math.floor(Math.random() * symbolImages.length))
+  );
+  // Build the reel's full list: the random symbols (for looping) plus the final result.
+  const symbols = finalSymbols
+    ? [...randomSymbols, ...finalSymbols]
+    : [...randomSymbols, ...randomSymbols];
+  // When stopping, we want to land exactly after the random portion so that the finalSymbols appear.
+  const finalOffset = -randomSymbols.length * cellHeight;
 
-  if (isSpinning) {
-    // Memoize the random reel array so that it does not reset on every render
-    const reelArray = useMemo(
-      () => Array.from({ length: 20 }, () => Math.floor(Math.random() * symbolImages.length)),
-      [isSpinning]
-    );
-    const continuousArray = [...reelArray, ...reelArray];
-    return (
-      <div className="w-24 h-full overflow-hidden relative">
-        <motion.div
-          className="w-full"
-          animate={{ y: -cellHeight * reelArray.length }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        >
-          {continuousArray.map((sym, i) => (
-            <div
-              key={i}
-              style={{ height: cellHeight }}
-              className="flex items-center justify-center"
-            >
-              <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={imageSize} height={imageSize} />
-            </div>
-          ))}
-        </motion.div>
-      </div>
-    );
-  }
-
-  // When not spinning, simply fade in the final symbols (no vertical slide)
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full"
+        // While spinning, continuously loop over the random section.
+        // Once isSpinning becomes false, animate to finalOffset.
+        animate={isSpinning ? { y: [0, finalOffset] } : { y: finalOffset }}
+        transition={
+          isSpinning
+            ? { duration: 1, repeat: Infinity, ease: "linear" }
+            : { duration: 0.5, ease: "easeOut" }
+        }
       >
-        {finalSymbols?.map((sym, i) => (
+        {symbols.map((sym, i) => (
           <div key={i} style={{ height: cellHeight }} className="flex items-center justify-center">
-            <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
+            <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={imageSize} height={imageSize} />
           </div>
         ))}
       </motion.div>
