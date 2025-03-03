@@ -456,7 +456,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <div
           className="absolute bg-green-500"
           style={{
-            top: 15, // down 15px
+            top: 30, // down 15px
             left: 0,
             width: reelWidth - 150, // shorten on right side
             height: 4,
