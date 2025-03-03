@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -622,10 +622,11 @@ function Reel({
   const imageSize = 65;
 
   if (isSpinning) {
-    const reelArray = Array.from({ length: 20 }, () =>
-      Math.floor(Math.random() * symbolImages.length)
+    // Memoize the random reel array so that it does not reset on every render
+    const reelArray = useMemo(
+      () => Array.from({ length: 20 }, () => Math.floor(Math.random() * symbolImages.length)),
+      [isSpinning]
     );
-    // Duplicate the array to create a continuous loop effect
     const continuousArray = [...reelArray, ...reelArray];
     return (
       <div className="w-24 h-full overflow-hidden relative">
