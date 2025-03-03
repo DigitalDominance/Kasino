@@ -75,7 +75,7 @@ function SlotsContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      const startRes = await axios.post(`${apiUrl}/game/start`, {
+      const startRes = await axios.post(${apiUrl}/game/start, {
         gameName: "Kasen Mania",
         uniqueHash,
         walletAddress: currentWalletAddress,
@@ -101,7 +101,7 @@ function SlotsContent() {
     setIsPlaying(false);
     if (gameId) {
       try {
-        await axios.post(`${apiUrl}/game/end`, {
+        await axios.post(${apiUrl}/game/end, {
           gameId,
           result: result === "You Win" ? "win" : "lose",
           winAmount: winAmt,
@@ -121,7 +121,7 @@ function SlotsContent() {
   };
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+    <div className={${montserrat.className} min-h-screen bg-black text-white flex flex-col}>
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
@@ -149,7 +149,7 @@ function SlotsContent() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}
-              href={`https://kas.fyi/transaction/${depositTxid}`}
+              href={https://kas.fyi/transaction/${depositTxid}}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -173,6 +173,7 @@ function SlotsContent() {
                   How to Play
                 </Button>
               </div>
+              {/* Container for the slot machine and preview glass */}
               <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl p-0">
                 <SlotsGame
                   isPlaying={isPlaying}
@@ -344,6 +345,7 @@ interface SlotsGameProps {
   betAmount: number;
 }
 
+// Symbol images
 const symbolImages = [
   "/kasen1.webp",
   "/kasen2.webp",
@@ -355,25 +357,36 @@ const symbolImages = [
   "/kasen8.webp",
 ];
 
+/**
+ * Helper to generate a winning grid based on the multiplier
+ */
 function generateFinalGrid(multiplier: number, symbolCount: number): number[][] {
   const grid = Array.from({ length: 5 }, () =>
     Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
   );
+
   if (multiplier === 1.1) {
+    // Middle row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[2] = grid[2].map(() => winSymbol);
   } else if (multiplier === 2) {
+    // Main diagonal
     const winSymbol = Math.floor(Math.random() * symbolCount);
     for (let i = 0; i < 5; i++) {
       grid[i][i] = winSymbol;
     }
   } else if (multiplier === 3) {
+    // Top row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[0] = grid[0].map(() => winSymbol);
   }
+
   return grid;
 }
 
+/**
+ * Helper to generate a losing grid (no forced pattern)
+ */
 function generateLosingGrid(symbolCount: number): number[][] {
   let grid: number[][];
   do {
@@ -381,8 +394,11 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
+    // Middle row all the same?
     grid[2].every((val) => val === grid[2][0]) ||
+    // Top row all the same?
     grid[0].every((val) => val === grid[0][0]) ||
+    // Main diagonal all the same?
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
   );
   return grid;
@@ -393,9 +409,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
 
-  // Reel container: height changed to 390
+  // Reels container dimensions
   const reelWidth = 720;
-  const reelHeight = 390;
+  // Updated to 380
+  const reelHeight = 380;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -404,6 +421,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       setFinalGrid(null);
       setOutcomeMultiplier(null);
 
+      // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
       const r = Math.random();
       let multiplier = 0;
       if (r < 0.3) {
@@ -438,6 +456,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
+      // Middle row highlight
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -450,6 +469,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 3) {
+      // Top row highlight
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -462,6 +482,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 2) {
+      // Diagonal highlight
       const startX = 0;
       const startY = 0;
       const endX = reelWidth;
@@ -478,7 +499,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             left: startX,
             width: length,
             height: 4,
-            transform: `rotate(${angle}deg)`,
+            transform: rotate(${angle}deg),
             transformOrigin: "0 0",
           }}
         />
@@ -486,18 +507,18 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   }
 
+  // Show "frosted" preview overlay if not spinning yet
   const showPreviewOverlay = !isPlaying && !finalGrid;
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* Move slot machine a few px left: marginLeft: '-5px' */}
+      {/* Slot machine image + female placeholder */}
       <Image
         src="/slotmachine.webp"
         alt="Slot Machine Background"
         width={800}
         height={400}
-        className="block object-cover object-center"
-        style={{ marginLeft: "-3px" }}
+        className="block mx-auto object-cover object-center"
       />
 
       <div
@@ -511,24 +532,25 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
       </div>
 
+      {/* If showPreviewOverlay is true, block the entire container (no gap) */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
+          {/* Reels preview behind glass */}
           <div className="absolute inset-0 flex justify-center items-center">
-            {/* Reduced spacing from 14 to 5 */}
             <div style={{ width: reelWidth, height: reelHeight }}>
-              <div className="flex space-x-5 h-full">
+              <div className="flex space-x-14 h-full">
                 {Array.from({ length: 5 }).map((_, colIndex) => (
                   <div key={colIndex} className="w-24 h-full overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
                         key={i}
-                        style={{ height: 75 }}
+                        style={{ height: 75 }} // cellHeight for preview
                         className="flex items-center justify-center"
                       >
                         <Image
                           src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                          alt={`Symbol preview ${i}`}
-                          width={65}
+                          alt={Symbol preview ${i}}
+                          width={65} // slightly smaller for preview
                           height={65}
                         />
                       </div>
@@ -539,6 +561,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             </div>
           </div>
 
+          {/* Glass overlay */}
           <div
             className="absolute inset-0 z-10"
             style={{
@@ -546,6 +569,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
               opacity: 0.6,
             }}
           />
+
+          {/* Text above glass */}
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
             <motion.h1
               className="text-5xl font-bold mb-4 text-transparent bg-clip-text"
@@ -565,10 +590,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
+      {/* Actual reels container (centered over the machine) */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div style={{ width: reelWidth, height: reelHeight }} className="relative">
-          {/* Reduced spacing from 14 to 5 */}
-          <div className="w-full h-full flex space-x-5">
+          <div className="w-full h-full flex space-x-14">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <Reel
                 key={colIndex}
@@ -595,10 +620,12 @@ function Reel({
   isSpinning: boolean;
   finalSymbols?: number[];
 }) {
+  // Now 5 rows of 75 = 375 total, fits in 380
   const cellHeight = 75;
   const imageSize = 65;
 
   if (isSpinning) {
+    // Generate random symbols for animation
     const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
@@ -615,7 +642,12 @@ function Reel({
               style={{ height: cellHeight }}
               className="flex items-center justify-center"
             >
-              <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={imageSize} height={imageSize} />
+              <Image
+                src={symbolImages[sym]}
+                alt={Symbol ${sym}}
+                width={imageSize}
+                height={imageSize}
+              />
             </div>
           ))}
         </motion.div>
@@ -623,6 +655,7 @@ function Reel({
     );
   }
 
+  // If not spinning, show the final symbols
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -632,10 +665,222 @@ function Reel({
             style={{ height: 75 }}
             className="flex items-center justify-center"
           >
-            <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
+            <Image
+              src={symbolImages[sym]}
+              alt={Symbol ${sym}}
+              width={65}
+              height={65}
+            />
           </div>
         ))}
       </motion.div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*                          Slots Controls                            */
+/* ------------------------------------------------------------------ */
+
+interface SlotsControlsProps {
+  betAmount: string;
+  setBetAmount: (amount: string) => void;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
+  onRollSlots: () => void;
+  resetGame: () => void;
+  gameResult: string | null;
+  winAmount: number | null;
+}
+
+export function SlotsControls({
+  betAmount,
+  setBetAmount,
+  isPlaying,
+  isWalletConnected,
+  balance,
+  onRollSlots,
+  resetGame,
+  gameResult,
+  winAmount,
+}: SlotsControlsProps) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+      return () => clearInterval(intervalId);
+    }
+  }, [cooldown]);
+
+  const showError = (msg: string) => setErrorMessage(msg);
+
+  const handleSpinSlots = () => {
+    if (!isWalletConnected) {
+      showError("Please connect your wallet first");
+      return;
+    }
+    const bet = Number(betAmount);
+    if (isNaN(bet)) {
+      showError("Invalid bet amount");
+      return;
+    }
+    if (bet < 1 || bet > 1000) {
+      showError("Bet must be between 1 & 1000");
+      return;
+    }
+    if (bet > balance) {
+      showError("Insufficient balance");
+      return;
+    }
+    onRollSlots();
+    setCooldown(10);
+  };
+
+  return (
+    <>
+      <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
+        <div className="p-6 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-[#49EACB]">Bet Amount</label>
+            <div className="relative">
+              <input
+                type="number"
+                value={betAmount}
+                onChange={(e) => {
+                  let value = Number(e.target.value);
+                  if (isNaN(value)) value = 1;
+                  value = Math.max(1, Math.min(1000, value));
+                  setBetAmount(value.toString());
+                }}
+                className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full"
+                placeholder="0.00"
+                disabled={isPlaying || !isWalletConnected}
+              />
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => {
+                  let current = Number(betAmount);
+                  if (isNaN(current)) current = 1;
+                  setBetAmount((current / 2).toString());
+                }}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                ½
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => {
+                  let current = Number(betAmount);
+                  if (isNaN(current)) current = 1;
+                  setBetAmount((current * 2).toString());
+                }}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                2×
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => setBetAmount("1")}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                Min
+              </Button>
+              <Button
+                variant="outline"
+                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                onClick={() => setBetAmount(Math.min(1000, balance).toString())}
+                disabled={isPlaying || !isWalletConnected}
+              >
+                Max
+              </Button>
+            </div>
+          </div>
+
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            {gameResult !== null && (
+              <div className="text-center mb-4">
+                <div className="text-2xl font-bold text-[#49EACB]">
+                  Result: {gameResult}
+                </div>
+                {winAmount !== null && winAmount > 0 ? (
+                  <div className="text-xl text-green-500">
+                    You won {winAmount.toFixed(8)} KAS!
+                  </div>
+                ) : (
+                  <div className="text-xl text-red-500">You lost your bet.</div>
+                )}
+              </div>
+            )}
+
+            {!isPlaying ? (
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                onClick={handleSpinSlots}
+                disabled={!isWalletConnected || cooldown > 0}
+              >
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? Spin Kasen Mania (${cooldown}s)
+                  : "Spin Kasen Mania"}
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                disabled
+              >
+                Spinning...
+              </Button>
+            )}
+          </motion.div>
+        </div>
+      </Card>
+
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-red-700 to-black text-white px-4 py-2 rounded shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <span>{errorMessage}</span>
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="ml-4 font-bold text-white"
+              >
+                X
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
