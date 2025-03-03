@@ -625,6 +625,8 @@ function Reel({
     const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
+    // Duplicate the array to create a continuous loop effect
+    const continuousArray = [...reelArray, ...reelArray];
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
@@ -632,7 +634,7 @@ function Reel({
           animate={{ y: -cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          {reelArray.map((sym, i) => (
+          {continuousArray.map((sym, i) => (
             <div
               key={i}
               style={{ height: cellHeight }}
@@ -653,7 +655,7 @@ function Reel({
         {finalSymbols?.map((sym, i) => (
           <div
             key={i}
-            style={{ height: 75 }}
+            style={{ height: cellHeight }}
             className="flex items-center justify-center"
           >
             <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
