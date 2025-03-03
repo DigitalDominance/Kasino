@@ -120,9 +120,6 @@ function SlotsContent() {
     setDepositTxid(null);
   };
 
-  // Determine whether to show the static preview overlay.
-  const showPreviewOverlay = !isPlaying;
-
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
@@ -399,17 +396,16 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
-  // NEW: New state to control when to show the win overlay (line and win message)
-  const [showWinOverlay, setShowWinOverlay] = useState(false);
+  // <-- Added new state to track each reel’s stop status
+  const [stoppedReels, setStoppedReels] = useState<boolean[]>([false, false, false, false, false]);
 
   useEffect(() => {
-    let timer1: NodeJS.Timeout;
-    let timer2: NodeJS.Timeout;
+    const timers: NodeJS.Timeout[] = [];
     if (isPlaying) {
       setSpinning(true);
       setFinalGrid(null);
       setOutcomeMultiplier(null);
-      setShowWinOverlay(false);
+      setStoppedReels([false, false, false, false, false]);
 
       // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
       const r = Math.random();
@@ -430,29 +426,36 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           ? generateLosingGrid(symbolImages.length)
           : generateFinalGrid(multiplier, symbolImages.length);
 
-      // Timer to stop spinning and show final grid after 3 seconds
-      timer1 = setTimeout(() => {
-        setFinalGrid(grid);
-        setSpinning(false);
-      }, 3000);
+      // Set the final grid immediately so that when each reel stops,
+      // it shows the final symbols.
+      setFinalGrid(grid);
 
-      // NEW: Extra 3-second delay (total 6 seconds) to trigger win overlay and call onGameEnd
-      timer2 = setTimeout(() => {
-        setShowWinOverlay(true);
-        const result = multiplier > 0 ? "You Win" : "House Wins";
-        const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
-        onGameEnd(result, winAmt);
-      }, 6000);
+      // Sequentially stop each reel after a base delay of 3000ms plus an additional 500ms per reel.
+      const delayBetween = 500; // 500ms between reels stopping
+      for (let i = 0; i < 5; i++) {
+        timers.push(
+          setTimeout(() => {
+            setStoppedReels((prev) => {
+              const newStopped = [...prev];
+              newStopped[i] = true;
+              return newStopped;
+            });
+            if (i === 4) {
+              // When the last reel stops, end spinning and call onGameEnd.
+              setSpinning(false);
+              const result = multiplier > 0 ? "You Win" : "House Wins";
+              const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
+              onGameEnd(result, winAmt);
+            }
+          }, 3000 + delayBetween * i)
+        );
+      }
     }
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    return () => timers.forEach((timer) => clearTimeout(timer));
   }, [isPlaying, betAmount, onGameEnd]);
 
-  // NEW: Only show the win overlay if showWinOverlay is true
   let overlayElement = null;
-  if (showWinOverlay && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
+  if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
       // Middle row: same Y, but shorten right side
       overlayElement = (
@@ -461,7 +464,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           style={{
             top: reelHeight / 2 - 2,
             left: 0,
-            width: reelWidth - 150,
+            width: reelWidth - 150, // shorten on right side
             height: 4,
           }}
         />
@@ -472,19 +475,19 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <div
           className="absolute bg-green-500"
           style={{
-            top: 30,
+            top: 30, // down 15px
             left: 0,
-            width: reelWidth - 150,
+            width: reelWidth - 150, // shorten on right side
             height: 4,
           }}
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal: start lower & end higher for a downward angle, also shorter
+      // Diagonal: start lower & end higher for more downward angle, also shorter
       const startX = 0;
-      const startY = 0;
-      const endX = reelWidth - 150;
-      const endY = reelHeight - 20;
+      const startY = 0; // move down a bit
+      const endX = reelWidth - 150; // shorten on right side
+      const endY = reelHeight - 20; // end a bit above the bottom
       const xDiff = endX - startX;
       const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -506,10 +509,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   }
 
-  // Render static preview overlay when not playing; otherwise, show animated reels.
+  const showPreviewOverlay = !isPlaying && !finalGrid;
+
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* Slot machine background */}
+      {/* The slot machine image is the same */}
       <Image
         src="/slotmachine.webp"
         alt="Slot Machine Background"
@@ -530,7 +534,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
       </div>
 
-      {/* Preview overlay shows only static images */}
+      {/* Frosted preview overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div className="absolute inset-0 flex justify-center items-center">
@@ -584,24 +588,21 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
-      {/* Actual reels: only rendered when not showing the preview */}
-      {!showPreviewOverlay && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
-            <div className="w-full h-full flex space-x-5">
-              {Array.from({ length: 5 }).map((_, colIndex) => (
-                <Reel
-                  key={colIndex}
-                  isSpinning={spinning}
-                  finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
-                  reelIndex={colIndex}
-                />
-              ))}
-            </div>
-            {overlayElement}
+      {/* Actual reels */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
+          <div className="w-full h-full flex space-x-5">
+            {Array.from({ length: 5 }).map((_, colIndex) => (
+              <Reel
+                key={colIndex}
+                isSpinning={spinning && !stoppedReels[colIndex]}
+                finalSymbols={finalGrid ? finalGrid.map((row) => row[colIndex]) : undefined}
+              />
+            ))}
           </div>
+          {overlayElement}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -613,37 +614,22 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 function Reel({
   isSpinning,
   finalSymbols,
-  reelIndex,
 }: {
   isSpinning: boolean;
   finalSymbols?: number[];
-  reelIndex: number;
 }) {
   const cellHeight = 75;
   const imageSize = 65;
-  const [stopped, setStopped] = useState(false);
 
-  useEffect(() => {
-    if (!isSpinning) {
-      const delay = reelIndex * 500; // Each reel stops sequentially
-      const timer = setTimeout(() => setStopped(true), delay);
-      return () => clearTimeout(timer);
-    } else {
-      setStopped(false);
-    }
-  }, [isSpinning, reelIndex]);
-
-  // Continuous spinning: duplicate first 5 symbols to avoid gaps.
-  if (!stopped) {
-    const baseReelArray = Array.from({ length: 20 }, () =>
+  if (isSpinning) {
+    const reelArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * symbolImages.length)
     );
-    const reelArray = [...baseReelArray, ...baseReelArray.slice(0, 5)];
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
-          animate={{ y: -cellHeight * baseReelArray.length }}
+          animate={{ y: -cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
           {reelArray.map((sym, i) => (
@@ -660,11 +646,16 @@ function Reel({
     );
   }
 
+  // If not spinning, show final symbols
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         {finalSymbols?.map((sym, i) => (
-          <div key={i} style={{ height: 75 }} className="flex items-center justify-center">
+          <div
+            key={i}
+            style={{ height: 75 }}
+            className="flex items-center justify-center"
+          >
             <Image src={symbolImages[sym]} alt={`Symbol ${sym}`} width={65} height={65} />
           </div>
         ))}
@@ -844,7 +835,10 @@ export function SlotsControls({
                   : "Spin Kasen Mania"}
               </Button>
             ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                disabled
+              >
                 Spinning...
               </Button>
             )}
@@ -863,7 +857,10 @@ export function SlotsControls({
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
-              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
+              <button
+                onClick={() => setErrorMessage(null)}
+                className="ml-4 font-bold text-white"
+              >
                 X
               </button>
             </div>
