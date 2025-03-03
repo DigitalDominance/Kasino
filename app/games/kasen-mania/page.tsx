@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -436,8 +436,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           const result = multiplier > 0 ? "You Win" : "House Wins";
           const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
           onGameEnd(result, winAmt);
-        }, 4000);
-      }, 1000);
+        }, 5000);
+      }, 3000);
     }
     return () => {
       clearTimeout(timer);
@@ -630,16 +630,18 @@ function Reel({
   }, [isSpinning, reelIndex]);
 
   if (!stopped) {
-    // Create a continuous list by duplicating the reel array
-    const reelArray = Array.from({ length: 20 }, () =>
-      Math.floor(Math.random() * symbolImages.length)
-    );
-    const continuousReel = [...reelArray, ...reelArray];
+    // Generate the continuous reel once per spin.
+    const continuousReel = useMemo(() => {
+      const arr = Array.from({ length: 20 }, () =>
+        Math.floor(Math.random() * symbolImages.length)
+      );
+      return [...arr, ...arr];
+    }, [isSpinning]);
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
-          animate={{ y: -cellHeight * reelArray.length }}
+          animate={{ y: -cellHeight * 20 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
           {continuousReel.map((sym, i) => (
