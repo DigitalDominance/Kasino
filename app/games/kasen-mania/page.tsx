@@ -174,10 +174,10 @@ function SlotsContent() {
                 </Button>
               </div>
               {/* 
-                Make this container "relative" so our preview glass 
-                can cover the entire h-[70vh] region if we want.
+                1) Remove the p-4 so glass can fill entire container.
+                2) Make the container "relative" with h-[70vh].
               */}
-              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden p-4 border border-gray-600 shadow-2xl">
+              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl p-0">
                 <SlotsGame
                   isPlaying={isPlaying}
                   onGameEnd={handleGameEnd}
@@ -413,8 +413,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
 
   // We'll use these for the reel container
-  const reelWidth = 500;
-  const reelHeight = 250;
+  // Make them tall enough to fill the slot machine
+  const reelWidth = 720;
+  const reelHeight = 360;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -513,7 +514,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const showPreviewOverlay = !isPlaying && !finalGrid;
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-full h-full">
+    <div className="relative w-full h-full flex items-center justify-center">
       {/* Slot machine image + female placeholder */}
       <Image
         src="/slotmachine.webp"
@@ -523,37 +524,38 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         className="block mx-auto object-cover object-center"
       />
 
+      {/* Move her up a bit more so it doesn't cut off the bottom */}
       <div
         className="absolute"
         style={{
-          top: "-20px",
+          top: "-30px",
           left: "50%",
           transform: "translateX(-50%)",
         }}
       >
-        <Image src="/female_placeholder.svg" alt="Female Character" width={120} height={120} />
+        <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
       </div>
 
-      {/* If showPreviewOverlay is true, block the entire container (absolute inset-0) */}
+      {/* If showPreviewOverlay is true, block the entire container (no gap) */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           {/* Reels preview behind glass */}
           <div className="absolute inset-0 flex justify-center items-center">
             <div style={{ width: reelWidth, height: reelHeight }}>
-              <div className="flex space-x-8 h-full">
+              <div className="flex space-x-14 h-full">
                 {Array.from({ length: 5 }).map((_, colIndex) => (
                   <div key={colIndex} className="w-24 h-full overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <div
                         key={i}
-                        style={{ height: 70 }}
+                        style={{ height: 90 }}
                         className="flex items-center justify-center"
                       >
                         <Image
                           src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
                           alt={`Symbol preview ${i}`}
-                          width={60}
-                          height={60}
+                          width={80}
+                          height={80}
                         />
                       </div>
                     ))}
@@ -595,7 +597,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       {/* Actual reels container (centered over the machine) */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div style={{ width: reelWidth, height: reelHeight }} className="relative">
-          <div className="w-full h-full flex space-x-8">
+          <div className="w-full h-full flex space-x-14">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <Reel
                 key={colIndex}
@@ -623,8 +625,8 @@ function Reel({
   finalSymbols?: number[];
 }) {
   // Make these bigger
-  const cellHeight = 80;
-  const imageSize = 70;
+  const cellHeight = 90;
+  const imageSize = 80;
 
   if (isSpinning) {
     // Generate random symbols for animation
@@ -664,14 +666,14 @@ function Reel({
         {finalSymbols?.map((sym, i) => (
           <div
             key={i}
-            style={{ height: cellHeight }}
+            style={{ height: 90 }}
             className="flex items-center justify-center"
           >
             <Image
               src={symbolImages[sym]}
               alt={`Symbol ${sym}`}
-              width={imageSize}
-              height={imageSize}
+              width={80}
+              height={80}
             />
           </div>
         ))}
