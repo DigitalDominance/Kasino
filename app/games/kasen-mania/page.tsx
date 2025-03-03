@@ -344,7 +344,6 @@ interface SlotsGameProps {
   betAmount: number;
 }
 
-// Symbol images
 const symbolImages = [
   "/kasen1.webp",
   "/kasen2.webp",
@@ -356,34 +355,29 @@ const symbolImages = [
   "/kasen8.webp",
 ];
 
-/**
- * Helper to generate a winning grid based on the multiplier
- */
+// Adjust as needed for your layout
+const reelWidth = 720;
+const reelHeight = 390;
+
 function generateFinalGrid(multiplier: number, symbolCount: number): number[][] {
   const grid = Array.from({ length: 5 }, () =>
     Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
   );
   if (multiplier === 1.1) {
-    // Middle row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[2] = grid[2].map(() => winSymbol);
   } else if (multiplier === 2) {
-    // Main diagonal
     const winSymbol = Math.floor(Math.random() * symbolCount);
     for (let i = 0; i < 5; i++) {
       grid[i][i] = winSymbol;
     }
   } else if (multiplier === 3) {
-    // Top row
     const winSymbol = Math.floor(Math.random() * symbolCount);
     grid[0] = grid[0].map(() => winSymbol);
   }
   return grid;
 }
 
-/**
- * Helper to generate a losing grid (no forced pattern)
- */
 function generateLosingGrid(symbolCount: number): number[][] {
   let grid: number[][];
   do {
@@ -391,11 +385,8 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
-    // Middle row all the same?
     grid[2].every((val) => val === grid[2][0]) ||
-    // Top row all the same?
     grid[0].every((val) => val === grid[0][0]) ||
-    // Main diagonal all the same?
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
   );
   return grid;
@@ -405,11 +396,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
-
-  // Reels container dimensions
-  // 1) changed from 380 -> 390
-  const reelWidth = 720;
-  const reelHeight = 390;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -449,42 +435,45 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     return () => clearTimeout(timer);
   }, [isPlaying, betAmount, onGameEnd]);
 
-  // Highlight lines
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
+      // Middle row: same Y, but shorten right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
           style={{
             top: reelHeight / 2 - 2,
             left: 0,
-            width: reelWidth,
+            width: reelWidth - 80, // shorten on right side
             height: 4,
           }}
         />
       );
     } else if (outcomeMultiplier === 3) {
+      // Top row: move down by 15px, shorten on right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
           style={{
-            top: 0,
+            top: 15, // down 15px
             left: 0,
-            width: reelWidth,
+            width: reelWidth - 80, // shorten on right side
             height: 4,
           }}
         />
       );
     } else if (outcomeMultiplier === 2) {
+      // Diagonal: start lower & end higher for more downward angle, also shorter
       const startX = 0;
-      const startY = 0;
-      const endX = reelWidth;
-      const endY = reelHeight;
+      const startY = 40; // move down a bit
+      const endX = reelWidth - 80; // shorten on right side
+      const endY = reelHeight - 10; // end a bit above the bottom
       const xDiff = endX - startX;
       const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
       const angle = Math.atan2(yDiff, xDiff) * (180 / Math.PI);
+
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -501,14 +490,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
     }
   }
 
-  // Show frosted overlay if not spinning
   const showPreviewOverlay = !isPlaying && !finalGrid;
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* 
-        2) Move the slot machine a few px left with marginLeft: "-5px"
-      */}
+      {/* The slot machine image is the same */}
       <Image
         src="/slotmachine.webp"
         alt="Slot Machine Background"
@@ -529,13 +515,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
       </div>
 
+      {/* Frosted preview overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div className="absolute inset-0 flex justify-center items-center">
             <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }}>
-              {/*
-                3) Spacing changed from space-x-14 -> space-x-5
-              */}
               <div className="flex space-x-5 h-full">
                 {Array.from({ length: 5 }).map((_, colIndex) => (
                   <div key={colIndex} className="w-24 h-full overflow-hidden">
@@ -585,6 +569,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
+      {/* Actual reels */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
           <div className="w-full h-full flex space-x-5">
@@ -642,6 +627,7 @@ function Reel({
     );
   }
 
+  // If not spinning, show final symbols
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
