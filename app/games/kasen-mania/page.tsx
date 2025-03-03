@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -630,21 +630,17 @@ function Reel({
   }, [isSpinning, reelIndex]);
 
   if (!stopped) {
-    // Generate the continuous reel once per spin.
-    const continuousReel = useMemo(() => {
-      const arr = Array.from({ length: 20 }, () =>
-        Math.floor(Math.random() * symbolImages.length)
-      );
-      return [...arr, ...arr];
-    }, [isSpinning]);
+    const reelArray = Array.from({ length: 20 }, () =>
+      Math.floor(Math.random() * symbolImages.length)
+    );
     return (
       <div className="w-24 h-full overflow-hidden relative">
         <motion.div
           className="w-full"
-          animate={{ y: -cellHeight * 20 }}
+          animate={{ y: -cellHeight * reelArray.length }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          {continuousReel.map((sym, i) => (
+          {reelArray.map((sym, i) => (
             <div
               key={i}
               style={{ height: cellHeight }}
