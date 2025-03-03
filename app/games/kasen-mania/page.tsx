@@ -436,8 +436,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           const result = multiplier > 0 ? "You Win" : "House Wins";
           const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
           onGameEnd(result, winAmt);
-        }, 5000);
-      }, 3000);
+        }, 4000);
+      }, 1000);
     }
     return () => {
       clearTimeout(timer);
