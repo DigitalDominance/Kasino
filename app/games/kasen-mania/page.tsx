@@ -290,7 +290,13 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image key={i} src="/placeholder2.svg" alt="Symbol" width={40} height={40} />
+                        <Image
+                          key={i}
+                          src="/placeholder2.svg"
+                          alt="Symbol"
+                          width={40}
+                          height={40}
+                        />
                       ))}
                     <span className="ml-2 text-sm">2× win</span>
                   </div>
@@ -301,7 +307,13 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image key={i} src="/placeholder3.svg" alt="Symbol" width={40} height={40} />
+                        <Image
+                          key={i}
+                          src="/placeholder3.svg"
+                          alt="Symbol"
+                          width={40}
+                          height={40}
+                        />
                       ))}
                     <span className="ml-2 text-sm">3× win</span>
                   </div>
@@ -522,34 +534,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
       </div>
 
-      {/* Frosted preview overlay if not spinning */}
+      {/* Frosted preview overlay if not spinning - static preview removed */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
-          <div className="absolute inset-0 flex justify-center items-center">
-            <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }}>
-              <div className="flex space-x-5 h-full">
-                {Array.from({ length: 5 }).map((_, colIndex) => (
-                  <div key={colIndex} className="w-24 h-full overflow-hidden">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        style={{ height: 75 }}
-                        className="flex items-center justify-center"
-                      >
-                        <Image
-                          src={symbolImages[Math.floor(Math.random() * symbolImages.length)]}
-                          alt={`Symbol preview ${i}`}
-                          width={65}
-                          height={65}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           <div
             className="absolute inset-0 z-10"
             style={{
