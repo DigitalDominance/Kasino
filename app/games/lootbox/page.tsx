@@ -16,29 +16,37 @@ import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
-//import "./styles.css";
 
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
-// Define ghost-themed loot items.
-// There are four rarities with the following payout (in KAS) per 25 KAS bet:
-// Haunted Wisp: 0.05, Ectoplasmic Echo: 20, Spectral Surge: 96, Phantasmal Phantom: 6250.
+// Define 15 ghost-themed loot items with four rarities.
+// Tier 1: Haunted Wisp (Common, 50% chance) – 6 variants, reward: 0.05 KAS
+// Tier 2: Ectoplasmic Echo (Uncommon, 40% chance) – 5 variants, reward: 20 KAS
+// Tier 3: Spectral Surge (Rare, ~9.9% chance) – 3 variants, reward: 96 KAS
+// Tier 4: Phantasmal Phantom (Legendary, 0.1% chance) – 1 variant, reward: 6250 KAS
 export const lootItems = [
-  // Tier 1: Haunted Wisp (Common, 50% chance)
+  // Tier 1: Haunted Wisp (IDs 1-6)
   { id: 1, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder.svg" },
   { id: 2, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder2.svg" },
-  // Tier 2: Ectoplasmic Echo (Uncommon, 40% chance)
-  { id: 3, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder3.svg" },
-  { id: 4, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder4.svg" },
-  { id: 5, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder5.svg" },
-  // Tier 3: Spectral Surge (Rare, ~9.9% chance)
-  { id: 6, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder6.svg" },
-  { id: 7, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder7.svg" },
-  // Tier 4: Phantasmal Phantom (Legendary, 0.1% chance)
-  { id: 8, name: "Phantasmal Phantom", tier: "phantasmal-phantom", reward: 6250, image: "/placeholder8.svg" },
+  { id: 3, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder3.svg" },
+  { id: 4, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder4.svg" },
+  { id: 5, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder5.svg" },
+  { id: 6, name: "Haunted Wisp", tier: "haunted-wisp", reward: 0.05, image: "/placeholder6.svg" },
+  // Tier 2: Ectoplasmic Echo (IDs 7-11)
+  { id: 7, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder7.svg" },
+  { id: 8, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder8.svg" },
+  { id: 9, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder.svg" },
+  { id: 10, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder2.svg" },
+  { id: 11, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 20, image: "/placeholder3.svg" },
+  // Tier 3: Spectral Surge (IDs 12-14)
+  { id: 12, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder4.svg" },
+  { id: 13, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder5.svg" },
+  { id: 14, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder6.svg" },
+  // Tier 4: Phantasmal Phantom (ID 15)
+  { id: 15, name: "Phantasmal Phantom", tier: "phantasmal-phantom", reward: 6250, image: "/placeholder7.svg" },
 ];
 
 export default function LootBoxGamePage() {
@@ -50,6 +58,7 @@ function LootBoxContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState(null);
   const [winItem, setWinItem] = useState(null);
+  const [winAmount, setWinAmount] = useState(null);
   const [gameId, setGameId] = useState(null);
   const [depositTxid, setDepositTxid] = useState(null);
 
@@ -62,8 +71,7 @@ function LootBoxContent() {
   const lootBoxCost = 25;
 
   const handleOpenLootBox = async () => {
-    // Enforce cost = 25 KAS.
-    if (Number(lootBoxCost) > balance) {
+    if (lootBoxCost > balance) {
       alert("Insufficient balance");
       return;
     }
@@ -111,16 +119,22 @@ function LootBoxContent() {
     }
   };
 
+  // Updated handleGameEnd now mimics the slots game.
   const handleGameEnd = async (item) => {
     setWinItem(item);
-    setGameResult("You Got");
+    // If the item is Haunted Wisp, consider it a loss.
+    const isWin = item.tier !== "haunted-wisp";
+    const resultText = isWin ? "You Win" : "You Lose";
+    const winAmt = isWin ? item.reward : 0;
+    setGameResult(resultText);
+    setWinAmount(winAmt);
     setIsPlaying(false);
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
           gameId,
-          result: item.tier === "haunted-wisp" ? "lose" : "win",
-          winItem: item,
+          result: isWin ? "win" : "lose",
+          winAmount: winAmt,
         });
       } catch (error) {
         console.error("Error ending game on backend:", error);
@@ -132,6 +146,7 @@ function LootBoxContent() {
     setIsPlaying(false);
     setGameResult(null);
     setWinItem(null);
+    setWinAmount(null);
     setGameId(null);
     setDepositTxid(null);
   };
@@ -142,7 +157,7 @@ function LootBoxContent() {
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+            <Link href="/" className="inline-flex items-center text-teal-400 hover:underline">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
@@ -170,18 +185,40 @@ function LootBoxContent() {
           </p>
         )}
 
+        {/* Traits Layout Card */}
+        <Card className="mb-6 bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4">
+          <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">Loot Box Traits & Rewards</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {lootItems.map((item) => (
+              <div key={item.id} className="flex flex-col items-center border border-teal-600 p-2 rounded">
+                <Image src={item.image} alt={item.name} width={50} height={50} />
+                <p className="mt-2 text-teal-200 text-sm font-semibold">{item.name}</p>
+                <p className="text-xs text-teal-100">{item.tier.replace("-", " ")}</p>
+                <p className="text-xs text-teal-100">{item.reward} KAS</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         {/* Main Game & Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-            <div className="p-6 flex flex-col h-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Loot Box</h2>
-                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={() => resetGame()}>
+          <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full items-center">
+              <div className="flex justify-between items-center w-full mb-4">
+                <h2 className="text-2xl font-bold text-teal-300">Loot Box</h2>
+                <Button variant="ghost" size="sm" className="text-teal-300" onClick={resetGame}>
                   Reset
                 </Button>
               </div>
-              <div className="relative h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl">
-                <LootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+              <div className="relative w-full flex-grow flex items-center justify-center">
+                {/* Reel container (centered) */}
+                <div className="relative w-full max-w-lg h-64 overflow-hidden">
+                  <LootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                  {/* Glass overlay (mask) */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-[250px] h-full border-x-4 border-teal-400" />
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
@@ -194,28 +231,28 @@ function LootBoxContent() {
             onOpenLootBox={handleOpenLootBox}
             gameResult={gameResult}
             winItem={winItem}
+            winAmount={winAmount}
           />
         </div>
 
         {/* Promo / Info Card */}
-        <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+        <Card className="mt-6 w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
             style={{
-              backgroundImage: "linear-gradient(270deg, #600000, #FF0000, #FF7373)",
+              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
               backgroundSize: "200% 200%",
             }}
           >
             Loot Box
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-white mb-4">
-            Open the Loot Box for a chance to win one of four ghost-themed rewards.
-            For 25 KAS you might receive a meager <strong>Haunted Wisp</strong> (0.05 KAS), a modest
-            <strong> Ectoplasmic Echo</strong> (20 KAS), a powerful <strong>Spectral Surge</strong> (~96 KAS)
-            – or the ultra-rare <strong>Phantasmal Phantom</strong> (6250 KAS, 250× payout)!
+          <p className="text-sm text-teal-200 mb-4">
+            For 25 KAS you might receive a meager <strong>Haunted Wisp</strong> (0.05 KAS), a modest{" "}
+            <strong>Ectoplasmic Echo</strong> (20 KAS), a powerful <strong>Spectral Surge</strong> (~96 KAS) – or the ultra‑rare{" "}
+            <strong>Phantasmal Phantom</strong> (6250 KAS, 250× payout)!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -223,7 +260,7 @@ function LootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-[#FF0000] hover:text-[#FF7373]"
+              className="text-teal-400 hover:text-teal-300"
             >
               <FaTwitter />
             </motion.a>
@@ -232,7 +269,7 @@ function LootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-[#FF0000] hover:text-[#FF7373]"
+              className="text-teal-400 hover:text-teal-300"
             >
               <FaTelegramPlane />
             </motion.a>
@@ -241,7 +278,7 @@ function LootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-[#FF0000] hover:text-[#FF7373]"
+              className="text-teal-400 hover:text-teal-300"
             >
               <FaGlobe />
             </motion.a>
@@ -264,17 +301,20 @@ function LootBoxContent() {
 // - Ectoplasmic Echo (Uncommon): 40%
 // - Spectral Surge (Rare): ~9.9%
 // - Phantasmal Phantom (Legendary): 0.1%
-// The winning item is then inserted into a reel of 40 random items at a fixed position so that the reel stops with it centered.
+// The winning item is inserted into a reel of 40 random items so that it stops centered.
+// When the animation ends, a fade-in overlay shows the result.
 function LootBoxGame({ isPlaying, onGameEnd }) {
   const [reelItems, setReelItems] = useState([]);
   const [animationX, setAnimationX] = useState(0);
   const itemWidth = 100; // width (in pixels) for each item
-  const reelVisibleCount = 5; // number of items visible in the viewport
+  const reelVisibleCount = 5; // number of items visible
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
 
   useEffect(() => {
     let animationTimeout;
     if (isPlaying) {
-      // Determine winning tier based on our odds.
+      setShowResultOverlay(false);
+      // Determine winning tier based on odds.
       const r = Math.random();
       let chosenTier;
       if (r < 0.5) {
@@ -286,29 +326,30 @@ function LootBoxGame({ isPlaying, onGameEnd }) {
       } else {
         chosenTier = "phantasmal-phantom";
       }
-      // Filter available items for that tier and pick one at random.
-      const tierItems = lootItems.filter(item => item.tier === chosenTier);
+      // Select winning item from that tier.
+      const tierItems = lootItems.filter((item) => item.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
       // Generate a reel of 40 random items.
       const randomReel = Array.from({ length: 40 }, () => {
         return lootItems[Math.floor(Math.random() * lootItems.length)];
       });
-      // Insert the winning item at a predetermined index.
+      // Insert the winning item at a fixed index.
       const winningPosition = 40;
       const finalReel = [...randomReel];
       finalReel.splice(winningPosition, 0, winningItem);
-      // Optionally append extra items to smooth out the animation.
+      // Append extra items to smooth the animation.
       finalReel.push(...Array.from({ length: reelVisibleCount }, () => lootItems[Math.floor(Math.random() * lootItems.length)]));
       setReelItems(finalReel);
 
-      // Calculate the final offset so that the winning item is centered.
+      // Calculate final offset so that winning item is centered.
       const finalOffset = -(winningPosition - Math.floor(reelVisibleCount / 2)) * itemWidth;
       setAnimationX(finalOffset);
 
-      // End the game after the animation completes.
+      // End game after animation completes.
       animationTimeout = setTimeout(() => {
         onGameEnd(winningItem);
+        setTimeout(() => setShowResultOverlay(true), 500);
       }, 4000);
     } else {
       setReelItems([]);
@@ -330,6 +371,27 @@ function LootBoxGame({ isPlaying, onGameEnd }) {
           </div>
         ))}
       </motion.div>
+      <AnimatePresence>
+        {showResultOverlay && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center bg-black/60"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="text-center p-4 rounded bg-teal-800/80">
+              <p className="text-2xl font-bold text-teal-200">You Got:</p>
+              <p className="text-xl text-teal-100">
+                {/* Display winning item's name and tier */}
+                {reelItems[40] && reelItems[40].name} ({reelItems[40] && reelItems[40].tier.replace("-", " ")})
+              </p>
+              <p className="text-sm text-teal-100">
+                Payout: {reelItems[40] && reelItems[40].reward} KAS
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -338,7 +400,7 @@ function LootBoxGame({ isPlaying, onGameEnd }) {
 /*                     Loot Box Controls Component                    */
 /* ------------------------------------------------------------------ */
 
-function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onOpenLootBox, gameResult, winItem }) {
+function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onOpenLootBox, gameResult, winItem, winAmount }) {
   const [errorMessage, setErrorMessage] = useState(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -351,7 +413,7 @@ function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onO
 
   useEffect(() => {
     if (cooldown > 0) {
-      const intervalId = setInterval(() => setCooldown(prev => prev - 1), 1000);
+      const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
       return () => clearInterval(intervalId);
     }
   }, [cooldown]);
@@ -377,16 +439,16 @@ function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onO
 
   return (
     <>
-      <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
+      <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-[#49EACB]">Cost per Loot Box (KAS)</label>
+            <label className="text-sm text-teal-300">Cost per Loot Box (KAS)</label>
             <div className="relative">
               <input
                 type="number"
                 value={betAmount}
                 disabled
-                className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full"
+                className="bg-teal-900/50 border border-teal-500 text-white pl-8 w-full"
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
@@ -401,20 +463,20 @@ function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onO
           </div>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameResult && winItem && (
+            {gameResult && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  {gameResult}: {winItem.name} ({winItem.tier})
+                <div className="text-2xl font-bold text-teal-300">
+                  {gameResult}: {winItem && winItem.name} ({winItem && winItem.tier.replace("-", " ")})
                 </div>
-                <div className="text-sm">
-                  Payout: {winItem.reward} KAS
+                <div className="text-sm text-teal-200">
+                  Payout: {winAmount !== null ? winAmount : 0} KAS
                 </div>
               </div>
             )}
 
             {!isPlaying ? (
               <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                className="w-full bg-teal-400 text-black hover:bg-teal-300"
                 onClick={handleOpenBox}
                 disabled={!isWalletConnected || cooldown > 0}
               >
@@ -425,7 +487,7 @@ function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onO
                   : "Open Loot Box"}
               </Button>
             ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
                 Opening...
               </Button>
             )}
@@ -440,7 +502,7 @@ function LootBoxControls({ betAmount, isPlaying, isWalletConnected, balance, onO
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-red-700 to-black text-white px-4 py-2 rounded shadow-lg"
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
