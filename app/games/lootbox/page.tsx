@@ -27,7 +27,7 @@ const montserrat = Montserrat({
 
 /* ------------------------------------------------------------------
    Loot Items Distribution
-   3 Common, 8 Uncommon, 3 Rare, 1 Legendary
+   3 Common, 6 Uncommon, 5 Rare, 1 Legendary
    Tiers:
      - haunted-wisp => 1 KAS
      - ectoplasmic-echo => 25 KAS
@@ -40,17 +40,17 @@ export const lootItems = [
   { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder2.svg" },
   { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder3.svg" },
 
-  // Tier 2: Ectoplasmic Echo (Uncommon) – 8 items, 25 KAS each
+  // Tier 2: Ectoplasmic Echo (Uncommon) – 6 items, 25 KAS each
   { id: 4,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
   { id: 5,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
   { id: 6,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
   { id: 7,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
   { id: 8,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
   { id: 9,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
-  { id: 10, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder2.svg" },
-  { id: 11, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder3.svg" },
 
-  // Tier 3: Spectral Surge (Rare) – 3 items, 96 KAS each
+  // Tier 3: Spectral Surge (Rare) – 5 items, 96 KAS each
+  { id: 10, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder2.svg" },
+  { id: 11, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder3.svg" },
   { id: 12, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder4.svg" },
   { id: 13, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder5.svg" },
   { id: 14, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder6.svg" },
@@ -154,24 +154,21 @@ function KasperLootBoxContent() {
   };
 
   // ------------------------------
-  //  End Game
+  //  End Game (All tiers = Win)
   // ------------------------------
   const handleGameEnd = async (item: any) => {
+    // Everything is a "win," including Haunted Wisp
     setWinItem(item);
-    const isWin = item.tier !== "haunted-wisp";
-    const resultText = isWin ? "You Win" : "You Lose";
-    const winAmt = isWin ? item.reward : 0;
-
-    setGameResult(resultText);
-    setWinAmount(winAmt);
+    setGameResult("You Win");
+    setWinAmount(item.reward);
     setIsPlaying(false);
 
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
           gameId,
-          result: isWin ? "win" : "lose",
-          winAmount: winAmt,
+          result: "win",
+          winAmount: item.reward,
         });
       } catch (error) {
         console.error("Error ending Kasper Loot Box game on backend:", error);
@@ -194,7 +191,6 @@ function KasperLootBoxContent() {
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
-
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -242,14 +238,12 @@ function KasperLootBoxContent() {
                   Reset
                 </Button>
               </div>
-              <div className="relative w-full flex-grow flex items-center justify-center">
-                {/* Larger reel container */}
-                <div className="relative w-full max-w-[600px] h-72 mx-auto overflow-hidden">
-                  <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                  {/* Wider glass panel overlays on the sides */}
-                  <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                  <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                </div>
+              {/* Larger reel container */}
+              <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
+                <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                {/* Wider glass panel overlays on the sides */}
+                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
@@ -283,7 +277,7 @@ function KasperLootBoxContent() {
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold">{item.name}</p>
                   <p className="capitalize">{item.tier.replace("-", " ")}</p>
-                  <p className="">{item.reward} KAS</p>
+                  <p>{item.reward} KAS</p>
                 </div>
               );
             })}
@@ -413,7 +407,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   }, [isPlaying, onGameEnd]);
 
   return (
-    <div className="w-full h-full overflow-hidden relative">
+    <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
       {/* Reel Animation */}
       <motion.div
         className="flex"
