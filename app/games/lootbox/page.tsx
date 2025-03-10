@@ -45,7 +45,7 @@ export const lootItems = [
 ];
 
 // ---------------------------------------------------------
-// Rarity Styling
+// Rarity Styling for Traits Card (existing)
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
@@ -59,6 +59,24 @@ function getRarityStyle(tier: string) {
       return "border-yellow-400 bg-yellow-900/30";
     default:
       return "border-gray-500 bg-gray-800/30";
+  }
+}
+
+// ---------------------------------------------------------
+// New: Rarity Overlay for Reel Items
+// ---------------------------------------------------------
+function getRarityOverlayClass(tier: string) {
+  switch (tier) {
+    case "haunted-wisp":
+      return "bg-gradient-to-br from-green-400/30 to-green-900/30";
+    case "ectoplasmic-echo":
+      return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
+    case "spectral-surge":
+      return "bg-gradient-to-br from-purple-400/30 to-purple-900/30";
+    case "phantasmal-phantom":
+      return "bg-gradient-to-br from-yellow-400/30 to-yellow-900/30";
+    default:
+      return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
   }
 }
 
@@ -338,11 +356,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       });
       setReelItems(newReel);
 
-      // Compute offset: center the winning image and shift it left by half the item width.
+      // Compute offset: center the winning image.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter + (itemWidth / 2);
+      const finalOffset = containerCenter - winningItemCenter - itemWidth / 2;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     } else {
@@ -380,13 +398,17 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               boxSizing: "border-box",
             }}
           >
-            <Image
-              src={item.image}
-              alt={item.name}
-              width={itemWidth - 10}
-              height={itemWidth - 10}
-              loading="eager"
-            />
+            <div className="relative w-full h-full">
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={itemWidth - 10}
+                height={itemWidth - 10}
+                loading="eager"
+              />
+              {/* Overlay based on rarity */}
+              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
+            </div>
           </div>
         ))}
       </motion.div>
@@ -398,11 +420,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Nested motion div for a pop-up effect */}
+            {/* Nested motion div for a big pop-up effect on the winning image */}
             <motion.div
               initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
               className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
             >
               <Image
