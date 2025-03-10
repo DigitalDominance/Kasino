@@ -27,15 +27,15 @@ const montserrat = Montserrat({
 // Loot Items Distribution
 // ---------------------------------------------------------
 export const lootItems = [
-  { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder.svg" },
-  { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder2.svg" },
-  { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder3.svg" },
-  { id: 4,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
-  { id: 5,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
-  { id: 6,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
-  { id: 7,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
-  { id: 8,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
-  { id: 9,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
+  { id: 1, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder.svg" },
+  { id: 2, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder2.svg" },
+  { id: 3, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder3.svg" },
+  { id: 4, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
+  { id: 5, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
+  { id: 6, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
+  { id: 7, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
+  { id: 8, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
+  { id: 9, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
   { id: 10, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder2.svg" },
   { id: 11, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder3.svg" },
   { id: 12, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder4.svg" },
@@ -308,7 +308,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const itemWidth = 120;
-  const reelVisibleCount = 5;
   const [animationTarget, setAnimationTarget] = useState(0);
   const [animationDuration, setAnimationDuration] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -339,11 +338,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       });
       setReelItems(newReel);
 
-      // Compute offset: subtract half an image width to shift winning image one-half to the left.
+      // Compute offset: center the winning image in the container.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter - (itemWidth / 2);
+      const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     } else {
@@ -400,7 +399,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
             {/* Nested motion div for a pop-up effect */}
             <motion.div
               initial={{ scale: 0.8 }}
-              animate={{ scale: [1.2, 1] }}
+              animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
               className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
             >
