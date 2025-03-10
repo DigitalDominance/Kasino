@@ -7,8 +7,6 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { LiveChat } from "../mines/live-chat";
-import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
@@ -27,35 +25,22 @@ const montserrat = Montserrat({
 
 // ---------------------------------------------------------
 // Loot Items Distribution
-// 3 Common, 6 Uncommon, 5 Rare, 1 Legendary
-// Tiers:
-//   - haunted-wisp => 1 KAS
-//   - ectoplasmic-echo => 25 KAS
-//   - spectral-surge => 96 KAS
-//   - phantasmal-phantom => 6250 KAS
 // ---------------------------------------------------------
 export const lootItems = [
-  // Tier 1: Haunted Wisp (Common) – 3 items, 1 KAS each
   { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder.svg" },
   { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder2.svg" },
   { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder3.svg" },
-
-  // Tier 2: Ectoplasmic Echo (Uncommon) – 6 items, 25 KAS each
   { id: 4,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
   { id: 5,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
   { id: 6,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
   { id: 7,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
   { id: 8,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
   { id: 9,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
-
-  // Tier 3: Spectral Surge (Rare) – 5 items, 96 KAS each
   { id: 10, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder2.svg" },
   { id: 11, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder3.svg" },
   { id: 12, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder4.svg" },
   { id: 13, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder5.svg" },
   { id: 14, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder6.svg" },
-
-  // Tier 4: Phantasmal Phantom (Legendary) – 1 item, 6250 KAS
   { id: 15, name: "Phantasmal Phantom", tier: "phantasmal-phantom", reward: 6250, image: "/placeholder7.svg" },
 ];
 
@@ -96,13 +81,8 @@ function KasperLootBoxContent() {
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
-
-  // Kasper Loot Box cost is fixed at 25 KAS.
   const lootBoxCost = 25;
 
-  // ------------------------------
-  //  Start Game
-  // ------------------------------
   const handleOpenLootBox = async () => {
     if (lootBoxCost > balance) {
       alert("Insufficient balance");
@@ -125,7 +105,6 @@ function KasperLootBoxContent() {
         alert("Treasury address not configured");
         return;
       }
-      // Send 25 KAS
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, lootBoxCost * 1e8, {
         priorityFee: 10000,
       });
@@ -153,11 +132,7 @@ function KasperLootBoxContent() {
     }
   };
 
-  // ------------------------------
-  //  End Game
-  // ------------------------------
   const handleGameEnd = async (item: any) => {
-    // All items are considered a win
     setWinItem(item);
     setGameResult("You Win");
     setWinAmount(item.reward);
@@ -176,9 +151,6 @@ function KasperLootBoxContent() {
     }
   };
 
-  // ------------------------------
-  //  Reset
-  // ------------------------------
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
@@ -191,7 +163,6 @@ function KasperLootBoxContent() {
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
-        {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link href="/" className="inline-flex items-center text-teal-400 hover:underline">
@@ -202,8 +173,6 @@ function KasperLootBoxContent() {
             <WalletConnection />
           </motion.div>
         </header>
-
-        {/* Deposit TXID */}
         {depositTxid && (
           <p className="mb-4 text-sm text-gray-300">
             Deposit TXID:{" "}
@@ -222,10 +191,7 @@ function KasperLootBoxContent() {
             </a>
           </p>
         )}
-
-        {/* Main Game & Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-          {/* Kasper Loot Box Game */}
           <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
@@ -234,17 +200,13 @@ function KasperLootBoxContent() {
                   Reset
                 </Button>
               </div>
-              {/* Reel Container */}
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                {/* Glass Panels */}
                 <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
                 <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
-
-          {/* Controls */}
           <KasperLootBoxControls
             betAmount={lootBoxCost.toString()}
             isPlaying={isPlaying}
@@ -256,8 +218,6 @@ function KasperLootBoxContent() {
             winAmount={winAmount}
           />
         </div>
-
-        {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">
             Kasper Loot Box Traits &amp; Rewards
@@ -276,8 +236,6 @@ function KasperLootBoxContent() {
             })}
           </div>
         </Card>
-
-        {/* Promo / Info Card */}
         <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -331,22 +289,11 @@ function KasperLootBoxContent() {
   );
 }
 
-// ---------------------------------------------------------
-// Kasper Loot Box Game Component
-// ---------------------------------------------------------
-function KasperLootBoxGame({
-  isPlaying,
-  onGameEnd,
-}: {
-  isPlaying: boolean;
-  onGameEnd: (item: any) => void;
-}) {
+function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
-  // Each item is 120px wide; we show 5 items at once
   const itemWidth = 120;
   const reelVisibleCount = 5;
-  // We'll animate with a continuous easing transition
   const [animationTarget, setAnimationTarget] = useState(0);
   const [animationDuration, setAnimationDuration] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -354,8 +301,6 @@ function KasperLootBoxGame({
   useEffect(() => {
     if (isPlaying) {
       setShowResultOverlay(false);
-
-      // 1) Determine winning tier based on probability
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
@@ -367,14 +312,10 @@ function KasperLootBoxGame({
       } else {
         chosenTier = "phantasmal-phantom";
       }
-
-      // 2) Pick winning item from chosen tier
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
-
-      // 3) Build a reel of exactly 40 items and force the winning item at the center.
       const reelLength = 40;
-      const winningIndex = Math.floor(reelLength / 2); // e.g., index 20 for 40 items
+      const winningIndex = Math.floor(reelLength / 2);
       const newReel = Array.from({ length: reelLength }, (_, idx) => {
         if (idx === winningIndex) {
           return winningItem;
@@ -383,10 +324,9 @@ function KasperLootBoxGame({
       });
       setReelItems(newReel);
 
-      // 4) Compute final offset using the container's width.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
-      // The center of the winning item is at: (winningIndex * itemWidth + itemWidth/2)
+      // Each reel item is forced to have a fixed width via box-sizing.
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
       const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
@@ -401,17 +341,12 @@ function KasperLootBoxGame({
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      {/* Reel container: flex layout ensures all 40 items are displayed consecutively */}
       <motion.div
         className="flex"
         initial={{ x: 0 }}
         animate={{ x: animationTarget }}
-        transition={{
-          duration: animationDuration,
-          ease: "easeOut",
-        }}
+        transition={{ duration: animationDuration, ease: "easeOut" }}
         onAnimationComplete={() => {
-          // When the animation finishes, trigger game end and show the result overlay.
           if (reelItems.length > 0) {
             onGameEnd(reelItems[Math.floor(reelItems.length / 2)]);
             setShowResultOverlay(true);
@@ -419,7 +354,15 @@ function KasperLootBoxGame({
         }}
       >
         {reelItems.map((item, i) => (
-          <div key={i} style={{ width: itemWidth, height: itemWidth, padding: "5px" }}>
+          <div
+            key={i}
+            style={{
+              width: itemWidth,
+              height: itemWidth,
+              padding: "5px",
+              boxSizing: "border-box"
+            }}
+          >
             <Image
               src={item.image}
               alt={item.name}
@@ -430,8 +373,6 @@ function KasperLootBoxGame({
           </div>
         ))}
       </motion.div>
-
-      {/* Overlay after the reel stops */}
       <AnimatePresence>
         {showResultOverlay && reelItems.length > 0 && (
           <motion.div
@@ -449,8 +390,7 @@ function KasperLootBoxGame({
                 className="mx-auto mb-2"
                 loading="eager"
                 style={{
-                  filter:
-                    "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)"
                 }}
               />
               <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
@@ -471,9 +411,6 @@ function KasperLootBoxGame({
   );
 }
 
-// ---------------------------------------------------------
-// Kasper Loot Box Controls Component
-// ---------------------------------------------------------
 function KasperLootBoxControls({
   betAmount,
   isPlaying,
@@ -553,8 +490,6 @@ function KasperLootBoxControls({
               </div>
             </div>
           </div>
-
-          {/* Display result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
@@ -566,8 +501,6 @@ function KasperLootBoxControls({
                 </div>
               </div>
             )}
-
-            {/* Button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-teal-400 text-black hover:bg-teal-300"
@@ -588,8 +521,6 @@ function KasperLootBoxControls({
           </motion.div>
         </div>
       </Card>
-
-      {/* Error Popup */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
