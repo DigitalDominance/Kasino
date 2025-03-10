@@ -342,7 +342,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter - (itemWidth / 2);
+      const finalOffset = containerCenter - winningItemCenter + (itemWidth / 2);
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     } else {
