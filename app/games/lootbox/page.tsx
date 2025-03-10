@@ -45,7 +45,7 @@ export const lootItems = [
 ];
 
 // ---------------------------------------------------------
-// Rarity Styling for Traits Card (existing)
+// Rarity Styling (for the traits card at the bottom)
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
@@ -63,7 +63,7 @@ function getRarityStyle(tier: string) {
 }
 
 // ---------------------------------------------------------
-// New: Rarity Overlay for Reel Items
+// Rarity Overlay for Reel Items
 // ---------------------------------------------------------
 function getRarityOverlayClass(tier: string) {
   switch (tier) {
@@ -348,19 +348,24 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       }
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
-      const reelLength = 40;
+
+      // Make the reel big enough so there's no empty space on the right.
+      const reelLength = 50;
       const winningIndex = Math.floor(reelLength / 2);
+
       const newReel = Array.from({ length: reelLength }, (_, idx) => {
         if (idx === winningIndex) return winningItem;
         return lootItems[Math.floor(Math.random() * lootItems.length)];
       });
       setReelItems(newReel);
 
-      // Compute offset: center the winning image.
+      // Calculate offset so the winning item is centered in the container.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter - itemWidth / 2;
+
+      // Removed the extra “- itemWidth / 2”
+      const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     } else {
@@ -407,7 +412,10 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 loading="eager"
               />
               {/* Overlay based on rarity */}
-              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
+              <div
+                className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`}
+                style={{ pointerEvents: "none" }}
+              />
             </div>
           </div>
         ))}
