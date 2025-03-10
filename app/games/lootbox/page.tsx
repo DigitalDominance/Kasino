@@ -7,8 +7,6 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { LiveChat } from "../mines/live-chat";
-import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
@@ -36,17 +34,17 @@ const montserrat = Montserrat({
 // ---------------------------------------------------------
 export const lootItems = [
   // Tier 1: Haunted Wisp (Common) – 3 items, 1 KAS each
-  { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder.svg" },
-  { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder2.svg" },
-  { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder3.svg" },
+  { id: 1, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder.svg" },
+  { id: 2, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder2.svg" },
+  { id: 3, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder3.svg" },
 
   // Tier 2: Ectoplasmic Echo (Uncommon) – 6 items, 25 KAS each
-  { id: 4,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
-  { id: 5,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
-  { id: 6,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
-  { id: 7,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
-  { id: 8,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
-  { id: 9,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
+  { id: 4, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
+  { id: 5, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
+  { id: 6, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
+  { id: 7, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
+  { id: 8, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
+  { id: 9, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
 
   // Tier 3: Spectral Surge (Rare) – 5 items, 96 KAS each
   { id: 10, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder2.svg" },
@@ -157,7 +155,6 @@ function KasperLootBoxContent() {
   //  End Game
   // ------------------------------
   const handleGameEnd = async (item: any) => {
-    // All items are considered a win
     setWinItem(item);
     setGameResult("You Win");
     setWinAmount(item.reward);
@@ -198,11 +195,7 @@ function KasperLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <WalletConnection />
           </motion.div>
         </header>
@@ -264,16 +257,13 @@ function KasperLootBoxContent() {
         {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">
-            Kasper Loot Box Traits &amp; Rewards
+            Kasper Loot Box Traits & Rewards
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {lootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
               return (
-                <div
-                  key={item.id}
-                  className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}
-                >
+                <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold">{item.name}</p>
                   <p className="capitalize">{item.tier.replace("-", " ")}</p>
@@ -303,31 +293,13 @@ function KasperLootBoxContent() {
             a potent <strong>Spectral Surge</strong> (~96 KAS), or the ultra‑rare <strong>Phantasmal Phantom</strong> (6250 KAS, 250× payout)!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
-            <motion.a
-              href="https://x.com/KasenOnKaspa"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
-            >
+            <motion.a href="https://x.com/KasenOnKaspa" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-teal-400 hover:text-teal-300">
               <FaTwitter />
             </motion.a>
-            <motion.a
-              href="https://t.co/W4YDM1cUpY"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
-            >
+            <motion.a href="https://t.co/W4YDM1cUpY" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-teal-400 hover:text-teal-300">
               <FaTelegramPlane />
             </motion.a>
-            <motion.a
-              href="https://kasenonkas.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
-            >
+            <motion.a href="https://kasenonkas.com" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-teal-400 hover:text-teal-300">
               <FaGlobe />
             </motion.a>
           </div>
@@ -341,13 +313,7 @@ function KasperLootBoxContent() {
 // ---------------------------------------------------------
 // Kasper Loot Box Game Component
 // ---------------------------------------------------------
-function KasperLootBoxGame({
-  isPlaying,
-  onGameEnd,
-}: {
-  isPlaying: boolean;
-  onGameEnd: (item: any) => void;
-}) {
+function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void }) {
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
 
@@ -355,15 +321,18 @@ function KasperLootBoxGame({
   const itemWidth = 120;
   const reelVisibleCount = 5;
 
-  // We'll animate with multi-phase keyframes for a spinning effect
-  const [keyframesX, setKeyframesX] = useState<number[]>([0]);
-  const [animationDuration, setAnimationDuration] = useState(0);
+  // We'll use a simple one-phase animation from x=0 to finalOffset
+  const [finalOffset, setFinalOffset] = useState(0);
 
   useEffect(() => {
     if (isPlaying) {
       setShowResultOverlay(false);
-
-      // 1) Probability logic
+      // Generate 39 random items
+      const randomCount = 39;
+      const randomReel = Array.from({ length: randomCount }, () =>
+        lootItems[Math.floor(Math.random() * lootItems.length)]
+      );
+      // Insert winning item at index 38 so total length becomes 40
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
@@ -375,83 +344,51 @@ function KasperLootBoxGame({
       } else {
         chosenTier = "phantasmal-phantom";
       }
-
-      // 2) Pick winning item
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
+      // Insert winning item at index 38
+      randomReel.splice(38, 0, winningItem);
+      setReelItems(randomReel);
 
-      // 3) Build a large reel, say 200 random items
-      const randomCount = 200;
-      const randomReel = Array.from({ length: randomCount }, () =>
-        lootItems[Math.floor(Math.random() * lootItems.length)]
-      );
+      // Calculate final offset so that item at index 38 is centered in a 5-item view.
+      // Center index = 2 (0-indexed), so finalOffset = -((38 - 2) * itemWidth)
+      const targetOffset = -((38 - 2) * itemWidth);
+      setFinalOffset(targetOffset);
 
-      // Place winning item near the end, e.g. index 195
-      const winningIndex = 195;
-      const finalReel = [...randomReel];
-      finalReel.splice(winningIndex, 0, winningItem);
-
-      // Append a few items so no gap
-      finalReel.push(
-        ...Array.from({ length: reelVisibleCount }, () => lootItems[Math.floor(Math.random() * lootItems.length)])
-      );
-      setReelItems(finalReel);
-
-      // 4) Multi-phase animation keyframes
-      // We want a few "loops" quickly, then decelerate to final offset.
-      // Let's define:
-      //  - Phase 1: from x=0 to x=-6000 quickly (simulate spinning multiple times)
-      //  - Phase 2: from x=-6000 to finalOffset (slower deceleration)
-      // total 3 seconds
-
-      // final offset so item at index=195 is centered => offset = -(195 - 2)* itemWidth
-      const finalOffset = -((winningIndex - 2) * itemWidth);
-
-      // We'll define 3 keyframes:
-      // x: [0, -6000, finalOffset]
-      // times: [0, 0.7, 1] => 70% of time to spin, last 30% decelerate
-      // total duration = 3 seconds
-      const spinKeyframes = [0, -6000, finalOffset];
-      setKeyframesX(spinKeyframes);
-      setAnimationDuration(3);
-
-      // We'll set a timer to call onGameEnd once the animation finishes
-      const spinTimer = setTimeout(() => {
+      // Animate continuously for 2 seconds from x=0 to targetOffset.
+      // Using a keyframe with 2 phases (quick spin then deceleration)
+      // Here we'll simply use a smooth easeInOut over 2 seconds.
+      // We use setTimeout to call onGameEnd once finished.
+      const spinDuration = 2; // seconds
+      const timer = setTimeout(() => {
         onGameEnd(winningItem);
         setShowResultOverlay(true);
-      }, 3000);
-
-      return () => clearTimeout(spinTimer);
+      }, spinDuration * 1000);
+      return () => clearTimeout(timer);
     } else {
-      // Reset
       setReelItems([]);
-      setKeyframesX([0]);
-      setAnimationDuration(0);
+      setFinalOffset(0);
       setShowResultOverlay(false);
     }
-  }, [isPlaying, onGameEnd]);
+  }, [isPlaying, onGameEnd, itemWidth]);
 
   return (
     <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      {/* The reel container. We'll animate the X position with multi-phase keyframes */}
+      {/* Reel Animation */}
       <motion.div
         className="flex"
         initial={{ x: 0 }}
-        animate={{ x: keyframesX }}
-        transition={{
-          duration: animationDuration,
-          times: [0, 0.7, 1], // 70% spin, 30% decelerate
-          ease: "easeInOut",
-        }}
+        animate={{ x: finalOffset }}
+        transition={{ duration: 2, ease: "easeInOut" }}
       >
-        {reelItems.map((item, i) => (
-          <div key={i} style={{ width: itemWidth, height: itemWidth, padding: "5px" }}>
+        {reelItems.map((item, idx) => (
+          <div key={idx} style={{ width: itemWidth, height: itemWidth, padding: "5px" }}>
             <Image src={item.image} alt={item.name} width={itemWidth - 10} height={itemWidth - 10} />
           </div>
         ))}
       </motion.div>
 
-      {/* Overlay after the reel stops */}
+      {/* Overlay after reel stops */}
       <AnimatePresence>
         {showResultOverlay && reelItems.length > 0 && (
           <motion.div
@@ -460,24 +397,23 @@ function KasperLootBoxGame({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* The winning item is at index 195 if we placed it there */}
             <div className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs">
               <Image
-                src={reelItems[195].image}
-                alt={reelItems[195].name}
+                src={reelItems[38].image}
+                alt={reelItems[38].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
               />
               <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-white">
-                {reelItems[195].name}{" "}
+                {reelItems[38].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[195].tier.replace("-", " ")})
+                  ({reelItems[38].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-teal-50 mt-2">
-                You won <strong>{reelItems[195].reward} KAS</strong>
+                You won <strong>{reelItems[38].reward} KAS</strong>
               </p>
             </div>
           </motion.div>
@@ -570,7 +506,6 @@ function KasperLootBoxControls({
             </div>
           </div>
 
-          {/* Display result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
@@ -583,7 +518,6 @@ function KasperLootBoxControls({
               </div>
             )}
 
-            {/* Button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-teal-400 text-black hover:bg-teal-300"
@@ -605,7 +539,6 @@ function KasperLootBoxControls({
         </div>
       </Card>
 
-      {/* Error Popup */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
