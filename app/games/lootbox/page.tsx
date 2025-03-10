@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -198,11 +198,7 @@ function KasperLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <WalletConnection />
           </motion.div>
         </header>
@@ -270,10 +266,7 @@ function KasperLootBoxContent() {
             {lootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
               return (
-                <div
-                  key={item.id}
-                  className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}
-                >
+                <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold">{item.name}</p>
                   <p className="capitalize">{item.tier.replace("-", " ")}</p>
@@ -353,9 +346,10 @@ function KasperLootBoxGame({
   // Each item is 120px wide; we show 5 items at once
   const itemWidth = 120;
   const reelVisibleCount = 5;
-  // We'll animate with a simple easing transition
+  // We'll animate with a continuous easing transition
   const [animationTarget, setAnimationTarget] = useState(0);
   const [animationDuration, setAnimationDuration] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isPlaying) {
@@ -389,30 +383,25 @@ function KasperLootBoxGame({
       });
       setReelItems(newReel);
 
-      // 4) Calculate final offset so that the winning item is centered in the 5-item viewport.
-      // The center in a 5-item viewport is at index Math.floor(5/2) = 2.
-      const centerIndex = Math.floor(reelVisibleCount / 2);
-      const finalOffset = -((winningIndex - centerIndex) * itemWidth);
+      // 4) Compute final offset using the container's width.
+      // Wait for the container to be available.
+      const containerWidth = containerRef.current?.offsetWidth || 600;
+      const containerCenter = containerWidth / 2;
+      // The center of the winning item is at: (winningIndex * itemWidth + itemWidth/2)
+      const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
+      const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
-
-      // Call onGameEnd after the animation finishes.
-      const spinTimer = setTimeout(() => {
-        onGameEnd(winningItem);
-        setShowResultOverlay(true);
-      }, 3000);
-
-      return () => clearTimeout(spinTimer);
     } else {
       setReelItems([]);
       setAnimationTarget(0);
       setAnimationDuration(0);
       setShowResultOverlay(false);
     }
-  }, [isPlaying, onGameEnd]);
+  }, [isPlaying]);
 
   return (
-    <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
       {/* Reel container: flex layout ensures all 40 items are displayed consecutively */}
       <motion.div
         className="flex"
@@ -421,6 +410,13 @@ function KasperLootBoxGame({
         transition={{
           duration: animationDuration,
           ease: "easeOut",
+        }}
+        onAnimationComplete={() => {
+          // When the animation finishes, trigger game end and show the result overlay.
+          if (reelItems.length > 0) {
+            onGameEnd(reelItems[Math.floor(reelItems.length / 2)]);
+            setShowResultOverlay(true);
+          }
         }}
       >
         {reelItems.map((item, i) => (
