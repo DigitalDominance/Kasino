@@ -338,11 +338,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       });
       setReelItems(newReel);
 
-      // Compute offset: center the winning image in the container.
+      // Compute offset: center the winning image and shift it left by half the item width.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter;
+      const finalOffset = containerCenter - winningItemCenter - (itemWidth / 2);
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     } else {
@@ -362,9 +362,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition={{ duration: animationDuration, ease: "easeOut" }}
         onAnimationComplete={() => {
           if (reelItems.length > 0) {
-            // Pause on the winning item; then trigger overlay with pop effect.
-            onGameEnd(reelItems[Math.floor(reelItems.length / 2)]);
-            setShowResultOverlay(true);
+            // Wait 2 seconds before ending the game and showing the overlay.
+            setTimeout(() => {
+              onGameEnd(reelItems[Math.floor(reelItems.length / 2)]);
+              setShowResultOverlay(true);
+            }, 2000);
           }
         }}
       >
