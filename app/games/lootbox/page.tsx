@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -157,6 +157,7 @@ function KasperLootBoxContent() {
   //  End Game
   // ------------------------------
   const handleGameEnd = async (item: any) => {
+    // All items are considered a win
     setWinItem(item);
     setGameResult("You Win");
     setWinAmount(item.reward);
@@ -197,7 +198,11 @@ function KasperLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <WalletConnection />
           </motion.div>
         </header>
@@ -265,7 +270,10 @@ function KasperLootBoxContent() {
             {lootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
               return (
-                <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
+                <div
+                  key={item.id}
+                  className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}
+                >
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold">{item.name}</p>
                   <p className="capitalize">{item.tier.replace("-", " ")}</p>
@@ -347,14 +355,15 @@ function KasperLootBoxGame({
   const itemWidth = 120;
   const reelVisibleCount = 5;
 
-  // We'll animate with Framer Motion directly
-  const [animationX, setAnimationX] = useState(0);
+  // We'll animate with multi-phase keyframes for a spinning effect
+  const [keyframesX, setKeyframesX] = useState<number[]>([0]);
+  const [animationDuration, setAnimationDuration] = useState(0);
 
   useEffect(() => {
     if (isPlaying) {
       setShowResultOverlay(false);
 
-      // 1) Determine the winning tier
+      // 1) Probability logic
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
@@ -367,58 +376,73 @@ function KasperLootBoxGame({
         chosenTier = "phantasmal-phantom";
       }
 
-      // 2) Pick a winning item from that tier
+      // 2) Pick winning item
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // 3) Build a large reel of 60 random items
-      //    Then insert the winning item near the end (index 58).
-      const randomCount = 60;
+      // 3) Build a large reel, say 200 random items
+      const randomCount = 200;
       const randomReel = Array.from({ length: randomCount }, () =>
         lootItems[Math.floor(Math.random() * lootItems.length)]
       );
-      const winningIndex = 58; // place the winning item near the end
+
+      // Place winning item near the end, e.g. index 195
+      const winningIndex = 195;
       const finalReel = [...randomReel];
       finalReel.splice(winningIndex, 0, winningItem);
 
-      // 4) Append a few items so there's no gap
+      // Append a few items so no gap
       finalReel.push(
         ...Array.from({ length: reelVisibleCount }, () => lootItems[Math.floor(Math.random() * lootItems.length)])
       );
       setReelItems(finalReel);
 
-      // 5) Calculate final offset
-      //    The winning item is at index 58, we want it in the center (index 2 of the visible 5)
-      //    offset = -(58 - 2)* itemWidth
-      const finalOffset = -(winningIndex - Math.floor(reelVisibleCount / 2)) * itemWidth;
-      setAnimationX(0); // start from x=0
-      // Animate from x=0 to x= finalOffset over 2s
-      const duration = 2;
+      // 4) Multi-phase animation keyframes
+      // We want a few "loops" quickly, then decelerate to final offset.
+      // Let's define:
+      //  - Phase 1: from x=0 to x=-6000 quickly (simulate spinning multiple times)
+      //  - Phase 2: from x=-6000 to finalOffset (slower deceleration)
+      // total 3 seconds
 
-      // We'll use a short setTimeout to end the game once the reel is at finalOffset
-      // Then show the overlay
+      // final offset so item at index=195 is centered => offset = -(195 - 2)* itemWidth
+      const finalOffset = -((winningIndex - 2) * itemWidth);
+
+      // We'll define 3 keyframes:
+      // x: [0, -6000, finalOffset]
+      // times: [0, 0.7, 1] => 70% of time to spin, last 30% decelerate
+      // total duration = 3 seconds
+      const spinKeyframes = [0, -6000, finalOffset];
+      setKeyframesX(spinKeyframes);
+      setAnimationDuration(3);
+
+      // We'll set a timer to call onGameEnd once the animation finishes
       const spinTimer = setTimeout(() => {
         onGameEnd(winningItem);
         setShowResultOverlay(true);
-      }, duration * 1000);
+      }, 3000);
 
       return () => clearTimeout(spinTimer);
     } else {
       // Reset
       setReelItems([]);
-      setAnimationX(0);
+      setKeyframesX([0]);
+      setAnimationDuration(0);
       setShowResultOverlay(false);
     }
   }, [isPlaying, onGameEnd]);
 
   return (
     <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      {/* The reel container. We'll animate the X position with framer-motion. */}
+      {/* The reel container. We'll animate the X position with multi-phase keyframes */}
       <motion.div
         className="flex"
         initial={{ x: 0 }}
-        animate={{ x: animationX }}
-        transition={{ duration: 2, ease: "easeInOut" }}
+        animate={{ x: keyframesX }}
+        transition={{
+          duration: animationDuration,
+          times: [0, 0.7, 1], // 70% spin, 30% decelerate
+          ease: "easeInOut",
+        }}
       >
         {reelItems.map((item, i) => (
           <div key={i} style={{ width: itemWidth, height: itemWidth, padding: "5px" }}>
@@ -436,24 +460,24 @@ function KasperLootBoxGame({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* The winning item is at index 58 if we placed it there */}
+            {/* The winning item is at index 195 if we placed it there */}
             <div className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs">
               <Image
-                src={reelItems[58].image}
-                alt={reelItems[58].name}
+                src={reelItems[195].image}
+                alt={reelItems[195].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
               />
               <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-white">
-                {reelItems[58].name}{" "}
+                {reelItems[195].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[58].tier.replace("-", " ")})
+                  ({reelItems[195].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-teal-50 mt-2">
-                You won <strong>{reelItems[58].reward} KAS</strong>
+                You won <strong>{reelItems[195].reward} KAS</strong>
               </p>
             </div>
           </motion.div>
@@ -546,6 +570,7 @@ function KasperLootBoxControls({
             </div>
           </div>
 
+          {/* Display result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
@@ -558,6 +583,7 @@ function KasperLootBoxControls({
               </div>
             )}
 
+            {/* Button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-teal-400 text-black hover:bg-teal-300"
@@ -579,6 +605,7 @@ function KasperLootBoxControls({
         </div>
       </Card>
 
+      {/* Error Popup */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
