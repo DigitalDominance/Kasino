@@ -17,23 +17,23 @@ import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 
-// -----------------------------------
-//  Font
-// -----------------------------------
+/* ------------------------------------------------------------------
+   Font
+-------------------------------------------------------------------*/
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
 /* ------------------------------------------------------------------
-   Updated Loot Items Distribution
+   Loot Items Distribution
    3 Common, 8 Uncommon, 3 Rare, 1 Legendary
    Tiers:
      - haunted-wisp => 1 KAS
      - ectoplasmic-echo => 25 KAS
      - spectral-surge => 96 KAS
      - phantasmal-phantom => 6250 KAS
-------------------------------------------------------------------- */
+-------------------------------------------------------------------*/
 export const lootItems = [
   // Tier 1: Haunted Wisp (Common) – 3 items, 1 KAS each
   { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder.svg" },
@@ -59,9 +59,9 @@ export const lootItems = [
   { id: 15, name: "Phantasmal Phantom", tier: "phantasmal-phantom", reward: 6250, image: "/placeholder7.svg" },
 ];
 
-// -----------------------------------
-//  Rarity Styling
-// -----------------------------------
+/* ------------------------------------------------------------------
+   Rarity Styling
+-------------------------------------------------------------------*/
 function getRarityStyle(tier: string) {
   switch (tier) {
     case "haunted-wisp":
@@ -77,11 +77,14 @@ function getRarityStyle(tier: string) {
   }
 }
 
-export default function LootBoxGamePage() {
-  return <LootBoxContent />;
+/* ------------------------------------------------------------------
+   Main Page Component
+-------------------------------------------------------------------*/
+export default function KasperLootBoxGamePage() {
+  return <KasperLootBoxContent />;
 }
 
-function LootBoxContent() {
+function KasperLootBoxContent() {
   const { isConnected, balance } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
@@ -94,11 +97,11 @@ function LootBoxContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Loot Box cost is fixed at 25 KAS.
+  // Kasper Loot Box cost is fixed at 25 KAS.
   const lootBoxCost = 25;
 
   // ------------------------------
-  //   Start Game
+  //  Start Game
   // ------------------------------
   const handleOpenLootBox = async () => {
     if (lootBoxCost > balance) {
@@ -131,7 +134,7 @@ function LootBoxContent() {
       setDepositTxid(txidString);
 
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "Loot Box",
+        gameName: "Kasper Loot Box",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: lootBoxCost,
@@ -145,17 +148,16 @@ function LootBoxContent() {
       }
       setIsPlaying(true);
     } catch (error: any) {
-      console.error("Error starting loot box game:", error);
+      console.error("Error starting Kasper Loot Box game:", error);
       alert("Error starting game: " + error.message);
     }
   };
 
   // ------------------------------
-  //   End Game
+  //  End Game
   // ------------------------------
   const handleGameEnd = async (item: any) => {
     setWinItem(item);
-    // If the item is "Haunted Wisp", treat it as a loss
     const isWin = item.tier !== "haunted-wisp";
     const resultText = isWin ? "You Win" : "You Lose";
     const winAmt = isWin ? item.reward : 0;
@@ -172,13 +174,13 @@ function LootBoxContent() {
           winAmount: winAmt,
         });
       } catch (error) {
-        console.error("Error ending game on backend:", error);
+        console.error("Error ending Kasper Loot Box game on backend:", error);
       }
     }
   };
 
   // ------------------------------
-  //   Reset
+  //  Reset
   // ------------------------------
   const resetGame = () => {
     setIsPlaying(false);
@@ -229,13 +231,13 @@ function LootBoxContent() {
           </p>
         )}
 
-        {/* Main Game & Controls (Bigger & above traits) */}
+        {/* Main Game & Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-          {/* The Loot Box Game */}
+          {/* Kasper Loot Box Game */}
           <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-teal-300">Loot Box</h2>
+                <h2 className="text-2xl font-bold text-teal-300">Kasper Loot Box</h2>
                 <Button variant="ghost" size="sm" className="text-teal-300" onClick={resetGame}>
                   Reset
                 </Button>
@@ -243,17 +245,17 @@ function LootBoxContent() {
               <div className="relative w-full flex-grow flex items-center justify-center">
                 {/* Larger reel container */}
                 <div className="relative w-full max-w-[600px] h-72 mx-auto overflow-hidden">
-                  <LootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                  {/* Glass panel overlays on the sides */}
-                  <div className="absolute top-0 bottom-0 left-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                  <div className="absolute top-0 bottom-0 right-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                  <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                  {/* Wider glass panel overlays on the sides */}
+                  <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                  <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
                 </div>
               </div>
             </div>
           </Card>
 
           {/* Controls */}
-          <LootBoxControls
+          <KasperLootBoxControls
             betAmount={lootBoxCost.toString()}
             isPlaying={isPlaying}
             isWalletConnected={isConnected}
@@ -265,10 +267,10 @@ function LootBoxContent() {
           />
         </div>
 
-        {/* Traits Layout Card (Smaller) */}
+        {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">
-            Loot Box Traits &amp; Rewards
+            Kasper Loot Box Traits &amp; Rewards
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {lootItems.map((item) => {
@@ -299,7 +301,7 @@ function LootBoxContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Loot Box
+            Kasper Loot Box
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-teal-200 mb-4">
@@ -345,9 +347,9 @@ function LootBoxContent() {
 }
 
 /* ------------------------------------------------------------------
-   Loot Box Game Component
+   Kasper Loot Box Game Component
 -------------------------------------------------------------------*/
-function LootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void }) {
+function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void }) {
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [animationX, setAnimationX] = useState(0);
   const itemWidth = 120; // Each item is 120px wide
@@ -359,9 +361,8 @@ function LootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: 
     if (isPlaying) {
       setShowResultOverlay(false);
 
-      // Probability logic remains the same:
-      // 50% for haunted-wisp, 40% for ectoplasmic-echo,
-      // ~9.9% for spectral-surge, 0.1% for phantasmal-phantom.
+      // Probability logic:
+      // 50% haunted-wisp, 40% ectoplasmic-echo, ~9.9% spectral-surge, 0.1% phantasmal-phantom
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
@@ -413,6 +414,7 @@ function LootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: 
 
   return (
     <div className="w-full h-full overflow-hidden relative">
+      {/* Reel Animation */}
       <motion.div
         className="flex"
         animate={{ x: animationX }}
@@ -433,18 +435,20 @@ function LootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: 
       <AnimatePresence>
         {showResultOverlay && reelItems[40] && (
           <motion.div
-            className="absolute inset-0 flex items-center justify-center bg-black/60"
+            className="absolute inset-0 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="text-center p-4 rounded bg-teal-800/80">
-              <p className="text-2xl font-bold text-teal-200">You Got:</p>
-              <p className="text-xl text-teal-100">
-                {reelItems[40].name} ({reelItems[40].tier.replace("-", " ")})
+            {/* Glowing Container for the Winning Item */}
+            <div className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs">
+              <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
+              <p className="text-xl font-bold text-white">
+                {reelItems[40].name}{" "}
+                <span className="text-base text-teal-200">({reelItems[40].tier.replace("-", " ")})</span>
               </p>
-              <p className="text-sm text-teal-100">
-                Payout: {reelItems[40].reward} KAS
+              <p className="text-lg text-teal-50 mt-2">
+                You won <strong>{reelItems[40].reward} KAS</strong>
               </p>
             </div>
           </motion.div>
@@ -455,9 +459,9 @@ function LootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: 
 }
 
 /* ------------------------------------------------------------------
-   Loot Box Controls Component
+   Kasper Loot Box Controls Component
 -------------------------------------------------------------------*/
-function LootBoxControls({
+function KasperLootBoxControls({
   betAmount,
   isPlaying,
   isWalletConnected,
@@ -501,7 +505,7 @@ function LootBoxControls({
       return;
     }
     if (Number(betAmount) !== 25) {
-      showError("Loot Box cost is fixed at 25 KAS");
+      showError("Kasper Loot Box cost is fixed at 25 KAS");
       return;
     }
     if (25 > balance) {
@@ -517,7 +521,7 @@ function LootBoxControls({
       <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-teal-300">Cost per Loot Box (KAS)</label>
+            <label className="text-sm text-teal-300">Cost per Kasper Loot Box (KAS)</label>
             <div className="relative">
               <input
                 type="number"
@@ -550,7 +554,7 @@ function LootBoxControls({
               </div>
             )}
 
-            {/* Button */}
+            {/* Open Button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-teal-400 text-black hover:bg-teal-300"
@@ -560,8 +564,8 @@ function LootBoxControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Open Loot Box (${cooldown}s)`
-                  : "Open Loot Box"}
+                  ? `Open Kasper Loot Box (${cooldown}s)`
+                  : "Open Kasper Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
