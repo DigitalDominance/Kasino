@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
@@ -34,9 +36,9 @@ const montserrat = Montserrat({
 // ---------------------------------------------------------
 export const lootItems = [
   // Tier 1: Haunted Wisp (Common) – 3 items, 1 KAS each
-  { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder.svg" },
-  { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder2.svg" },
-  { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder3.svg" },
+  { id: 1,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder.svg" },
+  { id: 2,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder2.svg" },
+  { id: 3,  name: "Haunted Wisp", tier: "haunted-wisp", reward: 1,   image: "/placeholder3.svg" },
 
   // Tier 2: Ectoplasmic Echo (Uncommon) – 6 items, 25 KAS each
   { id: 4,  name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
@@ -98,6 +100,9 @@ function KasperLootBoxContent() {
   // Kasper Loot Box cost is fixed at 25 KAS.
   const lootBoxCost = 25;
 
+  // ------------------------------
+  //  Start Game
+  // ------------------------------
   const handleOpenLootBox = async () => {
     if (lootBoxCost > balance) {
       alert("Insufficient balance");
@@ -148,7 +153,11 @@ function KasperLootBoxContent() {
     }
   };
 
+  // ------------------------------
+  //  End Game
+  // ------------------------------
   const handleGameEnd = async (item: any) => {
+    // All items are considered a win
     setWinItem(item);
     setGameResult("You Win");
     setWinAmount(item.reward);
@@ -167,6 +176,9 @@ function KasperLootBoxContent() {
     }
   };
 
+  // ------------------------------
+  //  Reset
+  // ------------------------------
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
@@ -186,11 +198,16 @@ function KasperLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <WalletConnection />
           </motion.div>
         </header>
 
+        {/* Deposit TXID */}
         {depositTxid && (
           <p className="mb-4 text-sm text-gray-300">
             Deposit TXID:{" "}
@@ -246,12 +263,17 @@ function KasperLootBoxContent() {
 
         {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">Kasper Loot Box Traits & Rewards</h3>
+          <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">
+            Kasper Loot Box Traits &amp; Rewards
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {lootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
               return (
-                <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
+                <div
+                  key={item.id}
+                  className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}
+                >
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold">{item.name}</p>
                   <p className="capitalize">{item.tier.replace("-", " ")}</p>
@@ -319,77 +341,104 @@ function KasperLootBoxContent() {
 // ---------------------------------------------------------
 // Kasper Loot Box Game Component
 // ---------------------------------------------------------
-function KasperLootBoxGame({ isPlaying, onGameEnd }) {
-  const [reelItems, setReelItems] = useState([]);
+function KasperLootBoxGame({
+  isPlaying,
+  onGameEnd,
+}: {
+  isPlaying: boolean;
+  onGameEnd: (item: any) => void;
+}) {
+  const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
-  const [finalOffset, setFinalOffset] = useState(0);
-  const itemWidth = 120; // Each item is 120px wide
-  const reelLength = 40; // Fixed reel length
-  const visibleCount = 5; // 5 items visible at once
+  // Each item is 120px wide; we show 5 items at once
+  const itemWidth = 120;
+  const reelVisibleCount = 5;
+  // We'll animate with a simple easing transition
+  const [animationTarget, setAnimationTarget] = useState(0);
+  const [animationDuration, setAnimationDuration] = useState(0);
 
   useEffect(() => {
     if (isPlaying) {
       setShowResultOverlay(false);
 
-      // Build a reel with (reelLength - 1) random items
-      const randomReel = Array.from({ length: reelLength - 1 }, () =>
-        lootItems[Math.floor(Math.random() * lootItems.length)]
-      );
-
-      // Determine winning tier and item
+      // 1) Determine winning tier based on probability
       const r = Math.random();
-      let chosenTier;
-      if (r < 0.5) chosenTier = "haunted-wisp";
-      else if (r < 0.9) chosenTier = "ectoplasmic-echo";
-      else if (r < 0.999) chosenTier = "spectral-surge";
-      else chosenTier = "phantasmal-phantom";
+      let chosenTier: string;
+      if (r < 0.5) {
+        chosenTier = "haunted-wisp";
+      } else if (r < 0.9) {
+        chosenTier = "ectoplasmic-echo";
+      } else if (r < 0.999) {
+        chosenTier = "spectral-surge";
+      } else {
+        chosenTier = "phantasmal-phantom";
+      }
 
-      const tierItems = lootItems.filter(item => item.tier === chosenTier);
+      // 2) Pick winning item from chosen tier
+      const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Insert the winning item at index reelLength - 2 (index 38 if reelLength is 40)
-      const winningIndex = reelLength - 2;
-      randomReel.splice(winningIndex, 0, winningItem);
-      // Now randomReel length is exactly reelLength (40 items)
-      setReelItems(randomReel);
+      // 3) Build a reel of exactly 40 items and force the winning item at the center.
+      const reelLength = 40;
+      const winningIndex = Math.floor(reelLength / 2); // e.g., index 20 for 40 items
+      const newReel = Array.from({ length: reelLength }, (_, idx) => {
+        if (idx === winningIndex) {
+          return winningItem;
+        }
+        return lootItems[Math.floor(Math.random() * lootItems.length)];
+      });
+      setReelItems(newReel);
 
-      // Calculate final offset so that the winning item (index 38) is centered
-      // With 5 visible items, center index is 2 (0-indexed)
-      const targetOffset = -((winningIndex - 2) * itemWidth);
-      setFinalOffset(targetOffset);
+      // 4) Calculate final offset so that the winning item is centered in the 5-item viewport.
+      // The center in a 5-item viewport is at index Math.floor(5/2) = 2.
+      const centerIndex = Math.floor(reelVisibleCount / 2);
+      const finalOffset = -((winningIndex - centerIndex) * itemWidth);
+      setAnimationTarget(finalOffset);
+      setAnimationDuration(3);
 
-      // Animate from x=0 to targetOffset over 2 seconds
-      const timer = setTimeout(() => {
+      // Call onGameEnd after the animation finishes.
+      const spinTimer = setTimeout(() => {
         onGameEnd(winningItem);
         setShowResultOverlay(true);
-      }, 2000);
-      return () => clearTimeout(timer);
+      }, 3000);
+
+      return () => clearTimeout(spinTimer);
     } else {
       setReelItems([]);
-      setFinalOffset(0);
+      setAnimationTarget(0);
+      setAnimationDuration(0);
       setShowResultOverlay(false);
     }
-  }, [isPlaying, onGameEnd, itemWidth]);
+  }, [isPlaying, onGameEnd]);
 
   return (
     <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      {/* Reel Animation */}
+      {/* Reel container: flex layout ensures all 40 items are displayed consecutively */}
       <motion.div
         className="flex"
         initial={{ x: 0 }}
-        animate={{ x: finalOffset }}
-        transition={{ duration: 2, ease: "easeInOut" }}
+        animate={{ x: animationTarget }}
+        transition={{
+          duration: animationDuration,
+          ease: "easeOut",
+        }}
       >
         {reelItems.map((item, i) => (
           <div key={i} style={{ width: itemWidth, height: itemWidth, padding: "5px" }}>
-            <Image src={item.image} alt={item.name} width={itemWidth - 10} height={itemWidth - 10} />
+            <Image
+              src={item.image}
+              alt={item.name}
+              width={itemWidth - 10}
+              height={itemWidth - 10}
+              loading="eager"
+            />
           </div>
         ))}
       </motion.div>
 
       {/* Overlay after the reel stops */}
       <AnimatePresence>
-        {showResultOverlay && reelItems.length === reelLength && (
+        {showResultOverlay && reelItems.length > 0 && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
@@ -398,21 +447,22 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }) {
           >
             <div className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs">
               <Image
-                src={reelItems[winningIndex].image}
-                alt={reelItems[winningIndex].name}
+                src={reelItems[Math.floor(reelItems.length / 2)].image}
+                alt={reelItems[Math.floor(reelItems.length / 2)].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
+                loading="eager"
               />
               <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-white">
-                {reelItems[winningIndex].name}{" "}
+                {reelItems[Math.floor(reelItems.length / 2)].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[winningIndex].tier.replace("-", " ")})
+                  ({reelItems[Math.floor(reelItems.length / 2)].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-teal-50 mt-2">
-                You won <strong>{reelItems[winningIndex].reward} KAS</strong>
+                You won <strong>{reelItems[Math.floor(reelItems.length / 2)].reward} KAS</strong>
               </p>
             </div>
           </motion.div>
@@ -505,6 +555,7 @@ function KasperLootBoxControls({
             </div>
           </div>
 
+          {/* Display result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
@@ -517,9 +568,18 @@ function KasperLootBoxControls({
               </div>
             )}
 
+            {/* Button */}
             {!isPlaying ? (
-              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" onClick={handleOpenBox} disabled={!isWalletConnected || cooldown > 0}>
-                {!isWalletConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Open Kasper Loot Box (${cooldown}s)` : "Open Kasper Loot Box"}
+              <Button
+                className="w-full bg-teal-400 text-black hover:bg-teal-300"
+                onClick={handleOpenBox}
+                disabled={!isWalletConnected || cooldown > 0}
+              >
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Open Kasper Loot Box (${cooldown}s)`
+                  : "Open Kasper Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
@@ -530,9 +590,16 @@ function KasperLootBoxControls({
         </div>
       </Card>
 
+      {/* Error Popup */}
       <AnimatePresence>
         {errorMessage && (
-          <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }} transition={{ duration: 0.5 }} className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg">
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
+          >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
               <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
