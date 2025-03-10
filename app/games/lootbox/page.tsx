@@ -384,7 +384,6 @@ function KasperLootBoxGame({
       setReelItems(newReel);
 
       // 4) Compute final offset using the container's width.
-      // Wait for the container to be available.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       // The center of the winning item is at: (winningIndex * itemWidth + itemWidth/2)
@@ -449,6 +448,10 @@ function KasperLootBoxGame({
                 height={80}
                 className="mx-auto mb-2"
                 loading="eager"
+                style={{
+                  filter:
+                    "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                }}
               />
               <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-white">
