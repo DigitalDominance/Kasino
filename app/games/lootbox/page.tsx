@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useLayoutEffect, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -16,7 +16,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 
 // ---------------------------------------------------------
-// Font (Fixed)
+// Font
 // ---------------------------------------------------------
 const montserrat = Montserrat({
   weight: "700",
@@ -49,20 +49,31 @@ export const lootItems = [
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
-    case "wraiths-whispers": return "border-blue-500 bg-blue-900/30";
-    case "phantom-echoes": return "border-indigo-500 bg-indigo-900/30";
-    case "spectral-symphony": return "border-purple-500 bg-purple-900/30";
-    case "kaspa-legend": return "border-pink-500 bg-pink-900/30";
-    default: return "border-gray-500 bg-gray-800/30";
+    case "wraiths-whispers":
+      return "border-blue-500 bg-blue-900/30";
+    case "phantom-echoes":
+      return "border-indigo-500 bg-indigo-900/30";
+    case "spectral-symphony":
+      return "border-purple-500 bg-purple-900/30";
+    case "kaspa-legend":
+      return "border-pink-500 bg-pink-900/30";
+    default:
+      return "border-gray-500 bg-gray-800/30";
   }
 }
+
 function getRarityOverlayClass(tier: string) {
   switch (tier) {
-    case "wraiths-whispers": return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
-    case "phantom-echoes": return "bg-gradient-to-br from-indigo-400/30 to-indigo-900/30";
-    case "spectral-symphony": return "bg-gradient-to-br from-purple-400/30 to-purple-900/30";
-    case "kaspa-legend": return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
-    default: return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
+    case "wraiths-whispers":
+      return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
+    case "phantom-echoes":
+      return "bg-gradient-to-br from-indigo-400/30 to-indigo-900/30";
+    case "spectral-symphony":
+      return "bg-gradient-to-br from-purple-400/30 to-purple-900/30";
+    case "kaspa-legend":
+      return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
+    default:
+      return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
   }
 }
 
@@ -81,6 +92,7 @@ function KasperLootBoxContent() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
@@ -108,10 +120,13 @@ function KasperLootBoxContent() {
         alert("Treasury address not configured");
         return;
       }
-      const depositTx = await window.kasware.sendKaspa(chosenTreasury, lootBoxCost * 1e8, { priorityFee: 10000 });
+      const depositTx = await window.kasware.sendKaspa(chosenTreasury, lootBoxCost * 1e8, {
+        priorityFee: 10000,
+      });
       const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
+
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kasper Loot Box",
         uniqueHash,
@@ -180,7 +195,11 @@ function KasperLootBoxContent() {
             Deposit TXID:{" "}
             <a
               className="txid-link"
-              style={{ background: "linear-gradient(90deg, #B6B6B6, #49EACB)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              style={{
+                background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
               href={`https://kas.fyi/transaction/${depositTxid}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -224,7 +243,9 @@ function KasperLootBoxContent() {
 
         {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Kasper Loot Box Traits & Rewards</h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
+            Kasper Loot Box Traits &amp; Rewards
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {lootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
@@ -246,22 +267,44 @@ function KasperLootBoxContent() {
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-            style={{ backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)", backgroundSize: "200% 200%" }}
+            style={{
+              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
+              backgroundSize: "200% 200%",
+            }}
           >
             Kasper Loot Box
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white-200 mb-4">
-            For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS), a potent <strong>Arcane Apparition</strong> (90 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
+            For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS),
+            a potent <strong>Arcane Apparition</strong> (90 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
-            <motion.a href="https://x.com/KasenOnKaspa" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-blue-400 hover:text-blue-300">
+            <motion.a
+              href="https://x.com/KasenOnKaspa"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
               <FaTwitter />
             </motion.a>
-            <motion.a href="https://t.co/W4YDM1cUpY" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-blue-400 hover:text-blue-300">
+            <motion.a
+              href="https://t.co/W4YDM1cUpY"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
               <FaTelegramPlane />
             </motion.a>
-            <motion.a href="https://kasenonkas.com" target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.2 }} className="text-blue-400 hover:text-blue-300">
+            <motion.a
+              href="https://kasenonkas.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
               <FaGlobe />
             </motion.a>
           </div>
@@ -273,68 +316,78 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Single Spin: 15 Items, Stop on Index 13 -> Changed to Index 8)
+// Kasper Loot Box Game Component (Extended Reel Animation)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
+  const [winningPositionState, setWinningPositionState] = useState<number | null>(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Fixed dimensions: 15 images at 120px each.
   const itemWidth = 120;
   const reelLength = 15;
-  // Change: set winning image earlier by forcing it at index 8.
-  const winningIndex = 8;
+  const winningIndex = 13; // winning index within a single cycle
 
-  // Use a fixed container width of 600px so that the center is always 300px.
+  // Fixed container width (assumed to be 600px; center is 300px)
   const FIXED_CONTAINER_WIDTH = 600;
   const fixedCenter = FIXED_CONTAINER_WIDTH / 2;
 
-  // Prevent multiple spins.
   const spinTriggered = useRef(false);
 
   useLayoutEffect(() => {
     if (isPlaying && containerRef.current && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
-      // Use a minimal delay to ensure our fixed dimensions are applied.
       setTimeout(() => {
-        // Determine winning tier and image.
+        // Determine winning tier/item randomly
         const r = Math.random();
         let chosenTier =
-          r < 0.5 ? "wraiths-whispers" :
-          r < 0.9 ? "phantom-echoes" :
-          r < 0.999 ? "spectral-symphony" : "kaspa-legend";
+          r < 0.5
+            ? "wraiths-whispers"
+            : r < 0.9
+            ? "phantom-echoes"
+            : r < 0.999
+            ? "spectral-symphony"
+            : "kaspa-legend";
         const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
         const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-        // Build a reel of 15 items with the winning image at our forced index.
-        const newReel = Array.from({ length: reelLength }, (_, idx) =>
-          idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
-        );
+        // Define extra cycles to simulate multiple spins
+        const cycles = 3; // number of extra full cycles
+        const totalItems = (cycles + 1) * reelLength;
+        // Calculate the final winning position in the extended reel
+        const winningPosition = cycles * reelLength + winningIndex;
+        setWinningPositionState(winningPosition);
+
+        // Build the extended reel; in the final cycle force the winning item at winningIndex
+        const newReel = Array.from({ length: totalItems }, (_, idx) => {
+          if (idx >= cycles * reelLength && idx < (cycles + 1) * reelLength) {
+            if ((idx - cycles * reelLength) === winningIndex) {
+              return winningItem;
+            }
+          }
+          return lootItems[Math.floor(Math.random() * lootItems.length)];
+        });
         setReelItems(newReel);
 
-        // Calculate initial and final offsets based on fixed dimensions.
-        // Initial: center image at index 0.
-        // Final: center image at our winning index (8).
-        const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2); // 300 - 60 = 240px.
-        const finalOffset = fixedCenter - (winningIndex * itemWidth + itemWidth / 2); 
-        // For winningIndex = 8: 8 * 120 = 960; 960+60 = 1020; so finalOffset = 300 - 1020 = -720.
+        // Calculate offsets so that the item’s center aligns with the container center
+        const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
+        const finalOffset = fixedCenter - (winningPosition * itemWidth + itemWidth / 2);
+
         controls.set({ x: initialOffset });
         controls
           .start({
             x: finalOffset,
-            transition: { type: "tween", duration: 3, ease: "linear" },
+            transition: { type: "tween", duration: 4, ease: "linear" },
           })
           .then(() => {
-            // Pause for 1 second before showing the winning popup.
             setTimeout(() => {
-              onGameEnd(newReel[winningIndex]);
+              onGameEnd(newReel[winningPosition]);
               setShowResultOverlay(true);
             }, 1000);
           });
       }, 0);
-    } else if (!isPlaying && containerRef.current) {
+    } else if (!isPlaying) {
       spinTriggered.current = false;
       const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
       controls.set({ x: initialOffset });
@@ -342,39 +395,69 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex, fixedCenter]);
 
   return (
-    <div ref={containerRef} style={{ width: FIXED_CONTAINER_WIDTH }} className="h-full flex items-center justify-center relative overflow-hidden">
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center relative overflow-hidden"
+      style={{ width: FIXED_CONTAINER_WIDTH }}
+    >
       <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
-          <div key={i} style={{ width: itemWidth, height: itemWidth, padding: "5px", boxSizing: "border-box" }}>
+          <div
+            key={i}
+            style={{
+              width: itemWidth,
+              height: itemWidth,
+              padding: "5px",
+              boxSizing: "border-box",
+            }}
+          >
             <div className="relative w-full h-full">
-              <Image src={item.image} alt={item.name} width={itemWidth - 10} height={itemWidth - 10} loading="eager" />
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={itemWidth - 10}
+                height={itemWidth - 10}
+                loading="eager"
+              />
               <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
             </div>
           </div>
         ))}
       </motion.div>
       <AnimatePresence>
-        {showResultOverlay && reelItems.length > 0 && (
-          <motion.div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
+        {showResultOverlay && winningPositionState !== null && reelItems[winningPositionState] && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
               transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs">
-              <Image src={reelItems[winningIndex].image} alt={reelItems[winningIndex].name} width={80} height={80} className="mx-auto mb-2" loading="eager"
-                style={{ filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)" }} />
+              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
+            >
+              <Image
+                src={reelItems[winningPositionState].image}
+                alt={reelItems[winningPositionState].name}
+                width={80}
+                height={80}
+                className="mx-auto mb-2"
+                loading="eager"
+                style={{
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                }}
+              />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {reelItems[winningIndex].name}{" "}
+                {reelItems[winningPositionState].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[winningIndex].tier.replace("-", " ")})
+                  ({reelItems[winningPositionState].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[winningIndex].reward} KAS</strong>
+                You won <strong>{reelItems[winningPositionState].reward} KAS</strong>
               </p>
             </motion.div>
           </motion.div>
@@ -456,7 +539,13 @@ function KasperLootBoxControls({
                 className="bg-teal-900/50 border border-teal-500 text-white pl-8 w-full"
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp" alt="KAS" width={16} height={16} className="rounded-full" />
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
               </div>
             </div>
           </div>
@@ -472,8 +561,16 @@ function KasperLootBoxControls({
               </div>
             )}
             {!isPlaying ? (
-              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" onClick={handleOpenBox} disabled={!isWalletConnected || cooldown > 0}>
-                {!isWalletConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Open Kasper Loot Box (${cooldown}s)` : "Open Kasper Loot Box"}
+              <Button
+                className="w-full bg-teal-400 text-black hover:bg-teal-300"
+                onClick={handleOpenBox}
+                disabled={!isWalletConnected || cooldown > 0}
+              >
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Open Kasper Loot Box (${cooldown}s)`
+                  : "Open Kasper Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
@@ -494,7 +591,9 @@ function KasperLootBoxControls({
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
-              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">X</button>
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
+                X
+              </button>
             </div>
           </motion.div>
         )}
