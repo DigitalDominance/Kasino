@@ -27,29 +27,25 @@ const montserrat = Montserrat({
 // Loot Items Distribution
 // ---------------------------------------------------------
 export const lootItems = [
-  // Wraith's Whispers (Common)
   { id: 1, name: "Flickering Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common1.webp" },
   { id: 2, name: "Dusky Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common2.webp" },
   { id: 3, name: "Fading Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common3.webp" },
-  // Phantom Echoes (Uncommon)
   { id: 4, name: "Resonant Shade", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon1.webp" },
   { id: 5, name: "Echoing Spirit", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon2.webp" },
   { id: 6, name: "Haunting Pulse", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon3.webp" },
   { id: 7, name: "Vibrant Apparition", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon4.webp" },
   { id: 8, name: "Reverberating Phantom", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon5.webp" },
   { id: 9, name: "Chiming Specter", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon6.webp" },
-  // Spectral Symphony (Epic)
   { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic1.webp" },
   { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic2.webp" },
   { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic3.webp" },
   { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic4.webp" },
   { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic5.webp" },
-  // Kaspa's Legend (Legendary)
   { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
 ];
 
 // ---------------------------------------------------------
-// Rarity Styling & Overlay for Cards & Reel Items
+// Rarity Styling & Overlay
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
@@ -326,70 +322,72 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Set fixed item width and reel length
+  // Fixed image width and reel length.
   const itemWidth = 120;
   const reelLength = 15;
-  const winningIndex = 13; // Winning item is forced at index 13
+  const winningIndex = 13; // Winning image forced at index 13
+  
+  // We'll use a fixed container width since container measurements are unreliable.
+  // Here we assume a fixed container width of 600px (so its center is 300px).
+  const FIXED_CONTAINER_WIDTH = 600;
+  const fixedCenter = FIXED_CONTAINER_WIDTH / 2;
 
-  // Prevent multiple spins per game.
   const spinTriggered = useRef(false);
 
   useLayoutEffect(() => {
     if (isPlaying && containerRef.current && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
+      // Delay to ensure containerRef is ready (if needed)
+      setTimeout(() => {
+        // Determine winning tier and item.
+        const r = Math.random();
+        let chosenTier =
+          r < 0.5
+            ? "wraiths-whispers"
+            : r < 0.9
+            ? "phantom-echoes"
+            : r < 0.999
+            ? "spectral-symphony"
+            : "kaspa-legend";
+        const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
+        const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Determine winning tier and item.
-      const r = Math.random();
-      let chosenTier =
-        r < 0.5
-          ? "wraiths-whispers"
-          : r < 0.9
-          ? "phantom-echoes"
-          : r < 0.999
-          ? "spectral-symphony"
-          : "kaspa-legend";
-      const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
-      const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
+        // Build the 15-item reel with the winning item at index 13.
+        const newReel = Array.from({ length: reelLength }, (_, idx) =>
+          idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
+        );
+        setReelItems(newReel);
 
-      // Build a reel of 15 items with the winning item forced at index 13.
-      const newReel = Array.from({ length: reelLength }, (_, idx) =>
-        idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
-      );
-      setReelItems(newReel);
+        // Calculate offsets based solely on fixed dimensions.
+        // initialOffset: center image at index 0 => fixedCenter - (0*itemWidth + itemWidth/2)
+        // finalOffset: center image at index 13 => fixedCenter - (winningIndex*itemWidth + itemWidth/2)
+        const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
+        const finalOffset = fixedCenter - (winningIndex * itemWidth + itemWidth / 2);
 
-      // Compute offsets so that item 0 starts centered and the winning item (index 13) ends centered.
-      const containerWidth = containerRef.current.clientWidth;
-      const containerCenter = containerWidth / 2;
-      const initialOffset = containerCenter - (0 * itemWidth + itemWidth / 2); // Center item 0
-      const finalOffset = containerCenter - (winningIndex * itemWidth + itemWidth / 2); // Center winning item
-
-      // Set initial offset and animate to final offset.
-      controls.set({ x: initialOffset });
-      controls
-        .start({
-          x: finalOffset,
-          transition: { type: "tween", duration: 3, ease: "linear" },
-        })
-        .then(() => {
-          // Pause for 1 second before showing the result popup.
-          setTimeout(() => {
-            onGameEnd(newReel[winningIndex]);
-            setShowResultOverlay(true);
-          }, 1000);
-        });
-    } else if (!isPlaying && containerRef.current) {
+        controls.set({ x: initialOffset });
+        controls
+          .start({
+            x: finalOffset,
+            transition: { type: "tween", duration: 3, ease: "linear" },
+          })
+          .then(() => {
+            setTimeout(() => {
+              onGameEnd(newReel[winningIndex]);
+              setShowResultOverlay(true);
+            }, 1000);
+          });
+      }, 0);
+    } else if (!isPlaying) {
       spinTriggered.current = false;
-      // Reset to center item 0
-      const containerWidth = containerRef.current.clientWidth;
-      const containerCenter = containerWidth / 2;
-      const initialOffset = containerCenter - (0 * itemWidth + itemWidth / 2);
+      // Reset using the fixed container center.
+      const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
       controls.set({ x: initialOffset });
     }
-  }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex]);
+  }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex, fixedCenter]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ width: FIXED_CONTAINER_WIDTH }}>
       <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
           <div
