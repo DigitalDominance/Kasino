@@ -222,8 +222,32 @@ function KasperLootBoxContent() {
               {/* Reel Container */}
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                {isPlaying && (
+                  <>
+                    <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                    <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                  </>
+                )}
+                {!isPlaying && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                    <motion.h1
+                      className="text-5xl font-bold mb-4"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#49EACB" }}
+                    >
+                      KASPER LOOT BOX
+                    </motion.h1>
+                    <motion.p
+                      className="text-xl"
+                      animate={{ opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#00FFFF" }}
+                    >
+                      spin to win
+                    </motion.p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -366,7 +390,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setTimeout(() => {
         controls.stop();
         const winningPosition = randomReel.length; // winning item is at this index
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
+        // Adjust stopping point: move 1.5 image lengths to the right
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 1.5 * itemWidth;
         controls.start({
           x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
