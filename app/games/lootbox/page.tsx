@@ -236,7 +236,7 @@ function KasperLootBoxContent() {
                 </Button>
               </div>
               {/* Reel Container */}
-              <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
+              <div className="relative mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
                 {isPlaying && (
                   <>
@@ -418,7 +418,7 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Horizontal Reel with Popup)
+// Kasper Loot Box Game Component (Single Reel with 50 Images)
 // ---------------------------------------------------------
 function KasperLootBoxGame({
   isPlaying,
@@ -427,8 +427,7 @@ function KasperLootBoxGame({
   isPlaying: boolean;
   onGameEnd: (item: any) => void;
 }) {
-  const controls = useAnimation();
-  const containerWidth = 600;
+  // We no longer use animation so that the entire reel is visible.
   const itemWidth = 120;
   const [finalReel, setFinalReel] = useState<any[]>([]);
   const [winningItem, setWinningItem] = useState<any>(null);
@@ -451,36 +450,28 @@ function KasperLootBoxGame({
       setWinningItem(winItem);
 
       // Generate a random reel of 50 images
-      const randomReel = Array.from({ length: 50 }, () => lootItems[Math.floor(Math.random() * lootItems.length)]);
+      const randomReel = Array.from({ length: 50 }, () =>
+        lootItems[Math.floor(Math.random() * lootItems.length)]
+      );
       setFinalReel(randomReel);
 
-      // Animate the reel continuously for 3 seconds and then stop
-      const loopDistance = randomReel.length * itemWidth;
-      controls.start({
-        x: [0, -loopDistance],
-        transition: { duration: 3, ease: "linear" },
-      });
-
+      // Wait 3 seconds then show the result popup
       setTimeout(() => {
-        controls.stop();
         onGameEnd(winItem);
         setShowResultOverlay(true);
       }, 3000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
-      controls.set({ x: 0 });
       setFinalReel([]);
       setWinningItem(null);
       setShowResultOverlay(false);
     }
-  }, [isPlaying, controls, itemWidth, onGameEnd]);
+  }, [isPlaying, onGameEnd]);
 
   return (
-    <div
-      className="w-full h-full flex items-center justify-center relative overflow-hidden"
-      style={{ width: containerWidth }}
-    >
-      <motion.div className="flex" animate={controls}>
+    // The container width is set dynamically to show all 50 images in a row.
+    <div className="relative flex items-center justify-center" style={{ width: finalReel.length * itemWidth || "100%" }}>
+      <div className="flex">
         {finalReel.map((item, i) => (
           <div key={i} style={{ width: itemWidth, flexShrink: 0 }} className="p-0">
             <div className="relative w-full h-full">
@@ -495,7 +486,7 @@ function KasperLootBoxGame({
             </div>
           </div>
         ))}
-      </motion.div>
+      </div>
       <AnimatePresence>
         {showResultOverlay && winningItem && (
           <motion.div
