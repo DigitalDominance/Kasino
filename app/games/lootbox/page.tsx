@@ -143,7 +143,7 @@ function KasperLootBoxContent() {
         alert("Failed to start game on backend");
         return;
       }
-      // Start the spin (single continuous spin of 50 images)
+      // Start the spin
       setIsPlaying(true);
     } catch (error: any) {
       console.error("Error starting Kasper Loot Box game:", error);
@@ -319,19 +319,19 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Single Spin: 50 Items, Index 0 & 45 Centered)
+// Kasper Loot Box Game Component (Single Spin: 15 Items, Stop on Index 13)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Fixed item width (px) and reel length.
+  // Set fixed item width and reel length
   const itemWidth = 120;
-  const reelLength = 50;
-  const winningIndex = 45; // Winning image forced at index 45
+  const reelLength = 15;
+  const winningIndex = 13; // Winning item is forced at index 13
 
-  // Use a ref to prevent multiple spins.
+  // Prevent multiple spins per game.
   const spinTriggered = useRef(false);
 
   useLayoutEffect(() => {
@@ -352,13 +352,13 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Build a reel of 50 items with the winning item forced at index 45.
+      // Build a reel of 15 items with the winning item forced at index 13.
       const newReel = Array.from({ length: reelLength }, (_, idx) =>
         idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
       );
       setReelItems(newReel);
 
-      // Compute offsets so that index 0 is centered at start and winningIndex is centered at finish.
+      // Compute offsets so that item 0 starts centered and the winning item (index 13) ends centered.
       const containerWidth = containerRef.current.clientWidth;
       const containerCenter = containerWidth / 2;
       const initialOffset = containerCenter - (0 * itemWidth + itemWidth / 2); // Center item 0
@@ -372,7 +372,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
           transition: { type: "tween", duration: 3, ease: "linear" },
         })
         .then(() => {
-          // Wait 1 second before showing the result.
+          // Pause for 1 second before showing the result popup.
           setTimeout(() => {
             onGameEnd(newReel[winningIndex]);
             setShowResultOverlay(true);
@@ -380,9 +380,10 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
     } else if (!isPlaying && containerRef.current) {
       spinTriggered.current = false;
+      // Reset to center item 0
       const containerWidth = containerRef.current.clientWidth;
       const containerCenter = containerWidth / 2;
-      const initialOffset = containerCenter - (itemWidth / 2);
+      const initialOffset = containerCenter - (0 * itemWidth + itemWidth / 2);
       controls.set({ x: initialOffset });
     }
   }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex]);
