@@ -409,7 +409,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         controls.stop();
         const winningPosition = randomReel.length; // winning item is at this index
         // Adjust stopping point: center the winning item then shift 1.5 image lengths to the right
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 1.5 * itemWidth;
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 4.5 * itemWidth;
         controls.start({
           x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
