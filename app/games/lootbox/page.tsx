@@ -335,13 +335,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const itemWidth = 120;
   const [animationTarget, setAnimationTarget] = useState(0);
-  const [animationDuration, setAnimationDuration] = useState(0);
+  const [animationDuration, setAnimationDuration] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isPlaying) {
       setShowResultOverlay(false);
-
       // Determine winning tier based on probability.
       const r = Math.random();
       let chosenTier: string;
@@ -375,19 +374,19 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     }
-    // Keep reelItems even after game ends.
+    // Note: We keep reelItems even after game ends so the winning image stays visible.
   }, [isPlaying]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
       <motion.div
         className="flex flex-nowrap"
-        initial={{ x: 0 }}
+        initial={isPlaying ? { x: 0 } : undefined}
         animate={{ x: animationTarget }}
         transition={{ duration: animationDuration, ease: "easeOut" }}
         onAnimationComplete={() => {
-          if (reelItems.length > 0) {
-            // Wait 2 seconds before showing the overlay and ending the game.
+          if (reelItems.length > 0 && isPlaying) {
+            // After the reel stops on the winning item, wait 2 seconds and show the popup.
             setTimeout(() => {
               onGameEnd(reelItems[38]);
               setShowResultOverlay(true);
