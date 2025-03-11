@@ -340,8 +340,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       randomReelLengthRef.current = randomReel.length;
       // Duplicate for seamless looping
       const loopReel = randomReel.concat(randomReel);
-      setFinalReel(loopReel);
-
+      
       // Determine winning tier/item via probability logic
       const r = Math.random();
       let chosenTier =
@@ -351,6 +350,10 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
       setWinningItem(winItem);
+      
+      // Override the element at index = randomReel.length with the winning item so that it will be the stopping point
+      loopReel[randomReel.length] = winItem;
+      setFinalReel(loopReel);
 
       // Start continuous horizontal loop over the first randomReel length
       const loopDistance = randomReel.length * itemWidth;
@@ -359,17 +362,20 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
+      // After 3 seconds, stop the loop and decelerate to the winning item (at index = randomReel.length)
       setTimeout(() => {
         controls.stop();
-        const currentX = currentXRef.current;
-        const alignedOffset = Math.round(currentX / itemWidth) * itemWidth;
+        const winningPosition = randomReel.length; // winning item is at this index
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
         controls.start({
-          x: alignedOffset,
+          x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
         });
-        onGameEnd(winItem);
-        setShowResultOverlay(true);
+        // Wait 1 second before showing the popup
+        setTimeout(() => {
+          onGameEnd(winItem);
+          setShowResultOverlay(true);
+        }, 1000);
       }, 3000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
@@ -393,11 +399,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         }}
       >
         {finalReel.map((item, i) => (
-          <div
-            key={i}
-            style={{ width: itemWidth, flexShrink: 0 }}
-            className="p-0"
-          >
+          <div key={i} style={{ width: itemWidth, flexShrink: 0 }} className="p-0">
             <div className="relative w-full h-full">
               <Image
                 src={item.image}
@@ -406,10 +408,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 height={itemWidth}
                 loading="eager"
               />
-              <div
-                className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`}
-                style={{ pointerEvents: "none" }}
-              />
+              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
             </div>
           </div>
         ))}
