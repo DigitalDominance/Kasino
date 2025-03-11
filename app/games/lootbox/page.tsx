@@ -174,7 +174,6 @@ function KasperLootBoxContent() {
   };
 
   const resetGame = () => {
-    // Reset all state (including reel-related state) so consecutive games work properly.
     setIsPlaying(false);
     setGameResult(null);
     setWinItem(null);
@@ -325,84 +324,63 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Clean Single Spin)
+// Kasper Loot Box Game Component (Basic Single Spin)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const itemRef = useRef<HTMLDivElement>(null); // Ref to measure one reel item's width
-  // Use a state variable to store the measured width (defaulting to 120)
-  const [measuredItemWidth, setMeasuredItemWidth] = useState<number>(120);
   const spinTriggered = useRef(false);
+  
+  // Fixed item width (in pixels)
+  const itemWidth = 120;
+  const reelLength = 42;
+  const winningIndex = 38; // Winning item at index 38 (i.e. 39th image)
 
-  // ---------------------------------------------------------
-  // 1. Measure the actual width of a reel item (using the first item)
-  // ---------------------------------------------------------
-  useLayoutEffect(() => {
-    if (itemRef.current) {
-      setMeasuredItemWidth(itemRef.current.clientWidth);
-    }
-  }, [reelItems]);
-
-  // ---------------------------------------------------------
-  // 2. Trigger spin when game starts (with a slight delay to ensure measurements)
-  // ---------------------------------------------------------
   useLayoutEffect(() => {
     if (isPlaying && containerRef.current && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
-      // Determine winning tier.
+
+      // Determine winning tier and item.
       const r = Math.random();
-      let chosenTier =
-        r < 0.5
-          ? "wraiths-whispers"
-          : r < 0.9
-          ? "phantom-echoes"
-          : r < 0.999
-          ? "spectral-symphony"
-          : "kaspa-legend";
+      let chosenTier = r < 0.5
+        ? "wraiths-whispers"
+        : r < 0.9
+        ? "phantom-echoes"
+        : r < 0.999
+        ? "spectral-symphony"
+        : "kaspa-legend";
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Build a reel of 42 items with the winning item at index 38 (i.e. the 39th image).
-      const reelLength = 42;
-      const winningIndex = 38;
+      // Build a reel of fixed length with the winning item at winningIndex.
       const newReel = Array.from({ length: reelLength }, (_, idx) =>
         idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
       );
       setReelItems(newReel);
 
-      // Slight delay to ensure reel items have rendered and the measured width is updated.
-      setTimeout(() => {
-        if (containerRef.current) {
-          const containerWidth = containerRef.current.clientWidth; // use clientWidth for accuracy
-          const containerCenter = containerWidth / 2;
-          // Use the measured item width instead of a hardcoded value.
-          const winningItemCenter = winningIndex * measuredItemWidth + measuredItemWidth / 2;
-          const finalOffset = containerCenter - winningItemCenter;
-          
-          // Animate the reel from 0 to the computed offset.
-          controls.set({ x: 0 });
-          controls
-            .start({
-              x: finalOffset,
-              transition: { type: "tween", duration: 3, ease: "linear" },
-            })
-            .then(() => {
-              setTimeout(() => {
-                onGameEnd(newReel[winningIndex]);
-                setShowResultOverlay(true);
-              }, 2000);
-            });
-        }
-      }, 50);
+      // Compute offset to center the winning item.
+      const containerWidth = containerRef.current.clientWidth;
+      const containerCenter = containerWidth / 2;
+      const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
+      const finalOffset = containerCenter - winningItemCenter;
+
+      // Animate the reel to the computed offset.
+      controls.set({ x: 0 });
+      controls.start({
+        x: finalOffset,
+        transition: { type: "tween", duration: 3, ease: "linear" }
+      }).then(() => {
+        onGameEnd(newReel[winningIndex]);
+        setShowResultOverlay(true);
+      });
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
     }
-  }, [isPlaying, measuredItemWidth, controls, onGameEnd]);
+  }, [isPlaying, controls, onGameEnd]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
@@ -410,21 +388,19 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         {reelItems.map((item, i) => (
           <div
             key={i}
-            // Assign the ref only to the first item so we can measure its width
-            ref={i === 0 ? itemRef : null}
             style={{
-              width: measuredItemWidth,
-              height: measuredItemWidth,
+              width: itemWidth,
+              height: itemWidth,
               padding: "5px",
-              boxSizing: "border-box",
+              boxSizing: "border-box"
             }}
           >
             <div className="relative w-full h-full">
               <Image
                 src={item.image}
                 alt={item.name}
-                width={measuredItemWidth - 10}
-                height={measuredItemWidth - 10}
+                width={itemWidth - 10}
+                height={itemWidth - 10}
                 loading="eager"
                 priority
               />
@@ -445,27 +421,29 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
               transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
+              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
             >
               <Image
-                src={reelItems[38].image}
-                alt={reelItems[38].name}
+                src={reelItems[winningIndex].image}
+                alt={reelItems[winningIndex].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
                 loading="eager"
                 priority
                 style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)"
                 }}
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {reelItems[38].name}{" "}
-                <span className="text-base text-teal-200">({reelItems[38].tier.replace("-", " ")})</span>
+                {reelItems[winningIndex].name}{" "}
+                <span className="text-base text-teal-200">
+                  ({reelItems[winningIndex].tier.replace("-", " ")})
+                </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[38].reward} KAS</strong>
+                You won <strong>{reelItems[winningIndex].reward} KAS</strong>
               </p>
             </motion.div>
           </motion.div>
