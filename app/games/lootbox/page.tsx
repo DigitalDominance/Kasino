@@ -41,11 +41,11 @@ export const lootItems = [
   { id: 9, name: "Chiming Specter", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon6.webp" },
 
   // Spectral Symphony (Epic)
-  { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic1.webp" },
-  { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic2.webp" },
-  { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic3.webp" },
-  { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic4.webp" },
-  { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic5.webp" },
+  { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic1.webp" },
+  { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic2.webp" },
+  { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic3.webp" },
+  { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic4.webp" },
+  { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic5.webp" },
 
   // Kaspa's Legend (Legendary)
   { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
@@ -288,7 +288,7 @@ function KasperLootBoxContent() {
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-blue-200 mb-4">
             For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS),
-            a potent <strong>Arcane Apparition</strong> (~96 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
+            a potent <strong>Arcane Apparition</strong> (90 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
