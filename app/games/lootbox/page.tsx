@@ -61,6 +61,7 @@ function getRarityStyle(tier: string) {
       return "border-gray-500 bg-gray-800/30";
   }
 }
+
 function getRarityOverlayClass(tier: string) {
   switch (tier) {
     case "wraiths-whispers":
@@ -315,20 +316,19 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Single Spin: 15 Items, Stop on Index 13)
+// Kasper Loot Box Game Component (Extended Reel Animation)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
+  const [winningPositionState, setWinningPositionState] = useState<number | null>(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Fixed image width and reel length.
   const itemWidth = 120;
   const reelLength = 15;
-  const winningIndex = 13; // Winning image forced at index 13
-  
-  // We'll use a fixed container width since container measurements are unreliable.
-  // Here we assume a fixed container width of 600px (so its center is 300px).
+  const winningIndex = 13; // winning index within a single cycle
+
+  // Fixed container width (assumed to be 600px; center is 300px)
   const FIXED_CONTAINER_WIDTH = 600;
   const fixedCenter = FIXED_CONTAINER_WIDTH / 2;
 
@@ -338,9 +338,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
     if (isPlaying && containerRef.current && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
-      // Delay to ensure containerRef is ready (if needed)
       setTimeout(() => {
-        // Determine winning tier and item.
+        // Determine winning tier/item randomly
         const r = Math.random();
         let chosenTier =
           r < 0.5
@@ -353,41 +352,54 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
         const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-        // Build the 15-item reel with the winning item at index 13.
-        const newReel = Array.from({ length: reelLength }, (_, idx) =>
-          idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
-        );
+        // Define extra cycles to simulate multiple spins
+        const cycles = 3; // number of extra full cycles
+        const totalItems = (cycles + 1) * reelLength;
+        // Calculate the final winning position in the extended reel
+        const winningPosition = cycles * reelLength + winningIndex;
+        setWinningPositionState(winningPosition);
+
+        // Build the extended reel; in the final cycle force the winning item at winningIndex
+        const newReel = Array.from({ length: totalItems }, (_, idx) => {
+          if (idx >= cycles * reelLength && idx < (cycles + 1) * reelLength) {
+            if ((idx - cycles * reelLength) === winningIndex) {
+              return winningItem;
+            }
+          }
+          return lootItems[Math.floor(Math.random() * lootItems.length)];
+        });
         setReelItems(newReel);
 
-        // Calculate offsets based solely on fixed dimensions.
-        // initialOffset: center image at index 0 => fixedCenter - (0*itemWidth + itemWidth/2)
-        // finalOffset: center image at index 13 => fixedCenter - (winningIndex*itemWidth + itemWidth/2)
+        // Calculate offsets so that the item’s center aligns with the container center
         const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
-        const finalOffset = fixedCenter - (winningIndex * itemWidth + itemWidth / 2);
+        const finalOffset = fixedCenter - (winningPosition * itemWidth + itemWidth / 2);
 
         controls.set({ x: initialOffset });
         controls
           .start({
             x: finalOffset,
-            transition: { type: "tween", duration: 3, ease: "linear" },
+            transition: { type: "tween", duration: 4, ease: "linear" },
           })
           .then(() => {
             setTimeout(() => {
-              onGameEnd(newReel[winningIndex]);
+              onGameEnd(newReel[winningPosition]);
               setShowResultOverlay(true);
             }, 1000);
           });
       }, 0);
     } else if (!isPlaying) {
       spinTriggered.current = false;
-      // Reset using the fixed container center.
       const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
       controls.set({ x: initialOffset });
     }
   }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex, fixedCenter]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ width: FIXED_CONTAINER_WIDTH }}>
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center relative overflow-hidden"
+      style={{ width: FIXED_CONTAINER_WIDTH }}
+    >
       <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
           <div
@@ -413,7 +425,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         ))}
       </motion.div>
       <AnimatePresence>
-        {showResultOverlay && reelItems.length > 0 && (
+        {showResultOverlay && winningPositionState !== null && reelItems[winningPositionState] && (
           <motion.div
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
@@ -427,8 +439,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
             >
               <Image
-                src={reelItems[winningIndex].image}
-                alt={reelItems[winningIndex].name}
+                src={reelItems[winningPositionState].image}
+                alt={reelItems[winningPositionState].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
@@ -439,13 +451,13 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {reelItems[winningIndex].name}{" "}
+                {reelItems[winningPositionState].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[winningIndex].tier.replace("-", " ")})
+                  ({reelItems[winningPositionState].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[winningIndex].reward} KAS</strong>
+                You won <strong>{reelItems[winningPositionState].reward} KAS</strong>
               </p>
             </motion.div>
           </motion.div>
