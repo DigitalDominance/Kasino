@@ -327,7 +327,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const containerRef = useRef<HTMLDivElement>(null);
   const itemWidth = 120;
   const reelLength = 15;
-  const winningIndex = 13; // winning index within a single cycle
+  const winningIndex = Math.floor(reelLength / 2); // winning index within a single cycle
 
   const spinTriggered = useRef(false);
 
@@ -367,10 +367,9 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
         setReelItems(newReel);
 
-        // Using itemWidth as the reference: assume the container "center" is itemWidth/2.
-        // Therefore:
-        //   initialOffset = itemWidth/2 - (0 * itemWidth + itemWidth/2) = 0
-        //   finalOffset = itemWidth/2 - (winningPosition * itemWidth + itemWidth/2) = -winningPosition * itemWidth
+        // Using itemWidth as the reference:
+        //   initialOffset = 0
+        //   finalOffset = -winningPosition * itemWidth
         const initialOffset = 0;
         const finalOffset = -winningPosition * itemWidth;
 
@@ -395,7 +394,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex]);
 
   return (
-    // Container width is now set to the itemWidth so that our offset calculations are based on the reel item
     <div ref={containerRef} className="flex items-center justify-center relative overflow-hidden" style={{ width: `${itemWidth}px` }}>
       <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
