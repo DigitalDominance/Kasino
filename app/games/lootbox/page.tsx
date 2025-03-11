@@ -27,22 +27,30 @@ const montserrat = Montserrat({
 // Loot Items Distribution
 // ---------------------------------------------------------
 export const lootItems = [
-  { id: 1, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder.svg" },
-  { id: 2, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder2.svg" },
-  { id: 3, name: "Haunted Wisp", tier: "haunted-wisp", reward: 1, image: "/placeholder3.svg" },
-  { id: 4, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder4.svg" },
-  { id: 5, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder5.svg" },
-  { id: 6, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder6.svg" },
-  { id: 7, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder7.svg" },
-  { id: 8, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder8.svg" },
-  { id: 9, name: "Ectoplasmic Echo", tier: "ectoplasmic-echo", reward: 25, image: "/placeholder.svg" },
-  { id: 10, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder2.svg" },
-  { id: 11, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder3.svg" },
-  { id: 12, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder4.svg" },
-  { id: 13, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder5.svg" },
-  { id: 14, name: "Spectral Surge", tier: "spectral-surge", reward: 96, image: "/placeholder6.svg" },
-  { id: 15, name: "Phantasmal Phantom", tier: "phantasmal-phantom", reward: 6250, image: "/placeholder7.svg" },
+  // Wraith's Whispers (Common)
+  { id: 1, name: "Flickering Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common1.webp" },
+  { id: 2, name: "Dusky Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common2.webp" },
+  { id: 3, name: "Fading Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common3.webp" },
+
+  // Phantom Echoes (Uncommon)
+  { id: 4, name: "Resonant Shade", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon1.webp" },
+  { id: 5, name: "Echoing Spirit", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon2.webp" },
+  { id: 6, name: "Haunting Pulse", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon3.webp" },
+  { id: 7, name: "Vibrant Apparition", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon4.webp" },
+  { id: 8, name: "Reverberating Phantom", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon5.webp" },
+  { id: 9, name: "Chiming Specter", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon6.webp" },
+
+  // Spectral Symphony (Epic)
+  { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic1.webp" },
+  { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic2.webp" },
+  { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic3.webp" },
+  { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic4.webp" },
+  { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 96, image: "/kasperlootbox/epic5.webp" },
+
+  // Kaspa's Legend (Legendary)
+  { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
 ];
+
 
 // ---------------------------------------------------------
 // Rarity Styling (for the traits card at the bottom)
