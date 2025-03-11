@@ -236,7 +236,7 @@ function KasperLootBoxContent() {
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute top-0 left-20"
-                        style={{ filter: "drop-shadow(0 0 10px #FF00FF)" }}
+                        style={{ filter: "drop-shadow(0 0 15px #FF00FF)" }}
                       >
                         <Image
                           src="/kasperlootbox/legendary.webp"
@@ -249,8 +249,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-20 right-20"
-                        style={{ filter: "drop-shadow(0 0 10px #00FF00)" }}
+                        className="absolute bottom-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #00FF00)" }}
                       >
                         <Image
                           src="/kasperlootbox/epic1.webp"
@@ -263,8 +263,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute top-12 right-20"
-                        style={{ filter: "drop-shadow(0 0 10px #00FFFF)" }}
+                        className="absolute top-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #00FFFF)" }}
                       >
                         <Image
                           src="/kasperlootbox/common1.webp"
@@ -277,8 +277,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-20 left-20"
-                        style={{ filter: "drop-shadow(0 0 10px #FFFF00)" }}
+                        className="absolute bottom-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 15px #FFFF00)" }}
                       >
                         <Image
                           src="/kasperlootbox/uncommon1.webp"
@@ -430,24 +430,24 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
       setWinningItem(winItem);
 
-      // Generate a random reel of 40 items from lootItems excluding the winning item
+      // Generate a random reel of 50 images (excluding the winning item)
       const filteredLoot = lootItems.filter(item => item.id !== winItem.id);
-      const randomReel = Array.from({ length: 40 }, () => filteredLoot[Math.floor(Math.random() * filteredLoot.length)]);
-      // Append the winning item at the very end so it's the last image
+      const randomReel = Array.from({ length: 50 }, () => filteredLoot[Math.floor(Math.random() * filteredLoot.length)]);
+      // Append the winning item as the 51st image
       const finalReelArray = randomReel.concat([winItem]);
       setFinalReel(finalReelArray);
 
-      // Start continuous horizontal loop over the randomReel portion only
+      // Start continuous horizontal loop over the randomReel portion (50 images)
       const loopDistance = randomReel.length * itemWidth;
       controls.start({
         x: [0, -loopDistance],
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the loop and decelerate to the winning item (which is at index = randomReel.length)
+      // After 3 seconds, stop the loop and decelerate to the winning item (which is at index = 50)
       setTimeout(() => {
         controls.stop();
-        const winningPosition = randomReel.length; // winning image is at this index
+        const winningPosition = randomReel.length; // winning item is at index 50 (0-based)
         const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
         controls.start({
           x: finalOffset,
