@@ -232,16 +232,16 @@ function KasperLootBoxContent() {
                   <>
                     {/* Background interactive images */}
                     <div className="absolute inset-0 z-30">
-                      <motion.div whileHover={{ scale: 1.1 }} className="absolute top-10 left-10">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute top-2 left-10">
                         <Image src="/kasperlootbox/legendary.webp" alt="King KASPER" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} className="absolute bottom-10 right-10">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute bottom-10 right-10">
                         <Image src="/kasperlootbox/epic1.webp" alt="Arcane Apparition" width={80} height={80} className="rounded-lg border-4 border-purple-500" />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} className="absolute top-5 right-5">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute top-5 right-5">
                         <Image src="/kasperlootbox/common1.webp" alt="Flickering Wisp" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} className="absolute bottom-5 left-5">
+                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute bottom-5 left-5">
                         <Image src="/kasperlootbox/uncommon1.webp" alt="Resonant Shade" width={70} height={70} className="rounded-md border-4 border-indigo-500" />
                       </motion.div>
                     </div>
@@ -409,7 +409,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         controls.stop();
         const winningPosition = randomReel.length; // winning item is at this index
         // Adjust stopping point: center the winning item then shift 1.5 image lengths to the right
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 3.5 * itemWidth;
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 1.5 * itemWidth;
         controls.start({
           x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
