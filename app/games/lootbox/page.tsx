@@ -51,20 +51,19 @@ export const lootItems = [
   { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
 ];
 
-
 // ---------------------------------------------------------
 // Rarity Styling (for the traits card at the bottom)
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
-    case "haunted-wisp":
-      return "border-green-500 bg-green-900/30";
-    case "ectoplasmic-echo":
+    case "wraiths-whispers":
       return "border-blue-500 bg-blue-900/30";
-    case "spectral-surge":
+    case "phantom-echoes":
+      return "border-indigo-500 bg-indigo-900/30";
+    case "spectral-symphony":
       return "border-purple-500 bg-purple-900/30";
-    case "phantasmal-phantom":
-      return "border-yellow-400 bg-yellow-900/30";
+    case "kaspa-legend":
+      return "border-pink-500 bg-pink-900/30";
     default:
       return "border-gray-500 bg-gray-800/30";
   }
@@ -75,14 +74,14 @@ function getRarityStyle(tier: string) {
 // ---------------------------------------------------------
 function getRarityOverlayClass(tier: string) {
   switch (tier) {
-    case "haunted-wisp":
-      return "bg-gradient-to-br from-green-400/30 to-green-900/30";
-    case "ectoplasmic-echo":
+    case "wraiths-whispers":
       return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
-    case "spectral-surge":
+    case "phantom-echoes":
+      return "bg-gradient-to-br from-indigo-400/30 to-indigo-900/30";
+    case "spectral-symphony":
       return "bg-gradient-to-br from-purple-400/30 to-purple-900/30";
-    case "phantasmal-phantom":
-      return "bg-gradient-to-br from-yellow-400/30 to-yellow-900/30";
+    case "kaspa-legend":
+      return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
     default:
       return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
   }
@@ -192,7 +191,7 @@ function KasperLootBoxContent() {
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/" className="inline-flex items-center text-teal-400 hover:underline">
+            <Link href="/" className="inline-flex items-center text-blue-400 hover:underline">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
@@ -223,19 +222,19 @@ function KasperLootBoxContent() {
 
         {/* Main Game & Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-          <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
+          <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-teal-300">Kasper Loot Box</h2>
-                <Button variant="ghost" size="sm" className="text-teal-300" onClick={resetGame}>
+                <h2 className="text-2xl font-bold text-blue-300">Kasper Loot Box</h2>
+                <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
                   Reset
                 </Button>
               </div>
               {/* Reel Container */}
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 left-0 w-40 bg-blue-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 right-0 w-40 bg-blue-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
@@ -254,8 +253,8 @@ function KasperLootBoxContent() {
         </div>
 
         {/* Traits Layout Card */}
-        <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-teal-300 mb-4 text-center">
+        <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm p-4 mb-6">
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
             Kasper Loot Box Traits &amp; Rewards
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -264,9 +263,9 @@ function KasperLootBoxContent() {
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt={item.name} width={40} height={40} />
-                  <p className="mt-1 font-semibold">{item.name}</p>
-                  <p className="capitalize">{item.tier.replace("-", " ")}</p>
-                  <p>{item.reward} KAS</p>
+                  <p className="mt-1 font-semibold text-blue-400 drop-shadow">{item.name}</p>
+                  <p className="capitalize text-blue-300 drop-shadow">{item.tier.replace("-", " ")}</p>
+                  <p className="text-blue-300 drop-shadow">{item.reward} KAS</p>
                 </div>
               );
             })}
@@ -274,7 +273,7 @@ function KasperLootBoxContent() {
         </Card>
 
         {/* Promo / Info Card */}
-        <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+        <Card className="w-full bg-blue-900/50 border border-blue-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
@@ -287,9 +286,9 @@ function KasperLootBoxContent() {
             Kasper Loot Box
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-teal-200 mb-4">
-            For 25 KAS you might receive a <strong>Haunted Wisp</strong> (1 KAS), an <strong>Ectoplasmic Echo</strong> (25 KAS),
-            a potent <strong>Spectral Surge</strong> (~96 KAS), or the ultra‑rare <strong>Phantasmal Phantom</strong> (6250 KAS, 250× payout)!
+          <p className="text-sm text-blue-200 mb-4">
+            For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS),
+            a potent <strong>Arcane Apparition</strong> (~96 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -297,7 +296,7 @@ function KasperLootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
+              className="text-blue-400 hover:text-blue-300"
             >
               <FaTwitter />
             </motion.a>
@@ -306,7 +305,7 @@ function KasperLootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
+              className="text-blue-400 hover:text-blue-300"
             >
               <FaTelegramPlane />
             </motion.a>
@@ -315,7 +314,7 @@ function KasperLootBoxContent() {
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.2 }}
-              className="text-teal-400 hover:text-teal-300"
+              className="text-blue-400 hover:text-blue-300"
             >
               <FaGlobe />
             </motion.a>
@@ -342,17 +341,17 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
     if (isPlaying) {
       setShowResultOverlay(false);
 
-      // Determine winning tier based on probability.
+      // Determine winning tier based on probability using new tier names.
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
-        chosenTier = "haunted-wisp";
+        chosenTier = "wraiths-whispers";
       } else if (r < 0.9) {
-        chosenTier = "ectoplasmic-echo";
+        chosenTier = "phantom-echoes";
       } else if (r < 0.999) {
-        chosenTier = "spectral-surge";
+        chosenTier = "spectral-symphony";
       } else {
-        chosenTier = "phantasmal-phantom";
+        chosenTier = "kaspa-legend";
       }
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
@@ -372,7 +371,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
 
-      // Removed the extra “- itemWidth / 2”
       const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
@@ -436,12 +434,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Nested motion div for a big pop-up effect on the winning image */}
+            {/* Big pop-up effect on the winning image */}
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
               transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(79,209,197,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
+              className="text-center p-6 rounded-lg border-2 border-blue-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-blue-800/80 animate-pulse max-w-xs"
             >
               <Image
                 src={reelItems[Math.floor(reelItems.length / 2)].image}
@@ -454,14 +452,14 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                   filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
                 }}
               />
-              <p className="text-3xl font-extrabold text-teal-100 mb-2">Congratulations!</p>
-              <p className="text-xl font-bold text-white">
+              <p className="text-3xl font-extrabold text-blue-400 mb-2">Congratulations!</p>
+              <p className="text-xl font-bold text-blue-100">
                 {reelItems[Math.floor(reelItems.length / 2)].name}{" "}
-                <span className="text-base text-teal-200">
+                <span className="text-base text-blue-200">
                   ({reelItems[Math.floor(reelItems.length / 2)].tier.replace("-", " ")})
                 </span>
               </p>
-              <p className="text-lg text-teal-50 mt-2">
+              <p className="text-lg text-blue-50 mt-2">
                 You won <strong>{reelItems[Math.floor(reelItems.length / 2)].reward} KAS</strong>
               </p>
             </motion.div>
@@ -532,16 +530,16 @@ function KasperLootBoxControls({
 
   return (
     <>
-      <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm">
+      <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-teal-300">Cost per Kasper Loot Box (KAS)</label>
+            <label className="text-sm text-blue-300">Cost per Kasper Loot Box (KAS)</label>
             <div className="relative">
               <input
                 type="number"
                 value={betAmount}
                 disabled
-                className="bg-teal-900/50 border border-teal-500 text-white pl-8 w-full"
+                className="bg-blue-900/50 border border-blue-500 text-white pl-8 w-full"
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
@@ -557,17 +555,17 @@ function KasperLootBoxControls({
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-teal-300">
+                <div className="text-2xl font-bold text-blue-300">
                   {gameResult}: {winItem.name} ({winItem.tier.replace("-", " ")})
                 </div>
-                <div className="text-sm text-teal-200">
+                <div className="text-sm text-blue-200">
                   Payout: {winAmount !== null ? winAmount : 0} KAS
                 </div>
               </div>
             )}
             {!isPlaying ? (
               <Button
-                className="w-full bg-teal-400 text-black hover:bg-teal-300"
+                className="w-full bg-blue-400 text-black hover:bg-blue-300"
                 onClick={handleOpenBox}
                 disabled={!isWalletConnected || cooldown > 0}
               >
@@ -578,7 +576,7 @@ function KasperLootBoxControls({
                   : "Open Kasper Loot Box"}
               </Button>
             ) : (
-              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
+              <Button className="w-full bg-blue-400 text-black hover:bg-blue-300" disabled>
                 Opening...
               </Button>
             )}
@@ -592,7 +590,7 @@ function KasperLootBoxControls({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-blue-700 to-black text-white px-4 py-2 rounded shadow-lg"
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
