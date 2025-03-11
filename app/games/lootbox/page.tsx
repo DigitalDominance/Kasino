@@ -236,7 +236,7 @@ function KasperLootBoxContent() {
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute top-0 left-20"
-                        style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}  {/* pink for King KASPER */}
+                        style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}
                       >
                         <Image
                           src="/kasperlootbox/legendary.webp"
@@ -250,7 +250,7 @@ function KasperLootBoxContent() {
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute bottom-0 right-20"
-                        style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}  {/* purple for Arcane Apparition */}
+                        style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}
                       >
                         <Image
                           src="/kasperlootbox/epic1.webp"
@@ -264,7 +264,7 @@ function KasperLootBoxContent() {
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute top-0 right-20"
-                        style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}  {/* blue for Flickering Wisp */}
+                        style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}
                       >
                         <Image
                           src="/kasperlootbox/common1.webp"
@@ -278,7 +278,7 @@ function KasperLootBoxContent() {
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute bottom-0 left-20"
-                        style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}  {/* indigo for Resonant Shade */}
+                        style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}
                       >
                         <Image
                           src="/kasperlootbox/uncommon1.webp"
@@ -401,9 +401,6 @@ function KasperLootBoxContent() {
   );
 }
 
-// ---------------------------------------------------------
-// Kasper Loot Box Game Component (Single Horizontal Reel with Popup)
-// ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
   const containerWidth = 600;
@@ -457,21 +454,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   }, [isPlaying, controls, itemWidth, onGameEnd]);
 
   return (
-    <div
-      className="w-full h-full flex items-center justify-center relative overflow-hidden"
-      style={{ width: containerWidth }}
-    >
+    <div className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ width: containerWidth }}>
       <motion.div className="flex" animate={controls}>
         {finalReel.map((item, i) => (
           <div key={i} style={{ width: itemWidth, flexShrink: 0 }} className="p-0">
             <div className="relative w-full h-full">
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={itemWidth}
-                height={itemWidth}
-                loading="eager"
-              />
+              <Image src={item.image} alt={item.name} width={itemWidth} height={itemWidth} loading="eager" />
               <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
             </div>
           </div>
@@ -515,9 +503,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   );
 }
 
-// ---------------------------------------------------------
-// Kasper Loot Box Controls Component
-// ---------------------------------------------------------
 function KasperLootBoxControls({
   betAmount,
   isPlaying,
