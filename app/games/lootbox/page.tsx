@@ -177,6 +177,7 @@ function KasperLootBoxContent() {
   };
 
   const resetGame = () => {
+    // Reset everything except the reel so the winning result remains visible.
     setIsPlaying(false);
     setGameResult(null);
     setWinItem(null);
@@ -327,7 +328,7 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component
+// Kasper Loot Box Game Component (Updated)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const [reelItems, setReelItems] = useState<any[]>([]);
@@ -356,13 +357,13 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Make the reel big enough so there's no empty space on the right.
-      const reelLength = 50;
-      const winningIndex = Math.floor(reelLength / 2);
-
+      // Set the reel length to 42 and ensure the winning item is always at index 38 (39th item)
+      const reelLength = 42;
+      const winningIndex = 38;
       const newReel = Array.from({ length: reelLength }, (_, idx) => {
-        if (idx === winningIndex) return winningItem;
-        return lootItems[Math.floor(Math.random() * lootItems.length)];
+        return idx === winningIndex
+          ? winningItem
+          : lootItems[Math.floor(Math.random() * lootItems.length)];
       });
       setReelItems(newReel);
 
@@ -370,16 +371,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-
       const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
-    } else {
-      setReelItems([]);
-      setAnimationTarget(0);
-      setAnimationDuration(0);
-      setShowResultOverlay(false);
     }
+    // Do not clear reelItems when isPlaying is false to keep the reel visible after game ends.
   }, [isPlaying]);
 
   return (
@@ -393,7 +389,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
           if (reelItems.length > 0) {
             // Wait 2 seconds before ending the game and showing the overlay.
             setTimeout(() => {
-              onGameEnd(reelItems[Math.floor(reelItems.length / 2)]);
+              onGameEnd(reelItems[38]);
               setShowResultOverlay(true);
             }, 2000);
           }
@@ -442,8 +438,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
             >
               <Image
-                src={reelItems[Math.floor(reelItems.length / 2)].image}
-                alt={reelItems[Math.floor(reelItems.length / 2)].name}
+                src={reelItems[38].image}
+                alt={reelItems[38].name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
@@ -454,13 +450,13 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {reelItems[Math.floor(reelItems.length / 2)].name}{" "}
+                {reelItems[38].name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[Math.floor(reelItems.length / 2)].tier.replace("-", " ")})
+                  ({reelItems[38].tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[Math.floor(reelItems.length / 2)].reward} KAS</strong>
+                You won <strong>{reelItems[38].reward} KAS</strong>
               </p>
             </motion.div>
           </motion.div>
