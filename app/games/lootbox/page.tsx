@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -177,7 +177,7 @@ function KasperLootBoxContent() {
   };
 
   const resetGame = () => {
-    // Reset everything except the reel so the winning result remains visible.
+    // Reset all state (including reel-related state) so consecutive games work properly.
     setIsPlaying(false);
     setGameResult(null);
     setWinItem(null);
@@ -328,36 +328,32 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Updated)
+// Kasper Loot Box Game Component (Updated with useAnimation)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
+  const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const itemWidth = 120;
-  const [animationTarget, setAnimationTarget] = useState(0);
-  const [animationDuration, setAnimationDuration] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Use layout effect so that measurements are ready before computing the offset.
+  // useLayoutEffect to measure container and compute offset before starting animation.
   useLayoutEffect(() => {
     if (isPlaying && containerRef.current) {
       setShowResultOverlay(false);
-      // Determine winning tier based on probability.
+      // Determine winning tier.
       const r = Math.random();
-      let chosenTier: string;
-      if (r < 0.5) {
-        chosenTier = "wraiths-whispers";
-      } else if (r < 0.9) {
-        chosenTier = "phantom-echoes";
-      } else if (r < 0.999) {
-        chosenTier = "spectral-symphony";
-      } else {
-        chosenTier = "kaspa-legend";
-      }
+      let chosenTier = r < 0.5
+        ? "wraiths-whispers"
+        : r < 0.9
+        ? "phantom-echoes"
+        : r < 0.999
+        ? "spectral-symphony"
+        : "kaspa-legend";
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Build a reel with 42 items and force the winning item at index 38.
+      // Build a reel of 42 items with the winning item at index 38.
       const reelLength = 42;
       const winningIndex = 38;
       const newReel = Array.from({ length: reelLength }, (_, idx) =>
@@ -365,33 +361,32 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       );
       setReelItems(newReel);
 
-      // Compute the offset so that the winning image (index 38) is exactly centered.
+      // Compute offset so that the winning image is exactly centered.
       const containerWidth = containerRef.current.offsetWidth;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
       const finalOffset = containerCenter - winningItemCenter;
-      setAnimationTarget(finalOffset);
-      setAnimationDuration(3);
+
+      // Reset animation and then start a clean, linear spin.
+      controls.set({ x: 0 });
+      controls.start({
+        x: finalOffset,
+        transition: { type: "tween", duration: 3, ease: "linear" }
+      }).then(() => {
+        setTimeout(() => {
+          onGameEnd(newReel[winningIndex]);
+          setShowResultOverlay(true);
+        }, 2000);
+      });
+    } else {
+      // When not playing, reset the animation position.
+      controls.set({ x: 0 });
     }
-  }, [isPlaying]);
+  }, [isPlaying, controls, onGameEnd]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      <motion.div
-        className="flex flex-nowrap"
-        // Remove the initial prop to prevent reanimation when the reel is already rendered.
-        animate={{ x: animationTarget }}
-        transition={{ type: "tween", duration: animationDuration, ease: "linear" }}
-        onAnimationComplete={() => {
-          if (reelItems.length > 0 && isPlaying) {
-            // After the reel stops with the winning image centered, wait 2 seconds then show the popup.
-            setTimeout(() => {
-              onGameEnd(reelItems[38]);
-              setShowResultOverlay(true);
-            }, 2000);
-          }
-        }}
-      >
+      <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
           <div
             key={i}
@@ -399,7 +394,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               width: itemWidth,
               height: itemWidth,
               padding: "5px",
-              boxSizing: "border-box",
+              boxSizing: "border-box"
             }}
           >
             <div className="relative w-full h-full">
@@ -427,7 +422,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Popup overlay with higher z-index */}
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
@@ -443,7 +437,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 loading="eager"
                 priority
                 style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)"
                 }}
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
@@ -475,7 +469,7 @@ function KasperLootBoxControls({
   onOpenLootBox,
   gameResult,
   winItem,
-  winAmount,
+  winAmount
 }: {
   betAmount: string;
   isPlaying: boolean;
