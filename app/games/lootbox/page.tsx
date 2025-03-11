@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,7 +49,7 @@ export const lootItems = [
 ];
 
 // ---------------------------------------------------------
-// Rarity Styling (for the traits card at the bottom)
+// Rarity Styling & Overlay
 // ---------------------------------------------------------
 function getRarityStyle(tier: string) {
   switch (tier) {
@@ -65,10 +65,6 @@ function getRarityStyle(tier: string) {
       return "border-gray-500 bg-gray-800/30";
   }
 }
-
-// ---------------------------------------------------------
-// Rarity Overlay for Reel Items
-// ---------------------------------------------------------
 function getRarityOverlayClass(tier: string) {
   switch (tier) {
     case "wraiths-whispers":
@@ -147,6 +143,7 @@ function KasperLootBoxContent() {
         alert("Failed to start game on backend");
         return;
       }
+      // Start the spin (infinite loop)
       setIsPlaying(true);
     } catch (error: any) {
       console.error("Error starting Kasper Loot Box game:", error);
@@ -158,8 +155,7 @@ function KasperLootBoxContent() {
     setWinItem(item);
     setGameResult("You Win");
     setWinAmount(item.reward);
-    setIsPlaying(false);
-
+    // After deceleration animation finishes, the final result is shown.
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
@@ -324,75 +320,113 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Basic Single Spin)
+// Helper: Compute Final Target X for Deceleration
 // ---------------------------------------------------------
-function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
+function computeTargetX(currentX, reelWidth, containerWidth, itemWidth, winningIndex) {
+  const containerCenter = containerWidth / 2;
+  // Desired offset (if no looping): center winning item in first copy.
+  const desiredX = containerCenter - (winningIndex * itemWidth + itemWidth / 2);
+  // Find a target: desiredX - k * reelWidth, such that it is less than the currentX.
+  let k = 0;
+  let targetX = desiredX - k * reelWidth;
+  while (targetX > currentX) {
+    k++;
+    targetX = desiredX - k * reelWidth;
+  }
+  return targetX;
+}
+
+// ---------------------------------------------------------
+// Kasper Loot Box Game Component (Infinite Loop then Deceleration)
+// ---------------------------------------------------------
+function KasperLootBoxGame({ isPlaying, onGameEnd }) {
   const controls = useAnimation();
-  const [reelItems, setReelItems] = useState<any[]>([]);
-  const [showResultOverlay, setShowResultOverlay] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const spinTriggered = useRef(false);
-  
-  // Fixed item width (in pixels)
+  const containerRef = useRef(null);
+  // Fixed item width and one-copy length (30 items)
   const itemWidth = 120;
-  const reelLength = 42;
-  const winningIndex = 38; // Winning item at index 38 (i.e. 39th image)
+  const copyLength = 30;
+  const reelWidth = copyLength * itemWidth;
+  
+  // State for the base reel and winning details.
+  const [baseReel, setBaseReel] = useState([]);
+  const [winningIndex, setWinningIndex] = useState(0);
+  const [winningItem, setWinningItem] = useState(null);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
 
+  // Duplicate the baseReel to form an infinite loop.
+  const fullReel = [...baseReel, ...baseReel];
+
+  // Track current x offset.
+  const currentXRef = useRef(0);
+  const handleUpdate = (latest) => {
+    currentXRef.current = latest.x;
+  };
+
+  // When a new spin starts, build a new base reel (30 items) with the winning item
   useLayoutEffect(() => {
-    if (isPlaying && containerRef.current && !spinTriggered.current) {
-      spinTriggered.current = true;
+    if (isPlaying && containerRef.current) {
       setShowResultOverlay(false);
-
-      // Determine winning tier and item.
+      // Choose winning tier and item.
       const r = Math.random();
-      let chosenTier = r < 0.5
-        ? "wraiths-whispers"
-        : r < 0.9
-        ? "phantom-echoes"
-        : r < 0.999
-        ? "spectral-symphony"
-        : "kaspa-legend";
+      const chosenTier =
+        r < 0.5
+          ? "wraiths-whispers"
+          : r < 0.9
+          ? "phantom-echoes"
+          : r < 0.999
+          ? "spectral-symphony"
+          : "kaspa-legend";
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
-      const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
-
-      // Build a reel of fixed length with the winning item at winningIndex.
-      const newReel = Array.from({ length: reelLength }, (_, idx) =>
-        idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
+      const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
+      setWinningItem(winItem);
+      // Choose winning index randomly between 20 and 28 (in the first copy).
+      const winIdx = Math.floor(Math.random() * (28 - 20 + 1)) + 20;
+      setWinningIndex(winIdx);
+      // Build base reel of 30 items with random items and insert winning item at winIdx.
+      const newReel = Array.from({ length: copyLength }, (_, idx) =>
+        idx === winIdx ? winItem : lootItems[Math.floor(Math.random() * lootItems.length)]
       );
-      setReelItems(newReel);
+      setBaseReel(newReel);
+    }
+  }, [isPlaying]);
 
-      // Compute offset to center the winning item.
-      const containerWidth = containerRef.current.clientWidth;
-      const containerCenter = containerWidth / 2;
-      const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter;
-
-      // Animate the reel to the computed offset.
-      controls.set({ x: 0 });
+  // Infinite loop animation while spinning.
+  useEffect(() => {
+    if (isPlaying) {
       controls.start({
-        x: finalOffset,
-        transition: { type: "tween", duration: 3, ease: "linear" }
+        x: -reelWidth,
+        transition: { duration: 5, ease: "linear", repeat: Infinity, repeatType: "loop" },
+      });
+    }
+  }, [isPlaying, controls, reelWidth]);
+
+  // When spin stops, decelerate smoothly.
+  useEffect(() => {
+    if (!isPlaying && baseReel.length > 0 && containerRef.current && winningItem) {
+      controls.stop();
+      const containerWidth = containerRef.current.clientWidth;
+      const targetX = computeTargetX(currentXRef.current, reelWidth, containerWidth, itemWidth, winningIndex);
+      controls.start({
+        x: targetX,
+        transition: { duration: 3, ease: "easeOut" },
       }).then(() => {
-        onGameEnd(newReel[winningIndex]);
+        onGameEnd(winningItem);
         setShowResultOverlay(true);
       });
-    } else if (!isPlaying) {
-      spinTriggered.current = false;
-      controls.set({ x: 0 });
     }
-  }, [isPlaying, controls, onGameEnd]);
+  }, [isPlaying, baseReel, controls, winningItem, winningIndex, reelWidth, onGameEnd, itemWidth]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
-      <motion.div className="flex flex-nowrap" animate={controls}>
-        {reelItems.map((item, i) => (
+      <motion.div className="flex flex-nowrap" animate={controls} onUpdate={handleUpdate}>
+        {fullReel.map((item, i) => (
           <div
             key={i}
             style={{
               width: itemWidth,
               height: itemWidth,
               padding: "5px",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
             }}
           >
             <div className="relative w-full h-full">
@@ -410,7 +444,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         ))}
       </motion.div>
       <AnimatePresence>
-        {showResultOverlay && reelItems.length > 0 && (
+        {showResultOverlay && fullReel.length > 0 && (
           <motion.div
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
@@ -424,26 +458,26 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
             >
               <Image
-                src={reelItems[winningIndex].image}
-                alt={reelItems[winningIndex].name}
+                src={winningItem.image}
+                alt={winningItem.name}
                 width={80}
                 height={80}
                 className="mx-auto mb-2"
                 loading="eager"
                 priority
                 style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)"
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
                 }}
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {reelItems[winningIndex].name}{" "}
+                {winningItem.name}{" "}
                 <span className="text-base text-teal-200">
-                  ({reelItems[winningIndex].tier.replace("-", " ")})
+                  ({winningItem.tier.replace("-", " ")})
                 </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[winningIndex].reward} KAS</strong>
+                You won <strong>{winningItem.reward} KAS</strong>
               </p>
             </motion.div>
           </motion.div>
@@ -465,17 +499,8 @@ function KasperLootBoxControls({
   gameResult,
   winItem,
   winAmount,
-}: {
-  betAmount: string;
-  isPlaying: boolean;
-  isWalletConnected: boolean;
-  balance: number;
-  onOpenLootBox: () => void;
-  gameResult: string | null;
-  winItem: any;
-  winAmount: number | null;
 }) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -492,7 +517,7 @@ function KasperLootBoxControls({
     }
   }, [cooldown]);
 
-  const showError = (msg: string) => setErrorMessage(msg);
+  const showError = (msg) => setErrorMessage(msg);
 
   const handleOpenBox = () => {
     if (!isWalletConnected) {
