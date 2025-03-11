@@ -220,10 +220,11 @@ function KasperLootBoxContent() {
                 </Button>
               </div>
               {/* Reel Container */}
-              <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
+              {/* Here the container width is set to itemWidth so that we use reel item width as the reference */}
+              <div className="relative" style={{ width: `${120}px`, height: "72px", overflow: "hidden" }}>
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 left-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 right-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
@@ -328,10 +329,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const reelLength = 15;
   const winningIndex = 13; // winning index within a single cycle
 
-  // Fixed container width (assumed to be 600px; center is 300px)
-  const FIXED_CONTAINER_WIDTH = 600;
-  const fixedCenter = FIXED_CONTAINER_WIDTH / 2;
-
   const spinTriggered = useRef(false);
 
   useLayoutEffect(() => {
@@ -352,8 +349,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
         const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-        // Define extra cycles to simulate multiple spins
-        const cycles = 3; // number of extra full cycles
+        // Define extra cycles to simulate multiple spins (adjust if needed)
+        const cycles = 2;
         const totalItems = (cycles + 1) * reelLength;
         // Calculate the final winning position in the extended reel
         const winningPosition = cycles * reelLength + winningIndex;
@@ -370,9 +367,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
         setReelItems(newReel);
 
-        // Calculate offsets so that the item’s center aligns with the container center
-        const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
-        const finalOffset = fixedCenter - (winningPosition * itemWidth + itemWidth / 2);
+        // Using itemWidth as the reference: assume the container "center" is itemWidth/2.
+        // Therefore:
+        //   initialOffset = itemWidth/2 - (0 * itemWidth + itemWidth/2) = 0
+        //   finalOffset = itemWidth/2 - (winningPosition * itemWidth + itemWidth/2) = -winningPosition * itemWidth
+        const initialOffset = 0;
+        const finalOffset = -winningPosition * itemWidth;
 
         controls.set({ x: initialOffset });
         controls
@@ -389,17 +389,14 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       }, 0);
     } else if (!isPlaying) {
       spinTriggered.current = false;
-      const initialOffset = fixedCenter - (0 * itemWidth + itemWidth / 2);
+      const initialOffset = 0;
       controls.set({ x: initialOffset });
     }
-  }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex, fixedCenter]);
+  }, [isPlaying, controls, onGameEnd, itemWidth, reelLength, winningIndex]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full flex items-center justify-center relative overflow-hidden"
-      style={{ width: FIXED_CONTAINER_WIDTH }}
-    >
+    // Container width is now set to the itemWidth so that our offset calculations are based on the reel item
+    <div ref={containerRef} className="flex items-center justify-center relative overflow-hidden" style={{ width: `${itemWidth}px` }}>
       <motion.div className="flex flex-nowrap" animate={controls}>
         {reelItems.map((item, i) => (
           <div
@@ -425,43 +422,45 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         ))}
       </motion.div>
       <AnimatePresence>
-        {showResultOverlay && winningPositionState !== null && reelItems[winningPositionState] && (
-          <motion.div
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+        {showResultOverlay &&
+          winningPositionState !== null &&
+          reelItems[winningPositionState] && (
             <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: [1, 1.4, 1] }}
-              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
+              className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <Image
-                src={reelItems[winningPositionState].image}
-                alt={reelItems[winningPositionState].name}
-                width={80}
-                height={80}
-                className="mx-auto mb-2"
-                loading="eager"
-                style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
-                }}
-              />
-              <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
-              <p className="text-xl font-bold text-teal-100">
-                {reelItems[winningPositionState].name}{" "}
-                <span className="text-base text-teal-200">
-                  ({reelItems[winningPositionState].tier.replace("-", " ")})
-                </span>
-              </p>
-              <p className="text-lg text-blue-50 mt-2">
-                You won <strong>{reelItems[winningPositionState].reward} KAS</strong>
-              </p>
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: [1, 1.4, 1] }}
+                transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
+                className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
+              >
+                <Image
+                  src={reelItems[winningPositionState].image}
+                  alt={reelItems[winningPositionState].name}
+                  width={80}
+                  height={80}
+                  className="mx-auto mb-2"
+                  loading="eager"
+                  style={{
+                    filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                  }}
+                />
+                <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
+                <p className="text-xl font-bold text-teal-100">
+                  {reelItems[winningPositionState].name}{" "}
+                  <span className="text-base text-teal-200">
+                    ({reelItems[winningPositionState].tier.replace("-", " ")})
+                  </span>
+                </p>
+                <p className="text-lg text-blue-50 mt-2">
+                  You won <strong>{reelItems[winningPositionState].reward} KAS</strong>
+                </p>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
       </AnimatePresence>
     </div>
   );
