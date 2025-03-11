@@ -229,24 +229,42 @@ function KasperLootBoxContent() {
                   </>
                 )}
                 {!isPlaying && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
-                    <motion.h1
-                      className="text-5xl font-bold mb-4"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      style={{ color: "#49EACB" }}
-                    >
-                      KASPER LOOT BOX
-                    </motion.h1>
-                    <motion.p
-                      className="text-xl"
-                      animate={{ opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      style={{ color: "#00FFFF" }}
-                    >
-                      spin to win
-                    </motion.p>
-                  </div>
+                  <>
+                    {/* Background interactive images */}
+                    <div className="absolute inset-0 z-30">
+                      <motion.div whileHover={{ scale: 1.1 }} className="absolute top-10 left-10">
+                        <Image src="/kasperlootbox/legendary.webp" alt="King KASPER" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                      </motion.div>
+                      <motion.div whileHover={{ scale: 1.1 }} className="absolute bottom-10 right-10">
+                        <Image src="/kasperlootbox/epic1.webp" alt="Arcane Apparition" width={80} height={80} className="rounded-lg border-4 border-purple-500" />
+                      </motion.div>
+                      <motion.div whileHover={{ scale: 1.1 }} className="absolute top-5 right-5">
+                        <Image src="/kasperlootbox/common1.webp" alt="Flickering Wisp" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                      </motion.div>
+                      <motion.div whileHover={{ scale: 1.1 }} className="absolute bottom-5 left-5">
+                        <Image src="/kasperlootbox/uncommon1.webp" alt="Resonant Shade" width={70} height={70} className="rounded-md border-4 border-indigo-500" />
+                      </motion.div>
+                    </div>
+                    {/* Pregame text overlay */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                      <motion.h1
+                        className="text-5xl font-bold mb-4"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ color: "#49EACB" }}
+                      >
+                        KASPER LOOT BOX
+                      </motion.h1>
+                      <motion.p
+                        className="text-xl tracking-wider"
+                        animate={{ opacity: [0.8, 1, 0.8] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ color: "#00FFFF" }}
+                      >
+                        SPIN TO WIN
+                      </motion.p>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -359,12 +377,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       spinTriggered.current = true;
       setShowResultOverlay(false);
 
-      // Generate a random reel of 40 items from lootItems
-      const randomReel = Array.from({ length: 40 }, () => lootItems[Math.floor(Math.random() * lootItems.length)]);
-      randomReelLengthRef.current = randomReel.length;
-      // Duplicate for seamless looping
-      const loopReel = randomReel.concat(randomReel);
-      
       // Determine winning tier/item via probability logic
       const r = Math.random();
       let chosenTier =
@@ -374,8 +386,14 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
       setWinningItem(winItem);
-      
-      // Override the element at index = randomReel.length with the winning item so that it will be the stopping point
+
+      // Generate a random reel of 40 items from lootItems excluding the winning item
+      const filteredLoot = lootItems.filter(item => item.id !== winItem.id);
+      const randomReel = Array.from({ length: 40 }, () => filteredLoot[Math.floor(Math.random() * filteredLoot.length)]);
+      randomReelLengthRef.current = randomReel.length;
+      // Duplicate for seamless looping
+      const loopReel = randomReel.concat(randomReel);
+      // Override the element at index = randomReel.length with the winning item
       loopReel[randomReel.length] = winItem;
       setFinalReel(loopReel);
 
@@ -390,8 +408,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setTimeout(() => {
         controls.stop();
         const winningPosition = randomReel.length; // winning item is at this index
-        // Adjust stopping point: move 1.5 image lengths to the right
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) - 1.5 * itemWidth;
+        // Adjust stopping point: center the winning item then shift 1.5 image lengths to the right
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) + 1.5 * itemWidth;
         controls.start({
           x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
