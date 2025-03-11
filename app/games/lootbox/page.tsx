@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useLayoutEffect, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,7 +31,6 @@ export const lootItems = [
   { id: 1, name: "Flickering Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common1.webp" },
   { id: 2, name: "Dusky Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common2.webp" },
   { id: 3, name: "Fading Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common3.webp" },
-
   // Phantom Echoes (Uncommon)
   { id: 4, name: "Resonant Shade", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon1.webp" },
   { id: 5, name: "Echoing Spirit", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon2.webp" },
@@ -39,14 +38,12 @@ export const lootItems = [
   { id: 7, name: "Vibrant Apparition", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon4.webp" },
   { id: 8, name: "Reverberating Phantom", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon5.webp" },
   { id: 9, name: "Chiming Specter", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon6.webp" },
-
   // Spectral Symphony (Epic)
   { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic1.webp" },
   { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic2.webp" },
   { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic3.webp" },
   { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic4.webp" },
   { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic5.webp" },
-
   // Kaspa's Legend (Legendary)
   { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
 ];
@@ -338,8 +335,9 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const [animationDuration, setAnimationDuration] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isPlaying) {
+  // Use layout effect so container measurements are ready before computing the offset.
+  useLayoutEffect(() => {
+    if (isPlaying && containerRef.current) {
       setShowResultOverlay(false);
       // Determine winning tier based on probability.
       const r = Math.random();
@@ -356,25 +354,22 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Set reel length to 42 and force winning item at index 38 (39th item)
+      // Build a reel with 42 items and force the winning item at index 38.
       const reelLength = 42;
       const winningIndex = 38;
-      const newReel = Array.from({ length: reelLength }, (_, idx) => {
-        return idx === winningIndex
-          ? winningItem
-          : lootItems[Math.floor(Math.random() * lootItems.length)];
-      });
+      const newReel = Array.from({ length: reelLength }, (_, idx) =>
+        idx === winningIndex ? winningItem : lootItems[Math.floor(Math.random() * lootItems.length)]
+      );
       setReelItems(newReel);
 
-      // Calculate offset so the winning item is centered.
-      const containerWidth = containerRef.current?.offsetWidth || 600;
+      // Compute the offset so the winning item is exactly centered.
+      const containerWidth = containerRef.current.offsetWidth;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
       const finalOffset = containerCenter - winningItemCenter;
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     }
-    // Note: We keep reelItems even after game ends so the winning image stays visible.
   }, [isPlaying]);
 
   return (
@@ -386,7 +381,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition={{ duration: animationDuration, ease: "easeOut" }}
         onAnimationComplete={() => {
           if (reelItems.length > 0 && isPlaying) {
-            // After the reel stops on the winning item, wait 2 seconds and show the popup.
+            // After the reel stops (winning image centered), wait 2 seconds then show the popup.
             setTimeout(() => {
               onGameEnd(reelItems[38]);
               setShowResultOverlay(true);
