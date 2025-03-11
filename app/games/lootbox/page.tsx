@@ -342,7 +342,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
     if (isPlaying) {
       setShowResultOverlay(false);
 
-      // Determine winning tier based on probability using new tier names.
+      // Determine winning tier based on probability.
       const r = Math.random();
       let chosenTier: string;
       if (r < 0.5) {
@@ -357,7 +357,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Set the reel length to 42 and ensure the winning item is always at index 38 (39th item)
+      // Set reel length to 42 and force winning item at index 38 (39th item)
       const reelLength = 42;
       const winningIndex = 38;
       const newReel = Array.from({ length: reelLength }, (_, idx) => {
@@ -367,7 +367,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       });
       setReelItems(newReel);
 
-      // Calculate offset so the winning item is centered in the container.
+      // Calculate offset so the winning item is centered.
       const containerWidth = containerRef.current?.offsetWidth || 600;
       const containerCenter = containerWidth / 2;
       const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
@@ -375,19 +375,19 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setAnimationTarget(finalOffset);
       setAnimationDuration(3);
     }
-    // Do not clear reelItems when isPlaying is false to keep the reel visible after game ends.
+    // Keep reelItems even after game ends.
   }, [isPlaying]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
       <motion.div
-        className="flex"
+        className="flex flex-nowrap"
         initial={{ x: 0 }}
         animate={{ x: animationTarget }}
         transition={{ duration: animationDuration, ease: "easeOut" }}
         onAnimationComplete={() => {
           if (reelItems.length > 0) {
-            // Wait 2 seconds before ending the game and showing the overlay.
+            // Wait 2 seconds before showing the overlay and ending the game.
             setTimeout(() => {
               onGameEnd(reelItems[38]);
               setShowResultOverlay(true);
@@ -412,8 +412,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 width={itemWidth - 10}
                 height={itemWidth - 10}
                 loading="eager"
+                priority
               />
-              {/* Overlay based on rarity */}
               <div
                 className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`}
                 style={{ pointerEvents: "none" }}
@@ -425,12 +425,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       <AnimatePresence>
         {showResultOverlay && reelItems.length > 0 && (
           <motion.div
-            className="absolute inset-0 flex items-center justify-center bg-black/70"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Big pop-up effect on the winning image */}
+            {/* Popup overlay with higher z-index */}
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
@@ -444,6 +444,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 height={80}
                 className="mx-auto mb-2"
                 loading="eager"
+                priority
                 style={{
                   filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
                 }}
