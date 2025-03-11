@@ -230,22 +230,62 @@ function KasperLootBoxContent() {
                 )}
                 {!isPlaying && (
                   <>
-                    {/* Background interactive images */}
+                    {/* Interactive Background Images */}
                     <div className="absolute inset-0 z-30">
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute top-2 left-10">
-                        <Image src="/kasperlootbox/legendary.webp" alt="King KASPER" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-4 left-16"
+                      >
+                        <Image
+                          src="/kasperlootbox/legendary.webp"
+                          alt="King KASPER"
+                          width={100}
+                          height={100}
+                          className="rounded-full border-4 border-pink-500"
+                        />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute bottom-10 right-10">
-                        <Image src="/kasperlootbox/epic1.webp" alt="Arcane Apparition" width={80} height={80} className="rounded-lg border-4 border-purple-500" />
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-12 right-16"
+                      >
+                        <Image
+                          src="/kasperlootbox/epic1.webp"
+                          alt="Arcane Apparition"
+                          width={80}
+                          height={80}
+                          className="rounded-lg border-4 border-purple-500"
+                        />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute top-5 right-5">
-                        <Image src="/kasperlootbox/common1.webp" alt="Flickering Wisp" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-10 right-10"
+                      >
+                        <Image
+                          src="/kasperlootbox/common1.webp"
+                          alt="Flickering Wisp"
+                          width={70}
+                          height={70}
+                          className="rounded-md border-4 border-blue-500"
+                        />
                       </motion.div>
-                      <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="absolute bottom-5 left-5">
-                        <Image src="/kasperlootbox/uncommon1.webp" alt="Resonant Shade" width={70} height={70} className="rounded-md border-4 border-indigo-500" />
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-10 left-10"
+                      >
+                        <Image
+                          src="/kasperlootbox/uncommon1.webp"
+                          alt="Resonant Shade"
+                          width={70}
+                          height={70}
+                          className="rounded-md border-4 border-indigo-500"
+                        />
                       </motion.div>
                     </div>
-                    {/* Pregame text overlay */}
+                    {/* Pregame Text Overlay */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                       <motion.h1
                         className="text-5xl font-bold mb-4"
@@ -408,8 +448,8 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setTimeout(() => {
         controls.stop();
         const winningPosition = randomReel.length; // winning item is at this index
-        // Adjust stopping point: center the winning item then shift 1.5 image lengths to the right
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2) - 1.5 * itemWidth;
+        // Adjust stopping point: center the winning item exactly
+        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
         controls.start({
           x: finalOffset,
           transition: { duration: 0.5, ease: "easeOut" },
