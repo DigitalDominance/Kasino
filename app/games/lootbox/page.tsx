@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -316,7 +316,7 @@ function KasperLootBoxContent() {
 }
 
 // ---------------------------------------------------------
-// Kasper Loot Box Game Component (Horizontal Reel with Slots-like Logic)
+// Kasper Loot Box Game Component (Horizontal Reel with Popup)
 // ---------------------------------------------------------
 function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
   const controls = useAnimation();
@@ -325,53 +325,58 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const containerCenter = containerWidth / 2;
   const [finalReel, setFinalReel] = useState<any[]>([]);
   const [winningItem, setWinningItem] = useState<any>(null);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
   const spinTriggered = useRef(false);
+  const currentXRef = useRef(0);
+  const randomReelLengthRef = useRef(0);
 
   useEffect(() => {
     if (isPlaying && !spinTriggered.current) {
       spinTriggered.current = true;
+      setShowResultOverlay(false);
+
       // Generate a random reel of 40 items from lootItems
       const randomReel = Array.from({ length: 40 }, () => lootItems[Math.floor(Math.random() * lootItems.length)]);
-      // Determine winning tier/item using our probability logic
+      randomReelLengthRef.current = randomReel.length;
+      // Duplicate for seamless looping
+      const loopReel = randomReel.concat(randomReel);
+      setFinalReel(loopReel);
+
+      // Determine winning tier/item via probability logic
       const r = Math.random();
       let chosenTier =
-        r < 0.5
-          ? "wraiths-whispers"
-          : r < 0.9
-          ? "phantom-echoes"
-          : r < 0.999
-          ? "spectral-symphony"
-          : "kaspa-legend";
+        r < 0.5 ? "wraiths-whispers" :
+        r < 0.9 ? "phantom-echoes" :
+        r < 0.999 ? "spectral-symphony" : "kaspa-legend";
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
       setWinningItem(winItem);
-      // Append winning item so that it appears after the random reel
-      const fullReel = [...randomReel, winItem];
-      setFinalReel(fullReel);
 
-      // While spinning, animate continuously (in a loop) over the random reel section
+      // Start continuous horizontal loop over the first randomReel length
+      const loopDistance = randomReel.length * itemWidth;
       controls.start({
-        x: [0, -randomReel.length * itemWidth],
+        x: [0, -loopDistance],
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the continuous animation and smoothly transition to final offset
+      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
       setTimeout(() => {
         controls.stop();
-        // Calculate final offset so that the winning item (at index randomReel.length) is centered
-        const winningPosition = randomReel.length; // index of winning item
-        const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
+        const currentX = currentXRef.current;
+        const alignedOffset = Math.round(currentX / itemWidth) * itemWidth;
         controls.start({
-          x: finalOffset,
+          x: alignedOffset,
           transition: { duration: 0.5, ease: "easeOut" },
         });
         onGameEnd(winItem);
+        setShowResultOverlay(true);
       }, 3000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
       setFinalReel([]);
       setWinningItem(null);
+      setShowResultOverlay(false);
     }
   }, [isPlaying, controls, itemWidth, containerCenter, onGameEnd]);
 
@@ -380,29 +385,74 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       className="w-full h-full flex items-center justify-center relative overflow-hidden"
       style={{ width: containerWidth }}
     >
-      <motion.div className="flex" animate={controls}>
+      <motion.div
+        className="flex"
+        animate={controls}
+        onUpdate={(latest) => {
+          currentXRef.current = latest.x;
+        }}
+      >
         {finalReel.map((item, i) => (
           <div
             key={i}
-            style={{
-              width: itemWidth,
-              padding: "5px",
-              boxSizing: "border-box",
-            }}
+            style={{ width: itemWidth, flexShrink: 0 }}
+            className="p-0"
           >
             <div className="relative w-full h-full">
               <Image
                 src={item.image}
                 alt={item.name}
-                width={itemWidth - 10}
-                height={itemWidth - 10}
+                width={itemWidth}
+                height={itemWidth}
                 loading="eager"
               />
-              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
+              <div
+                className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`}
+                style={{ pointerEvents: "none" }}
+              />
             </div>
           </div>
         ))}
       </motion.div>
+      <AnimatePresence>
+        {showResultOverlay && winningItem && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
+              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
+            >
+              <Image
+                src={winningItem.image}
+                alt={winningItem.name}
+                width={80}
+                height={80}
+                className="mx-auto mb-2"
+                loading="eager"
+                style={{
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                }}
+              />
+              <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
+              <p className="text-xl font-bold text-teal-100">
+                {winningItem.name}{" "}
+                <span className="text-base text-teal-200">
+                  ({winningItem.tier.replace("-", " ")})
+                </span>
+              </p>
+              <p className="text-lg text-blue-50 mt-2">
+                You won <strong>{winningItem.reward} KAS</strong>
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
