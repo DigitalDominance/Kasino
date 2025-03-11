@@ -222,7 +222,7 @@ function KasperLootBoxContent() {
 
         {/* Main Game & Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-          <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm overflow-hidden">
+          <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
                 <h2 className="text-2xl font-bold text-blue-300">Kasper Loot Box</h2>
@@ -233,8 +233,8 @@ function KasperLootBoxContent() {
               {/* Reel Container */}
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                <div className="absolute top-0 bottom-0 left-0 w-40 bg-blue-900/60 backdrop-blur-md pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-40 bg-blue-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
@@ -253,7 +253,7 @@ function KasperLootBoxContent() {
         </div>
 
         {/* Traits Layout Card */}
-        <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm p-4 mb-6">
+        <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
             Kasper Loot Box Traits &amp; Rewards
           </h3>
@@ -265,7 +265,7 @@ function KasperLootBoxContent() {
                   <Image src={item.image} alt={item.name} width={40} height={40} />
                   <p className="mt-1 font-semibold text-blue-400 drop-shadow">{item.name}</p>
                   <p className="capitalize text-blue-300 drop-shadow">{item.tier.replace("-", " ")}</p>
-                  <p className="text-blue-300 drop-shadow">{item.reward} KAS</p>
+                  <p className="text-teal-300 drop-shadow">{item.reward} KAS</p>
                 </div>
               );
             })}
@@ -273,7 +273,7 @@ function KasperLootBoxContent() {
         </Card>
 
         {/* Promo / Info Card */}
-        <Card className="w-full bg-blue-900/50 border border-blue-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+        <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
@@ -286,7 +286,7 @@ function KasperLootBoxContent() {
             Kasper Loot Box
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-blue-200 mb-4">
+          <p className="text-sm text-white-200 mb-4">
             For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS),
             a potent <strong>Arcane Apparition</strong> (90 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
           </p>
@@ -439,7 +439,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
               initial={{ scale: 0.8 }}
               animate={{ scale: [1, 1.4, 1] }}
               transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-blue-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-blue-800/80 animate-pulse max-w-xs"
+              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 animate-pulse max-w-xs"
             >
               <Image
                 src={reelItems[Math.floor(reelItems.length / 2)].image}
@@ -452,10 +452,10 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                   filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
                 }}
               />
-              <p className="text-3xl font-extrabold text-blue-400 mb-2">Congratulations!</p>
-              <p className="text-xl font-bold text-blue-100">
+              <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
+              <p className="text-xl font-bold text-teal-100">
                 {reelItems[Math.floor(reelItems.length / 2)].name}{" "}
-                <span className="text-base text-blue-200">
+                <span className="text-base text-teal-200">
                   ({reelItems[Math.floor(reelItems.length / 2)].tier.replace("-", " ")})
                 </span>
               </p>
@@ -530,7 +530,7 @@ function KasperLootBoxControls({
 
   return (
     <>
-      <Card className="bg-blue-900/50 border border-blue-500 backdrop-blur-sm">
+      <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <div className="space-y-2">
             <label className="text-sm text-blue-300">Cost per Kasper Loot Box (KAS)</label>
@@ -539,7 +539,7 @@ function KasperLootBoxControls({
                 type="number"
                 value={betAmount}
                 disabled
-                className="bg-blue-900/50 border border-blue-500 text-white pl-8 w-full"
+                className="bg-teal-900/50 border border-teal-500 text-white pl-8 w-full"
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
@@ -565,7 +565,7 @@ function KasperLootBoxControls({
             )}
             {!isPlaying ? (
               <Button
-                className="w-full bg-blue-400 text-black hover:bg-blue-300"
+                className="w-full bg-teal-400 text-black hover:bg-teal-300"
                 onClick={handleOpenBox}
                 disabled={!isWalletConnected || cooldown > 0}
               >
@@ -576,7 +576,7 @@ function KasperLootBoxControls({
                   : "Open Kasper Loot Box"}
               </Button>
             ) : (
-              <Button className="w-full bg-blue-400 text-black hover:bg-blue-300" disabled>
+              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
                 Opening...
               </Button>
             )}
@@ -590,7 +590,7 @@ function KasperLootBoxControls({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-blue-700 to-black text-white px-4 py-2 rounded shadow-lg"
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
