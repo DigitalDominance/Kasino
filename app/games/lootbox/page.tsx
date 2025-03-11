@@ -235,7 +235,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute top-4 left-16"
+                        className="absolute top-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 10px #FF00FF)" }}
                       >
                         <Image
                           src="/kasperlootbox/legendary.webp"
@@ -248,7 +249,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-12 right-16"
+                        className="absolute bottom-20 right-20"
+                        style={{ filter: "drop-shadow(0 0 10px #00FF00)" }}
                       >
                         <Image
                           src="/kasperlootbox/epic1.webp"
@@ -261,7 +263,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute top-10 right-10"
+                        className="absolute top-12 right-20"
+                        style={{ filter: "drop-shadow(0 0 10px #00FFFF)" }}
                       >
                         <Image
                           src="/kasperlootbox/common1.webp"
@@ -274,7 +277,8 @@ function KasperLootBoxContent() {
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-10 left-10"
+                        className="absolute bottom-20 left-20"
+                        style={{ filter: "drop-shadow(0 0 10px #FFFF00)" }}
                       >
                         <Image
                           src="/kasperlootbox/uncommon1.webp"
@@ -410,7 +414,6 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const spinTriggered = useRef(false);
   const currentXRef = useRef(0);
-  const randomReelLengthRef = useRef(0);
 
   useEffect(() => {
     if (isPlaying && !spinTriggered.current) {
@@ -430,25 +433,21 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       // Generate a random reel of 40 items from lootItems excluding the winning item
       const filteredLoot = lootItems.filter(item => item.id !== winItem.id);
       const randomReel = Array.from({ length: 40 }, () => filteredLoot[Math.floor(Math.random() * filteredLoot.length)]);
-      randomReelLengthRef.current = randomReel.length;
-      // Duplicate for seamless looping
-      const loopReel = randomReel.concat(randomReel);
-      // Override the element at index = randomReel.length with the winning item
-      loopReel[randomReel.length] = winItem;
-      setFinalReel(loopReel);
+      // Append the winning item at the very end so it's the last image
+      const finalReelArray = randomReel.concat([winItem]);
+      setFinalReel(finalReelArray);
 
-      // Start continuous horizontal loop over the first randomReel length
+      // Start continuous horizontal loop over the randomReel portion only
       const loopDistance = randomReel.length * itemWidth;
       controls.start({
         x: [0, -loopDistance],
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the loop and decelerate to the winning item (at index = randomReel.length)
+      // After 3 seconds, stop the loop and decelerate to the winning item (which is at index = randomReel.length)
       setTimeout(() => {
         controls.stop();
-        const winningPosition = randomReel.length; // winning item is at this index
-        // Adjust stopping point: center the winning item exactly
+        const winningPosition = randomReel.length; // winning image is at this index
         const finalOffset = containerCenter - (winningPosition * itemWidth + itemWidth / 2);
         controls.start({
           x: finalOffset,
