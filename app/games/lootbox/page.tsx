@@ -331,28 +331,42 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const controls = useAnimation();
   const [reelItems, setReelItems] = useState<any[]>([]);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
-  const itemWidth = 120;
   const containerRef = useRef<HTMLDivElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null); // Ref to measure one reel item's width
+  // Use a state variable to store the measured width (defaulting to 120)
+  const [measuredItemWidth, setMeasuredItemWidth] = useState<number>(120);
   const spinTriggered = useRef(false);
 
-  // useLayoutEffect for measurements and triggering spin once per game.
+  // ---------------------------------------------------------
+  // 1. Measure the actual width of a reel item (using the first item)
+  // ---------------------------------------------------------
+  useLayoutEffect(() => {
+    if (itemRef.current) {
+      setMeasuredItemWidth(itemRef.current.clientWidth);
+    }
+  }, [reelItems]);
+
+  // ---------------------------------------------------------
+  // 2. Trigger spin when game starts (with a slight delay to ensure measurements)
+  // ---------------------------------------------------------
   useLayoutEffect(() => {
     if (isPlaying && containerRef.current && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
       // Determine winning tier.
       const r = Math.random();
-      let chosenTier = r < 0.5
-        ? "wraiths-whispers"
-        : r < 0.9
-        ? "phantom-echoes"
-        : r < 0.999
-        ? "spectral-symphony"
-        : "kaspa-legend";
+      let chosenTier =
+        r < 0.5
+          ? "wraiths-whispers"
+          : r < 0.9
+          ? "phantom-echoes"
+          : r < 0.999
+          ? "spectral-symphony"
+          : "kaspa-legend";
       const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
       const winningItem = tierItems[Math.floor(Math.random() * tierItems.length)];
 
-      // Build a reel of 42 items with the winning item at index 38.
+      // Build a reel of 42 items with the winning item at index 38 (i.e. the 39th image).
       const reelLength = 42;
       const winningIndex = 38;
       const newReel = Array.from({ length: reelLength }, (_, idx) =>
@@ -360,28 +374,35 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       );
       setReelItems(newReel);
 
-      // Compute offset to center the winning image.
-      const containerWidth = containerRef.current.offsetWidth;
-      const containerCenter = containerWidth / 2;
-      const winningItemCenter = winningIndex * itemWidth + itemWidth / 2;
-      const finalOffset = containerCenter - winningItemCenter;
-
-      // Start a single linear spin from 0 to finalOffset.
-      controls.set({ x: 0 });
-      controls.start({
-        x: finalOffset,
-        transition: { type: "tween", duration: 3, ease: "linear" }
-      }).then(() => {
-        setTimeout(() => {
-          onGameEnd(newReel[winningIndex]);
-          setShowResultOverlay(true);
-        }, 2000);
-      });
+      // Slight delay to ensure reel items have rendered and the measured width is updated.
+      setTimeout(() => {
+        if (containerRef.current) {
+          const containerWidth = containerRef.current.clientWidth; // use clientWidth for accuracy
+          const containerCenter = containerWidth / 2;
+          // Use the measured item width instead of a hardcoded value.
+          const winningItemCenter = winningIndex * measuredItemWidth + measuredItemWidth / 2;
+          const finalOffset = containerCenter - winningItemCenter;
+          
+          // Animate the reel from 0 to the computed offset.
+          controls.set({ x: 0 });
+          controls
+            .start({
+              x: finalOffset,
+              transition: { type: "tween", duration: 3, ease: "linear" },
+            })
+            .then(() => {
+              setTimeout(() => {
+                onGameEnd(newReel[winningIndex]);
+                setShowResultOverlay(true);
+              }, 2000);
+            });
+        }
+      }, 50);
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
     }
-  }, [isPlaying, controls, onGameEnd]);
+  }, [isPlaying, measuredItemWidth, controls, onGameEnd]);
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center relative overflow-hidden">
@@ -389,26 +410,25 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         {reelItems.map((item, i) => (
           <div
             key={i}
+            // Assign the ref only to the first item so we can measure its width
+            ref={i === 0 ? itemRef : null}
             style={{
-              width: itemWidth,
-              height: itemWidth,
+              width: measuredItemWidth,
+              height: measuredItemWidth,
               padding: "5px",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
             }}
           >
             <div className="relative w-full h-full">
               <Image
                 src={item.image}
                 alt={item.name}
-                width={itemWidth - 10}
-                height={itemWidth - 10}
+                width={measuredItemWidth - 10}
+                height={measuredItemWidth - 10}
                 loading="eager"
                 priority
               />
-              <div
-                className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`}
-                style={{ pointerEvents: "none" }}
-              />
+              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
             </div>
           </div>
         ))}
@@ -436,15 +456,13 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 loading="eager"
                 priority
                 style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)"
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
                 }}
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
                 {reelItems[38].name}{" "}
-                <span className="text-base text-teal-200">
-                  ({reelItems[38].tier.replace("-", " ")})
-                </span>
+                <span className="text-base text-teal-200">({reelItems[38].tier.replace("-", " ")})</span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
                 You won <strong>{reelItems[38].reward} KAS</strong>
