@@ -221,7 +221,7 @@ function KasperLootBoxContent() {
               </div>
               {/* Reel Container */}
               {/* Here the container width is set to itemWidth so that we use reel item width as the reference */}
-              <div className="relative" style={{ width: `${120}px`, height: "72px", overflow: "hidden" }}>
+              <div className="relative" style={{ width: `${600}px`, height: "400px", overflow: "hidden" }}>
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
                 <div className="absolute top-0 bottom-0 left-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
                 <div className="absolute top-0 bottom-0 right-0 w-10 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
