@@ -41,15 +41,14 @@ function MainPageContent() {
   const [winCounter, setWinCounter] = useState<any[]>([]);
   const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
 
-  // Use full backend URL from env variable
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Banner images (Note: Kasen promo banner is now at index 1)
+  // Banner images (with Kasen promo banner at index 1)
   const mainBanners = [
     "/roulettebanner.webp",
-    "/kasenpromo.png", // Kasen promo banner in 2nd spot
+    "/kasenpromo.png",
     "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
@@ -74,7 +73,7 @@ function MainPageContent() {
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
-  // Helper: For each win, if the username looks like a wallet address, try to resolve it.
+  // Helper: For each win, if username looks like a wallet address, resolve it.
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -91,7 +90,7 @@ function MainPageContent() {
     return win;
   };
 
-  // Fetch live wins for the ticker (limited to the 10 most recent wins)
+  // Fetch live wins for the ticker
   useEffect(() => {
     const fetchWins = async () => {
       try {
@@ -108,14 +107,11 @@ function MainPageContent() {
     };
 
     fetchWins();
-    const interval = setInterval(() => {
-      fetchWins();
-    }, 8000);
-
+    const interval = setInterval(fetchWins, 8000);
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Fetch win counter data from the new API endpoint
+  // Fetch win counter data
   useEffect(() => {
     const fetchWinCounter = async () => {
       try {
@@ -218,13 +214,9 @@ function MainPageContent() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="text-[#49EACB] hover:bg-[#49EACB]/10"
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onClick={() => setIsSidebarOpen((prev) => !prev)}
                 >
-                  {isSidebarOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
+                  {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </MotionButton>
                 <motion.div
                   className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
@@ -363,6 +355,7 @@ function MainPageContent() {
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
+                        className="max-w-[500px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -461,6 +454,7 @@ function MainPageContent() {
                     {characterGames.map((game, i) => (
                       <motion.div
                         key={i}
+                        className="max-w-[500px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.4, duration: 0.5 }}
@@ -492,6 +486,32 @@ function MainPageContent() {
                               <h3 className="font-semibold text-white group-hover:text-[#49EACB] transition-colors duration-300">
                                 {game.name}
                               </h3>
+                              <p className="text-sm text-gray-400">
+                                Wins:{" "}
+                                <span className="text-[#49EACB] font-bold">
+                                  {winCounter.find(
+                                    (counter) =>
+                                      counter._id.toLowerCase() === game.slug
+                                  )?.totalWins || 0}
+                                </span>
+                              </p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <span className="text-sm text-gray-400">High Score:</span>
+                                <div className="flex items-center gap-1">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-sm text-[#49EACB] font-bold">
+                                    {highScores[game.slug]
+                                      ? highScores[game.slug].toFixed(2)
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </MotionCard>
                         </Link>
@@ -553,7 +573,9 @@ function MainPageContent() {
                             </div>
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-1">
-                                <div className="text-sm text-[#49EACB]">{win.game.toUpperCase()}</div>
+                                <div className="text-sm text-[#49EACB]">
+                                  {win.game.toUpperCase()}
+                                </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -562,7 +584,9 @@ function MainPageContent() {
                                     height={16}
                                     className="rounded-full"
                                   />
-                                  <span className="text-[#49EACB] font-bold">{win.amount.toFixed(2)}</span>
+                                  <span className="text-[#49EACB] font-bold">
+                                    {win.amount.toFixed(2)}
+                                  </span>
                                 </div>
                               </div>
                               <div className="text-sm text-gray-400">{win.username}</div>
