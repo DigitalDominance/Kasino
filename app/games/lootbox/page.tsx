@@ -223,8 +223,15 @@ function KasperLootBoxContent() {
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
                 {/*
-                  If the game isn't playing, show the interactive background images and pregame text overlay.
+                  Only render left/right overlay cards when the game is playing.
                 */}
+                {isPlaying && (
+                  <>
+                    <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                    <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                  </>
+                )}
+                {/* Pregame Screen */}
                 {!isPlaying && (
                   <>
                     {/* Interactive Background Images */}
@@ -307,9 +314,6 @@ function KasperLootBoxContent() {
                     </div>
                   </>
                 )}
-                {/* Left & Right Overlays */}
-                <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
               </div>
             </div>
           </Card>
@@ -445,7 +449,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 5 seconds, stop the loop and decelerate to the nearest aligned offset
+      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
       setTimeout(() => {
         controls.stop();
         const currentX = currentXRef.current;
@@ -456,7 +460,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
         onGameEnd(winItem);
         setShowResultOverlay(true);
-      }, 5000);
+      }, 3000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
