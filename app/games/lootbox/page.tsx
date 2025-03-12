@@ -1,21 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { WalletProvider, Notification } from "@/contexts/WalletContext";
-import { GiCheerful, GiStarFormation } from "react-icons/gi";
-import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import Image from "next/image";
+import { useWallet } from "@/contexts/WalletContext";
+import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 
 // ---------------------------------------------------------
 // Font
@@ -26,617 +24,515 @@ const montserrat = Montserrat({
 });
 
 // ---------------------------------------------------------
-// Motion
+// Loot Items Distribution
 // ---------------------------------------------------------
-const MotionCard = motion(Card);
-const MotionButton = motion(Button);
+export const lootItems = [
+  { id: 1, name: "Flickering Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common1.webp" },
+  { id: 2, name: "Dusky Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common2.webp" },
+  { id: 3, name: "Fading Wisp", tier: "wraiths-whispers", reward: 1, image: "/kasperlootbox/common3.webp" },
+  { id: 4, name: "Resonant Shade", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon1.webp" },
+  { id: 5, name: "Echoing Spirit", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon2.webp" },
+  { id: 6, name: "Haunting Pulse", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon3.webp" },
+  { id: 7, name: "Vibrant Apparition", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon4.webp" },
+  { id: 8, name: "Reverberating Phantom", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon5.webp" },
+  { id: 9, name: "Chiming Specter", tier: "phantom-echoes", reward: 25, image: "/kasperlootbox/uncommon6.webp" },
+  { id: 10, name: "Arcane Apparition", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic1.webp" },
+  { id: 11, name: "Mystic Wraith", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic2.webp" },
+  { id: 12, name: "Veiled Specter", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic3.webp" },
+  { id: 13, name: "Ethereal Enigma", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic4.webp" },
+  { id: 14, name: "Otherworldly Pulse", tier: "spectral-symphony", reward: 90, image: "/kasperlootbox/epic5.webp" },
+  { id: 15, name: "King KASPER", tier: "kaspa-legend", reward: 6250, image: "/kasperlootbox/legendary.webp" },
+];
 
 // ---------------------------------------------------------
-// Interfaces
+// Rarity Styling & Overlay
 // ---------------------------------------------------------
-interface Win {
-  username: string;
-  amount: number;
-  game: string;
-  timestamp: string;
+function getRarityStyle(tier: string) {
+  switch (tier) {
+    case "wraiths-whispers":
+      return "border-blue-500 bg-blue-900/30";
+    case "phantom-echoes":
+      return "border-indigo-500 bg-indigo-900/30";
+    case "spectral-symphony":
+      return "border-purple-500 bg-purple-900/30";
+    case "kaspa-legend":
+      return "border-pink-500 bg-pink-900/30";
+    default:
+      return "border-gray-500 bg-gray-800/30";
+  }
+}
+
+function getRarityOverlayClass(tier: string) {
+  switch (tier) {
+    case "wraiths-whispers":
+      return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
+    case "phantom-echoes":
+      return "bg-gradient-to-br from-indigo-400/30 to-indigo-900/30";
+    case "spectral-symphony":
+      return "bg-gradient-to-br from-purple-400/30 to-purple-900/30";
+    case "kaspa-legend":
+      return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
+    default:
+      return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
+  }
 }
 
 // ---------------------------------------------------------
-// Main Page Content
+// Main Page Component
 // ---------------------------------------------------------
-function MainPageContent() {
-  const [currentBanner, setCurrentBanner] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export default function KasperLootBoxGamePage() {
+  return <KasperLootBoxContent />;
+}
 
-  // Live wins, counters, high scores
-  const [liveWins, setLiveWins] = useState<Win[]>([]);
-  const [winCounter, setWinCounter] = useState<any[]>([]);
-  const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
+function KasperLootBoxContent() {
+  const { isConnected, balance } = useWallet();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [winItem, setWinItem] = useState<any>(null);
+  const [winAmount, setWinAmount] = useState<number | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
-  // Use full backend URL from env variable
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://kasino-backend-4818b4b69870.herokuapp.com";
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+  const lootBoxCost = 25;
 
-  // Banner images
-  const mainBanners = [
-    "/roulettebanner.webp",
-    "/minesbanner.webp",
-    "/crashbanner.webp",
-    "/dicecoinflipcombobanner.webp",
-  ];
-
-  // Original Games
-  const games = [
-    { name: "Mines", slug: "mines" },
-    { name: "Crash", slug: "crash" },
-    { name: "Roulette", slug: "roulette" },
-    { name: "Dice", slug: "dice" },
-    { name: "Coin Flip", slug: "coinflip" },
-  ];
-
-  // Character Games
-  const characterGames = [
-    { name: "Kasper Loot Box", slug: "lootbox" },
-    { name: "Kasen Mania", slug: "kasen-mania" },
-  ];
-
-  // Banner Controls
-  const nextBanner = () =>
-    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
-  const prevBanner = () =>
-    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
-
-  // Helper: Resolve username if wallet
-  const resolveUsername = async (win: Win): Promise<Win> => {
-    if (win.username.startsWith("kaspa:")) {
-      try {
-        const res = await axios.get(
-          `/api/user?walletAddress=${encodeURIComponent(win.username)}`
-        );
-        if (res.data && res.data.username) {
-          return { ...win, username: res.data.username };
-        }
-      } catch (err) {
-        console.error("Error resolving username for wallet", win.username, err);
-      }
+  const handleOpenLootBox = async () => {
+    if (lootBoxCost > balance) {
+      alert("Insufficient balance");
+      return;
     }
-    return win;
+    if (!isConnected) {
+      alert("Please connect your wallet");
+      return;
+    }
+    try {
+      const uniqueHash = uuidv4();
+      const accounts = await window.kasware.getAccounts();
+      const currentWalletAddress = accounts[0];
+      if (!currentWalletAddress) {
+        alert("No wallet address found");
+        return;
+      }
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      if (!chosenTreasury) {
+        alert("Treasury address not configured");
+        return;
+      }
+      const depositTx = await window.kasware.sendKaspa(chosenTreasury, lootBoxCost * 1e8, {
+        priorityFee: 10000,
+      });
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const txidString = parsedTx.id;
+      setDepositTxid(txidString);
+
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
+        gameName: "Kasper Loot Box",
+        uniqueHash,
+        walletAddress: currentWalletAddress,
+        betAmount: lootBoxCost,
+        txid: txidString,
+      });
+      if (startRes.data.success) {
+        setGameId(startRes.data.gameId);
+      } else {
+        alert("Failed to start game on backend");
+        return;
+      }
+      // Start the spin
+      setIsPlaying(true);
+    } catch (error: any) {
+      console.error("Error starting Kasper Loot Box game:", error);
+      alert("Error starting game: " + error.message);
+    }
   };
 
-  // Fetch live wins (limit 10)
-  useEffect(() => {
-    const fetchWins = async () => {
+  const handleGameEnd = async (item: any) => {
+    setWinItem(item);
+    setGameResult("You Win");
+    setWinAmount(item.reward);
+    if (gameId) {
       try {
-        const res = await axios.get(`${apiUrl}/api/latest-wins`);
-        if (res.data.success) {
-          const resolvedWins = await Promise.all(
-            res.data.wins.map(resolveUsername)
-          );
-          setLiveWins(resolvedWins.slice(0, 10));
-        }
+        await axios.post(`${apiUrl}/game/end`, {
+          gameId,
+          result: "win",
+          winAmount: item.reward,
+        });
       } catch (error) {
-        console.error("Error fetching latest wins:", error);
+        console.error("Error ending Kasper Loot Box game on backend:", error);
       }
-    };
-    fetchWins();
-    const interval = setInterval(fetchWins, 8000);
-    return () => clearInterval(interval);
-  }, [apiUrl]);
+    }
+  };
 
-  // Fetch win counter
-  useEffect(() => {
-    const fetchWinCounter = async () => {
-      try {
-        const res = await axios.get(`${apiUrl}/api/win-counter`);
-        if (res.data.success) {
-          setWinCounter(res.data.winCounter);
-        }
-      } catch (error) {
-        console.error("Error fetching win counter:", error);
-      }
-    };
-    fetchWinCounter();
-    const interval = setInterval(fetchWinCounter, 10000);
-    return () => clearInterval(interval);
-  }, [apiUrl]);
-
-  // Fetch high scores
-  useEffect(() => {
-    const fetchHighScores = async () => {
-      try {
-        const res = await axios.get(`${apiUrl}/api/highscores`);
-        if (res.data.success) {
-          setHighScores(res.data.highscores);
-        }
-      } catch (error) {
-        console.error("Error fetching high scores:", error);
-      }
-    };
-    fetchHighScores();
-    const interval = setInterval(fetchHighScores, 10000);
-    return () => clearInterval(interval);
-  }, [apiUrl]);
-
-  // Fake loading
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
+  const resetGame = () => {
+    setIsPlaying(false);
+    setGameResult(null);
+    setWinItem(null);
+    setWinAmount(null);
+    setGameId(null);
+    setDepositTxid(null);
+  };
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black`}>
-      <style jsx global>{`
-        @keyframes gradientAnimation {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-gradient {
-          background: linear-gradient(270deg, #49eacb, #006d5b, #003f2f, #006d5b, #49eacb);
-          background-size: 400% 400%;
-          animation: gradientAnimation 8s ease infinite;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .hover-effect:hover {
-          filter: drop-shadow(0 0 8px #49eacb);
-        }
-        .nav-hover {
-          transition: filter 0.3s ease;
-        }
-        .nav-hover:hover {
-          filter: drop-shadow(0 0 8px #49eacb);
-        }
-        .icon-primary {
-          color: #49eacb;
-          fill: #49eacb;
-        }
-        /* Move the telegram icon higher on mobile */
-        @media (max-width: 768px) {
-          .telegram-icon {
-            bottom: 15vh !important;
-          }
-        }
-      `}</style>
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+      <div className="flex-grow p-6">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link href="/" className="inline-flex items-center text-blue-400 hover:underline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
+            </Link>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <WalletConnection />
+          </motion.div>
+        </header>
 
-      <LoadingAnimation />
+        {/* Deposit TXID */}
+        {depositTxid && (
+          <p className="mb-4 text-sm text-gray-300">
+            Deposit TXID:{" "}
+            <a
+              className="txid-link"
+              style={{
+                background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+              href={`https://kas.fyi/transaction/${depositTxid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {depositTxid}
+            </a>
+          </p>
+        )}
 
-      <AnimatePresence mode="wait">
-        {!isLoading && (
+        {/* Main Game & Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
+          <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full items-center">
+              <div className="flex justify-between items-center w-full mb-4">
+                <h2 className="text-2xl font-bold text-blue-300">Kasper Loot Box</h2>
+                <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
+                  Reset
+                </Button>
+              </div>
+              {/* Reel Container */}
+              <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
+                <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                {/*
+                  Only render left/right overlay cards when the game is playing.
+                */}
+                {isPlaying && (
+                  <>
+                    <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                    <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                  </>
+                )}
+                {/* Pregame Screen */}
+                {!isPlaying && (
+                  <>
+                    {/* Interactive Background Images */}
+                    <div className="absolute inset-0 z-30">
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}
+                      >
+                        <Image
+                          src="/kasperlootbox/legendary.webp"
+                          alt="King KASPER"
+                          width={100}
+                          height={100}
+                          className="rounded-full border-4 border-pink-500"
+                        />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}
+                      >
+                        <Image
+                          src="/kasperlootbox/epic1.webp"
+                          alt="Arcane Apparition"
+                          width={80}
+                          height={80}
+                          className="rounded-lg border-4 border-purple-500"
+                        />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}
+                      >
+                        <Image
+                          src="/kasperlootbox/common1.webp"
+                          alt="Flickering Wisp"
+                          width={70}
+                          height={70}
+                          className="rounded-md border-4 border-blue-500"
+                        />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}
+                      >
+                        <Image
+                          src="/kasperlootbox/uncommon1.webp"
+                          alt="Resonant Shade"
+                          width={70}
+                          height={70}
+                          className="rounded-md border-4 border-indigo-500"
+                        />
+                      </motion.div>
+                    </div>
+                    {/* Pregame Text Overlay */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                      <motion.h1
+                        className="text-5xl font-bold mb-4"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ color: "#49EACB" }}
+                      >
+                        KASPER LOOT BOX
+                      </motion.h1>
+                      <motion.p
+                        className="text-xl tracking-wider"
+                        animate={{ opacity: [0.8, 1, 0.8] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        style={{ color: "#00FFFF" }}
+                      >
+                        SPIN TO WIN
+                      </motion.p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Controls */}
+          <KasperLootBoxControls
+            betAmount={lootBoxCost.toString()}
+            isPlaying={isPlaying}
+            isWalletConnected={isConnected}
+            balance={balance}
+            onOpenLootBox={handleOpenLootBox}
+            gameResult={gameResult}
+            winItem={winItem}
+            winAmount={winAmount}
+          />
+        </div>
+
+        {/* Traits Layout Card */}
+        <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
+            Kasper Loot Box Traits &amp; Rewards
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {lootItems.map((item) => {
+              const rarityClass = getRarityStyle(item.tier);
+              return (
+                <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
+                  <Image src={item.image} alt={item.name} width={40} height={40} />
+                  <p className="mt-1 font-semibold text-blue-400 drop-shadow">{item.name}</p>
+                  <p className="capitalize text-blue-300 drop-shadow">{item.tier.replace("-", " ")}</p>
+                  <p className="text-teal-300 drop-shadow">{item.reward} KAS</p>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Promo / Info Card */}
+        <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+          <motion.h2
+            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            style={{
+              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
+              backgroundSize: "200% 200%",
+            }}
+          >
+            Kasper Loot Box
+          </motion.h2>
+          <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
+          <p className="text-sm text-white-200 mb-4">
+            For 25 KAS you might receive a <strong>Flickering Wisp</strong> (1 KAS), a <strong>Resonant Shade</strong> (25 KAS),
+            a potent <strong>Arcane Apparition</strong> (90 KAS), or the ultra‑rare <strong>King KASPER</strong> (6250 KAS, 250× payout)!
+          </p>
+          <div className="flex justify-center space-x-4 text-xl">
+            <motion.a
+              href="https://x.com/KasenOnKaspa"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <FaTwitter />
+            </motion.a>
+            <motion.a
+              href="https://t.co/W4YDM1cUpY"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <FaTelegramPlane />
+            </motion.a>
+            <motion.a
+              href="https://kasenonkas.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <FaGlobe />
+            </motion.a>
+          </div>
+        </Card>
+      </div>
+      <SiteFooter />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------
+// Kasper Loot Box Game Component (Horizontal Reel with Popup)
+// ---------------------------------------------------------
+function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd: (item: any) => void; }) {
+  const controls = useAnimation();
+  const containerWidth = 600;
+  const itemWidth = 120;
+  const containerCenter = containerWidth / 2;
+  const [finalReel, setFinalReel] = useState<any[]>([]);
+  const [winningItem, setWinningItem] = useState<any>(null);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const spinTriggered = useRef(false);
+  const currentXRef = useRef(0);
+  const randomReelLengthRef = useRef(0);
+
+  useEffect(() => {
+    if (isPlaying && !spinTriggered.current) {
+      spinTriggered.current = true;
+      setShowResultOverlay(false);
+
+      // Generate a random reel of 40 items from lootItems
+      const randomReel = Array.from({ length: 40 }, () => lootItems[Math.floor(Math.random() * lootItems.length)]);
+      randomReelLengthRef.current = randomReel.length;
+      // Duplicate for seamless looping
+      const loopReel = randomReel.concat(randomReel);
+      setFinalReel(loopReel);
+
+      // Determine winning tier/item via probability logic
+      const r = Math.random();
+      let chosenTier =
+        r < 0.5 ? "wraiths-whispers" :
+        r < 0.9 ? "phantom-echoes" :
+        r < 0.999 ? "spectral-symphony" : "kaspa-legend";
+      const tierItems = lootItems.filter((itm) => itm.tier === chosenTier);
+      const winItem = tierItems[Math.floor(Math.random() * tierItems.length)];
+      setWinningItem(winItem);
+
+      // Start continuous horizontal loop over the first randomReel length
+      const loopDistance = randomReel.length * itemWidth;
+      controls.start({
+        x: [0, -loopDistance],
+        transition: { duration: 1, repeat: Infinity, ease: "linear" },
+      });
+
+      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
+      setTimeout(() => {
+        controls.stop();
+        const currentX = currentXRef.current;
+        const alignedOffset = Math.round(currentX / itemWidth) * itemWidth;
+        controls.start({
+          x: alignedOffset,
+          transition: { duration: 0.5, ease: "easeOut" },
+        });
+        onGameEnd(winItem);
+        setShowResultOverlay(true);
+      }, 4000);
+    } else if (!isPlaying) {
+      spinTriggered.current = false;
+      controls.set({ x: 0 });
+      setFinalReel([]);
+      setWinningItem(null);
+      setShowResultOverlay(false);
+    }
+  }, [isPlaying, controls, itemWidth, containerCenter, onGameEnd]);
+
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center relative overflow-hidden"
+      style={{ width: containerWidth }}
+    >
+      <motion.div
+        className="flex"
+        animate={controls}
+        onUpdate={(latest) => {
+          currentXRef.current = latest.x;
+        }}
+      >
+        {finalReel.map((item, i) => (
+          <div key={i} style={{ width: itemWidth, flexShrink: 0 }} className="p-0">
+            <div className="relative w-full h-full">
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={itemWidth}
+                height={itemWidth}
+                loading="eager"
+              />
+              <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
+            </div>
+          </div>
+        ))}
+      </motion.div>
+      <AnimatePresence>
+        {showResultOverlay && winningItem && (
           <motion.div
-            key="main-content"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-            className="min-h-screen bg-black text-white flex flex-col"
           >
-            {/* Header */}
-            <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center gap-0"
-              >
-                <MotionButton
-                  variant="ghost"
-                  size="icon"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="text-[#49eacb] hover:bg-[#49eacb]/10"
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                >
-                  {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </MotionButton>
-                <motion.div
-                  className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
-                  style={{ transition: "box-shadow 0.3s ease-in-out" }}
-                >
-                  <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
-                    alt="Kasino Logo"
-                    fill
-                    className="object-contain"
-                  />
-                </motion.div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center gap-4"
-              >
-                <WalletConnection />
-              </motion.div>
-            </header>
-
-            <div className="flex flex-1">
-              {/* Sidebar */}
-              <AnimatePresence>
-                {isSidebarOpen && (
-                  <motion.aside
-                    initial={{ x: -320, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -320, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="fixed top-[80px] left-0 w-80 h-[calc(100vh-80px)] border-r border-[#49EACB]/10 p-4 backdrop-blur-sm bg-black/95 z-40"
-                  >
-                    <div className="relative">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#49EACB]/60" />
-                      <input
-                        placeholder="Search"
-                        className="w-full bg-[#49EACB]/5 rounded-md pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#49EACB]/30 border border-[#49EACB]/10 transition-all duration-300"
-                      />
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Link
-                        href="#"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
-                        <span className="group-hover:text-[#49eacb]">Casino</span>
-                      </Link>
-                      <Link
-                        href="https://raffles.kaspercoin.net/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
-                        <span className="group-hover:text-[#8a2be2]">Raffles</span>
-                      </Link>
-                      <Link
-                        href="https://t.me/KasCasinoXYZ/2"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
-                        <span className="group-hover:text-[#8b0000]">Support</span>
-                      </Link>
-                    </div>
-                    <div className="absolute telegram-icon left-0 w-full px-4" style={{ bottom: "1rem" }}>
-                      <Link
-                        href="https://t.me/KasCasinoXYZ"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center"
-                      >
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
-                          <FaTelegramPlane size={20} color="black" />
-                        </div>
-                      </Link>
-                    </div>
-                  </motion.aside>
-                )}
-              </AnimatePresence>
-
-              {/* Main Content */}
-              <main className="flex-1 p-6 overflow-hidden">
-                {/* Banner Carousel */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-12 w-full -mt-6 sm:mt-0"
-                  style={{ aspectRatio: "1920 / 500" }}
-                >
-                  <div className="relative w-full h-full overflow-hidden rounded-lg border border-[#49EACB]/10">
-                    {mainBanners.map((banner, index) => (
-                      <motion.div
-                        key={index}
-                        className="absolute inset-0"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: index === currentBanner ? 1 : 0 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Image
-                          src={banner}
-                          alt="Main Banner"
-                          fill
-                          objectFit="contain"
-                          className="object-contain"
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={prevBanner}
-                    className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
-                  >
-                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                  <button
-                    onClick={nextBanner}
-                    className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
-                  >
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </motion.div>
-
-                {/* Original Games */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-                  className="mb-12"
-                >
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
-                      <GiCheerful />
-                    </span>
-                    <span className="animate-gradient">Original Games</span>
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {games.map((game, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
-                      >
-                        <Link href={`/games/${game.slug}`}>
-                          <MotionCard
-                            className="group relative overflow-hidden border-none bg-transparent"
-                            whileHover={{
-                              scale: 1.05,
-                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                            }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <div className="relative aspect-[4/3] mt-1">
-                              <Image
-                                src={
-                                  game.slug === "crash"
-                                    ? "/crashcard.webp"
-                                    : game.slug === "roulette"
-                                    ? "/roulettecard.webp"
-                                    : game.slug === "coinflip"
-                                    ? "/coinflipcard.webp"
-                                    : game.slug === "dice"
-                                    ? "/dicecard.webp"
-                                    : game.slug === "mines"
-                                    ? "/minescard.webp"
-                                    : "/placeholder.svg"
-                                }
-                                alt={`${game.name} thumbnail`}
-                                fill
-                                objectFit="cover"
-                                style={{ bottom: "10px" }}
-                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                              />
-                              <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                <MotionButton
-                                  className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                  whileHover={{ scale: 1.02 }}
-                                >
-                                  Play Now
-                                </MotionButton>
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                {game.name}
-                              </h3>
-                              <p className="text-sm text-gray-400">
-                                Wins:{" "}
-                                <span className="text-[#49EACB] font-bold">
-                                  {winCounter.find(
-                                    (counter) =>
-                                      counter._id.toLowerCase() === game.slug
-                                  )?.totalWins || 0}
-                                </span>
-                              </p>
-                              <div className="mt-1 flex items-center gap-1">
-                                <span className="text-sm text-gray-400">High Score:</span>
-                                <div className="flex items-center gap-1">
-                                  <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                    alt="KAS"
-                                    width={16}
-                                    height={16}
-                                    className="rounded-full"
-                                  />
-                                  <span className="text-sm text-[#49EACB] font-bold">
-                                    {highScores[game.slug]
-                                      ? highScores[game.slug].toFixed(2)
-                                      : "N/A"}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </MotionCard>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Character Games Section */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                  className="mb-12"
-                >
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
-                      <FaUserAlt />
-                    </span>
-                    <span className="animate-gradient">Character Games</span>
-                  </h2>
-                  {/* Exactly same layout as Original Games */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {characterGames.map((game, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
-                      >
-                        <Link href={`/games/${game.slug}`}>
-                          <MotionCard
-                            className="group relative overflow-hidden border-none bg-transparent"
-                            whileHover={{
-                              scale: 1.05,
-                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                            }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <div className="relative aspect-[4/3] mt-1">
-                              {/* If you have special images, put them here */}
-                              <Image
-                                src={
-                                  game.slug === "lootbox"
-                                    ? "/placeholder.svg"
-                                    : game.slug === "kasen-mania"
-                                    ? "/kasenmaniacard.webp"
-                                    : "/placeholder.svg"
-                                }
-                                alt={`${game.name} thumbnail`}
-                                fill
-                                objectFit="cover"
-                                style={{ bottom: "10px" }}
-                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                              />
-                              <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                <MotionButton
-                                  className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                  whileHover={{ scale: 1.02 }}
-                                >
-                                  Play Now
-                                </MotionButton>
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                {game.name}
-                              </h3>
-                              <p className="text-sm text-gray-400">
-                                Wins:{" "}
-                                <span className="text-[#49EACB] font-bold">
-                                  {winCounter.find(
-                                    (counter) =>
-                                      counter._id.toLowerCase() === game.slug
-                                  )?.totalWins || 0}
-                                </span>
-                              </p>
-                              <div className="mt-1 flex items-center gap-1">
-                                <span className="text-sm text-gray-400">High Score:</span>
-                                <div className="flex items-center gap-1">
-                                  <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                    alt="KAS"
-                                    width={16}
-                                    height={16}
-                                    className="rounded-full"
-                                  />
-                                  <span className="text-sm text-[#49EACB] font-bold">
-                                    {highScores[game.slug]
-                                      ? highScores[game.slug].toFixed(2)
-                                      : "N/A"}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </MotionCard>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Live Wins */}
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-                >
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
-                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
-                      <GiStarFormation />
-                    </span>
-                    <span className="animate-gradient">Live Wins</span>
-                  </h2>
-                  <ScrollArea>
-                    <motion.div
-                      className="flex gap-4 pb-4"
-                      initial={{ x: -20 }}
-                      animate={{ x: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                    >
-                      {liveWins.map((win, i) => {
-                        let cardImage = "/placeholder.svg";
-                        if (win.game.toLowerCase() === "crash") {
-                          cardImage = "/crashcard.webp";
-                        } else if (win.game.toLowerCase() === "roulette") {
-                          cardImage = "/roulettecard.webp";
-                        } else if (win.game.toLowerCase() === "coinflip") {
-                          cardImage = "/coinflipcard.webp";
-                        } else if (win.game.toLowerCase() === "dice") {
-                          cardImage = "/dicecard.webp";
-                        } else if (win.game.toLowerCase() === "mines") {
-                          cardImage = "/minescard.webp";
-                        }
-                        return (
-                          <MotionCard
-                            key={i}
-                            className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                            whileHover={{
-                              scale: 1.02,
-                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)",
-                            }}
-                          >
-                            <div className="relative aspect-[4/3] mt-1">
-                              <Image
-                                src={cardImage}
-                                alt={`${win.game} card`}
-                                fill
-                                objectFit="cover"
-                                style={{ bottom: "10px" }}
-                                className="rounded-none scale-100 object-cover"
-                              />
-                              <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
-                                LIVE
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="text-sm text-[#49EACB]">
-                                  {win.game.toUpperCase()}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                    alt="KAS"
-                                    width={16}
-                                    height={16}
-                                    className="rounded-full"
-                                  />
-                                  <span className="text-[#49EACB] font-bold">
-                                    {win.amount.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-sm text-gray-400">{win.username}</div>
-                            </div>
-                          </MotionCard>
-                        );
-                      })}
-                    </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
-                  </ScrollArea>
-                </motion.div>
-              </main>
-            </div>
-
-            {/* Footer */}
-            <SiteFooter />
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
+              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
+            >
+              <Image
+                src={winningItem.image}
+                alt={winningItem.name}
+                width={80}
+                height={80}
+                className="mx-auto mb-2"
+                loading="eager"
+                style={{
+                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
+                }}
+              />
+              <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
+              <p className="text-xl font-bold text-teal-100">
+                {winningItem.name}{" "}
+                <span className="text-base text-teal-200">
+                  ({winningItem.tier.replace("-", " ")})
+                </span>
+              </p>
+              <p className="text-lg text-blue-50 mt-2">
+                You won <strong>{winningItem.reward} KAS</strong>
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -644,7 +540,137 @@ function MainPageContent() {
   );
 }
 
-// Export MainPage
-export default function MainPage() {
-  return <MainPageContent />;
+// ---------------------------------------------------------
+// Kasper Loot Box Controls Component
+// ---------------------------------------------------------
+function KasperLootBoxControls({
+  betAmount,
+  isPlaying,
+  isWalletConnected,
+  balance,
+  onOpenLootBox,
+  gameResult,
+  winItem,
+  winAmount,
+}: {
+  betAmount: string;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
+  onOpenLootBox: () => void;
+  gameResult: string | null;
+  winItem: any;
+  winAmount: number | null;
+}) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+      return () => clearInterval(intervalId);
+    }
+  }, [cooldown]);
+
+  const showError = (msg: string) => setErrorMessage(msg);
+
+  const handleOpenBox = () => {
+    if (!isWalletConnected) {
+      showError("Please connect your wallet first");
+      return;
+    }
+    if (Number(betAmount) !== 25) {
+      showError("Kasper Loot Box cost is fixed at 25 KAS");
+      return;
+    }
+    if (25 > balance) {
+      showError("Insufficient balance");
+      return;
+    }
+    onOpenLootBox();
+    setCooldown(10);
+  };
+
+  return (
+    <>
+      <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm">
+        <div className="p-6 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-blue-300">Cost per Kasper Loot Box (KAS)</label>
+            <div className="relative">
+              <input
+                type="number"
+                value={betAmount}
+                disabled
+                className="bg-teal-900/50 border border-teal-500 text-white pl-8 w-full"
+              />
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
+              </div>
+            </div>
+          </div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            {gameResult && winItem && (
+              <div className="text-center mb-4">
+                <div className="text-2xl font-bold text-blue-300">
+                  {gameResult}: {winItem.name} ({winItem.tier.replace("-", " ")})
+                </div>
+                <div className="text-sm text-blue-200">
+                  Payout: {winAmount !== null ? winAmount : 0} KAS
+                </div>
+              </div>
+            )}
+            {!isPlaying ? (
+              <Button
+                className="w-full bg-teal-400 text-black hover:bg-teal-300"
+                onClick={handleOpenBox}
+                disabled={!isWalletConnected || cooldown > 0}
+              >
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Open Kasper Loot Box (${cooldown}s)`
+                  : "Open Kasper Loot Box"}
+              </Button>
+            ) : (
+              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
+                Opening...
+              </Button>
+            )}
+          </motion.div>
+        </div>
+      </Card>
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <span>{errorMessage}</span>
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
+                X
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
