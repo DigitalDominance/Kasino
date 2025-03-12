@@ -445,7 +445,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
+      // After 5 seconds, stop the loop and decelerate to the nearest aligned offset
       setTimeout(() => {
         controls.stop();
         const currentX = currentXRef.current;
@@ -456,7 +456,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
         onGameEnd(winItem);
         setShowResultOverlay(true);
-      }, 3000);
+      }, 5000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
