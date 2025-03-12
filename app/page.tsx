@@ -13,17 +13,18 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import { WalletProvider, Notification } from "@/contexts/WalletContext";
-import { GiCheerful, GiStarFormation } from "react-icons/gi";
-import { FaTelegramPlane } from "react-icons/fa";
+import { GiCheerful } from "react-icons/gi";
+import { FaTelegramPlane, FaGlobe, FaTwitter, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
+
+// Motion variants for Card and Button
+const MotionCard = motion(Card);
+const MotionButton = motion(Button);
 
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
-
-const MotionCard = motion(Card);
-const MotionButton = motion(Button);
 
 interface Win {
   username: string;
@@ -45,9 +46,10 @@ function MainPageContent() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Banner images
+  // Banner images (Note: Kasen promo banner is now at index 1)
   const mainBanners = [
     "/roulettebanner.webp",
+    "/kasenpromo.png", // Kasen promo banner in 2nd spot
     "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
@@ -59,6 +61,12 @@ function MainPageContent() {
     { name: "Roulette", players: 765, slug: "roulette" },
     { name: "Dice", players: 543, slug: "dice" },
     { name: "Coin Flip", players: 321, slug: "coinflip" },
+  ];
+
+  // New Character Games array
+  const characterGames = [
+    { name: "Kasper Loot Box", slug: "lootbox", image: "/placeholder.svg" },
+    { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
   const nextBanner = () =>
@@ -178,7 +186,6 @@ function MainPageContent() {
           color: #49eacb;
           fill: #49eacb;
         }
-        /* Move the telegram icon higher on mobile */
         @media (max-width: 768px) {
           .telegram-icon {
             bottom: 15vh !important;
@@ -271,7 +278,7 @@ function MainPageContent() {
                         href="https://raffles.kaspercoin.net/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8a2be2]/5 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
                       >
                         <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
                         <span className="group-hover:text-[#8a2be2]">Raffles</span>
@@ -286,7 +293,6 @@ function MainPageContent() {
                         <span className="group-hover:text-[#8b0000]">Support</span>
                       </Link>
                     </div>
-                    {/* Telegram Icon at the sidebar (moved up on mobile via CSS) */}
                     <div className="absolute telegram-icon left-0 w-full px-4" style={{ bottom: "1rem" }}>
                       <Link
                         href="https://t.me/KasCasinoXYZ"
@@ -322,13 +328,7 @@ function MainPageContent() {
                         animate={{ opacity: index === currentBanner ? 1 : 0 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <Image
-                          src={banner}
-                          alt="Main Banner"
-                          fill
-                          objectFit="contain"
-                          className="object-contain"
-                        />
+                        <Image src={banner} alt="Main Banner" fill className="object-contain" />
                       </motion.div>
                     ))}
                   </div>
@@ -346,7 +346,7 @@ function MainPageContent() {
                   </button>
                 </motion.div>
 
-                {/* Original Games */}
+                {/* Original Games Section */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -359,7 +359,6 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  {/* Use grid-cols-1 for mobile */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map((game, i) => (
                       <motion.div
@@ -368,7 +367,7 @@ function MainPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                       >
-                        <Link href={`/games/${game.slug}`} key={i}>
+                        <Link href={`/games/${game.slug}`}>
                           <MotionCard
                             className="group relative overflow-hidden border-none bg-transparent"
                             whileHover={{
@@ -445,7 +444,63 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* Live Wins */}
+                {/* Character Games Section */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                  className="mb-12"
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
+                      <FaUserAlt />
+                    </span>
+                    <span className="animate-gradient">Character Games</span>
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {characterGames.map((game, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 + 0.4, duration: 0.5 }}
+                      >
+                        <Link href={`/games/${game.slug}`}>
+                          <MotionCard
+                            className="group relative overflow-hidden border-none bg-transparent"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                            }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="relative aspect-[4/3]">
+                              <Image
+                                src={game.image}
+                                alt={`${game.name} thumbnail`}
+                                fill
+                                objectFit="cover"
+                                className="transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-4">
+                                <MotionButton className="bg-[#49EACB] text-black font-semibold text-xs sm:text-sm" whileHover={{ scale: 1.02 }}>
+                                  Play Now
+                                </MotionButton>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-semibold text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                {game.name}
+                              </h3>
+                            </div>
+                          </MotionCard>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Live Wins Section */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -453,7 +508,7 @@ function MainPageContent() {
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
                     <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
-                      <GiStarFormation />
+                      <GiCheerful />
                     </span>
                     <span className="animate-gradient">Live Wins</span>
                   </h2>
@@ -471,7 +526,7 @@ function MainPageContent() {
                         } else if (win.game.toLowerCase() === "roulette") {
                           cardImage = "/roulettecard.webp";
                         } else if (win.game.toLowerCase() === "coinflip") {
-                          cardImage = "/coinflipcard.webp";  
+                          cardImage = "/coinflipcard.webp";
                         } else if (win.game.toLowerCase() === "dice") {
                           cardImage = "/dicecard.webp";
                         } else if (win.game.toLowerCase() === "mines") {
@@ -481,10 +536,7 @@ function MainPageContent() {
                           <MotionCard
                             key={i}
                             className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                            whileHover={{
-                              scale: 1.02,
-                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)",
-                            }}
+                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
                               <Image
@@ -501,9 +553,7 @@ function MainPageContent() {
                             </div>
                             <div className="p-4">
                               <div className="flex items-center justify-between mb-1">
-                                <div className="text-sm text-[#49EACB]">
-                                  {win.game.toUpperCase()}
-                                </div>
+                                <div className="text-sm text-[#49EACB]">{win.game.toUpperCase()}</div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -512,9 +562,7 @@ function MainPageContent() {
                                     height={16}
                                     className="rounded-full"
                                   />
-                                  <span className="text-[#49EACB] font-bold">
-                                    {win.amount.toFixed(2)}
-                                  </span>
+                                  <span className="text-[#49EACB] font-bold">{win.amount.toFixed(2)}</span>
                                 </div>
                               </div>
                               <div className="text-sm text-gray-400">{win.username}</div>
