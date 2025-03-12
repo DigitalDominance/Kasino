@@ -460,7 +460,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         });
         onGameEnd(winItem);
         setShowResultOverlay(true);
-      }, 3000);
+      }, 4000);
     } else if (!isPlaying) {
       spinTriggered.current = false;
       controls.set({ x: 0 });
@@ -567,7 +567,7 @@ function KasperLootBoxControls({
 
   useEffect(() => {
     if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      const timer = setTimeout(() => setErrorMessage(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
