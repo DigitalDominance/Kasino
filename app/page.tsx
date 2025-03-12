@@ -50,9 +50,10 @@ function MainPageContent() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Banner images
+  // Banners (including Kasen promo as second slot)
   const mainBanners = [
     "/roulettebanner.webp",
+    "/kasenpromo.png", 
     "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
@@ -73,9 +74,19 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Banner controls
-  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
-  const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
+  // Manual banner controls
+  const nextBanner = () =>
+    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
+  const prevBanner = () =>
+    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
+
+  // Auto-rotate banners every 4 seconds
+  useEffect(() => {
+    const rotation = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
+    }, 4000);
+    return () => clearInterval(rotation);
+  }, [mainBanners.length]);
 
   // Resolve wallet addresses to usernames if needed
   const resolveUsername = async (win: Win): Promise<Win> => {
@@ -100,7 +111,9 @@ function MainPageContent() {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
         if (res.data.success) {
-          const resolvedWins = await Promise.all(res.data.wins.map(resolveUsername));
+          const resolvedWins = await Promise.all(
+            res.data.wins.map(resolveUsername)
+          );
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -153,15 +166,6 @@ function MainPageContent() {
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
-
-  // Special slug -> dataKey function
-  // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
-  // Otherwise use the slug
-  const getDataKey = (slug: string) => {
-    if (slug === "lootbox") return "kasper loot box";
-    if (slug === "kasen-mania") return "kasen mania";
-    return slug;
-  };
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
@@ -367,15 +371,12 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  {/* Horizontal layout */}
                   <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
-                      // Normal slug usage
                       const dataKey = game.slug; 
                       const totalWins =
                         winCounter.find(
-                          (counter) =>
-                            counter._id.toLowerCase() === dataKey
+                          (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
 
                       const rawScore = highScores[dataKey] || 0;
@@ -385,7 +386,8 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          className="max-w-[400px]"
+                          // 25vw wide but max 400px
+                          className="w-[25vw] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -468,7 +470,6 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {characterGames.map((game, i) => {
-                      // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
                       let dataKey = game.slug;
                       if (dataKey === "lootbox") dataKey = "kasper loot box";
                       else if (dataKey === "kasen-mania") dataKey = "kasen mania";
@@ -486,7 +487,7 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          className="max-w-[400px]"
+                          className="w-[25vw] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -580,8 +581,7 @@ function MainPageContent() {
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
                         else if (lwGame === "kasper loot box") {
-                          // or a special lootbox image
-                          cardImage = "/placeholder.svg";
+                          cardImage = "/placeholder.svg"; // or custom
                         } else if (lwGame === "kasen mania") {
                           cardImage = "/kasenmaniacard.webp";
                         }
