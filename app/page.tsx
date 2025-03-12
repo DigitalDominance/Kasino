@@ -387,7 +387,7 @@ function MainPageContent() {
                         <motion.div
                           key={i}
                           // 25vw wide but max 400px
-                          className="w-[25vw] min-w-[250px] max-w-[400px]"
+                          className="w-[25vw] min-w-[300px] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -487,7 +487,7 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          className="w-[25vw] min-w-[250px] max-w-[400px]"
+                          className="w-[25vw] min-w-[300px] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
