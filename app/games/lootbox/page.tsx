@@ -12,19 +12,28 @@ import { SiteFooter } from "@/components/site-footer";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { GiCheerful } from "react-icons/gi";
-import { FaTelegramPlane, FaGlobe, FaTwitter, FaUserAlt } from "react-icons/fa";
+import { WalletProvider, Notification } from "@/contexts/WalletContext";
+import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 
+// ---------------------------------------------------------
+// Font
+// ---------------------------------------------------------
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
-// For framer-motion
+// ---------------------------------------------------------
+// Motion
+// ---------------------------------------------------------
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);
 
+// ---------------------------------------------------------
+// Interfaces
+// ---------------------------------------------------------
 interface Win {
   username: string;
   amount: number;
@@ -32,26 +41,27 @@ interface Win {
   timestamp: string;
 }
 
-export default function MainPage() {
-  return <MainPageContent />;
-}
-
+// ---------------------------------------------------------
+// Main Page Content
+// ---------------------------------------------------------
 function MainPageContent() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Live wins, counters, high scores
   const [liveWins, setLiveWins] = useState<Win[]>([]);
   const [winCounter, setWinCounter] = useState<any[]>([]);
   const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
 
+  // Use full backend URL from env variable
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Banner images (with Kasen promo banner at index 1)
+  // Banner images
   const mainBanners = [
     "/roulettebanner.webp",
-    "/kasenpromo.png",
     "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
@@ -59,26 +69,26 @@ function MainPageContent() {
 
   // Original Games
   const games = [
-    { name: "Mines", slug: "mines", image: "/minescard.webp" },
-    { name: "Crash", slug: "crash", image: "/crashcard.webp" },
-    { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
-    { name: "Dice", slug: "dice", image: "/dicecard.webp" },
-    { name: "Coin Flip", slug: "coinflip", image: "/coinflipcard.webp" },
+    { name: "Mines", slug: "mines" },
+    { name: "Crash", slug: "crash" },
+    { name: "Roulette", slug: "roulette" },
+    { name: "Dice", slug: "dice" },
+    { name: "Coin Flip", slug: "coinflip" },
   ];
 
   // Character Games
   const characterGames = [
-    { name: "Kasper Loot Box", slug: "lootbox", image: "/placeholder.svg" },
-    { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
+    { name: "Kasper Loot Box", slug: "lootbox" },
+    { name: "Kasen Mania", slug: "kasen-mania" },
   ];
 
-  // Carousel controls
+  // Banner Controls
   const nextBanner = () =>
     setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
-  // Resolve wallet addresses to usernames if needed
+  // Helper: Resolve username if wallet
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -95,13 +105,15 @@ function MainPageContent() {
     return win;
   };
 
-  // Fetch live wins
+  // Fetch live wins (limit 10)
   useEffect(() => {
     const fetchWins = async () => {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
         if (res.data.success) {
-          const resolvedWins = await Promise.all(res.data.wins.map(resolveUsername));
+          const resolvedWins = await Promise.all(
+            res.data.wins.map(resolveUsername)
+          );
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -183,6 +195,7 @@ function MainPageContent() {
           color: #49eacb;
           fill: #49eacb;
         }
+        /* Move the telegram icon higher on mobile */
         @media (max-width: 768px) {
           .telegram-icon {
             bottom: 15vh !important;
@@ -215,8 +228,8 @@ function MainPageContent() {
                   size="icon"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="text-[#49EACB] hover:bg-[#49EACB]/10"
-                  onClick={() => setIsSidebarOpen((prev) => !prev)}
+                  className="text-[#49eacb] hover:bg-[#49eacb]/10"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 >
                   {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </MotionButton>
@@ -265,8 +278,8 @@ function MainPageContent() {
                         href="#"
                         className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
                       >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49EACB] to-[#49EACB]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
-                        <span className="group-hover:text-[#49EACB]">Casino</span>
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
+                        <span className="group-hover:text-[#49eacb]">Casino</span>
                       </Link>
                       <Link
                         href="https://raffles.kaspercoin.net/"
@@ -326,6 +339,7 @@ function MainPageContent() {
                           src={banner}
                           alt="Main Banner"
                           fill
+                          objectFit="contain"
                           className="object-contain"
                         />
                       </motion.div>
@@ -345,7 +359,7 @@ function MainPageContent() {
                   </button>
                 </motion.div>
 
-                {/* Original Games Section */}
+                {/* Original Games */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -358,88 +372,88 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  {/* Horizontal flow with flex (no grid) */}
-                  <div className="flex flex-wrap items-start gap-3">
-                    {games.map((game, i) => {
-                      // REVERTED: use slug for matching
-                      const totalWins =
-                        winCounter.find(
-                          (c: any) =>
-                            c._id.toLowerCase() === game.slug
-                        )?.totalWins || 0;
-
-                      const rawScore = highScores[game.slug] || 0;
-                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
-                      return (
-                        <motion.div
-                          key={i}
-                          // Responsive: width = 25vw, min=250px, max=400px
-                          className="w-[25vw] min-w-[250px] max-w-[400px]"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
-                        >
-                          <Link href={`/games/${game.slug}`}>
-                            <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent"
-                              whileHover={{
-                                scale: 1.05,
-                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                              }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <div className="relative aspect-[4/3] mt-1">
-                                <Image
-                                  src={game.image}
-                                  alt={`${game.name} thumbnail`}
-                                  fill
-                                  style={{ bottom: "10px" }}
-                                  className="object-cover scale-100 transition-transform duration-300 group-hover:scale-110"
-                                />
-                                {/* Hover overlay */}
-                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                  <MotionButton
-                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                    whileHover={{ scale: 1.02 }}
-                                  >
-                                    Play Now
-                                  </MotionButton>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {games.map((game, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                      >
+                        <Link href={`/games/${game.slug}`}>
+                          <MotionCard
+                            className="group relative overflow-hidden border-none bg-transparent"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                            }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="relative aspect-[4/3] mt-1">
+                              <Image
+                                src={
+                                  game.slug === "crash"
+                                    ? "/crashcard.webp"
+                                    : game.slug === "roulette"
+                                    ? "/roulettecard.webp"
+                                    : game.slug === "coinflip"
+                                    ? "/coinflipcard.webp"
+                                    : game.slug === "dice"
+                                    ? "/dicecard.webp"
+                                    : game.slug === "mines"
+                                    ? "/minescard.webp"
+                                    : "/placeholder.svg"
+                                }
+                                alt={`${game.name} thumbnail`}
+                                fill
+                                objectFit="cover"
+                                style={{ bottom: "10px" }}
+                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                <MotionButton
+                                  className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                  whileHover={{ scale: 1.02 }}
+                                >
+                                  Play Now
+                                </MotionButton>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                {game.name}
+                              </h3>
+                              <p className="text-sm text-gray-400">
+                                Wins:{" "}
+                                <span className="text-[#49EACB] font-bold">
+                                  {winCounter.find(
+                                    (counter) =>
+                                      counter._id.toLowerCase() === game.slug
+                                  )?.totalWins || 0}
+                                </span>
+                              </p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <span className="text-sm text-gray-400">High Score:</span>
+                                <div className="flex items-center gap-1">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-sm text-[#49EACB] font-bold">
+                                    {highScores[game.slug]
+                                      ? highScores[game.slug].toFixed(2)
+                                      : "N/A"}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="p-4">
-                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                  {game.name}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
-                                </p>
-                                <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                      alt="KAS"
-                                      width={16}
-                                      height={16}
-                                      className="rounded-full"
-                                    />
-                                    <span className="text-sm text-[#49EACB] font-bold">
-                                      {highScoreVal}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </MotionCard>
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
+                            </div>
+                          </MotionCard>
+                        </Link>
+                      </motion.div>
+                    ))}
                   </div>
                 </motion.div>
 
@@ -456,90 +470,88 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Character Games</span>
                   </h2>
-                  {/* Another horizontal flow with flex */}
-                  <div className="flex flex-wrap items-start gap-3">
-                    {characterGames.map((game, i) => {
-                      // REVERTED: use slug for matching
-                      const totalWins =
-                        winCounter.find(
-                          (c: any) =>
-                            c._id.toLowerCase() === game.slug
-                        )?.totalWins || 0;
-
-                      const rawScore = highScores[game.slug] || 0;
-                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
-                      return (
-                        <motion.div
-                          key={i}
-                          className="w-[25vw] min-w-[250px] max-w-[400px]"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.1 + 0.4, duration: 0.5 }}
-                        >
-                          <Link href={`/games/${game.slug}`}>
-                            <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent"
-                              whileHover={{
-                                scale: 1.05,
-                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                              }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <div className="relative aspect-[4/3] mt-1">
-                                <Image
-                                  src={game.image}
-                                  alt={`${game.name} thumbnail`}
-                                  fill
-                                  style={{ bottom: "10px" }}
-                                  className="object-cover scale-100 transition-transform duration-300 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                  <MotionButton
-                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                    whileHover={{ scale: 1.02 }}
-                                  >
-                                    Play Now
-                                  </MotionButton>
+                  {/* Exactly same layout as Original Games */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {characterGames.map((game, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                      >
+                        <Link href={`/games/${game.slug}`}>
+                          <MotionCard
+                            className="group relative overflow-hidden border-none bg-transparent"
+                            whileHover={{
+                              scale: 1.05,
+                              boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                            }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="relative aspect-[4/3] mt-1">
+                              {/* If you have special images, put them here */}
+                              <Image
+                                src={
+                                  game.slug === "lootbox"
+                                    ? "/placeholder.svg"
+                                    : game.slug === "kasen-mania"
+                                    ? "/kasenmaniacard.webp"
+                                    : "/placeholder.svg"
+                                }
+                                alt={`${game.name} thumbnail`}
+                                fill
+                                objectFit="cover"
+                                style={{ bottom: "10px" }}
+                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                <MotionButton
+                                  className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                  whileHover={{ scale: 1.02 }}
+                                >
+                                  Play Now
+                                </MotionButton>
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                {game.name}
+                              </h3>
+                              <p className="text-sm text-gray-400">
+                                Wins:{" "}
+                                <span className="text-[#49EACB] font-bold">
+                                  {winCounter.find(
+                                    (counter) =>
+                                      counter._id.toLowerCase() === game.slug
+                                  )?.totalWins || 0}
+                                </span>
+                              </p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <span className="text-sm text-gray-400">High Score:</span>
+                                <div className="flex items-center gap-1">
+                                  <Image
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    alt="KAS"
+                                    width={16}
+                                    height={16}
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-sm text-[#49EACB] font-bold">
+                                    {highScores[game.slug]
+                                      ? highScores[game.slug].toFixed(2)
+                                      : "N/A"}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="p-4">
-                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                  {game.name}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
-                                </p>
-                                <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                      alt="KAS"
-                                      width={16}
-                                      height={16}
-                                      className="rounded-full"
-                                    />
-                                    <span className="text-sm text-[#49EACB] font-bold">
-                                      {highScoreVal}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </MotionCard>
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
+                            </div>
+                          </MotionCard>
+                        </Link>
+                      </motion.div>
+                    ))}
                   </div>
                 </motion.div>
 
-                {/* Live Wins Section */}
+                {/* Live Wins */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -547,7 +559,7 @@ function MainPageContent() {
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
                     <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
-                      <GiCheerful />
+                      <GiStarFormation />
                     </span>
                     <span className="animate-gradient">Live Wins</span>
                   </h2>
@@ -560,14 +572,17 @@ function MainPageContent() {
                     >
                       {liveWins.map((win, i) => {
                         let cardImage = "/placeholder.svg";
-                        const lowerGame = win.game.toLowerCase();
-                        if (lowerGame === "crash") cardImage = "/crashcard.webp";
-                        else if (lowerGame === "roulette") cardImage = "/roulettecard.webp";
-                        else if (lowerGame === "coinflip") cardImage = "/coinflipcard.webp";
-                        else if (lowerGame === "dice") cardImage = "/dicecard.webp";
-                        else if (lowerGame === "mines") cardImage = "/minescard.webp";
-                        // For "Kasper Loot Box", "Kasen Mania", etc. you can add logic if you have images
-
+                        if (win.game.toLowerCase() === "crash") {
+                          cardImage = "/crashcard.webp";
+                        } else if (win.game.toLowerCase() === "roulette") {
+                          cardImage = "/roulettecard.webp";
+                        } else if (win.game.toLowerCase() === "coinflip") {
+                          cardImage = "/coinflipcard.webp";
+                        } else if (win.game.toLowerCase() === "dice") {
+                          cardImage = "/dicecard.webp";
+                        } else if (win.game.toLowerCase() === "mines") {
+                          cardImage = "/minescard.webp";
+                        }
                         return (
                           <MotionCard
                             key={i}
@@ -582,6 +597,7 @@ function MainPageContent() {
                                 src={cardImage}
                                 alt={`${win.game} card`}
                                 fill
+                                objectFit="cover"
                                 style={{ bottom: "10px" }}
                                 className="rounded-none scale-100 object-cover"
                               />
@@ -607,18 +623,13 @@ function MainPageContent() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-sm text-gray-400">
-                                {win.username}
-                              </div>
+                              <div className="text-sm text-gray-400">{win.username}</div>
                             </div>
                           </MotionCard>
                         );
                       })}
                     </motion.div>
-                    <ScrollBar
-                      orientation="horizontal"
-                      className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
-                    />
+                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
                   </ScrollArea>
                 </motion.div>
               </main>
@@ -631,4 +642,9 @@ function MainPageContent() {
       </AnimatePresence>
     </div>
   );
+}
+
+// Export MainPage
+export default function MainPage() {
+  return <MainPageContent />;
 }
