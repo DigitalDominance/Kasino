@@ -12,28 +12,19 @@ import { SiteFooter } from "@/components/site-footer";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { WalletProvider, Notification } from "@/contexts/WalletContext";
 import { GiCheerful, GiStarFormation } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 
-// ---------------------------------------------------------
-// Font
-// ---------------------------------------------------------
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
-// ---------------------------------------------------------
-// Motion
-// ---------------------------------------------------------
+// For framer-motion
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);
 
-// ---------------------------------------------------------
-// Interfaces
-// ---------------------------------------------------------
 interface Win {
   username: string;
   amount: number;
@@ -41,9 +32,10 @@ interface Win {
   timestamp: string;
 }
 
-// ---------------------------------------------------------
-// Main Page Content
-// ---------------------------------------------------------
+export default function MainPage() {
+  return <MainPageContent />;
+}
+
 function MainPageContent() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,7 +46,6 @@ function MainPageContent() {
   const [winCounter, setWinCounter] = useState<any[]>([]);
   const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
 
-  // Use full backend URL from env variable
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
@@ -69,26 +60,24 @@ function MainPageContent() {
 
   // Original Games
   const games = [
-    { name: "Mines", slug: "mines" },
-    { name: "Crash", slug: "crash" },
-    { name: "Roulette", slug: "roulette" },
-    { name: "Dice", slug: "dice" },
-    { name: "Coin Flip", slug: "coinflip" },
+    { name: "Mines", slug: "mines", image: "/minescard.webp" },
+    { name: "Crash", slug: "crash", image: "/crashcard.webp" },
+    { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
+    { name: "Dice", slug: "dice", image: "/dicecard.webp" },
+    { name: "Coin Flip", slug: "coinflip", image: "/coinflipcard.webp" },
   ];
 
   // Character Games
   const characterGames = [
-    { name: "Kasper Loot Box", slug: "lootbox" },
-    { name: "Kasen Mania", slug: "kasen-mania" },
+    { name: "Kasper Loot Box", slug: "lootbox", image: "/placeholder.svg" },
+    { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Banner Controls
-  const nextBanner = () =>
-    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
-  const prevBanner = () =>
-    setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
+  // Banner controls
+  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
+  const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
-  // Helper: Resolve username if wallet
+  // Resolve wallet addresses to usernames if needed
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -105,15 +94,13 @@ function MainPageContent() {
     return win;
   };
 
-  // Fetch live wins (limit 10)
+  // Fetch live wins
   useEffect(() => {
     const fetchWins = async () => {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
         if (res.data.success) {
-          const resolvedWins = await Promise.all(
-            res.data.wins.map(resolveUsername)
-          );
+          const resolvedWins = await Promise.all(res.data.wins.map(resolveUsername));
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -167,12 +154,12 @@ function MainPageContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  // This function returns the appropriate ID for the game slug,
-  // with a special case for "lootbox" => "kasper loot box"
+  // Special slug -> dataKey function
+  // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
+  // Otherwise use the slug
   const getDataKey = (slug: string) => {
-    if (slug === "lootbox") {
-      return "kasper loot box"; // special case
-    }
+    if (slug === "lootbox") return "kasper loot box";
+    if (slug === "kasen-mania") return "kasen mania";
     return slug;
   };
 
@@ -204,7 +191,6 @@ function MainPageContent() {
           color: #49eacb;
           fill: #49eacb;
         }
-        /* Move the telegram icon higher on mobile */
         @media (max-width: 768px) {
           .telegram-icon {
             bottom: 15vh !important;
@@ -368,7 +354,7 @@ function MainPageContent() {
                   </button>
                 </motion.div>
 
-                {/* Original Games */}
+                {/* Original Games (Horizontal flow) */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -381,7 +367,8 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {/* Horizontal layout */}
+                  <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
                       // Normal slug usage
                       const dataKey = game.slug; 
@@ -390,6 +377,7 @@ function MainPageContent() {
                           (counter) =>
                             counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
+
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal =
                         rawScore > 0 ? rawScore.toFixed(2) : "N/A";
@@ -397,7 +385,6 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          // Max width 400
                           className="max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -414,19 +401,7 @@ function MainPageContent() {
                             >
                               <div className="relative aspect-[4/3] mt-1">
                                 <Image
-                                  src={
-                                    game.slug === "crash"
-                                      ? "/crashcard.webp"
-                                      : game.slug === "roulette"
-                                      ? "/roulettecard.webp"
-                                      : game.slug === "coinflip"
-                                      ? "/coinflipcard.webp"
-                                      : game.slug === "dice"
-                                      ? "/dicecard.webp"
-                                      : game.slug === "mines"
-                                      ? "/minescard.webp"
-                                      : "/placeholder.svg"
-                                  }
+                                  src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
                                   objectFit="cover"
@@ -478,7 +453,7 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* Character Games Section */}
+                {/* Character Games Section (Horizontal flow) */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -491,12 +466,12 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Character Games</span>
                   </h2>
-                  {/* Exactly same layout, but special case for lootbox => "kasper loot box" */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="flex flex-wrap items-start gap-3">
                     {characterGames.map((game, i) => {
-                      // If slug is "lootbox", we search for "kasper loot box"
-                      const dataKey =
-                        game.slug === "lootbox" ? "kasper loot box" : game.slug;
+                      // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
+                      let dataKey = game.slug;
+                      if (dataKey === "lootbox") dataKey = "kasper loot box";
+                      else if (dataKey === "kasen-mania") dataKey = "kasen mania";
 
                       const totalWins =
                         winCounter.find(
@@ -527,13 +502,7 @@ function MainPageContent() {
                             >
                               <div className="relative aspect-[4/3] mt-1">
                                 <Image
-                                  src={
-                                    game.slug === "lootbox"
-                                      ? "/placeholder.svg"
-                                      : game.slug === "kasen-mania"
-                                      ? "/kasenmaniacard.webp"
-                                      : "/placeholder.svg"
-                                  }
+                                  src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
                                   objectFit="cover"
@@ -583,7 +552,7 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* Live Wins */}
+                {/* Live Wins (Horizontal) */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -604,20 +573,19 @@ function MainPageContent() {
                     >
                       {liveWins.map((win, i) => {
                         let cardImage = "/placeholder.svg";
-                        if (win.game.toLowerCase() === "crash") {
-                          cardImage = "/crashcard.webp";
-                        } else if (win.game.toLowerCase() === "roulette") {
-                          cardImage = "/roulettecard.webp";
-                        } else if (win.game.toLowerCase() === "coinflip") {
-                          cardImage = "/coinflipcard.webp";
-                        } else if (win.game.toLowerCase() === "dice") {
-                          cardImage = "/dicecard.webp";
-                        } else if (win.game.toLowerCase() === "mines") {
-                          cardImage = "/minescard.webp";
-                        } else if (win.game.toLowerCase() === "kasper loot box") {
-                          // If your backend actually logs it as "Kasper Loot Box"
-                          cardImage = "/placeholder.svg"; // or some custom image
+                        const lwGame = win.game.toLowerCase();
+                        if (lwGame === "crash") cardImage = "/crashcard.webp";
+                        else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
+                        else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
+                        else if (lwGame === "dice") cardImage = "/dicecard.webp";
+                        else if (lwGame === "mines") cardImage = "/minescard.webp";
+                        else if (lwGame === "kasper loot box") {
+                          // or a special lootbox image
+                          cardImage = "/placeholder.svg";
+                        } else if (lwGame === "kasen mania") {
+                          cardImage = "/kasenmaniacard.webp";
                         }
+
                         return (
                           <MotionCard
                             key={i}
@@ -664,7 +632,10 @@ function MainPageContent() {
                         );
                       })}
                     </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                    <ScrollBar
+                      orientation="horizontal"
+                      className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
+                    />
                   </ScrollArea>
                 </motion.div>
               </main>
@@ -677,9 +648,4 @@ function MainPageContent() {
       </AnimatePresence>
     </div>
   );
-}
-
-// Export MainPage
-export default function MainPage() {
-  return <MainPageContent />;
 }
