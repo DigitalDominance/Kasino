@@ -351,11 +351,11 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[10px]">
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
-                        className="max-w-[500px]"
+                        className="max-w-[300px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -450,11 +450,11 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Character Games</span>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
                     {characterGames.map((game, i) => (
                       <motion.div
                         key={i}
-                        className="max-w-[500px]"
+                        className="max-w-[300px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.4, duration: 0.5 }}
@@ -476,7 +476,7 @@ function MainPageContent() {
                                 objectFit="cover"
                                 className="transition-transform duration-300 group-hover:scale-110"
                               />
-                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-4">
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <MotionButton className="bg-[#49EACB] text-black font-semibold text-xs sm:text-sm" whileHover={{ scale: 1.02 }}>
                                   Play Now
                                 </MotionButton>
