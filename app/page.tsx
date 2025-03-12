@@ -53,7 +53,7 @@ function MainPageContent() {
   // Banners (including Kasen promo as second slot)
   const mainBanners = [
     "/roulettebanner.webp",
-    "/kasenpromo.png", 
+    "/kasenpromo.png",
     "/minesbanner.webp",
     "/crashbanner.webp",
     "/dicecoinflipcombobanner.webp",
@@ -74,7 +74,7 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Manual banner controls
+  // Banner manual controls
   const nextBanner = () =>
     setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
@@ -166,6 +166,14 @@ function MainPageContent() {
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Special slug -> dataKey function
+  // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
+  const getDataKey = (slug: string) => {
+    if (slug === "lootbox") return "kasper loot box";
+    if (slug === "kasen-mania") return "kasen mania";
+    return slug;
+  };
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
@@ -373,21 +381,19 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
-                      const dataKey = game.slug; 
+                      const dataKey = game.slug;
                       const totalWins =
                         winCounter.find(
                           (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
-
                       const rawScore = highScores[dataKey] || 0;
-                      const highScoreVal =
-                        rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
 
                       return (
                         <motion.div
                           key={i}
-                          // 25vw wide but max 400px
-                          className="w-[25vw] min-w-[300px] max-w-[400px]"
+                          // On mobile: 90vw; on md and above: 25vw, max 400px.
+                          className="w-[90vw] md:w-[25vw] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -425,14 +431,10 @@ function MainPageContent() {
                                 </h3>
                                 <p className="text-sm text-gray-400">
                                   Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
+                                  <span className="text-[#49EACB] font-bold">{totalWins}</span>
                                 </p>
                                 <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
+                                  <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
                                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -476,18 +478,15 @@ function MainPageContent() {
 
                       const totalWins =
                         winCounter.find(
-                          (counter) =>
-                            counter._id.toLowerCase() === dataKey
+                          (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
-
                       const rawScore = highScores[dataKey] || 0;
-                      const highScoreVal =
-                        rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
 
                       return (
                         <motion.div
                           key={i}
-                          className="w-[25vw] min-w-[300px] max-w-[400px]"
+                          className="w-[90vw] md:w-[25vw] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -525,15 +524,13 @@ function MainPageContent() {
                                 </h3>
                                 <p className="text-sm text-gray-400">
                                   Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
+                                  <span className="text-[#49EACB] font-bold">{totalWins}</span>
                                 </p>
                                 <div className="mt-1 flex items-center gap-1">
                                   <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -581,11 +578,10 @@ function MainPageContent() {
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
                         else if (lwGame === "kasper loot box") {
-                          cardImage = "/placeholder.svg"; // or custom
+                          cardImage = "/placeholder.svg";
                         } else if (lwGame === "kasen mania") {
                           cardImage = "/kasenmaniacard.webp";
                         }
-
                         return (
                           <MotionCard
                             key={i}
@@ -615,7 +611,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
@@ -632,10 +628,7 @@ function MainPageContent() {
                         );
                       })}
                     </motion.div>
-                    <ScrollBar
-                      orientation="horizontal"
-                      className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
-                    />
+                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
                   </ScrollArea>
                 </motion.div>
               </main>
