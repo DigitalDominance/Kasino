@@ -33,6 +33,10 @@ interface Win {
   timestamp: string;
 }
 
+export default function MainPage() {
+  return <MainPageContent />;
+}
+
 function MainPageContent() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,6 +58,7 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
+  // Original Games
   const games = [
     { name: "Mines", players: 987, slug: "mines" },
     { name: "Crash", players: 1234, slug: "crash" },
@@ -62,18 +67,19 @@ function MainPageContent() {
     { name: "Coin Flip", players: 321, slug: "coinflip" },
   ];
 
-  // New Character Games array
+  // Character Games
   const characterGames = [
     { name: "Kasper Loot Box", slug: "lootbox", image: "/placeholder.svg" },
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
+  // Carousel controls
   const nextBanner = () =>
     setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
-  // Helper: For each win, if username looks like a wallet address, resolve it.
+  // Helper to resolve wallet addresses to usernames (if any)
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -90,7 +96,7 @@ function MainPageContent() {
     return win;
   };
 
-  // Fetch live wins for the ticker
+  // Fetch latest wins
   useEffect(() => {
     const fetchWins = async () => {
       try {
@@ -111,7 +117,7 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Fetch win counter data
+  // Fetch win counter
   useEffect(() => {
     const fetchWinCounter = async () => {
       try {
@@ -129,7 +135,7 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Fetch high score data for each game
+  // Fetch high scores
   useEffect(() => {
     const fetchHighScores = async () => {
       try {
@@ -147,6 +153,7 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
+  // Fake loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -190,6 +197,7 @@ function MainPageContent() {
       `}</style>
 
       <LoadingAnimation />
+
       <AnimatePresence mode="wait">
         {!isLoading && (
           <motion.div
@@ -320,7 +328,12 @@ function MainPageContent() {
                         animate={{ opacity: index === currentBanner ? 1 : 0 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <Image src={banner} alt="Main Banner" fill className="object-contain" />
+                        <Image
+                          src={banner}
+                          alt="Main Banner"
+                          fill
+                          className="object-contain"
+                        />
                       </motion.div>
                     ))}
                   </div>
@@ -351,11 +364,11 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[10px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[6px]">
                     {games.map((game, i) => (
                       <motion.div
                         key={i}
-                        className="max-w-[300px]"
+                        className="max-w-[400px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -386,10 +399,10 @@ function MainPageContent() {
                                 }
                                 alt={`${game.name} thumbnail`}
                                 fill
-                                objectFit="cover"
                                 style={{ bottom: "10px" }}
-                                className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                className="object-cover scale-100 transition-transform duration-300 group-hover:scale-110"
                               />
+                              {/* Hover overlay identical to Original Games style */}
                               <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                 <MotionButton
                                   className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
@@ -406,14 +419,18 @@ function MainPageContent() {
                               <p className="text-sm text-gray-400">
                                 Wins:{" "}
                                 <span className="text-[#49EACB] font-bold">
-                                  {winCounter.find(
-                                    (counter) =>
-                                      counter._id.toLowerCase() === game.slug
-                                  )?.totalWins || 0}
+                                  {
+                                    winCounter.find(
+                                      (counter) =>
+                                        counter._id.toLowerCase() === game.slug
+                                    )?.totalWins || 0
+                                  }
                                 </span>
                               </p>
                               <div className="mt-1 flex items-center gap-1">
-                                <span className="text-sm text-gray-400">High Score:</span>
+                                <span className="text-sm text-gray-400">
+                                  High Score:
+                                </span>
                                 <div className="flex items-center gap-1">
                                   <Image
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -450,11 +467,11 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Character Games</span>
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[10px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[6px]">
                     {characterGames.map((game, i) => (
                       <motion.div
                         key={i}
-                        className="max-w-[300px]"
+                        className="max-w-[400px]"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 + 0.4, duration: 0.5 }}
@@ -468,35 +485,43 @@ function MainPageContent() {
                             }}
                             transition={{ duration: 0.3 }}
                           >
-                            <div className="relative aspect-[4/3]">
+                            <div className="relative aspect-[4/3] mt-1">
                               <Image
                                 src={game.image}
                                 alt={`${game.name} thumbnail`}
                                 fill
-                                objectFit="cover"
-                                className="transition-transform duration-300 group-hover:scale-110"
+                                style={{ bottom: "10px" }}
+                                className="object-cover scale-100 transition-transform duration-300 group-hover:scale-110"
                               />
-                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <MotionButton className="bg-[#49EACB] text-black font-semibold text-xs sm:text-sm" whileHover={{ scale: 1.02 }}>
+                              {/* Same hover overlay style as Original Games */}
+                              <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                <MotionButton
+                                  className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                  whileHover={{ scale: 1.02 }}
+                                >
                                   Play Now
                                 </MotionButton>
                               </div>
                             </div>
                             <div className="p-4">
-                              <h3 className="font-semibold text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                              <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
                                 {game.name}
                               </h3>
                               <p className="text-sm text-gray-400">
                                 Wins:{" "}
                                 <span className="text-[#49EACB] font-bold">
-                                  {winCounter.find(
-                                    (counter) =>
-                                      counter._id.toLowerCase() === game.slug
-                                  )?.totalWins || 0}
+                                  {
+                                    winCounter.find(
+                                      (counter) =>
+                                        counter._id.toLowerCase() === game.slug
+                                    )?.totalWins || 0
+                                  }
                                 </span>
                               </p>
                               <div className="mt-1 flex items-center gap-1">
-                                <span className="text-sm text-gray-400">High Score:</span>
+                                <span className="text-sm text-gray-400">
+                                  High Score:
+                                </span>
                                 <div className="flex items-center gap-1">
                                   <Image
                                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
@@ -556,7 +581,10 @@ function MainPageContent() {
                           <MotionCard
                             key={i}
                             className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
-                            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)" }}
+                            whileHover={{
+                              scale: 1.02,
+                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)",
+                            }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
                               <Image
@@ -589,13 +617,18 @@ function MainPageContent() {
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-sm text-gray-400">{win.username}</div>
+                              <div className="text-sm text-gray-400">
+                                {win.username}
+                              </div>
                             </div>
                           </MotionCard>
                         );
                       })}
                     </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                    <ScrollBar
+                      orientation="horizontal"
+                      className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
+                    />
                   </ScrollArea>
                 </motion.div>
               </main>
@@ -608,8 +641,4 @@ function MainPageContent() {
       </AnimatePresence>
     </div>
   );
-}
-
-export default function MainPage() {
-  return <MainPageContent />;
 }
