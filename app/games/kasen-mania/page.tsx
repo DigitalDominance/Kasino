@@ -530,7 +530,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             2) The female is bigger and shifted up individually with relative + top negative.
         */}
         <div
-          className="absolute flex items-end justify-center gap-12"
+          className="absolute flex items-end justify-center gap-14"
           style={{
             bottom: "90%",
             left: "50%",
@@ -542,7 +542,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             alt="Kasen Fox"
             width={120}
             height={140}
-            className="w-13vw h-auto"
+            className="w-15vw h-auto"
           />
           <Image
             src="/kasenmale.webp"
@@ -556,7 +556,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             alt="Kasen Female"
             width={180}
             height={140}
-            className="w-20vw h-auto relative"
+            className="w-24vw h-auto relative"
             style={{ top: "-10px" }}
           />
         </div>
