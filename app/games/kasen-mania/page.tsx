@@ -523,16 +523,35 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         style={{ marginLeft: "-5px" }}
       />
 
+      {/* REPLACE THIS BLOCK */}
       <div
-        className="absolute"
+        className="absolute flex items-end justify-center gap-4"
         style={{
-          top: "-30px",
+          top: "-50px",
           left: "50%",
           transform: "translateX(-50%)",
         }}
       >
-        <Image src="/female_placeholder.svg" alt="Female Character" width={130} height={130} />
+        <Image
+          src="/kasenfox.webp"
+          alt="Kasen Fox"
+          width={80}
+          height={100}
+        />
+        <Image
+          src="/kasenmale.webp"
+          alt="Kasen Male"
+          width={80}
+          height={100}
+        />
+        <Image
+          src="/kasenfemale.webp"
+          alt="Kasen Female"
+          width={80}
+          height={100}
+        />
       </div>
+      {/* END REPLACED BLOCK */}
 
       {/* Frosted preview overlay if not spinning - static preview removed */}
       {showPreviewOverlay && (
