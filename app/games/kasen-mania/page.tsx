@@ -554,7 +554,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           <Image
             src="/kasenfemale.webp"
             alt="Kasen Female"
-            width={120}
+            width={180}
             height={140}
             className="w-20vw h-auto relative"
             style={{ top: "-10px" }}
