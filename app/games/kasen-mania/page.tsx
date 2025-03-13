@@ -385,6 +385,7 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
+    // Avoid random generation accidentally matching a win condition
     grid[2].every((val) => val === grid[2][0]) ||
     grid[0].every((val) => val === grid[0][0]) ||
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
@@ -457,37 +458,37 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
-      // Middle row: same Y, but shorten right side
+      // Middle row: same Y, but shorten on the right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
           style={{
             top: reelHeight / 2 - 2,
             left: 0,
-            width: reelWidth - 150, // shorten on right side
+            width: reelWidth - 150,
             height: 4,
           }}
         />
       );
     } else if (outcomeMultiplier === 3) {
-      // Top row: move down by 15px, shorten on right side
+      // Top row: shift down slightly, shorten on the right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
           style={{
-            top: 30, // down 15px
+            top: 30,
             left: 0,
-            width: reelWidth - 150, // shorten on right side
+            width: reelWidth - 150,
             height: 4,
           }}
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal: start lower & end higher for more downward angle, also shorter
+      // Diagonal line from top-left to bottom-right
       const startX = 0;
-      const startY = 0; // move down a bit
-      const endX = reelWidth - 150; // shorten on right side
-      const endY = reelHeight - 20; // end a bit above the bottom
+      const startY = 0;
+      const endX = reelWidth - 150;
+      const endY = reelHeight - 20;
       const xDiff = endX - startX;
       const yDiff = endY - startY;
       const length = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -513,7 +514,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* The slot machine image is the same */}
+      {/* The slot machine image */}
       <Image
         src="/slotmachine.webp"
         alt="Slot Machine Background"
@@ -523,7 +524,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         style={{ marginLeft: "-5px" }}
       />
 
-      {/* REPLACE THIS BLOCK */}
+      {/* The replaced block with three images */}
       <div
         className="absolute flex items-end justify-center gap-4"
         style={{
@@ -551,9 +552,8 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           height={100}
         />
       </div>
-      {/* END REPLACED BLOCK */}
 
-      {/* Frosted preview overlay if not spinning - static preview removed */}
+      {/* Frosted preview overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div
@@ -584,7 +584,10 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
       {/* Actual reels */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }} className="relative">
+        <div
+          style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }}
+          className="relative"
+        >
           <div className="w-full h-full flex space-x-5">
             {Array.from({ length: 5 }).map((_, colIndex) => (
               <Reel
@@ -615,23 +618,20 @@ function Reel({
   const cellHeight = 75;
   const imageSize = 65;
   // Generate a set of random symbols once when the reel mounts.
-  // This array remains constant during the spin.
   const [randomSymbols] = useState(() =>
     Array.from({ length: 40 }, () => Math.floor(Math.random() * symbolImages.length))
   );
-  // Build the reel's full list: the random symbols (for looping) plus the final result.
+  // Build the reel's full list: the random symbols plus the final result.
   const symbols = finalSymbols
     ? [...randomSymbols, ...finalSymbols]
     : [...randomSymbols, ...randomSymbols];
-  // When stopping, we want to land exactly after the random portion so that the finalSymbols appear.
+  // Land exactly after the random portion to show final symbols.
   const finalOffset = -randomSymbols.length * cellHeight;
 
   return (
     <div className="w-24 h-full overflow-hidden relative">
       <motion.div
         className="w-full"
-        // While spinning, continuously loop over the random section.
-        // Once isSpinning becomes false, animate to finalOffset.
         animate={isSpinning ? { y: [0, finalOffset] } : { y: finalOffset }}
         transition={
           isSpinning
