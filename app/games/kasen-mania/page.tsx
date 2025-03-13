@@ -526,9 +526,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
         {/* The three characters, bigger & spaced out, placed lower (top: 12%) */}
         <div
-          className="absolute flex items-end justify-center gap-30"
+          className="absolute flex items-end justify-center gap-50"
           style={{
-            bottom: "85%",
+            bottom: "90%",
             left: "50%",
             transform: "translateX(-50%)",
           }}
@@ -538,7 +538,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             alt="Kasen Fox"
             width={120}
             height={140}
-            className="w-10vw h-auto"
+            className="w-13vw h-auto"
           />
           <Image
             src="/kasenmale.webp"
@@ -552,7 +552,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             alt="Kasen Female"
             width={120}
             height={140}
-            className="w-10vw h-auto"
+            className="w-15vw h-auto"
           />
         </div>
       </div>
