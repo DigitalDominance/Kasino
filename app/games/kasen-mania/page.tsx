@@ -558,7 +558,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             width={180}
             height={140}
             className="w-24vw h-auto relative"
-            style={{ top: "-20px", right: "10px" }}
+            style={{ top: "-30px", right: "10px" }}
           />
         </div>
       </div>
