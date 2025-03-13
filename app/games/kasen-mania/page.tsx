@@ -541,15 +541,16 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             src="/kasenfox.webp"
             alt="Kasen Fox"
             width={140}
-            height={160}
-            className="w-20vw h-auto"
+            height={170}
+            className="w-22vw h-auto"
           />
           <Image
             src="/kasenmale.webp"
             alt="Kasen Male"
             width={120}
             height={140}
-            className="w-10vw h-auto"
+            className="w-10vw h-auto relative"
+            style={{ right: "-10px" }}
           />
           <Image
             src="/kasenfemale.webp"
@@ -557,7 +558,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             width={180}
             height={140}
             className="w-24vw h-auto relative"
-            style={{ top: "-20px" }}
+            style={{ top: "-20px", right: "10px" }}
           />
         </div>
       </div>
