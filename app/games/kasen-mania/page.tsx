@@ -540,7 +540,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           <Image
             src="/kasenfox.webp"
             alt="Kasen Fox"
-            width={1500}
+            width={150}
             height={170}
             className="w-22vw h-auto"
           />
