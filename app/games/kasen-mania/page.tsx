@@ -385,6 +385,7 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
+    // Avoid random generation accidentally matching a win condition
     grid[2].every((val) => val === grid[2][0]) ||
     grid[0].every((val) => val === grid[0][0]) ||
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
@@ -457,7 +458,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
-      // Middle row
+      // Middle row: same Y, but shorten right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -470,7 +471,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 3) {
-      // Top row
+      // Top row: shift down slightly
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -524,9 +525,12 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           className="w-full h-auto"
         />
 
-        {/* The three characters, bigger & spaced out, placed lower (top: 12%) */}
+        {/* The three characters. 
+            1) We use a normal gap with Tailwind (e.g. gap-12).
+            2) The female is bigger and shifted up individually with relative + top negative.
+        */}
         <div
-          className="absolute flex items-end justify-center gap-50"
+          className="absolute flex items-end justify-center gap-12"
           style={{
             bottom: "90%",
             left: "50%",
@@ -552,12 +556,13 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
             alt="Kasen Female"
             width={120}
             height={140}
-            className="w-15vw h-auto"
+            className="w-20vw h-auto relative"
+            style={{ top: "-10px" }}
           />
         </div>
       </div>
 
-      {/* Overlay if not spinning */}
+      {/* Frosted preview overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div
@@ -621,12 +626,15 @@ function Reel({
 }) {
   const cellHeight = 75;
   const imageSize = 65;
+  // Generate a set of random symbols once when the reel mounts.
   const [randomSymbols] = useState(() =>
     Array.from({ length: 40 }, () => Math.floor(Math.random() * symbolImages.length))
   );
+  // Build the reel's full list: the random symbols plus the final result.
   const symbols = finalSymbols
     ? [...randomSymbols, ...finalSymbols]
     : [...randomSymbols, ...randomSymbols];
+  // Land exactly after the random portion to show final symbols.
   const finalOffset = -randomSymbols.length * cellHeight;
 
   return (
