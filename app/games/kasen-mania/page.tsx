@@ -528,7 +528,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         <div
           className="absolute flex items-end justify-center gap-10"
           style={{
-            top: "70%",
+            bottom: "70%",
             left: "50%",
             transform: "translateX(-50%)",
           }}
@@ -536,23 +536,23 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           <Image
             src="/kasenfox.webp"
             alt="Kasen Fox"
-            width={60}
-            height={70}
-            className="w-auto h-auto"
+            width={120}
+            height={140}
+            className="w-10vw h-auto"
           />
           <Image
             src="/kasenmale.webp"
             alt="Kasen Male"
-            width={60}
-            height={70}
-            className="w-auto h-auto"
+            width={120}
+            height={140}
+            className="w-10vw h-auto"
           />
           <Image
             src="/kasenfemale.webp"
             alt="Kasen Female"
-            width={60}
-            height={70}
-            className="w-auto h-auto"
+            width={120}
+            height={140}
+            className="w-10vw h-auto"
           />
         </div>
       </div>
