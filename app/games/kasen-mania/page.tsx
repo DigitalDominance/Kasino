@@ -526,9 +526,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
         {/* The three characters, bigger & spaced out, placed lower (top: 12%) */}
         <div
-          className="absolute flex items-end justify-center gap-10"
+          className="absolute flex items-end justify-center gap-30"
           style={{
-            bottom: "70%",
+            bottom: "85%",
             left: "50%",
             transform: "translateX(-50%)",
           }}
