@@ -385,7 +385,6 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
-    // Avoid random generation accidentally matching a win condition
     grid[2].every((val) => val === grid[2][0]) ||
     grid[0].every((val) => val === grid[0][0]) ||
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
@@ -458,7 +457,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
-      // Middle row: same Y, but shorten on the right side
+      // Middle row
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -471,7 +470,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 3) {
-      // Top row: shift down slightly, shorten on the right side
+      // Top row
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -484,7 +483,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal line from top-left to bottom-right
+      // Diagonal
       const startX = 0;
       const startY = 0;
       const endX = reelWidth - 150;
@@ -514,46 +513,51 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* The slot machine image */}
-      <Image
-        src="/slotmachine.webp"
-        alt="Slot Machine Background"
-        width={800}
-        height={400}
-        className="block object-cover object-center"
-        style={{ marginLeft: "-5px" }}
-      />
+      {/* A responsive container for slot machine + characters */}
+      <div className="relative w-full max-w-[800px] mx-auto">
+        {/* The slot machine image (responsive) */}
+        <Image
+          src="/slotmachine.webp"
+          alt="Slot Machine Background"
+          width={800}
+          height={400}
+          className="w-full h-auto"
+        />
 
-      {/* The replaced block with three images */}
-      <div
-        className="absolute flex items-end justify-center gap-4"
-        style={{
-          top: "-50px",
-          left: "50%",
-          transform: "translateX(-50%)",
-        }}
-      >
-        <Image
-          src="/kasenfox.webp"
-          alt="Kasen Fox"
-          width={80}
-          height={100}
-        />
-        <Image
-          src="/kasenmale.webp"
-          alt="Kasen Male"
-          width={80}
-          height={100}
-        />
-        <Image
-          src="/kasenfemale.webp"
-          alt="Kasen Female"
-          width={80}
-          height={100}
-        />
+        {/* The three characters, bigger & spaced out, placed lower (top: 12%) */}
+        <div
+          className="absolute flex items-end justify-center gap-10"
+          style={{
+            top: "12%",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <Image
+            src="/kasenfox.webp"
+            alt="Kasen Fox"
+            width={120}
+            height={140}
+            className="w-auto h-auto"
+          />
+          <Image
+            src="/kasenmale.webp"
+            alt="Kasen Male"
+            width={120}
+            height={140}
+            className="w-auto h-auto"
+          />
+          <Image
+            src="/kasenfemale.webp"
+            alt="Kasen Female"
+            width={120}
+            height={140}
+            className="w-auto h-auto"
+          />
+        </div>
       </div>
 
-      {/* Frosted preview overlay if not spinning */}
+      {/* Overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div
@@ -617,15 +621,12 @@ function Reel({
 }) {
   const cellHeight = 75;
   const imageSize = 65;
-  // Generate a set of random symbols once when the reel mounts.
   const [randomSymbols] = useState(() =>
     Array.from({ length: 40 }, () => Math.floor(Math.random() * symbolImages.length))
   );
-  // Build the reel's full list: the random symbols plus the final result.
   const symbols = finalSymbols
     ? [...randomSymbols, ...finalSymbols]
     : [...randomSymbols, ...randomSymbols];
-  // Land exactly after the random portion to show final symbols.
   const finalOffset = -randomSymbols.length * cellHeight;
 
   return (
