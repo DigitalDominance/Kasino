@@ -28,12 +28,11 @@ const montserrat = Montserrat({
 const MIN_BET = 1;
 const MAX_BET = 1000;
 const NUM_COLS = 6;
-const TOTAL_ROWS = 10; // total rows (finished + active + locked)
+const TOTAL_ROWS = 10; // total rows: finished + active + locked
 const WIN_ROW_PROBABILITY = 0.8; // 80% chance a row is "winning"
 
 // Exponential multiplier: multiplier = 1.1^(# finished rows)
-const getMultiplier = (rows: number) =>
-  Number(Math.pow(1.1, rows).toFixed(2));
+const getMultiplier = (rows: number) => Number(Math.pow(1.1, rows).toFixed(2));
 
 // Image asset paths – winning cubes use kaspagameicon.png
 const PLACEHOLDER_IMG = "/placeholder.svg";
@@ -43,8 +42,8 @@ const LOSE_IMG = "/red-x-icon.svg";
 // ---------------------------------------------------------
 // Row Pattern Generator
 // ---------------------------------------------------------
-// For each row, generate a pattern (array of booleans of length NUM_COLS).
-// "Win" row: exactly 1 losing cube; "lose" row: exactly 2 losing cubes.
+// For a "win" row, mark exactly 1 cube as losing;
+// for a "lose" row, mark exactly 2 cubes as losing.
 function generateRowPattern() {
   const rowOutcome = Math.random() < WIN_ROW_PROBABILITY ? "win" : "lose";
   const pattern = Array(NUM_COLS).fill(true);
@@ -79,7 +78,13 @@ interface TowerClimbGameProps {
   flipBoard: boolean;
 }
 
-function TowerClimbGame({ finishedRows, activeRow, lockedRows, onCubeClick, flipBoard }: TowerClimbGameProps) {
+function TowerClimbGame({
+  finishedRows,
+  activeRow,
+  lockedRows,
+  onCubeClick,
+  flipBoard,
+}: TowerClimbGameProps) {
   const allRows = [...finishedRows];
   if (activeRow) allRows.push(activeRow);
   allRows.push(...lockedRows);
@@ -95,7 +100,6 @@ function TowerClimbGame({ finishedRows, activeRow, lockedRows, onCubeClick, flip
         } else {
           rowType = "locked";
         }
-        // Locked rows get reduced opacity.
         const opacityClass = rowType === "locked" ? "opacity-40" : "opacity-100";
         return (
           <div
@@ -116,7 +120,6 @@ function TowerClimbGame({ finishedRows, activeRow, lockedRows, onCubeClick, flip
                       onCubeClick(colIndex);
                     }
                   }}
-                  // If flipBoard is true, animate a Y-axis flip.
                   animate={{ rotateY: flipBoard ? 180 : 0 }}
                   transition={{ duration: 0.8 }}
                 >
@@ -150,6 +153,7 @@ function TowerClimbContent() {
   const [cashoutPopup, setCashoutPopup] = useState(false);
   const [losePopup, setLosePopup] = useState(false);
   const [flipBoard, setFlipBoard] = useState(false);
+  const [cashoutClicked, setCashoutClicked] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
@@ -158,10 +162,11 @@ function TowerClimbContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Initialize the tower board
+  // Initialize tower board
   const initTower = () => {
     setFinishedRows([]);
     setFlipBoard(false);
+    setCashoutClicked(false);
     const newActive = { ...generateRowPattern(), revealed: false };
     setActiveRow(newActive);
     const locked: TowerRow[] = [];
@@ -171,7 +176,7 @@ function TowerClimbContent() {
     setLockedRows(locked);
   };
 
-  // Start the game: deduct bet and call backend
+  // Start game: deduct bet & call backend
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -190,7 +195,8 @@ function TowerClimbContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury =
+        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
@@ -198,7 +204,8 @@ function TowerClimbContent() {
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
@@ -225,14 +232,13 @@ function TowerClimbContent() {
     }
   };
 
-  // Handle cube click in active row
+  // Handle cube click on active row
   const handleCubeClick = (cubeIndex: number) => {
     if (!activeRow || activeRow.revealed) return;
     const updatedActive = { ...activeRow, revealed: true };
     setActiveRow(updatedActive);
     const isWin = updatedActive.pattern[cubeIndex];
     if (isWin) {
-      // On win, add the row to finishedRows and shift next row in
       setTimeout(() => {
         setFinishedRows(prev => [...prev, updatedActive]);
         const nextActive = lockedRows[0];
@@ -244,7 +250,7 @@ function TowerClimbContent() {
         });
       }, 500);
     } else {
-      // On loss, flip the entire board (reveal locked rows) and trigger loss popup
+      // On loss: reveal the board (flip all locked rows) and trigger loss popup
       setActiveRow(updatedActive);
       setLockedRows(prev => prev.map(row => ({ ...row, revealed: true })));
       setFlipBoard(true);
@@ -261,25 +267,26 @@ function TowerClimbContent() {
     }
   };
 
-  // Cash out with an exponential multiplier: multiplier = 1.1^(# finished rows)
+  // Handle cash out immediately on click and disable further clicks.
   const handleCashOut = async () => {
+    if (cashoutClicked) return;
+    setCashoutClicked(true);
     const bet = Number(betAmount);
     const multiplier = getMultiplier(finishedRows.length);
     const payout = bet * multiplier;
+    // Immediately show popup.
     setGameResult("Cashed Out");
-    if (gameId) {
-      try {
-        await axios.post(`${apiUrl}/game/end`, {
-          gameId,
-          result: "win",
-          winAmount: payout,
-        });
-      } catch (error) {
-        console.error("Error ending game on backend:", error);
-      }
-    }
     setIsPlaying(false);
     setCashoutPopup(true);
+    try {
+      await axios.post(`${apiUrl}/game/end`, {
+        gameId,
+        result: "win",
+        winAmount: payout,
+      });
+    } catch (error) {
+      console.error("Error ending game on backend:", error);
+    }
   };
 
   const resetGame = () => {
@@ -333,89 +340,92 @@ function TowerClimbContent() {
           </p>
         )}
 
-        {/* Game Container Card */}
-        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden mb-6">
-          <div className="p-6 flex flex-col h-full items-center">
-            <div className="flex justify-between items-center w-full mb-4">
-              <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Tower Climb</h2>
-              <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
-                Reset
-              </Button>
-            </div>
-            {/* Pregame Screen inside game container */}
-            {pregame ? (
-              <div className="relative w-full h-[40vh] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
-                {/* Add several kaspa logos scattered around */}
-                <motion.div className="absolute top-2 left-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1 }}>
-                  <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                </motion.div>
-                <motion.div className="absolute top-4 right-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.3 }}>
-                  <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                </motion.div>
-                <motion.div className="absolute bottom-2 left-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.6 }}>
-                  <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                </motion.div>
-                <motion.div className="absolute bottom-4 right-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.9 }}>
-                  <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                </motion.div>
-                <motion.div className="absolute top-1/2 left-1/2" style={{ transform: "translate(-50%, -50%)" }} animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 1.2 }}>
-                  <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                </motion.div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
-                  <motion.h1
-                    className="text-5xl font-bold mb-4"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    style={{ color: "#49EACB" }}
-                  >
-                    KASPA TOWER CLIMB
-                  </motion.h1>
-                  <motion.p
-                    className="text-xl tracking-wider mb-4"
-                    animate={{ opacity: [0.8, 1, 0.8] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    style={{ color: "#00FFFF" }}
-                  >
-                    CLIMB TO WIN BIG
-                  </motion.p>
-                  {/* Note: The "Place Your Bet" button is shown here for decoration only */}
-                  <motion.div
-                    className="mt-6"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                  >
-                    <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
-                      Place Your Bet
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            ) : (
-              // Game board when pregame is over
-              <div className="w-full max-w-md mx-auto">
-                <TowerClimbGame
-                  finishedRows={finishedRows}
-                  activeRow={activeRow}
-                  lockedRows={lockedRows}
-                  onCubeClick={handleCubeClick}
-                  flipBoard={flipBoard}
-                />
-              </div>
-            )}
-            {/* Cash Out button: visible when game is active and at least one row is finished */}
-            {isPlaying && finishedRows.length > 0 && (
-              <motion.div className="mt-4">
-                <Button onClick={handleCashOut} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
-                  Cash Out (Payout: {Number(betAmount) * getMultiplier(finishedRows.length)} KAS)
+        {/* Main Game & Controls */}
+        <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
+          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full items-center">
+              <div className="flex justify-between items-center w-full mb-4">
+                <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Tower Climb</h2>
+                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
+                  Reset
                 </Button>
-              </motion.div>
-            )}
-          </div>
-        </Card>
+              </div>
+              {/* Pregame Screen inside game container */}
+              {pregame ? (
+                <div className="relative w-full h-[40vh] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
+                  {/* Scatter 5 kaspa logos with dark neon-green outline */}
+                  <motion.div className="absolute top-2 left-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1 }}>
+                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
+                  </motion.div>
+                  <motion.div className="absolute top-4 right-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.3 }}>
+                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
+                  </motion.div>
+                  <motion.div className="absolute bottom-4 left-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.6 }}>
+                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
+                  </motion.div>
+                  <motion.div className="absolute bottom-6 right-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.9 }}>
+                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
+                  </motion.div>
+                  <motion.div className="absolute bottom-2 left-1/2" style={{ transform: "translateX(-50%)" }} animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 1.2 }}>
+                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
+                  </motion.div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                    <motion.h1
+                      className="text-5xl font-bold mb-4"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#49EACB" }}
+                    >
+                      KASPA TOWER CLIMB
+                    </motion.h1>
+                    <motion.p
+                      className="text-xl tracking-wider mb-4"
+                      animate={{ opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#00FFFF" }}
+                    >
+                      CLIMB TO WIN BIG
+                    </motion.p>
+                    {/* Move the kaspa image further down */}
+                    <div className="mt-16">
+                      <Image src="/kaspagameicon.png" alt="Kaspa Icon" width={96} height={96} />
+                    </div>
+                    {/* Decorative Place Your Bet button (non‑functional) */}
+                    <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+                      <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+                        Place Your Bet
+                      </Button>
+                    </motion.div>
+                  </div>
+                </div>
+              ) : (
+                // Game board when pregame is over
+                <div className="w-full max-w-md mx-auto">
+                  <TowerClimbGame
+                    finishedRows={finishedRows}
+                    activeRow={activeRow}
+                    lockedRows={lockedRows}
+                    onCubeClick={handleCubeClick}
+                    flipBoard={flipBoard}
+                  />
+                </div>
+              )}
+              {/* Cash Out button (if game in progress and at least one row is finished) */}
+              {isPlaying && finishedRows.length > 0 && (
+                <motion.div className="mt-4">
+                  <Button
+                    onClick={handleCashOut}
+                    disabled={cashoutClicked}
+                    className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                  >
+                    Cash Out (Payout: {Number(betAmount) * getMultiplier(finishedRows.length)} KAS)
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+          </Card>
 
-        {/* Controls & Live Components (on the right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Right Column: Controls, LiveChat & LiveWins */}
           <div className="space-y-6">
             <TowerClimbControls
               betAmount={betAmount}
@@ -433,54 +443,56 @@ function TowerClimbContent() {
             <LiveChat textColor="#49EACB" />
             <LiveWins textColor="#49EACB" />
           </div>
-          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
-            <motion.h2
-              className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
-              animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-              style={{
-                backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
-                backgroundSize: "200% 200%",
-              }}
-            >
-              Kaspa Tower Climb
-            </motion.h2>
-            <img src="/towerpromo.png" alt="Tower Climb Promo" className="w-full h-auto mb-4" />
-            <p className="text-sm text-white mb-4">
-              Climb the tower one row at a time. Each successful row increases your payout,
-              but one wrong move ends the climb!
-            </p>
-            <div className="flex justify-center space-x-4 text-xl">
-              <motion.a
-                href="https://x.com/KasenOnKaspa"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2 }}
-                className="text-[#49EACB] hover:text-[#49EACB]/80"
-              >
-                <FaTwitter />
-              </motion.a>
-              <motion.a
-                href="https://t.co/W4YDM1cUpY"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2 }}
-                className="text-[#49EACB] hover:text-[#49EACB]/80"
-              >
-                <FaTelegramPlane />
-              </motion.a>
-              <motion.a
-                href="https://kasenonkas.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2 }}
-                className="text-[#49EACB] hover:text-[#49EACB]/80"
-              >
-                <FaGlobe />
-              </motion.a>
-            </div>
-          </Card>
         </div>
+
+        {/* Promo / Info Card */}
+        <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+          <motion.h2
+            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            style={{
+              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
+              backgroundSize: "200% 200%",
+            }}
+          >
+            Kaspa Tower Climb
+          </motion.h2>
+          <img src="/towerpromo.png" alt="Tower Climb Promo" className="w-full h-auto mb-4" />
+          <p className="text-sm text-white mb-4">
+            Climb the tower one row at a time. Each successful row increases your payout,
+            but one wrong move ends the climb!
+          </p>
+          <div className="flex justify-center space-x-4 text-xl">
+            <motion.a
+              href="https://x.com/KasenOnKaspa"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#49EACB] hover:text-[#49EACB]/80"
+            >
+              <FaTwitter />
+            </motion.a>
+            <motion.a
+              href="https://t.co/W4YDM1cUpY"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#49EACB] hover:text-[#49EACB]/80"
+            >
+              <FaTelegramPlane />
+            </motion.a>
+            <motion.a
+              href="https://kasenonkas.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.2 }}
+              className="text-[#49EACB] hover:text-[#49EACB]/80"
+            >
+              <FaGlobe />
+            </motion.a>
+          </div>
+        </Card>
       </div>
       <SiteFooter />
 
