@@ -43,7 +43,6 @@ const LOSE_IMG = "/kaspatowerclimbloss.png";
 // ---------------------------------------------------------
 // Row Pattern Generator for a given floor
 // ---------------------------------------------------------
-// This function uses linear interpolation so that the number of winning bricks decreases as floor increases.
 function generateRowPatternForFloor(floor: number) {
   const maxWinning = NUM_COLS - 1; // best chance on bottom floor
   const minWinning = 2; // hardest at the top
@@ -52,7 +51,6 @@ function generateRowPatternForFloor(floor: number) {
   );
   const pattern = Array(NUM_COLS).fill(false);
   const indices = Array.from({ length: NUM_COLS }, (_, i) => i);
-  // Shuffle indices (Fisher–Yates)
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [indices[i], indices[j]] = [indices[j], indices[i]];
@@ -66,7 +64,7 @@ function generateRowPatternForFloor(floor: number) {
 // ---------------------------------------------------------
 // Tower Climb Game Component
 // ---------------------------------------------------------
-// Extend TowerRow to optionally include per-cube reveal state.
+// We now include an optional "revealedIndices" array to track per-cube flipping.
 interface TowerRow {
   pattern: boolean[]; // true = winning; false = losing
   revealed: boolean;
@@ -110,21 +108,19 @@ function TowerClimbGame({
             className={`flex justify-center gap-2 transition-opacity duration-500 ${opacityClass}`}
           >
             {row.pattern.map((cell, colIndex) => {
-              // Determine if this cube should be revealed:
-              const isCubeRevealed =
-                row.revealed ||
-                (row.revealedIndices && row.revealedIndices[colIndex]);
-              const imgSrc = isCubeRevealed ? (cell ? WIN_IMG : LOSE_IMG) : PLACEHOLDER_IMG;
+              const isRevealed =
+                row.revealed || (row.revealedIndices && row.revealedIndices[colIndex]);
+              const imgSrc = isRevealed ? (cell ? WIN_IMG : LOSE_IMG) : PLACEHOLDER_IMG;
               return (
                 <motion.div
                   key={colIndex}
                   className="w-16 h-16 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
                   onClick={() => {
-                    if (rowType === "active" && !row.revealed && (!row.revealedIndices || !row.revealedIndices[colIndex])) {
+                    if (rowType === "active" && !isRevealed) {
                       onCubeClick(colIndex);
                     }
                   }}
-                  animate={{ rotateY: flipBoard ? 180 : 0 }}
+                  animate={{ rotateY: isRevealed || flipBoard ? 180 : 0 }}
                   transition={{ duration: 0.8 }}
                 >
                   <Image src={imgSrc} alt="cube" width={64} height={64} />
@@ -166,27 +162,25 @@ function TowerClimbContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Memoize 50 decorative logo positions (randomly placed) for the pregame screen.
+  // Generate 50 decorative logos with random positions
   const decorativeLogos = useMemo(() => {
     return Array.from({ length: 50 }).map(() => ({
-      top: Math.random() * 80 + "%", // 0%-80%
+      top: Math.random() * 80 + "%",
       left: Math.random() * 80 + "%",
     }));
   }, []);
 
-  // Initialize the tower (fixed TOTAL_ROWS floors)
+  // Initialize tower board with fixed TOTAL_ROWS floors.
   const initTower = () => {
     setFinishedRows([]);
     setFlipBoard(false);
     setCashoutClicked(false);
-    // Floor 1 as active row with per-cube reveal state.
     const newActive: TowerRow = {
       pattern: generateRowPatternForFloor(1),
       revealed: false,
       revealedIndices: Array(NUM_COLS).fill(false),
     };
     setActiveRow(newActive);
-    // Locked rows: floors 2 through TOTAL_ROWS.
     const locked: TowerRow[] = [];
     for (let floor = 2; floor <= TOTAL_ROWS; floor++) {
       locked.push({ pattern: generateRowPatternForFloor(floor), revealed: false });
@@ -194,7 +188,7 @@ function TowerClimbContent() {
     setLockedRows(locked);
   };
 
-  // Start the game: deduct bet and call backend.
+  // Start game: deduct bet and notify backend.
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -250,18 +244,15 @@ function TowerClimbContent() {
     }
   };
 
-  // Handle cube click on the active row:
-  // Flip only the clicked cube first; then after 1 second, reveal the entire row.
+  // Handle cube click on the active row.
   const handleCubeClick = (cubeIndex: number) => {
     if (!activeRow || activeRow.revealed) return;
-    // Update only the clicked cube in revealedIndices.
-    const newRevealedIndices = activeRow.revealedIndices
-      ? [...activeRow.revealedIndices]
-      : Array(NUM_COLS).fill(false);
+    // First, update the clicked cube only.
+    const newRevealedIndices = activeRow.revealedIndices ? [...activeRow.revealedIndices] : Array(NUM_COLS).fill(false);
     newRevealedIndices[cubeIndex] = true;
     setActiveRow({ ...activeRow, revealedIndices: newRevealedIndices });
 
-    // After 1 second, fully reveal the row.
+    // After 1 second, fully reveal the active row.
     setTimeout(() => {
       const fullyRevealedRow: TowerRow = {
         ...activeRow,
@@ -271,7 +262,6 @@ function TowerClimbContent() {
       setActiveRow(fullyRevealedRow);
       const outcome = activeRow.pattern[cubeIndex];
       if (outcome) {
-        // If win, after additional 500ms, add row to finished and shift next row (if any).
         setTimeout(() => {
           const newFinished = [...finishedRows, fullyRevealedRow];
           setFinishedRows(newFinished);
@@ -280,12 +270,10 @@ function TowerClimbContent() {
             setActiveRow({ ...nextRow, revealed: false, revealedIndices: Array(NUM_COLS).fill(false) });
             setLockedRows(prev => prev.slice(1));
           } else {
-            // Tower complete: cash out.
             handleCashOut();
           }
         }, 500);
       } else {
-        // On loss: flip entire board (reveal all locked rows) and trigger loss popup.
         setLockedRows(prev => prev.map(row => ({ ...row, revealed: true })));
         setFlipBoard(true);
         setGameResult("Game Over");
@@ -302,7 +290,7 @@ function TowerClimbContent() {
     }, 1000);
   };
 
-  // Handle cash out immediately on click (only once).
+  // Handle cash out immediately on click.
   const handleCashOut = async () => {
     if (cashoutClicked) return;
     setCashoutClicked(true);
@@ -331,7 +319,6 @@ function TowerClimbContent() {
     setPregame(true);
   };
 
-  // Cooldown timer for starting a new game.
   useEffect(() => {
     if (cooldown > 0) {
       const interval = setInterval(() => setCooldown(c => c - 1), 1000);
@@ -388,12 +375,11 @@ function TowerClimbContent() {
               {/* Pregame Screen (fills entire container) */}
               {pregame ? (
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
-                  {/* Scatter 50 decorative kaspa logos */}
                   {decorativeLogos.map((pos, index) => (
                     <motion.div
                       key={index}
                       className="absolute"
-                      style={{ top: pos.top, left: pos.left }}
+                      style={{ top: pos.top, left: pos.left, opacity: 0.5 }}
                       whileHover={{ scale: 1.2 }}
                     >
                       <Image
@@ -425,7 +411,6 @@ function TowerClimbContent() {
                     <div className="mt-20">
                       <Image src="/kaspagameicon.png" alt="Kaspa Icon" width={96} height={96} />
                     </div>
-                    {/* Decorative "Place Your Bet" button (non-functional) */}
                     <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
                       <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
                         Place Your Bet
@@ -445,7 +430,6 @@ function TowerClimbContent() {
                   />
                 </div>
               )}
-              {/* Cash Out Button (visible when game is in progress and at least one floor is finished) */}
               {isPlaying && finishedRows.length > 0 && (
                 <motion.div className="mt-4">
                   <Button
