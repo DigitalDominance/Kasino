@@ -29,12 +29,12 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 const NUM_COLS = 6;
 const TOTAL_ROWS = 10; // total rows (finished + active + locked)
-const WIN_ROW_PROBABILITY = 0.8; // 80% chance for a row to be "winning" (fewer losing cubes)
+const WIN_ROW_PROBABILITY = 0.8; // 80% chance for a row to be "winning"
 
-// For gradual multiplier: first row yields 1.1×, then each extra row adds 0.2
+// Gradual multiplier: first finished row gives 1.1×, second 1.3×, third 1.5×, etc.
 const getMultiplier = (rows: number) => (rows > 0 ? 1.1 + (rows - 1) * 0.2 : 1);
 
-// Image asset paths – note: use kaspagameicon.png for winning cubes and for pregame decorations.
+// Image asset paths – using kaspagameicon.png for winning cubes
 const PLACEHOLDER_IMG = "/placeholder.svg";
 const WIN_IMG = "/kaspagameicon.png";
 const LOSE_IMG = "/red-x-icon.svg";
@@ -42,9 +42,8 @@ const LOSE_IMG = "/red-x-icon.svg";
 // ---------------------------------------------------------
 // Row Pattern Generator
 // ---------------------------------------------------------
-// Generate a row pattern with NUM_COLS booleans.
-// For a "win" row: mark exactly 1 cube as losing (≈83% win chance per row).
-// For a "lose" row: mark exactly 2 cubes as losing (≈67% win chance).
+// For each row, we generate an array of booleans (length = NUM_COLS).
+// For a “win” row, mark exactly 1 cube as losing; for a “lose” row, mark exactly 2 losing cubes.
 function generateRowPattern() {
   const rowOutcome = Math.random() < WIN_ROW_PROBABILITY ? "win" : "lose";
   const pattern = Array(NUM_COLS).fill(true);
@@ -64,7 +63,7 @@ function generateRowPattern() {
 }
 
 // ---------------------------------------------------------
-// Tower Climb Game Types & Component
+// Tower Climb Game Component
 // ---------------------------------------------------------
 interface TowerRow {
   pattern: boolean[]; // true = winning; false = losing
@@ -83,7 +82,7 @@ function TowerClimbGame({ finishedRows, activeRow, lockedRows, onCubeClick }: To
   if (activeRow) allRows.push(activeRow);
   allRows.push(...lockedRows);
   
-  // Render rows bottom-up
+  // Render rows bottom-up (active row appears at the bottom)
   return (
     <div className="flex flex-col-reverse gap-2">
       {allRows.map((row, rowIndex) => {
@@ -142,6 +141,7 @@ function TowerClimbContent() {
   const [lockedRows, setLockedRows] = useState<TowerRow[]>([]);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [cashoutPopup, setCashoutPopup] = useState(false);
+  const [losePopup, setLosePopup] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
@@ -216,16 +216,16 @@ function TowerClimbContent() {
     }
   };
 
-  // Handle cube click on active row
+  // Handle cube click on active row – reveal row and determine outcome
   const handleCubeClick = (cubeIndex: number) => {
     if (!activeRow || activeRow.revealed) return;
     const updatedActive = { ...activeRow, revealed: true };
     setActiveRow(updatedActive);
     const isWin = updatedActive.pattern[cubeIndex];
     if (isWin) {
+      // Successful pick: add row to finished and shift next row in
       setTimeout(() => {
         setFinishedRows(prev => [...prev, updatedActive]);
-        // Shift next row in from locked rows
         const nextActive = lockedRows[0];
         setActiveRow({ ...nextActive, revealed: false });
         setLockedRows(prev => {
@@ -235,6 +235,7 @@ function TowerClimbContent() {
         });
       }, 500);
     } else {
+      // Losing pick: end game and trigger loss popup
       setGameResult("Game Over");
       if (gameId) {
         axios.post(`${apiUrl}/game/end`, {
@@ -244,11 +245,11 @@ function TowerClimbContent() {
         });
       }
       setIsPlaying(false);
+      setLosePopup(true);
     }
   };
 
-  // Cash out with a lower multiplier progression:
-  // Multiplier = 1.1 for first row, 1.3 for second, etc.
+  // Cash out: payout = bet * multiplier (gradually increasing: 1.1, 1.3, 1.5, ...)
   const handleCashOut = async () => {
     const bet = Number(betAmount);
     const multiplier = getMultiplier(finishedRows.length);
@@ -331,7 +332,7 @@ function TowerClimbContent() {
             </div>
             {/* Pregame Screen inside game container */}
             {pregame ? (
-              <div className="relative w-full h-[40vh] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#39FF14] to-[#00FF00]">
+              <div className="relative w-full h-[40vh] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-30">
                   <motion.h1
                     className="text-5xl font-bold mb-4"
@@ -352,6 +353,16 @@ function TowerClimbContent() {
                   <div className="w-24 h-24">
                     <Image src="/kaspagameicon.png" alt="Kaspa Icon" width={96} height={96} />
                   </div>
+                  <motion.div
+                    className="mt-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                  >
+                    <Button onClick={() => setPregame(false)} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                      Place Your Bet
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             ) : (
@@ -365,7 +376,7 @@ function TowerClimbContent() {
                 />
               </div>
             )}
-            {/* Cash Out button appears only when game is in progress and at least one row is finished */}
+            {/* Cash Out button (shown when game is in progress and at least one row is finished) */}
             {isPlaying && finishedRows.length > 0 && (
               <motion.div className="mt-4">
                 <Button onClick={handleCashOut} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
@@ -456,7 +467,7 @@ function TowerClimbContent() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-[#39FF14] p-6 rounded-lg shadow-2xl text-center"
+              className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
@@ -466,8 +477,36 @@ function TowerClimbContent() {
                 You cashed out for {Number(betAmount) * getMultiplier(finishedRows.length)} KAS
               </p>
               <Button
-                className="bg-black text-[#39FF14] hover:bg-black/80"
+                className="bg-black text-[#49EACB] hover:bg-black/80"
                 onClick={() => setCashoutPopup(false)}
+              >
+                Close
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Animated Loss Popup */}
+      <AnimatePresence>
+        {losePopup && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-red-700 p-6 rounded-lg shadow-2xl text-center"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <h2 className="text-3xl font-bold mb-4">Game Over</h2>
+              <p className="text-xl mb-6">You lost your bet.</p>
+              <Button
+                className="bg-black text-red-700 hover:bg-black/80"
+                onClick={() => setLosePopup(false)}
               >
                 Close
               </Button>
