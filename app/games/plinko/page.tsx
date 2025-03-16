@@ -31,138 +31,130 @@ const montserrat = Montserrat({
 const MIN_BET = 1;
 const MAX_BET = 1000;
 
-// Number of Plinko "rows" of pins. We use 15 rows (index 0..14).
-// The final slot is 0..15 => 16 total slots.
-const NUM_ROWS = 15;
+/**
+ * We define a total of 17 pin-rows, indexed 0..16.
+ *  - Row 0 has 4 pins
+ *  - Row 16 has 18 pins
+ * Then row 17 is the final “landing row” with 18 boxes.
+ *
+ * So we have 17 random steps for the ball to move from row=0..16,
+ * possibly moving right each row if the random boolean is true.
+ */
+const NUM_STEPS = 17;
 
-// Multipliers for each of the 16 final slots.
+// Interpolate from 4 pins at top row (i=0) to 18 pins at bottom row (i=16).
+function getPinsForRow(i: number): number {
+  // We want a total increase of 14 pins (from 4 -> 18) over 16 steps.
+  // We’ll do a simple linear interpolation:
+  //   pins(i) = 4 + floor( (18-4)*i / (NUM_STEPS-1) )
+  //   = 4 + floor(14*i/16)
+  // so that row=16 => 4 + floor(14*16/16) = 4 + 14 = 18.
+  return 4 + Math.floor((14 * i) / (NUM_STEPS - 1));
+}
+
+// The final row has 18 “winning boxes”
+const FINAL_SLOT_COUNT = 18;
+
+// Example multipliers for 18 slots (indices 0..17), symmetric around the center
 const FINAL_SLOT_MULTIPLIERS = [
   110, 41, 10, 5, 3, 1.5, 1, 0.5,
-  0.3, 1, 1.5, 3, 5, 10, 41, 110,
+  0.3, 0.3,
+  0.5, 1, 1.5, 3, 5, 10, 41, 110,
 ];
 
-// Spacing for pins and rows (tweak to your preference)
-const PIN_SPACING = 40;   // horizontal distance between adjacent pins in the same row
-const ROW_SPACING = 45;   // vertical distance between consecutive rows of pins
-
-// Drop speed (ms between row transitions)
-const DROP_SPEED = 200; // faster than 500ms
+// Horizontal & vertical spacing
+const PIN_SPACING = 35;   // horizontal distance between adjacent pins
+const ROW_SPACING = 45;   // vertical distance between consecutive rows
+const DROP_SPEED = 150;   // ms per row transition
 
 /*
 --------------------------------------------------------------------------------
 HELPER FUNCTIONS
 --------------------------------------------------------------------------------
 */
-// Generate a random path of left/right moves for the ball.
-// Each row i => true means "move right" at that row, false => "move left".
-function generateRandomPath(rows: number) {
+// Generate a random path of length NUM_STEPS => each step is either “go right” (true) or “go left” (false).
+function generateRandomPath() {
   const path: boolean[] = [];
-  for (let i = 0; i < rows; i++) {
+  for (let i = 0; i < NUM_STEPS; i++) {
     path.push(Math.random() < 0.5);
   }
   return path;
 }
 
-// Compute final slot = number of "true" moves (right).
-// With 15 rows, finalSlot is in [0..15].
+// The final slot is just the sum of “true” steps in the path (0..17).
 function getFinalSlot(path: boolean[]) {
-  let col = 0;
-  for (const moveRight of path) {
-    if (moveRight) col++;
-  }
-  return col;
-}
-
-// Return a color for a multiplier cube (optional)
-function getMultiplierColor(mult: number) {
-  // You can map specific multipliers to colors or do a gradient
-  if (mult >= 41) return "bg-red-500";
-  if (mult >= 10) return "bg-orange-500";
-  if (mult >= 3) return "bg-yellow-500";
-  if (mult >= 1.5) return "bg-green-500";
-  if (mult >= 1) return "bg-teal-500";
-  return "bg-blue-500";
+  return path.reduce((sum, stepRight) => sum + (stepRight ? 1 : 0), 0);
 }
 
 /*
 --------------------------------------------------------------------------------
-PIN LAYOUT & MULTIPLIER SLOTS
+PLINKO LAYOUT (Pins + Final Boxes)
 --------------------------------------------------------------------------------
 */
-
-// Renders the 15 rows of pins in a wide triangular layout
-// plus the final row of 16 multiplier cubes at the bottom.
-function PlinkoLayout({ opacity }: { opacity: number }) {
-  // We'll generate an array of pin coordinates for each row i=0..14
-  // row i has (i+1) pins. We'll center them horizontally.
-  const pins = useMemo(() => {
-    const pinElements = [];
-    for (let i = 0; i < NUM_ROWS; i++) {
-      // row i => i+1 pins
-      const rowWidth = i + 1;
-      const rowArr = [];
-      for (let c = 0; c < rowWidth; c++) {
-        // x offset: (c - rowWidth/2) * PIN_SPACING
-        // y offset: i * ROW_SPACING
-        const x = (c - rowWidth / 2) * PIN_SPACING;
-        const y = i * ROW_SPACING;
-        rowArr.push(
-          <motion.div
-            key={`pin-${i}-${c}`}
-            className="w-3 h-3 rounded-full bg-[#49EACB] absolute"
-            style={{
-              left: "50%",
-              top: 0,
-              transform: `translate(${x}px, ${y}px)`,
-            }}
-          />
-        );
-      }
-      pinElements.push(...rowArr);
+function getPinCoordinates() {
+  // For each row i in [0..16], we have getPinsForRow(i) pins
+  // We'll store an array of {x,y} for each pin
+  const coords: { x: number; y: number }[] = [];
+  for (let i = 0; i < NUM_STEPS; i++) {
+    const numPins = getPinsForRow(i); // 4..18
+    const center = (numPins - 1) / 2; // e.g. if 4 pins => center=1.5
+    for (let col = 0; col < numPins; col++) {
+      const x = (col - center) * PIN_SPACING;
+      const y = i * ROW_SPACING;
+      coords.push({ x, y });
     }
-    return pinElements;
-  }, []);
+  }
+  return coords;
+}
 
-  // Render the 16 bottom cubes for multipliers
-  // We'll place them at "row=15" => y=15*ROW_SPACING
-  // x offset: (slot - 15/2)*PIN_SPACING => (slot - 7.5)*PIN_SPACING
-  const bottomRow = useMemo(() => {
-    const rowY = NUM_ROWS * ROW_SPACING; // row index=15 => after 15 rows
-    const cubes = [];
-    for (let s = 0; s < 16; s++) {
-      const mult = FINAL_SLOT_MULTIPLIERS[s];
-      const x = (s - 7.5) * PIN_SPACING; // center them horizontally
-      const colorClass = getMultiplierColor(mult);
-      cubes.push(
-        <motion.div
-          key={`slot-${s}`}
-          className={`w-12 h-12 flex items-center justify-center text-black font-bold absolute ${colorClass} border border-gray-800 rounded-md`}
+// Render the pins plus the final row of 18 boxes
+function PlinkoLayout({ opacity }: { opacity: number }) {
+  const pins = useMemo(() => getPinCoordinates(), []);
+  // For final row i=17 => 18 boxes => columns [0..17]
+  const finalRowY = NUM_STEPS * ROW_SPACING; // row=17 => below row=16
+  const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2; // 8.5 if 18 boxes => indices 0..17
+
+  return (
+    <div className="relative w-full h-[900px]" style={{ opacity }}>
+      {/* Pins */}
+      {pins.map((p, idx) => (
+        <div
+          key={`pin-${idx}`}
+          className="absolute w-3 h-3 rounded-full bg-[#49EACB]"
           style={{
             left: "50%",
             top: 0,
-            transform: `translate(${x - 24}px, ${rowY}px)`, 
-            // minus half the cube width to center it better
+            transform: `translate(${p.x}px, ${p.y}px)`,
           }}
-        >
-          {mult}x
-        </motion.div>
-      );
-    }
-    return cubes;
-  }, []);
-
-  return (
-    <div className="relative w-full h-[800px]" style={{ opacity }}>
-      {pins}
-      {bottomRow}
+        />
+      ))}
+      {/* Final row of 18 boxes */}
+      {Array.from({ length: FINAL_SLOT_COUNT }).map((_, slot) => {
+        const x = (slot - centerBoxes) * PIN_SPACING;
+        const mult = FINAL_SLOT_MULTIPLIERS[slot];
+        return (
+          <div
+            key={`slot-${slot}`}
+            className="absolute flex items-center justify-center w-12 h-12 
+                       bg-black/30 border-2 border-[#49EACB] text-[#49EACB] 
+                       font-bold rounded-md shadow-[0_0_8px_#49EACB]"
+            style={{
+              left: "50%",
+              top: 0,
+              transform: `translate(${x - 24}px, ${finalRowY}px)`,
+            }}
+          >
+            {mult}x
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 /*
 --------------------------------------------------------------------------------
-PLINKO BOARD COMPONENT
-Animates the dropping ball over the pins.
+BALL ANIMATION
 --------------------------------------------------------------------------------
 */
 interface PlinkoBoardProps {
@@ -172,13 +164,12 @@ interface PlinkoBoardProps {
 }
 
 function PlinkoBoard({ ballPath, dropping, onBallLanded }: PlinkoBoardProps) {
-  // We'll track the current row (0..15) and "col" = # of rights so far
   const [currentRow, setCurrentRow] = useState<number>(0);
   const [currentCol, setCurrentCol] = useState<number>(0);
 
   useEffect(() => {
     if (!ballPath || !dropping) {
-      // reset the ball
+      // Reset
       setCurrentRow(0);
       setCurrentCol(0);
       return;
@@ -186,16 +177,16 @@ function PlinkoBoard({ ballPath, dropping, onBallLanded }: PlinkoBoardProps) {
 
     let step = 0;
     const interval = setInterval(() => {
-      if (step >= NUM_ROWS) {
+      if (step >= NUM_STEPS) {
+        // Landed
         clearInterval(interval);
-        // ball has landed => final slot
         const finalSlot = getFinalSlot(ballPath);
         onBallLanded(finalSlot);
       } else {
-        // move down one row
+        // Move down one row
         setCurrentRow(step + 1);
+        // If the path says "right", increment col
         if (ballPath[step]) {
-          // move right => col++
           setCurrentCol((prev) => prev + 1);
         }
         step++;
@@ -205,27 +196,26 @@ function PlinkoBoard({ ballPath, dropping, onBallLanded }: PlinkoBoardProps) {
     return () => clearInterval(interval);
   }, [ballPath, dropping, onBallLanded]);
 
-  // For geometry:
-  // row i => center is i/2. col => offset = col - i/2
-  // x offset = (col - i/2) * PIN_SPACING
-  // y offset = i * ROW_SPACING
-  const x = (currentCol - currentRow / 2) * PIN_SPACING;
-  const y = currentRow * ROW_SPACING;
+  // For row i, we have getPinsForRow(i) pins => center = (numPins-1)/2
+  // x = (currentCol - center)*PIN_SPACING
+  // y = i*ROW_SPACING
+  // But i = currentRow might exceed 16 if we pass the final row => we clamp
+  const effectiveRow = Math.min(currentRow, NUM_STEPS - 1);
+  const numPins = getPinsForRow(effectiveRow);
+  const center = (numPins - 1) / 2;
+  const x = (currentCol - center) * PIN_SPACING;
+  const y = effectiveRow * ROW_SPACING;
 
   return (
-    <div className="relative w-full h-[800px]">
-      {/* Ball (Kaspa logo) */}
+    <div className="relative w-full h-[900px]">
       <motion.div
         className="absolute left-1/2"
-        animate={{
-          x,
-          y,
-        }}
+        animate={{ x, y }}
         transition={{ type: "spring", stiffness: 80, damping: 12 }}
         style={{
           width: 32,
           height: 32,
-          marginLeft: -16, // half the ball width
+          marginLeft: -16, // center the ball horizontally
         }}
       >
         <Image
@@ -335,8 +325,8 @@ function PlinkoContent() {
       setGameResult(null);
       setCooldown(10);
 
-      // Generate random path
-      const path = generateRandomPath(NUM_ROWS);
+      // Generate random path of length 17
+      const path = generateRandomPath();
       setBallPath(path);
       setDropping(true);
     } catch (error: any) {
@@ -349,7 +339,7 @@ function PlinkoContent() {
   const handleBallLanded = async (finalSlot: number) => {
     setDropping(false);
     const bet = Number(betAmount);
-    const multiplier = FINAL_SLOT_MULTIPLIERS[finalSlot];
+    const multiplier = FINAL_SLOT_MULTIPLIERS[finalSlot] ?? 1;
     const payout = bet * multiplier;
 
     // Show the user’s result
@@ -436,7 +426,7 @@ function PlinkoContent() {
             <div className="p-6 flex flex-col h-full items-center justify-center relative">
               {pregame ? (
                 <>
-                  {/* Semi-opaque Plinko layout for the background */}
+                  {/* Semi-opaque Plinko layout for background */}
                   <PlinkoLayout opacity={0.5} />
                   {/* Overlay text */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -466,7 +456,7 @@ function PlinkoContent() {
                 </>
               ) : (
                 <>
-                  {/* Full-opaque layout (pins + bottom slots) */}
+                  {/* Full-opaque layout (pins + bottom boxes) */}
                   <PlinkoLayout opacity={1} />
                   {/* Ball animation on top */}
                   <PlinkoBoard
@@ -515,8 +505,8 @@ function PlinkoContent() {
             className="w-full h-auto mb-4"
           />
           <p className="text-sm text-white mb-4">
-            Drop the Kaspa ball through the pins, and see which multiplier you land on!
-            Edges have bigger payouts, center is safer.
+            Drop the Kaspa ball through the pins, from 4 wide at the top to 18 wide at the bottom!
+            Aim for the edges to hit the biggest multipliers.
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
