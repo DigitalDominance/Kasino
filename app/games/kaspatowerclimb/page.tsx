@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,16 +34,15 @@ const TOTAL_ROWS = 10; // fixed tower height (floors)
 // Exponential multiplier: multiplier = 1.1^(# finished floors)
 const getMultiplier = (floors: number) => Number(Math.pow(1.1, floors).toFixed(2));
 
-// Image asset paths – WIN_IMG uses kaspagameicon.png
-const PLACEHOLDER_IMG = "/placeholder.svg";
-const WIN_IMG = "/kaspagameicon.png";
-const LOSE_IMG = "/red-x-icon.svg";
+// Updated image asset paths
+const PLACEHOLDER_IMG = "/kaspatowerclimbbrick.png";
+const WIN_IMG = "/kaspatowerclimbwin.png";
+const LOSE_IMG = "/kaspatowerclimbloss.png";
 
 // ---------------------------------------------------------
 // Row Pattern Generator for a given floor
 // ---------------------------------------------------------
 // The number of winning cubes decreases as the floor increases.
-// For example, at floor 1 the winning count is NUM_COLS-1 and at the top floor it’s lower.
 function generateRowPatternForFloor(floor: number) {
   const maxWinning = NUM_COLS - 1; // best chance on bottom floor
   const minWinning = 2; // hardest at the top
@@ -166,6 +165,14 @@ function TowerClimbContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
+  // Memoize decorative logo positions for the pregame screen
+  const decorativeLogos = useMemo(() => {
+    return Array.from({ length: 8 }).map(() => ({
+      top: Math.random() * 70 + 10 + "%", // between 10% and 80%
+      left: Math.random() * 70 + 10 + "%",
+    }));
+  }, []);
+
   // Initialize the tower with a fixed number of floors.
   const initTower = () => {
     setFinishedRows([]);
@@ -177,7 +184,7 @@ function TowerClimbContent() {
       revealed: false,
     };
     setActiveRow(newActive);
-    // Locked rows are floors 2 through TOTAL_ROWS.
+    // Locked rows: floors 2 through TOTAL_ROWS.
     const locked: TowerRow[] = [];
     for (let floor = 2; floor <= TOTAL_ROWS; floor++) {
       locked.push({ pattern: generateRowPatternForFloor(floor), revealed: false });
@@ -185,7 +192,7 @@ function TowerClimbContent() {
     setLockedRows(locked);
   };
 
-  // Start the game: deduct bet and notify backend.
+  // Start game: deduct bet & call backend.
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -204,8 +211,7 @@ function TowerClimbContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury =
-        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
@@ -213,8 +219,7 @@ function TowerClimbContent() {
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx =
-        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
@@ -248,22 +253,19 @@ function TowerClimbContent() {
     setActiveRow(updatedActive);
     const isWin = updatedActive.pattern[cubeIndex];
     if (isWin) {
-      // If successful, add the row to finishedRows.
       setTimeout(() => {
         const newFinished = [...finishedRows, updatedActive];
         setFinishedRows(newFinished);
-        // If we haven't reached the top floor, shift the next locked row.
+        // If not reached top floor, shift next locked row; else, complete the tower.
         if (newFinished.length < TOTAL_ROWS) {
           const nextRow = lockedRows[0];
           setActiveRow({ ...nextRow, revealed: false });
           setLockedRows(prev => prev.slice(1));
         } else {
-          // Tower complete.
           handleCashOut();
         }
       }, 500);
     } else {
-      // On a losing pick, reveal the rest of the board and flip it.
       setActiveRow(updatedActive);
       setLockedRows(prev => prev.map(row => ({ ...row, revealed: true })));
       setFlipBoard(true);
@@ -366,22 +368,23 @@ function TowerClimbContent() {
               {/* Pregame Screen (fills entire container) */}
               {pregame ? (
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
-                  {/* Scatter 5 kaspa logos */}
-                  <motion.div className="absolute top-2 left-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1 }}>
-                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                  </motion.div>
-                  <motion.div className="absolute top-4 right-4" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.3 }}>
-                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                  </motion.div>
-                  <motion.div className="absolute bottom-10 left-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.6 }}>
-                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                  </motion.div>
-                  <motion.div className="absolute bottom-12 right-8" animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 0.9 }}>
-                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                  </motion.div>
-                  <motion.div className="absolute bottom-2 left-1/2" style={{ transform: "translateX(-50%)" }} animate={{ opacity: [0, 1] }} transition={{ duration: 1, delay: 1.2 }}>
-                    <Image src="/kaspagameicon.png" alt="Kaspa Logo" width={40} height={40} style={{ border: "2px solid #004d00", borderRadius: "50%" }} />
-                  </motion.div>
+                  {/* Generate 8 decorative kaspa logos using memoized positions */}
+                  {decorativeLogos.map((pos, index) => (
+                    <motion.div
+                      key={index}
+                      className="absolute"
+                      style={{ top: pos.top, left: pos.left }}
+                      whileHover={{ scale: 1.2 }}
+                    >
+                      <Image
+                        src="/kaspagameicon.png"
+                        alt="Kaspa Logo"
+                        width={30}
+                        height={30}
+                        style={{ border: "2px solid #004d00", borderRadius: "50%" }}
+                      />
+                    </motion.div>
+                  ))}
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
                       className="text-5xl font-bold mb-4"
@@ -399,7 +402,7 @@ function TowerClimbContent() {
                     >
                       CLIMB TO WIN BIG
                     </motion.p>
-                    <div className="mt-16">
+                    <div className="mt-20">
                       <Image src="/kaspagameicon.png" alt="Kaspa Icon" width={96} height={96} />
                     </div>
                     {/* Decorative "Place Your Bet" button (non-functional) */}
@@ -422,7 +425,7 @@ function TowerClimbContent() {
                   />
                 </div>
               )}
-              {/* Cash Out Button (visible when game is in progress and at least one floor is finished) */}
+              {/* Cash Out Button (visible when game is active and at least one floor is finished) */}
               {isPlaying && finishedRows.length > 0 && (
                 <motion.div className="mt-4">
                   <Button
