@@ -14,24 +14,121 @@ import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
 
+// ---------------------------------------------------------
+// Font & Constants
+// ---------------------------------------------------------
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
-// ---------------------------------------------------------
-// Constants & Asset Paths
-// ---------------------------------------------------------
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const WIN_PROBABILITY = 0.30; // 30% chance per level (house advantage of ~10% vs fair)
+const NUM_COLS = 6;
+const TOTAL_ROWS = 10; // total rows to show (finished + active + locked)
+const WIN_ROW_PROBABILITY = 0.8; // roughly 80% chance per row for a winning selection
+
+// Image asset paths
 const PLACEHOLDER_IMG = "/placeholder.svg";
 const WIN_IMG = "/kaspa-token-logo.svg";
 const LOSE_IMG = "/red-x-icon.svg";
 
-// Total rows to display in the tower view (finished + active + locked)
-const TOTAL_ROWS = 10;
+// ---------------------------------------------------------
+// Row Pattern Generator
+// ---------------------------------------------------------
+// For each row, we generate an array of booleans (length = NUM_COLS).
+// For a “win” row we assign exactly 1 losing cube (so win chance ≈ 5/6 ≈ 83%),
+// and for a “lose” row we assign 2 losing cubes (win chance ≈ 4/6 ≈ 67%).
+// Overall, the chance for a winning pick averages to about 80%.
+function generateRowPattern() {
+  const rowOutcome = Math.random() < WIN_ROW_PROBABILITY ? "win" : "lose";
+  const pattern = Array(NUM_COLS).fill(true);
+  if (rowOutcome === "win") {
+    // Mark exactly 1 cube as losing.
+    const losingIndex = Math.floor(Math.random() * NUM_COLS);
+    pattern[losingIndex] = false;
+  } else {
+    // Mark exactly 2 cubes as losing.
+    const losingIndices = new Set<number>();
+    while (losingIndices.size < 2) {
+      losingIndices.add(Math.floor(Math.random() * NUM_COLS));
+    }
+    for (let idx of losingIndices) {
+      pattern[idx] = false;
+    }
+  }
+  return { rowOutcome, pattern };
+}
+
+// ---------------------------------------------------------
+// Tower Climb Game Component
+// ---------------------------------------------------------
+interface TowerRow {
+  pattern: boolean[]; // true: winning cube; false: losing cube
+  revealed: boolean;
+}
+
+interface TowerClimbGameProps {
+  finishedRows: TowerRow[];
+  activeRow: TowerRow | null;
+  lockedRows: TowerRow[];
+  onCubeClick: (cubeIndex: number) => void;
+}
+
+function TowerClimbGame({ finishedRows, activeRow, lockedRows, onCubeClick }: TowerClimbGameProps) {
+  // Build an array of rows from finished rows, active row, and locked rows.
+  const allRows = [...finishedRows];
+  if (activeRow) allRows.push(activeRow);
+  allRows.push(...lockedRows);
+  
+  // Render rows in reverse order so the active row appears at the bottom.
+  return (
+    <div className="flex flex-col-reverse gap-2">
+      {allRows.map((row, rowIndex) => {
+        // Determine the type of row:
+        // Finished: already played; Active: current row; Locked: yet to be reached.
+        let rowType: "finished" | "active" | "locked";
+        if (rowIndex < finishedRows.length) {
+          rowType = "finished";
+        } else if (activeRow && rowIndex === finishedRows.length) {
+          rowType = "active";
+        } else {
+          rowType = "locked";
+        }
+        // Use reduced opacity for locked rows.
+        const opacityClass = rowType === "locked" ? "opacity-40" : "opacity-100";
+        return (
+          <div key={rowIndex} className={`flex justify-center gap-2 transition-opacity duration-500 ${opacityClass}`}>
+            {row.pattern.map((cell, colIndex) => {
+              let imgSrc = PLACEHOLDER_IMG;
+              // If the row is revealed, show winning (WIN_IMG) or losing (LOSE_IMG) icons.
+              if (row.revealed) {
+                imgSrc = cell ? WIN_IMG : LOSE_IMG;
+              }
+              return (
+                <motion.div
+                  key={colIndex}
+                  className="w-16 h-16 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
+                  whileTap={{ scale: rowType === "active" ? 0.9 : 1 }}
+                  onClick={() => {
+                    if (rowType === "active" && !row.revealed) {
+                      onCubeClick(colIndex);
+                    }
+                  }}
+                >
+                  <Image src={imgSrc} alt="cube" width={64} height={64} />
+                </motion.div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------
 // Main Page Component
@@ -42,21 +139,34 @@ export default function KaspaTowerClimbPage() {
 
 function TowerClimbContent() {
   const { isConnected, balance } = useWallet();
+  const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
-  const [levels, setLevels] = useState<
-    { chosenIndex: number; outcome: "win" | "lose" }[]
-  >([]);
+  const [finishedRows, setFinishedRows] = useState<TowerRow[]>([]);
+  const [activeRow, setActiveRow] = useState<TowerRow | null>(null);
+  const [lockedRows, setLockedRows] = useState<TowerRow[]>([]);
   const [gameResult, setGameResult] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
 
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Start the game by deducting the chosen bet and calling your backend.
+  // Initialize tower rows: set active row and pre-generate locked rows.
+  const initTower = () => {
+    setFinishedRows([]);
+    const newActive = { ...generateRowPattern(), revealed: false };
+    setActiveRow(newActive);
+    const locked: TowerRow[] = [];
+    for (let i = 0; i < TOTAL_ROWS - 1; i++) {
+      locked.push({ ...generateRowPattern(), revealed: false });
+    }
+    setLockedRows(locked);
+  };
+
+  // Start the game: deduct bet via wallet and call backend.
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -75,23 +185,18 @@ function TowerClimbContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury =
-        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-      const depositTx = await window.kasware.sendKaspa(
-        chosenTreasury,
-        bet * 1e8,
-        { priorityFee: 10000 }
-      );
-      const parsedTx =
-        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
+        priorityFee: 10000,
+      });
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Start game on backend with gameName "Kaspa Tower Climb"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kaspa Tower Climb",
         uniqueHash,
@@ -105,8 +210,9 @@ function TowerClimbContent() {
         alert("Failed to start game on backend");
         return;
       }
+      initTower();
       setIsPlaying(true);
-      setLevels([]); // reset tower
+      setPregame(false);
       setGameResult(null);
     } catch (error: any) {
       console.error("Error starting Kaspa Tower Climb:", error);
@@ -114,16 +220,29 @@ function TowerClimbContent() {
     }
   };
 
-  // Handle a block click on the active row.
-  const handleBlockClick = (blockIndex: number) => {
-    if (!isPlaying) return;
-
-    // Determine outcome using win probability.
-    const outcome = Math.random() < WIN_PROBABILITY ? "win" : "lose";
-    setLevels((prev) => [...prev, { chosenIndex: blockIndex, outcome }]);
-
-    // If the player loses, end the game.
-    if (outcome === "lose") {
+  // Handle a cube click on the active row.
+  const handleCubeClick = (cubeIndex: number) => {
+    if (!activeRow || activeRow.revealed) return;
+    // Reveal the entire active row.
+    const updatedActive = { ...activeRow, revealed: true };
+    setActiveRow(updatedActive);
+    // Check if the clicked cube is winning.
+    const isWin = updatedActive.pattern[cubeIndex];
+    if (isWin) {
+      // If win, add the revealed row to finished rows, then shift in the next row.
+      setTimeout(() => {
+        setFinishedRows(prev => [...prev, updatedActive]);
+        // Shift: the first locked row becomes active.
+        const nextActive = lockedRows[0];
+        setActiveRow({ ...nextActive, revealed: false });
+        setLockedRows(prev => {
+          const remaining = prev.slice(1);
+          remaining.push({ ...generateRowPattern(), revealed: false });
+          return remaining;
+        });
+      }, 500);
+    } else {
+      // If lose, end the game.
       setGameResult("Game Over");
       if (gameId) {
         axios.post(`${apiUrl}/game/end`, {
@@ -136,12 +255,10 @@ function TowerClimbContent() {
     }
   };
 
-  // Allow the player to cash out (claim winnings) based on levels reached.
+  // Cash out: payout = bet * (1 + number of finished rows)
   const handleCashOut = async () => {
     const bet = Number(betAmount);
-    const levelCount = levels.length;
-    // For example, payout multiplier = 1 + (number of levels won)
-    const payout = bet * (1 + levelCount);
+    const payout = bet * (1 + finishedRows.length);
     setGameResult("Cashed Out");
     if (gameId) {
       try {
@@ -157,23 +274,19 @@ function TowerClimbContent() {
     setIsPlaying(false);
   };
 
-  // Reset the game.
   const resetGame = () => {
     setIsPlaying(false);
-    setLevels([]);
     setGameResult(null);
     setGameId(null);
     setDepositTxid(null);
+    setPregame(true);
   };
 
-  // Cooldown timer for starting a new game.
+  // Cooldown for starting game.
   useEffect(() => {
     if (cooldown > 0) {
-      const intervalId = setInterval(
-        () => setCooldown((prev) => prev - 1),
-        1000
-      );
-      return () => clearInterval(intervalId);
+      const interval = setInterval(() => setCooldown(c => c - 1), 1000);
+      return () => clearInterval(interval);
     }
   }, [cooldown]);
 
@@ -212,8 +325,90 @@ function TowerClimbContent() {
           </p>
         )}
 
+        {/* Pregame Screen */}
+        {pregame && (
+          <div className="relative w-full h-[70vh] bg-gradient-to-b from-[#600000] to-black rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl">
+            <div className="absolute inset-0 z-30">
+              <motion.div
+                whileHover={{ scale: 1.15, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute top-0 left-20"
+                style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}
+              >
+                <Image
+                  src="/kasperlootbox/legendary.webp"
+                  alt="King KASPER"
+                  width={100}
+                  height={100}
+                  className="rounded-full border-4 border-pink-500"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.15, rotate: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute bottom-0 right-20"
+                style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}
+              >
+                <Image
+                  src="/kasperlootbox/epic1.webp"
+                  alt="Arcane Apparition"
+                  width={80}
+                  height={80}
+                  className="rounded-lg border-4 border-purple-500"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.15, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute top-0 right-20"
+                style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}
+              >
+                <Image
+                  src="/kasperlootbox/common1.webp"
+                  alt="Flickering Wisp"
+                  width={70}
+                  height={70}
+                  className="rounded-md border-4 border-blue-500"
+                />
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.15, rotate: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute bottom-0 left-20"
+                style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}
+              >
+                <Image
+                  src="/kasperlootbox/uncommon1.webp"
+                  alt="Resonant Shade"
+                  width={70}
+                  height={70}
+                  className="rounded-md border-4 border-indigo-500"
+                />
+              </motion.div>
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+              <motion.h1
+                className="text-5xl font-bold mb-4"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ color: "#49EACB" }}
+              >
+                KASPA TOWER CLIMB
+              </motion.h1>
+              <motion.p
+                className="text-xl tracking-wider"
+                animate={{ opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ color: "#00FFFF" }}
+              >
+                CLIMB TO WIN BIG
+              </motion.p>
+            </div>
+          </div>
+        )}
+
         {/* Main Game & Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
@@ -223,42 +418,45 @@ function TowerClimbContent() {
                 </Button>
               </div>
               <div className="w-full max-w-md mx-auto">
-                <KaspaTowerClimbGame
-                  levels={levels}
-                  onBlockClick={handleBlockClick}
-                  isActive={isPlaying && gameResult === null}
+                <TowerClimbGame
+                  finishedRows={finishedRows}
+                  activeRow={activeRow}
+                  lockedRows={lockedRows}
+                  onCubeClick={handleCubeClick}
                 />
               </div>
-              {levels.length > 0 && isPlaying && (
+              {isPlaying && finishedRows.length > 0 && (
                 <motion.div className="mt-4">
-                  <Button
-                    onClick={handleCashOut}
-                    className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                  >
-                    Cash Out (Payout: {Number(betAmount) * (1 + levels.length)} KAS)
+                  <Button onClick={handleCashOut} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
+                    Cash Out (Payout: {Number(betAmount) * (1 + finishedRows.length)} KAS)
                   </Button>
                 </motion.div>
               )}
             </div>
           </Card>
 
-          <KaspaTowerClimbControls
-            betAmount={betAmount}
-            setBetAmount={setBetAmount}
-            isPlaying={isPlaying}
-            isWalletConnected={isConnected}
-            balance={balance}
-            onStartGame={() => {
-              handleStartGame();
-              setCooldown(10);
-            }}
-            gameResult={gameResult}
-            cooldown={cooldown}
-          />
+          {/* Controls & Live Components */}
+          <div className="space-y-6">
+            <TowerClimbControls
+              betAmount={betAmount}
+              setBetAmount={setBetAmount}
+              isPlaying={isPlaying}
+              isWalletConnected={isConnected}
+              balance={balance}
+              onStartGame={() => {
+                handleStartGame();
+                setCooldown(10);
+              }}
+              gameResult={gameResult}
+              cooldown={cooldown}
+            />
+            <LiveChat textColor="#49EACB" />
+            <LiveWins textColor="#49EACB" />
+          </div>
         </div>
 
         {/* Promo / Info Card */}
-        <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+        <Card className="w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
@@ -272,7 +470,7 @@ function TowerClimbContent() {
           </motion.h2>
           <img src="/towerpromo.png" alt="Tower Climb Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            Climb the tower one level at a time. Each successful level increases your payout,
+            Climb the tower one row at a time. Each successful row increases your payout,
             but one wrong move ends the climb!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
@@ -312,85 +510,9 @@ function TowerClimbContent() {
 }
 
 // ---------------------------------------------------------
-// Kaspa Tower Climb Game Component
+// Tower Climb Controls Component
 // ---------------------------------------------------------
-//
-// The tower is rendered as a vertical stack (from bottom up). The finished rows (levels) are
-// displayed at full opacity, the active row (at the bottom) is interactive,
-// and the rows above (locked) are shown with reduced opacity.
-interface KaspaTowerClimbGameProps {
-  levels: { chosenIndex: number; outcome: "win" | "lose" }[];
-  onBlockClick: (blockIndex: number) => void;
-  isActive: boolean;
-}
-
-function KaspaTowerClimbGame({ levels, onBlockClick, isActive }: KaspaTowerClimbGameProps) {
-  // Calculate the number of locked (unvisited) rows.
-  const finishedCount = levels.length;
-  const activeRow = isActive ? 1 : 0;
-  const lockedCount = TOTAL_ROWS - finishedCount - activeRow;
-
-  // Build rows: finished levels, then active row, then locked rows.
-  // We display them bottom-up so the active row is at the bottom.
-  const finishedRows = levels; // each finished row holds its chosen outcome.
-  const activeRowPlaceholder = null; // null indicates active (clickable) row.
-  const lockedRows = Array.from({ length: lockedCount }, () => "locked");
-
-  // Combine rows so that the bottom row is active.
-  const allRows = [...finishedRows, activeRowPlaceholder, ...lockedRows];
-
-  // When rendering, we use flex-col-reverse so the bottom row is at the bottom.
-  return (
-    <div className="flex flex-col-reverse gap-2">
-      {allRows.map((row, index) => {
-        // Determine row type: finished, active, or locked.
-        let rowType: "finished" | "active" | "locked";
-        if (index < finishedRows.length) {
-          rowType = "finished";
-        } else if (index === finishedRows.length && isActive) {
-          rowType = "active";
-        } else {
-          rowType = "locked";
-        }
-        return (
-          <div key={index} className={`flex justify-center gap-2 transition-opacity duration-500 ${
-            rowType === "locked" ? "opacity-40" : "opacity-100"
-          }`}>
-            {Array.from({ length: 3 }).map((_, colIndex) => {
-              let imgSrc = PLACEHOLDER_IMG;
-              let clickable = rowType === "active";
-              // For finished rows, reveal the chosen block's outcome.
-              if (rowType === "finished" && row !== null) {
-                if (colIndex === row.chosenIndex) {
-                  imgSrc = row.outcome === "win" ? WIN_IMG : LOSE_IMG;
-                }
-              }
-              return (
-                <motion.div
-                  key={colIndex}
-                  className="w-20 h-20 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
-                  whileTap={{ scale: clickable ? 0.9 : 1 }}
-                  onClick={() => {
-                    if (clickable) {
-                      onBlockClick(colIndex);
-                    }
-                  }}
-                >
-                  <Image src={imgSrc} alt="block" width={80} height={80} />
-                </motion.div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------
-// Kaspa Tower Climb Controls Component
-// ---------------------------------------------------------
-interface KaspaTowerClimbControlsProps {
+interface TowerClimbControlsProps {
   betAmount: string;
   setBetAmount: (amount: string) => void;
   isPlaying: boolean;
@@ -401,7 +523,7 @@ interface KaspaTowerClimbControlsProps {
   cooldown: number;
 }
 
-function KaspaTowerClimbControls({
+function TowerClimbControls({
   betAmount,
   setBetAmount,
   isPlaying,
@@ -410,7 +532,7 @@ function KaspaTowerClimbControls({
   onStartGame,
   gameResult,
   cooldown,
-}: KaspaTowerClimbControlsProps) {
+}: TowerClimbControlsProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -520,7 +642,7 @@ function KaspaTowerClimbControls({
             </div>
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameResult !== null && (
+            {gameResult && (
               <div className="text-center mb-4">
                 <div className="text-2xl font-bold text-[#49EACB]">
                   Result: {gameResult}
