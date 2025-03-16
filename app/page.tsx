@@ -70,7 +70,7 @@ function MainPageContent() {
 
   // Character Games
   const characterGames = [
-    { name: "Kasper Loot Box", slug: "lootbox", image: "/placeholder.svg" },
+    { name: "Kasper Loot Box", slug: "lootbox", image: "/kasperlootboxcard.webp" },
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
@@ -578,7 +578,7 @@ function MainPageContent() {
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
                         else if (lwGame === "kasper loot box") {
-                          cardImage = "/placeholder.svg";
+                          cardImage = "/kasperlootboxcard.webp";
                         } else if (lwGame === "kasen mania") {
                           cardImage = "/kasenmaniacard.webp";
                         }
