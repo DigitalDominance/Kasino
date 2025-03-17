@@ -32,7 +32,7 @@ const MAX_BET = 1000;
  * We have 15 pin rows (rows 0..14):
  *  - row=0 → 4 pins
  *  - row=1 → 5 pins
- *  - …
+ *  - … 
  *  - row=14 → 18 pins
  *
  * Then row=15 is the final row with multiplier boxes.
@@ -133,7 +133,8 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
     return positions; // length = PIN_ROW_COUNT + 1 (16)
   }, [path]);
 
-  // Ball drop animation: step through each row when dropping.
+  // Ball drop animation: once game has started (pregame=false) and dropping=true,
+  // step through each row. When finished, do not reset the ball.
   useEffect(() => {
     if (pregame) {
       setCurrentStep(0);
@@ -219,7 +220,6 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          // Adjust marginTop so the ball remains behind the pins
           style={{ width: 28, height: 28, marginLeft: -14, marginTop: -33, zIndex: 0 }}
         >
           <Image
@@ -294,7 +294,8 @@ function PlinkoContent() {
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
@@ -317,10 +318,9 @@ function PlinkoContent() {
       setGameResult(null);
       setCooldown(10);
 
-      // Generate original coin-toss path.
+      // Generate coin-toss path
       const path = generateRandomPath();
       setBallPath(
-        // Compute drop path based on coin toss outcome.
         (() => {
           const finalSlot = getFinalSlot(path);
           const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
@@ -420,7 +420,6 @@ function PlinkoContent() {
                 path={ballPath}
                 dropping={dropping}
                 onBallLanded={handleBallLanded}
-                finalOutcome={finalOutcome !== null ? finalOutcome : undefined}
               />
               {pregame && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
