@@ -17,33 +17,34 @@ import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 
-/* 
---------------------------------------------------------------------------------
-FONT & CONSTANTS
---------------------------------------------------------------------------------
-*/
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
 
+// -----------------------------------------
+// CONSTANTS
+// -----------------------------------------
 const MIN_BET = 1;
 const MAX_BET = 1000;
 
 /**
- * We have 15 pin rows: 0..14
- *   - row=0 => 4 pins
- *   - row=14 => 18 pins
- * Then row=15 is the final "multiplier boxes" row.
+ * We have 15 pin rows (rows 0..14):
+ *  - row=0 → 4 pins
+ *  - row=1 → 5 pins
+ *  - …
+ *  - row=14 → 18 pins
  *
- * So we do 16 steps total (0..15). Steps 0..14 are pin rows, step=15 is the final box row.
+ * Then row=15 is the final row with multiplier boxes.
+ *
+ * Thus, we use 16 steps (0..15) for the ball drop.
  */
-const PIN_ROW_COUNT = 15; // actual pin rows
+const PIN_ROW_COUNT = 15;
 function pinsForRow(row: number) {
-  return 4 + row; // row=0 => 4, row=14 => 18
+  return 4 + row; // row 0: 4 pins; row 14: 18 pins
 }
 
-// Final row => 18 boxes
+// Final row: 18 multiplier boxes
 const FINAL_SLOT_COUNT = 18;
 const FINAL_SLOT_MULTIPLIERS = [
   110, 41, 10, 5, 3, 1.5, 1, 0.5,
@@ -51,31 +52,26 @@ const FINAL_SLOT_MULTIPLIERS = [
   0.5, 1, 1.5, 3, 5, 10, 41, 110,
 ];
 
-// Layout & animation
-const ROW_SPACING = 50;  // vertical distance between pin rows
-const PIN_SPACING = 40;  // horizontal distance between adjacent pins
-const PIN_SIZE = 10;     // diameter for pins
-const BOX_SIZE = 28;     // multiplier box size
-const STAGE_HEIGHT = 900; // container height in px
+// Layout & animation settings
+const ROW_SPACING = 50;   // vertical distance between rows
+const PIN_SPACING = 40;   // horizontal distance between adjacent pins
+const PIN_SIZE = 10;      // diameter for pins
+const BOX_SIZE = 28;      // multiplier box size
+const STAGE_HEIGHT = 900; // container height
+const STEP_DELAY = 200;   // ms per row step
 
-// We'll reduce each "step" delay to speed up the row-by-row approach
-// but the actual bounce feeling is from the Framer Motion spring config.
-const STEP_DELAY = 200;  
-
-// For a bouncier feel, we use higher stiffness & lower damping:
+// Spring config for a bouncy, gravity-like effect
 const SPRING_CONFIG = {
   type: "spring",
   stiffness: 200,
   damping: 6,
 };
 
-/*
---------------------------------------------------------------------------------
-HELPER FUNCTIONS
---------------------------------------------------------------------------------
-*/
-// 15 booleans => each row decides left (false) or right (true).
+// -----------------------------------------
+// HELPER FUNCTIONS
+// -----------------------------------------
 function generateRandomPath() {
+  // Generate an array of 15 booleans (one per pin row)
   const path: boolean[] = [];
   for (let i = 0; i < PIN_ROW_COUNT; i++) {
     path.push(Math.random() < 0.5);
@@ -83,18 +79,15 @@ function generateRandomPath() {
   return path;
 }
 
-// The final slot is the sum of "true" in the path => range [0..15]
 function getFinalSlot(path: boolean[]) {
+  // Sum of "true" steps gives final slot index (0..15)
   return path.reduce((sum, stepRight) => sum + (stepRight ? 1 : 0), 0);
 }
 
-/*
---------------------------------------------------------------------------------
-PLINKO STAGE
-Renders pins, final boxes, and animates the ball row-by-row.
-Now includes a final step => row=15 => place ball in correct box.
---------------------------------------------------------------------------------
-*/
+// -----------------------------------------
+// PLINKO STAGE COMPONENT
+// Renders pins, final multiplier boxes, and animates the ball drop.
+// -----------------------------------------
 interface PlinkoStageProps {
   pregame: boolean;
   path: boolean[] | null;
@@ -103,39 +96,18 @@ interface PlinkoStageProps {
 }
 
 function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps) {
-  // currentStep goes 0..15. Steps 0..14 => pin rows, step=15 => final box row
+  // currentStep goes from 0 to PIN_ROW_COUNT (15) where step 15 is the final box row.
   const [currentStep, setCurrentStep] = useState(0);
-
-  // Ball position
+  // Ball position (x, y)
   const [pos, setPos] = useState({ x: 0, y: 0 });
-
-  // Are we fully landed (step>15)?
+  // Flag to indicate ball has landed
   const [landed, setLanded] = useState(false);
 
-  // 1) PIN COORDS
-  // For rows 0..14
-  const pinCoords = useMemo(() => {
-    const coords: { x: number; y: number }[] = [];
-    for (let row = 0; row < PIN_ROW_COUNT; row++) {
-      const count = pinsForRow(row);
-      const center = (count - 1) / 2;
-      const y = row * ROW_SPACING;
-      for (let col = 0; col < count; col++) {
-        const x = (col - center) * PIN_SPACING;
-        coords.push({ x, y });
-      }
-    }
-    return coords;
-  }, []);
-
-  // 2) Compute ball positions for steps 0..15
-  // steps 0..14 => normal row => sum of "true" => col
-  // step=15 => final row => place ball in finalSlot box
+  // Compute ball positions for each step (0..15)
+  // For rows 0..14, compute position from pins; step 15: final box position.
   const stepPositions = useMemo(() => {
     if (!path) return [];
     const positions: { x: number; y: number }[] = [];
-
-    // col => how many times we've gone right
     let col = 0;
     for (let row = 0; row < PIN_ROW_COUNT; row++) {
       const count = pinsForRow(row);
@@ -143,52 +115,53 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
       const x = (col - center) * PIN_SPACING;
       const y = row * ROW_SPACING;
       positions.push({ x, y });
-      // next row => if path[row] is true => col++
       if (path[row]) col++;
     }
-
-    // Step 15 => final row => place the ball in the correct box
+    // Final step: place the ball in the correct multiplier box.
     const finalSlot = getFinalSlot(path);
-    const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2; // 8.5 if 18 boxes
+    const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
     const finalX = (finalSlot - centerBoxes) * PIN_SPACING;
-    const finalY = PIN_ROW_COUNT * ROW_SPACING; // row=15
+    const finalY = PIN_ROW_COUNT * ROW_SPACING; // row 15
     positions.push({ x: finalX, y: finalY });
-
-    return positions; // length=16
+    return positions; // length should be PIN_ROW_COUNT + 1 (i.e. 16)
   }, [path]);
 
-  // 3) Animate the ball step by step
+  // Ball drop animation: once game has started (pregame=false) and dropping=true,
+  // step through each row. When finished, do not reset the ball.
   useEffect(() => {
-    if (pregame || !dropping || !path) {
-      // reset
+    // If in pregame, reset the ball to top.
+    if (pregame) {
       setCurrentStep(0);
       setPos({ x: 0, y: 0 });
       setLanded(false);
       return;
     }
-    if (landed) return; // do nothing if we've fully landed
+    // If game is finished (dropping is false and landed is true), do nothing.
+    if (!dropping && landed) return;
 
-    // If currentStep <= 15 => move ball to stepPositions[currentStep]
-    if (currentStep <= PIN_ROW_COUNT) {
-      const target = stepPositions[currentStep] ?? { x: 0, y: 0 };
-      setPos(target);
-
-      // after STEP_DELAY, go to next step
-      const timer = setTimeout(() => {
-        setCurrentStep((s) => s + 1);
-      }, STEP_DELAY);
-      return () => clearTimeout(timer);
-    } else {
-      // currentStep=16 => we've done final step => call onBallLanded
-      setLanded(true);
-      const finalSlot = getFinalSlot(path);
-      onBallLanded(finalSlot);
+    // Only animate if dropping is true.
+    if (dropping && path) {
+      if (currentStep < stepPositions.length) {
+        // Animate ball to target position for this step.
+        const target = stepPositions[currentStep];
+        setPos(target);
+        // Schedule next step
+        const timer = setTimeout(() => {
+          setCurrentStep((prev) => prev + 1);
+        }, STEP_DELAY);
+        return () => clearTimeout(timer);
+      } else {
+        // Final step reached: mark as landed and call onBallLanded.
+        setLanded(true);
+        const finalSlot = getFinalSlot(path);
+        onBallLanded(finalSlot);
+      }
     }
   }, [pregame, dropping, path, currentStep, stepPositions, landed, onBallLanded]);
 
-  // 4) Render final boxes
+  // Render final multiplier boxes (row=15)
   const finalBoxes = useMemo(() => {
-    const y = PIN_ROW_COUNT * ROW_SPACING; // row=15 visually
+    const y = PIN_ROW_COUNT * ROW_SPACING; // y position for final boxes
     const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
     return Array.from({ length: FINAL_SLOT_COUNT }).map((_, slot) => {
       const x = (slot - centerBoxes) * PIN_SPACING;
@@ -213,9 +186,24 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
     });
   }, [pregame]);
 
+  // Render pin dots for rows 0..14
+  const pinCoords = useMemo(() => {
+    const coords: { x: number; y: number }[] = [];
+    for (let row = 0; row < PIN_ROW_COUNT; row++) {
+      const count = pinsForRow(row);
+      const center = (count - 1) / 2;
+      const y = row * ROW_SPACING;
+      for (let col = 0; col < count; col++) {
+        const x = (col - center) * PIN_SPACING;
+        coords.push({ x, y });
+      }
+    }
+    return coords;
+  }, []);
+
   return (
     <div className="relative w-full" style={{ height: STAGE_HEIGHT }}>
-      {/* Pins (rows 0..14) */}
+      {/* Render pins */}
       {pinCoords.map((p, idx) => (
         <div
           key={`pin-${idx}`}
@@ -229,21 +217,15 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           }}
         />
       ))}
-
-      {/* Final row boxes */}
+      {/* Render final multiplier boxes */}
       {finalBoxes}
-
-      {/* Ball, hidden if pregame */}
+      {/* Render ball (only if game has started) */}
       {!pregame && (
         <motion.div
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          style={{
-            width: 28,
-            height: 28,
-            marginLeft: -14,
-          }}
+          style={{ width: 28, height: 28, marginLeft: -14 }}
         >
           <Image
             src="/kaspagameicon.png"
@@ -269,22 +251,14 @@ export default function PlinkoPage() {
 
 function PlinkoContent() {
   const { isConnected, balance } = useWallet();
-
-  // UI states
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
   const [cooldown, setCooldown] = useState(0);
-
-  // Game states
   const [ballPath, setBallPath] = useState<boolean[] | null>(null);
   const [dropping, setDropping] = useState(false);
-
-  // Result
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [resultPopup, setResultPopup] = useState(false);
-
-  // Backend
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
@@ -292,8 +266,7 @@ function PlinkoContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Start a new round
-  const handleStartGame = async () => {
+  async function handleStartGame() {
     const bet = Number(betAmount);
     if (!isConnected) {
       alert("Please connect your wallet first.");
@@ -307,9 +280,7 @@ function PlinkoContent() {
       alert("Insufficient balance");
       return;
     }
-
     try {
-      // Prepare unique hash & treasury
       const uniqueHash = uuidv4();
       const accounts = await window.kasware.getAccounts();
       const currentWalletAddress = accounts[0];
@@ -322,17 +293,13 @@ function PlinkoContent() {
         alert("Treasury address not configured");
         return;
       }
-
-      // Deduct bet from user’s wallet
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx =
-        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Notify backend: game start
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Plinko",
         uniqueHash,
@@ -346,13 +313,12 @@ function PlinkoContent() {
       }
       setGameId(startRes.data.gameId);
 
-      // Initialize
+      // Initialize game states
       setPregame(false);
       setIsPlaying(true);
       setGameResult(null);
       setCooldown(10);
 
-      // Generate random path => length=15
       const path = generateRandomPath();
       setBallPath(path);
       setDropping(true);
@@ -360,20 +326,15 @@ function PlinkoContent() {
       console.error("Error starting Plinko:", error);
       alert("Error starting game: " + error.message);
     }
-  };
+  }
 
-  // Called once the ball has fully landed in the final box
-  const handleBallLanded = async (finalSlot: number) => {
-    setDropping(false); // no more stepping
+  async function handleBallLanded(finalSlot: number) {
+    setDropping(false); // Stop the step animation
     const bet = Number(betAmount);
     const multiplier = FINAL_SLOT_MULTIPLIERS[finalSlot] ?? 1;
     const payout = bet * multiplier;
-
-    // Show the user’s result
     setGameResult(payout);
     setResultPopup(true);
-
-    // Notify backend
     try {
       await axios.post(`${apiUrl}/game/end`, {
         gameId,
@@ -384,10 +345,9 @@ function PlinkoContent() {
       console.error("Error ending Plinko game on backend:", error);
     }
     setIsPlaying(false);
-  };
+  }
 
-  // Reset everything
-  const resetGame = () => {
+  function resetGame() {
     setPregame(true);
     setIsPlaying(false);
     setGameResult(null);
@@ -396,13 +356,12 @@ function PlinkoContent() {
     setDropping(false);
     setDepositTxid(null);
     setGameId(null);
-  };
+  }
 
-  // Basic cooldown
   useEffect(() => {
     if (cooldown > 0) {
-      const interval = setInterval(() => setCooldown((c) => c - 1), 1000);
-      return () => clearInterval(interval);
+      const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
+      return () => clearInterval(timer);
     }
   }, [cooldown]);
 
@@ -416,16 +375,10 @@ function PlinkoContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <WalletConnection />
           </motion.div>
         </header>
-
-        {/* Deposit TXID */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -444,10 +397,7 @@ function PlinkoContent() {
             </a>
           </p>
         )}
-
-        {/* Main layout */}
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
-          {/* Plinko Card */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 relative">
               <PlinkoStage
@@ -479,8 +429,6 @@ function PlinkoContent() {
               )}
             </div>
           </Card>
-
-          {/* Right Column: Bet Controls, Live Chat, Live Wins */}
           <div className="space-y-6">
             <PlinkoControls
               betAmount={betAmount}
@@ -496,8 +444,6 @@ function PlinkoContent() {
             <LiveWins textColor="#49EACB" />
           </div>
         </div>
-
-        {/* Info Card */}
         <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -510,14 +456,9 @@ function PlinkoContent() {
           >
             Kaspa Plinko
           </motion.h2>
-          <img
-            src="/plinko-promo.png"
-            alt="Plinko Promo"
-            className="w-full h-auto mb-4"
-          />
+          <img src="/plinko-promo.png" alt="Plinko Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            From 4 pins at the top row to 18 pins at row 14—try your luck and watch the ball bounce
-            into its final box!
+            From 4 pins at the top row to 18 pins at row 14—watch the ball drop and bounce into its final multiplier!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -550,10 +491,7 @@ function PlinkoContent() {
           </div>
         </Card>
       </div>
-
       <SiteFooter />
-
-      {/* Result Popup */}
       <AnimatePresence>
         {resultPopup && gameResult !== null && (
           <motion.div
@@ -591,7 +529,7 @@ function PlinkoContent() {
 
 /*
 --------------------------------------------------------------------------------
-BET CONTROLS
+PLINKO CONTROLS COMPONENT
 --------------------------------------------------------------------------------
 */
 interface PlinkoControlsProps {
@@ -714,7 +652,6 @@ function PlinkoControls({
               </Button>
             </div>
           </div>
-
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult !== null && (
               <div className="text-center mb-4">
@@ -743,8 +680,6 @@ function PlinkoControls({
           </motion.div>
         </div>
       </Card>
-
-      {/* Error popup */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
@@ -756,10 +691,7 @@ function PlinkoControls({
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
-              <button
-                onClick={() => setErrorMessage(null)}
-                className="ml-4 font-bold text-white"
-              >
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
                 X
               </button>
             </div>
