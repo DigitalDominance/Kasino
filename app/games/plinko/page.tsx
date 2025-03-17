@@ -58,13 +58,13 @@ const PIN_SPACING = 40;   // horizontal distance between adjacent pins
 const PIN_SIZE = 10;      // diameter for pins
 const BOX_SIZE = 28;      // multiplier box size
 const STAGE_HEIGHT = 900; // container height
-const STEP_DELAY = 200;   // ms per row step
+const STEP_DELAY = 300;   // increased delay per row step (was 200ms)
 
-// Spring config for a bouncy, gravity-like effect
+// Adjusted spring config for a smoother, slower drop.
 const SPRING_CONFIG = {
   type: "spring",
-  stiffness: 200,
-  damping: 6,
+  stiffness: 80,
+  damping: 14,
 };
 
 // -----------------------------------------
@@ -225,7 +225,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          style={{ width: 28, height: 28, marginLeft: -14 }}
+          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -28 - 5 }}
         >
           <Image
             src="/kaspagameicon.png"
@@ -240,11 +240,9 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
   );
 }
 
-/*
---------------------------------------------------------------------------------
-MAIN PLINKO PAGE
---------------------------------------------------------------------------------
-*/
+// -----------------------------------------
+// MAIN PLINKO PAGE
+// -----------------------------------------
 export default function PlinkoPage() {
   return <PlinkoContent />;
 }
@@ -329,7 +327,7 @@ function PlinkoContent() {
   }
 
   async function handleBallLanded(finalSlot: number) {
-    setDropping(false); // Stop the step animation
+    setDropping(false);
     const bet = Number(betAmount);
     const multiplier = FINAL_SLOT_MULTIPLIERS[finalSlot] ?? 1;
     const payout = bet * multiplier;
@@ -366,16 +364,19 @@ function PlinkoContent() {
   }, [cooldown]);
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+    <>
       <div className="flex-grow p-6">
-        {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <WalletConnection />
           </motion.div>
         </header>
@@ -458,7 +459,7 @@ function PlinkoContent() {
           </motion.h2>
           <img src="/plinko-promo.png" alt="Plinko Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            From 4 pins at the top row to 18 pins at row 14—watch the ball drop and bounce into its final multiplier!
+            From 4 pins at the top row to 18 pins at row 14—watch the ball drop naturally and settle into its multiplier!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -523,15 +524,10 @@ function PlinkoContent() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
 
-/*
---------------------------------------------------------------------------------
-PLINKO CONTROLS COMPONENT
---------------------------------------------------------------------------------
-*/
 interface PlinkoControlsProps {
   betAmount: string;
   setBetAmount: (val: string) => void;
