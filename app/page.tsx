@@ -15,6 +15,7 @@ import { Montserrat } from "next/font/google";
 import { GiCheerful, GiStarFormation } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
+import { useWallet } from "@/contexts/WalletContext";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -258,6 +259,8 @@ function MainPageContent() {
                 transition={{ duration: 0.5 }}
                 className="flex items-center gap-4"
               >
+                {/* XP Display Component in the Nav Bar */}
+                <XPDisplay />
                 <WalletConnection />
               </motion.div>
             </header>
@@ -392,7 +395,6 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          // On mobile: 90vw; on md and above: 25vw, max 400px.
                           className="w-[90vw] md:w-[25vw] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -636,6 +638,110 @@ function MainPageContent() {
 
             {/* Footer */}
             <SiteFooter />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* XPDisplay Component */
+function XPDisplay() {
+  const { isConnected, walletAddress } = useWallet();
+  const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Fetch user data when connected
+  useEffect(() => {
+    if (isConnected && walletAddress) {
+      axios
+        .get(`/api/user?walletAddress=${walletAddress}`)
+        .then((res) => {
+          if (res.data.success && res.data.user) {
+            setUserData(res.data.user);
+          }
+        })
+        .catch((err) => console.error("Error fetching user data:", err));
+    }
+  }, [isConnected, walletAddress]);
+
+  // Calculate cumulative XP threshold for a given level (using same formula as backend)
+  const getThreshold = (level: number) => {
+    const r = 1.08;
+    const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
+    let threshold = 0;
+    for (let i = 1; i <= level; i++) {
+      threshold += a * Math.pow(r, i - 1);
+    }
+    return threshold;
+  };
+
+  const currentLevel = userData.level;
+  const currentThreshold = getThreshold(currentLevel);
+  const nextThreshold =
+    currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
+  const xpProgress = userData.totalXp - currentThreshold;
+  const xpNeeded = nextThreshold - currentThreshold;
+  const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
+
+  // Determine border color based on level ranges:
+  // 0–24: neon blue, 25–49: yellow, 50–74: orange, 75–100: red
+  let borderColorClass = "";
+  if (currentLevel < 25) {
+    borderColorClass = "border-[#49EACB] text-[#49EACB]";
+  } else if (currentLevel < 50) {
+    borderColorClass = "border-yellow-400 text-yellow-400";
+  } else if (currentLevel < 75) {
+    borderColorClass = "border-orange-500 text-orange-500";
+  } else {
+    borderColorClass = "border-red-500 text-red-500";
+  }
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Default circle showing just the level number */}
+      <div
+        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
+      >
+        <span className="text-sm">{currentLevel}</span>
+      </div>
+
+      {/* Hover popup with progress details */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-3 bg-gray-900 rounded shadow-lg z-50"
+          >
+            {currentLevel < 100 ? (
+              <>
+                <div className="text-white text-sm mb-2">
+                  XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                  <span>{xpProgress.toFixed(0)} XP</span>
+                  <span>{xpNeeded.toFixed(0)} XP</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    style={{ width: `${progressPercent}%` }}
+                    className="bg-teal-500 h-2 rounded-full"
+                  ></div>
+                </div>
+                <div className="text-white text-xs mt-1 text-center">
+                  {progressPercent.toFixed(1)}% to next level
+                </div>
+              </>
+            ) : (
+              <div className="text-white text-sm text-center">Max Level Reached!</div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
