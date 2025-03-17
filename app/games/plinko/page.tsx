@@ -57,7 +57,7 @@ const ROW_SPACING = 50;   // vertical distance between rows
 const PIN_SPACING = 40;   // horizontal distance between adjacent pins
 const PIN_SIZE = 10;      // diameter for pins
 const BOX_SIZE = 28;      // multiplier box size
-const STAGE_HEIGHT = 900; // container height
+const STAGE_HEIGHT = 900; // container height in px
 const STEP_DELAY = 300;   // increased delay per row step for a slower drop
 
 // Adjusted spring config for a smoother, natural drop.
@@ -65,6 +65,13 @@ const SPRING_CONFIG = {
   type: "spring",
   stiffness: 80,
   damping: 14,
+};
+
+// To simulate gravity, delay reduces linearly from 500ms at step 0 to 200ms at step PIN_ROW_COUNT.
+const delayForStep = (step: number) => {
+  const initialDelay = 500;
+  const finalDelay = 200;
+  return initialDelay - ((initialDelay - finalDelay) * (step / PIN_ROW_COUNT));
 };
 
 // -----------------------------------------
@@ -123,7 +130,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
     const finalX = (finalSlot - centerBoxes) * PIN_SPACING;
     const finalY = PIN_ROW_COUNT * ROW_SPACING; // row 15
     positions.push({ x: finalX, y: finalY });
-    return positions; // length should be PIN_ROW_COUNT + 1 (i.e. 16)
+    return positions; // length = PIN_ROW_COUNT + 1 (16)
   }, [path]);
 
   // Ball drop animation: once game has started (pregame=false) and dropping=true,
@@ -162,15 +169,14 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
       return (
         <div
           key={`box-${slot}`}
-          className="absolute flex items-center justify-center 
-                     bg-black/30 border border-[#49EACB] text-[#49EACB] text-xs
-                     font-bold rounded-md shadow-[0_0_8px_#49EACB]"
+          className="absolute flex items-center justify-center bg-black/30 border border-[#49EACB] text-[#49EACB] text-xs font-bold rounded-md shadow-[0_0_8px_#49EACB]"
           style={{
             width: BOX_SIZE,
             height: BOX_SIZE,
             left: "50%",
             transform: `translate(${x - BOX_SIZE / 2}px, ${y}px)`,
             opacity: pregame ? 0.5 : 1,
+            zIndex: 1,
           }}
         >
           {mult}x
@@ -206,6 +212,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
             left: "50%",
             transform: `translate(${p.x - PIN_SIZE / 2}px, ${p.y - PIN_SIZE / 2}px)`,
             opacity: pregame ? 0.5 : 1,
+            zIndex: 1,
           }}
         />
       ))}
@@ -216,7 +223,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
           // Adjust marginTop so the bottom of the ball touches the top of the pins.
-          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -5 }}
+          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -5, zIndex: 0 }}
         >
           <Image
             src="/kaspagameicon.png"
@@ -235,7 +242,11 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
 // MAIN PLINKO PAGE
 // -----------------------------------------
 export default function PlinkoPage() {
-  return <PlinkoContent />;
+  return (
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+      <PlinkoContent />
+    </div>
+  );
 }
 
 function PlinkoContent() {
@@ -255,6 +266,7 @@ function PlinkoContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
+  // Use original coin toss method for odds.
   async function handleStartGame() {
     const bet = Number(betAmount);
     if (!isConnected) {
@@ -302,13 +314,27 @@ function PlinkoContent() {
       }
       setGameId(startRes.data.gameId);
 
+      // Initialize game states
       setPregame(false);
       setIsPlaying(true);
       setGameResult(null);
       setCooldown(10);
 
-      const path = generateRandomPath();
-      setBallPath(path);
+      // Generate coin-toss path and compute drop path.
+      const coinPath = generateRandomPath();
+      const finalSlot = getFinalSlot(coinPath);
+      const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
+      const finalX = (finalSlot - centerBoxes) * PIN_SPACING;
+      const finalY = PIN_ROW_COUNT * ROW_SPACING;
+      const steps = PIN_ROW_COUNT + 1;
+      const dropPath = [];
+      for (let i = 0; i < steps; i++) {
+        const t = i / PIN_ROW_COUNT;
+        const x = 0 + (finalX - 0) * t;
+        const y = 0 + (finalY - 0) * t;
+        dropPath.push({ x, y });
+      }
+      setBallPath(dropPath);
       setDropping(true);
     } catch (error: any) {
       console.error("Error starting Plinko:", error);
