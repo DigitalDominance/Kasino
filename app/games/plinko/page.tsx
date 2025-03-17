@@ -215,7 +215,6 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          // Adjust marginTop so the bottom of the ball touches the top of the pins.
           style={{ width: 28, height: 28, marginLeft: -14, marginTop: -5 }}
         >
           <Image
@@ -354,7 +353,7 @@ function PlinkoContent() {
   }, [cooldown]);
 
   return (
-    <>
+    <div className={`${montserrat.className} bg-black min-h-screen`}>
       <div className="flex-grow p-6">
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -510,7 +509,7 @@ function PlinkoContent() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
 
