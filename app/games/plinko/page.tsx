@@ -32,7 +32,7 @@ const MAX_BET = 1000;
  * We have 15 pin rows (rows 0..14):
  *  - row=0 → 4 pins
  *  - row=1 → 5 pins
- *  - … 
+ *  - …
  *  - row=14 → 18 pins
  *
  * Then row=15 is the final row with multiplier boxes.
@@ -44,7 +44,7 @@ function pinsForRow(row: number) {
   return 4 + row; // row 0: 4 pins; row 14: 18 pins
 }
 
-// Final row: 18 multiplier boxes (we use only indices 0..15 for outcomes)
+// Final row: 18 multiplier boxes
 const FINAL_SLOT_COUNT = 18;
 const FINAL_SLOT_MULTIPLIERS = [
   110, 41, 10, 5, 3, 1.5, 1, 0.5,
@@ -57,8 +57,8 @@ const ROW_SPACING = 50;   // vertical distance between rows
 const PIN_SPACING = 40;   // horizontal distance between adjacent pins
 const PIN_SIZE = 10;      // diameter for pins
 const BOX_SIZE = 28;      // multiplier box size
-const STAGE_HEIGHT = 900; // container height in px
-const STEP_DELAY = 300;   // ms per row step
+const STAGE_HEIGHT = 900; // container height
+const STEP_DELAY = 300;   // increased delay per row step for a slower drop
 
 // Adjusted spring config for a smoother, natural drop.
 const SPRING_CONFIG = {
@@ -67,32 +67,21 @@ const SPRING_CONFIG = {
   damping: 14,
 };
 
-// To simulate gravity, delay reduces linearly from 500ms at step 0 to 200ms at step PIN_ROW_COUNT.
-const delayForStep = (step: number) => {
-  const initialDelay = 500;
-  const finalDelay = 200;
-  return initialDelay - ((initialDelay - finalDelay) * (step / PIN_ROW_COUNT));
-};
-
 // -----------------------------------------
-// HELPER FUNCTIONS (Weighted Outcome)
+// HELPER FUNCTIONS
 // -----------------------------------------
-// Original binomial weights for 15 tosses are: 
-// [1, 15, 105, 455, 1365, 3003, 5005, 6435, 6435, 5005, 3003, 1365, 455, 105, 15, 1] (sum = 32768)
-// We want the 41× outcome (which occurs when the final outcome equals 1) to be 1/500 chance (≈0.2%)
-// Thus, we override the weight for outcome 1 from 15 to 66 (since 66/ (32768 -15 +66) ≈ 66/32819 ≈ 0.00201)
-function selectWeightedOutcome(): number {
-  const weights = [1, 66, 105, 455, 1365, 3003, 5005, 6435, 6435, 5005, 3003, 1365, 455, 105, 15, 1];
-  const total = weights.reduce((sum, w) => sum + w, 0);
-  const r = Math.random() * total;
-  let cumulative = 0;
-  for (let i = 0; i < weights.length; i++) {
-    cumulative += weights[i];
-    if (r < cumulative) {
-      return i;
-    }
+function generateRandomPath() {
+  // Generate an array of 15 booleans (one per pin row)
+  const path: boolean[] = [];
+  for (let i = 0; i < PIN_ROW_COUNT; i++) {
+    path.push(Math.random() < 0.5);
   }
-  return weights.length - 1;
+  return path;
+}
+
+function getFinalSlot(path: boolean[]) {
+  // Sum of "true" steps gives final slot index (0..15)
+  return path.reduce((sum, stepRight) => sum + (stepRight ? 1 : 0), 0);
 }
 
 // -----------------------------------------
@@ -101,7 +90,7 @@ function selectWeightedOutcome(): number {
 // -----------------------------------------
 interface PlinkoStageProps {
   pregame: boolean;
-  path: { x: number; y: number }[] | null;
+  path: boolean[] | null;
   dropping: boolean;
   onBallLanded: (finalSlot: number) => void;
 }
@@ -114,33 +103,58 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
   // Flag to indicate ball has landed
   const [landed, setLanded] = useState(false);
 
+  // Compute ball positions for each step (0..15)
+  // For rows 0..14, compute position from pins; step 15: final box position.
+  const stepPositions = useMemo(() => {
+    if (!path) return [];
+    const positions: { x: number; y: number }[] = [];
+    let col = 0;
+    for (let row = 0; row < PIN_ROW_COUNT; row++) {
+      const count = pinsForRow(row);
+      const center = (count - 1) / 2;
+      const x = (col - center) * PIN_SPACING;
+      const y = row * ROW_SPACING;
+      positions.push({ x, y });
+      if (path[row]) col++;
+    }
+    // Final step: place the ball in the correct multiplier box.
+    const finalSlot = getFinalSlot(path);
+    const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
+    const finalX = (finalSlot - centerBoxes) * PIN_SPACING;
+    const finalY = PIN_ROW_COUNT * ROW_SPACING; // row 15
+    positions.push({ x: finalX, y: finalY });
+    return positions; // length should be PIN_ROW_COUNT + 1 (i.e. 16)
+  }, [path]);
+
+  // Ball drop animation: once game has started (pregame=false) and dropping=true,
+  // step through each row. When finished, do not reset the ball.
   useEffect(() => {
-    if (pregame || !dropping || !path) {
+    if (pregame) {
       setCurrentStep(0);
       setPos({ x: 0, y: 0 });
       setLanded(false);
       return;
     }
-    if (currentStep < path.length) {
-      const target = path[currentStep];
-      setPos(target);
-      const timer = setTimeout(() => {
-        setCurrentStep((s) => s + 1);
-      }, delayForStep(currentStep));
-      return () => clearTimeout(timer);
-    } else {
-      setLanded(true);
-      // When dropped completely, call onBallLanded with the final outcome.
-      // Here, the final outcome index is determined by the drop path (length is PIN_ROW_COUNT+1).
-      // Since we generated the drop path using the weighted outcome, the final outcome equals the selected value.
-      const finalSlot = Math.round(path[path.length - 1].x / PIN_SPACING + ((FINAL_SLOT_COUNT - 1) / 2));
-      onBallLanded(finalSlot);
+    if (!dropping && landed) return;
+    if (dropping && path) {
+      if (currentStep < stepPositions.length) {
+        const target = stepPositions[currentStep];
+        setPos(target);
+        const timer = setTimeout(() => {
+          setCurrentStep((prev) => prev + 1);
+        }, STEP_DELAY);
+        return () => clearTimeout(timer);
+      } else {
+        setLanded(true);
+        const finalSlot = getFinalSlot(path);
+        onBallLanded(finalSlot);
+      }
     }
-  }, [pregame, dropping, path, currentStep, onBallLanded]);
+  }, [pregame, dropping, path, currentStep, stepPositions, landed, onBallLanded]);
 
   // Render final multiplier boxes (row=15)
   const finalBoxes = useMemo(() => {
-    const y = PIN_ROW_COUNT * ROW_SPACING;
+    const y = PIN_ROW_COUNT * ROW_SPACING; // y position for final boxes
     const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
     return Array.from({ length: FINAL_SLOT_COUNT }).map((_, slot) => {
       const x = (slot - centerBoxes) * PIN_SPACING;
@@ -148,20 +162,22 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
       return (
         <div
           key={`box-${slot}`}
-          className="absolute flex items-center justify-center bg-black/30 border border-[#49EACB] text-[#49EACB] text-xs font-bold rounded-md shadow-[0_0_8px_#49EACB]"
+          className="absolute flex items-center justify-center 
+                     bg-black/30 border border-[#49EACB] text-[#49EACB] text-xs
+                     font-bold rounded-md shadow-[0_0_8px_#49EACB]"
           style={{
             width: BOX_SIZE,
             height: BOX_SIZE,
             left: "50%",
             transform: `translate(${x - BOX_SIZE / 2}px, ${y}px)`,
-            zIndex: 1,
+            opacity: pregame ? 0.5 : 1,
           }}
         >
           {mult}x
         </div>
       );
     });
-  }, []);
+  }, [pregame]);
 
   // Render pin dots for rows 0..14
   const pinCoords = useMemo(() => {
@@ -189,7 +205,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
             height: PIN_SIZE,
             left: "50%",
             transform: `translate(${p.x - PIN_SIZE / 2}px, ${p.y - PIN_SIZE / 2}px)`,
-            zIndex: 1,
+            opacity: pregame ? 0.5 : 1,
           }}
         />
       ))}
@@ -199,7 +215,8 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -33, zIndex: 0 }}
+          // Adjust marginTop so the bottom of the ball touches the top of the pins.
+          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -5 }}
         >
           <Image
             src="/kaspagameicon.png"
@@ -218,11 +235,7 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
 // MAIN PLINKO PAGE
 // -----------------------------------------
 export default function PlinkoPage() {
-  return (
-    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-      <PlinkoContent />
-    </div>
-  );
+  return <PlinkoContent />;
 }
 
 function PlinkoContent() {
@@ -231,7 +244,7 @@ function PlinkoContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
   const [cooldown, setCooldown] = useState(0);
-  const [ballPath, setBallPath] = useState<{ x: number; y: number }[] | null>(null);
+  const [ballPath, setBallPath] = useState<boolean[] | null>(null);
   const [dropping, setDropping] = useState(false);
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [resultPopup, setResultPopup] = useState(false);
@@ -242,7 +255,6 @@ function PlinkoContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Use original coin toss method for odds.
   async function handleStartGame() {
     const bet = Number(betAmount);
     if (!isConnected) {
@@ -290,27 +302,13 @@ function PlinkoContent() {
       }
       setGameId(startRes.data.gameId);
 
-      // Initialize game states
       setPregame(false);
       setIsPlaying(true);
       setGameResult(null);
       setCooldown(10);
 
-      // Generate coin-toss path and compute drop path
-      const coinPath = generateRandomPath();
-      const finalSlot = getFinalSlot(coinPath);
-      const centerBoxes = (FINAL_SLOT_COUNT - 1) / 2;
-      const finalX = (finalSlot - centerBoxes) * PIN_SPACING;
-      const finalY = PIN_ROW_COUNT * ROW_SPACING;
-      const steps = PIN_ROW_COUNT + 1;
-      const dropPath = [];
-      for (let i = 0; i < steps; i++) {
-        const t = i / PIN_ROW_COUNT;
-        const x = 0 + (finalX - 0) * t;
-        const y = 0 + (finalY - 0) * t;
-        dropPath.push({ x, y });
-      }
-      setBallPath(dropPath);
+      const path = generateRandomPath();
+      setBallPath(path);
       setDropping(true);
     } catch (error: any) {
       console.error("Error starting Plinko:", error);
