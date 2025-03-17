@@ -58,9 +58,9 @@ const PIN_SPACING = 40;   // horizontal distance between adjacent pins
 const PIN_SIZE = 10;      // diameter for pins
 const BOX_SIZE = 28;      // multiplier box size
 const STAGE_HEIGHT = 900; // container height
-const STEP_DELAY = 300;   // increased delay per row step (was 200ms)
+const STEP_DELAY = 300;   // increased delay per row step for a slower drop
 
-// Adjusted spring config for a smoother, slower drop.
+// Adjusted spring config for a smoother, natural drop.
 const SPRING_CONFIG = {
   type: "spring",
   stiffness: 80,
@@ -129,29 +129,22 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
   // Ball drop animation: once game has started (pregame=false) and dropping=true,
   // step through each row. When finished, do not reset the ball.
   useEffect(() => {
-    // If in pregame, reset the ball to top.
     if (pregame) {
       setCurrentStep(0);
       setPos({ x: 0, y: 0 });
       setLanded(false);
       return;
     }
-    // If game is finished (dropping is false and landed is true), do nothing.
     if (!dropping && landed) return;
-
-    // Only animate if dropping is true.
     if (dropping && path) {
       if (currentStep < stepPositions.length) {
-        // Animate ball to target position for this step.
         const target = stepPositions[currentStep];
         setPos(target);
-        // Schedule next step
         const timer = setTimeout(() => {
           setCurrentStep((prev) => prev + 1);
         }, STEP_DELAY);
         return () => clearTimeout(timer);
       } else {
-        // Final step reached: mark as landed and call onBallLanded.
         setLanded(true);
         const finalSlot = getFinalSlot(path);
         onBallLanded(finalSlot);
@@ -203,7 +196,6 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
 
   return (
     <div className="relative w-full" style={{ height: STAGE_HEIGHT }}>
-      {/* Render pins */}
       {pinCoords.map((p, idx) => (
         <div
           key={`pin-${idx}`}
@@ -217,15 +209,14 @@ function PlinkoStage({ pregame, path, dropping, onBallLanded }: PlinkoStageProps
           }}
         />
       ))}
-      {/* Render final multiplier boxes */}
       {finalBoxes}
-      {/* Render ball (only if game has started) */}
       {!pregame && (
         <motion.div
           className="absolute left-1/2"
           animate={{ x: pos.x, y: pos.y }}
           transition={SPRING_CONFIG}
-          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -28 - 5 }}
+          // Adjust marginTop so the bottom of the ball touches the top of the pins.
+          style={{ width: 28, height: 28, marginLeft: -14, marginTop: -5 }}
         >
           <Image
             src="/kaspagameicon.png"
@@ -311,7 +302,6 @@ function PlinkoContent() {
       }
       setGameId(startRes.data.gameId);
 
-      // Initialize game states
       setPregame(false);
       setIsPlaying(true);
       setGameResult(null);
@@ -372,11 +362,7 @@ function PlinkoContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <WalletConnection />
           </motion.div>
         </header>
