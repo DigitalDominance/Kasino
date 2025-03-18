@@ -87,7 +87,7 @@ function MainPageContent() {
     return () => clearInterval(rotation);
   }, [mainBanners.length]);
 
-  // Resolve wallet addresses to usernames if needed (for live wins)
+  // Resolve wallet addresses to usernames for live wins
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -158,7 +158,6 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Simulate a loading state
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
     return () => clearTimeout(timer);
@@ -247,7 +246,6 @@ function MainPageContent() {
                 transition={{ duration: 0.5 }}
                 className="flex items-center gap-4"
               >
-                {/* XP Display Component in the Nav Bar */}
                 <XPDisplay />
                 <WalletConnection />
               </motion.div>
@@ -316,7 +314,6 @@ function MainPageContent() {
 
               {/* Main Content */}
               <main className="flex-1 p-6 overflow-hidden">
-                {/* Banner Carousel */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -357,7 +354,7 @@ function MainPageContent() {
                   </button>
                 </motion.div>
 
-                {/* Original Games (Horizontal flow) */}
+                {/* Original Games */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -379,7 +376,6 @@ function MainPageContent() {
                         )?.totalWins || 0;
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
                       return (
                         <motion.div
                           key={i}
@@ -421,10 +417,14 @@ function MainPageContent() {
                                 </h3>
                                 <p className="text-sm text-gray-400">
                                   Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">{totalWins}</span>
+                                  <span className="text-[#49EACB] font-bold">
+                                    {totalWins}
+                                  </span>
                                 </p>
                                 <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">High Score:</span>
+                                  <span className="text-sm text-gray-400">
+                                    High Score:
+                                  </span>
                                   <div className="flex items-center gap-1">
                                     <Image
                                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
@@ -447,7 +447,7 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* Character Games Section (Horizontal flow) */}
+                {/* Character Games */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -465,14 +465,12 @@ function MainPageContent() {
                       let dataKey = game.slug;
                       if (dataKey === "lootbox") dataKey = "kasper loot box";
                       else if (dataKey === "kasen-mania") dataKey = "kasen mania";
-
                       const totalWins =
                         winCounter.find(
                           (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
                       return (
                         <motion.div
                           key={i}
@@ -514,10 +512,14 @@ function MainPageContent() {
                                 </h3>
                                 <p className="text-sm text-gray-400">
                                   Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">{totalWins}</span>
+                                  <span className="text-[#49EACB] font-bold">
+                                    {totalWins}
+                                  </span>
                                 </p>
                                 <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">High Score:</span>
+                                  <span className="text-sm text-gray-400">
+                                    High Score:
+                                  </span>
                                   <div className="flex items-center gap-1">
                                     <Image
                                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
@@ -540,7 +542,7 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* Live Wins (Horizontal) */}
+                {/* Live Wins */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -624,7 +626,6 @@ function MainPageContent() {
               </main>
             </div>
 
-            {/* Footer */}
             <SiteFooter />
           </motion.div>
         )}
@@ -633,64 +634,46 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component */
-function XPDisplay() {
+/* XPDisplay Component - Reusable in other files */
+export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
-  // Use the same base URL as your other API calls.
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Poll the /api/user endpoint every 5 seconds for live XP updates.
   useEffect(() => {
     const fetchXP = async () => {
       try {
         if (isConnected && window.kasware && window.kasware.getAccounts) {
           const accounts: string[] = await window.kasware.getAccounts();
-          if (!accounts || accounts.length === 0) {
-            console.error("XPDisplay: No accounts returned by kasware.getAccounts()");
-            return;
-          }
+          if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
           const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
-          console.log("XPDisplay: Fetching URL:", requestUrl);
           const res = await axios.get(requestUrl);
-          console.log("XPDisplay: Response received:", res.data);
           if (res.data.success && res.data.user) {
             setUserData({
               totalXp: res.data.user.totalXp || 0,
               level: res.data.user.level || 0,
             });
-            console.log("XPDisplay: Updated userData:", {
-              totalXp: res.data.user.totalXp,
-              level: res.data.user.level,
-            });
-          } else {
-            console.error("XPDisplay: API did not return a valid user:", res.data);
           }
-        } else {
-          console.error("XPDisplay: Not connected or kasware.getAccounts not available");
         }
       } catch (err) {
-        console.error("XPDisplay: Error fetching user XP data:", err);
+        // Remove logging here for security.
       }
     };
 
-    // Initial fetch
     fetchXP();
-
-    // Set up polling every 5 seconds
     const interval = setInterval(fetchXP, 5000);
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // Use userData.level directly (allowing level 0 to be displayed)
+  // Use the level exactly as provided (allowing level 0)
   const displayLevel = userData.level;
 
-  // Calculate cumulative XP threshold for the given level
+  // Calculate threshold using the same formula as backend
   const getThreshold = (level: number) => {
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
@@ -707,7 +690,7 @@ function XPDisplay() {
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges:
+  // Determine border color based on level ranges
   let borderColorClass = "";
   if (displayLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -719,6 +702,11 @@ function XPDisplay() {
     borderColorClass = "border-red-500 text-red-500";
   }
 
+  // Dynamically adjust font size for the level text based on number of digits
+  const levelStr = displayLevel.toString();
+  const fontSize =
+    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+
   return (
     <div
       className="relative"
@@ -727,9 +715,11 @@ function XPDisplay() {
     >
       {/* XP Circle */}
       <div
-        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
+        className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
       >
-        <span className="text-sm">{displayLevel}</span>
+        <span style={{ fontSize }} className="whitespace-nowrap">
+          {displayLevel}
+        </span>
       </div>
 
       {/* Glassy Popup on the LEFT with neon teal accents */}
@@ -740,7 +730,7 @@ function XPDisplay() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-0 right-full mr-2 w-64 p-4 bg-gray-200/30 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50"
+            className="absolute top-0 right-full mr-2 w-64 p-4 bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50"
           >
             {displayLevel < 100 ? (
               <>
