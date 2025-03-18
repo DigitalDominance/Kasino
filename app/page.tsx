@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -647,6 +647,9 @@ export function XPDisplay() {
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
 
+  // Track initial load to avoid triggering popups on first render
+  const initialLoadRef = useRef(true);
+
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
@@ -658,7 +661,9 @@ export function XPDisplay() {
           const accounts: string[] = await window.kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
-          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
+          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
+            walletAddress
+          )}`;
           const res = await axios.get(requestUrl);
           if (res.data.success && res.data.user) {
             setUserData({
@@ -677,15 +682,19 @@ export function XPDisplay() {
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // Detect XP gain and level up changes
+  // Detect XP gain and level up changes only after initial load.
   useEffect(() => {
-    // XP gain detection
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      setPrevXp(userData.totalXp);
+      setPrevLevel(userData.level);
+      return;
+    }
     if (userData.totalXp > prevXp) {
       const gain = userData.totalXp - prevXp;
       setXpGain(gain);
       setTimeout(() => setXpGain(null), 2000);
     }
-    // Level up detection
     if (userData.level > prevLevel) {
       setIsFlipping(true);
       setShowLevelUpPopup(true);
@@ -698,10 +707,8 @@ export function XPDisplay() {
     setPrevLevel(userData.level);
   }, [userData, prevXp, prevLevel]);
 
-  // Use the level exactly as provided (allowing level 0)
   const displayLevel = userData.level;
 
-  // Calculate threshold using the same formula as backend
   const getThreshold = (level: number) => {
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
@@ -718,7 +725,6 @@ export function XPDisplay() {
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges
   let borderColorClass = "";
   if (displayLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -730,10 +736,12 @@ export function XPDisplay() {
     borderColorClass = "border-red-500 text-red-500";
   }
 
-  // Dynamically adjust font size for the level text based on number of digits
   const levelStr = displayLevel.toString();
   const fontSize =
     levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+
+  // Common popup styling (glass and same as hover popup)
+  const popupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64";
 
   return (
     <div
@@ -746,16 +754,14 @@ export function XPDisplay() {
         animate={isFlipping ? { rotateY: 360 } : { rotateY: 0 }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
       >
-        <div
-          className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
-        >
+        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}>
           <span style={{ fontSize }} className="whitespace-nowrap">
             {displayLevel}
           </span>
         </div>
       </motion.div>
 
-      {/* Glassy Popup on the LEFT with neon teal accents */}
+      {/* Glassy Popup on hover */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -763,7 +769,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-0 right-full mr-2 w-64 p-4 bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50"
+            className={popupClass + " top-0 right-full mr-2"}
           >
             {displayLevel < 100 ? (
               <>
@@ -775,19 +781,14 @@ export function XPDisplay() {
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    style={{ width: `${progressPercent}%` }}
-                    className="bg-teal-500 h-2 rounded-full"
-                  ></div>
+                  <div style={{ width: `${progressPercent}%` }} className="bg-teal-500 h-2 rounded-full"></div>
                 </div>
                 <div className="text-teal-300 text-xs mt-1 text-center">
                   {progressPercent.toFixed(1)}% to next level
                 </div>
               </>
             ) : (
-              <div className="text-teal-300 text-sm text-center">
-                Max Level Reached!
-              </div>
+              <div className="text-teal-300 text-sm text-center">Max Level Reached!</div>
             )}
           </motion.div>
         )}
@@ -801,7 +802,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className="absolute left-[-80px] top-1/2 transform -translate-y-1/2 bg-green-500 text-white px-2 py-1 rounded shadow-lg z-50"
+            className={popupClass + " left-[-80px] top-1/2 transform -translate-y-1/2"}
           >
             +{xpGain} XP
           </motion.div>
@@ -816,7 +817,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30, y: -10 }}
             exit={{ opacity: 0, x: -50, y: -10 }}
             transition={{ duration: 0.5 }}
-            className="absolute left-[-80px] top-0 bg-blue-500 text-white px-2 py-1 rounded shadow-lg z-50"
+            className={popupClass + " left-[-80px] top-0"}
           >
             Leveled Up!
           </motion.div>
