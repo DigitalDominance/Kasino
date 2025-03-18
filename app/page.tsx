@@ -76,7 +76,8 @@ function MainPageContent() {
   ];
 
   // Banner manual controls
-  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
+  const nextBanner = () =>
+    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
@@ -92,7 +93,9 @@ function MainPageContent() {
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
-        const res = await axios.get(`/api/user?walletAddress=${encodeURIComponent(win.username)}`);
+        const res = await axios.get(
+          `/api/user?walletAddress=${encodeURIComponent(win.username)}`
+        );
         if (res.data && res.data.username) {
           return { ...win, username: res.data.username };
         }
@@ -109,7 +112,9 @@ function MainPageContent() {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
         if (res.data.success) {
-          const resolvedWins = await Promise.all(res.data.wins.map(resolveUsername));
+          const resolvedWins = await Promise.all(
+            res.data.wins.map(resolveUsername)
+          );
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -517,7 +522,7 @@ function MainPageContent() {
                                   <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -632,7 +637,7 @@ function MainPageContent() {
 
 /* XPDisplay Component */
 function XPDisplay() {
-  const { isConnected, walletAddress } = useWallet();
+  const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
@@ -643,30 +648,34 @@ function XPDisplay() {
 
   // Poll the /api/user endpoint every 5 seconds for live XP updates.
   useEffect(() => {
-    if (isConnected && walletAddress) {
-      const fetchXP = () => {
-        const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
-        console.log("XPDisplay: Fetching URL:", requestUrl);
-        axios
-          .get(requestUrl)
-          .then((res) => {
-            console.log("XPDisplay: Response received:", res.data);
-            if (res.data.success && res.data.user) {
-              setUserData({
-                totalXp: res.data.user.totalXp || 0,
-                level: res.data.user.level || 0,
-              });
-              console.log("XPDisplay: Updated userData:", {
-                totalXp: res.data.user.totalXp,
-                level: res.data.user.level,
-              });
-            } else {
-              console.error("XPDisplay: API did not return a valid user:", res.data);
-            }
-          })
-          .catch((err) => {
-            console.error("XPDisplay: Error fetching user XP data:", err);
-          });
+    if (isConnected && window.kasware && window.kasware.getAccounts) {
+      const fetchXP = async () => {
+        try {
+          const accounts: string[] = await window.kasware.getAccounts();
+          if (!accounts || accounts.length === 0) {
+            console.error("XPDisplay: No accounts returned by kasware.getAccounts()");
+            return;
+          }
+          const walletAddress = accounts[0];
+          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
+          console.log("XPDisplay: Fetching URL:", requestUrl);
+          const res = await axios.get(requestUrl);
+          console.log("XPDisplay: Response received:", res.data);
+          if (res.data.success && res.data.user) {
+            setUserData({
+              totalXp: res.data.user.totalXp || 0,
+              level: res.data.user.level || 0,
+            });
+            console.log("XPDisplay: Updated userData:", {
+              totalXp: res.data.user.totalXp,
+              level: res.data.user.level,
+            });
+          } else {
+            console.error("XPDisplay: API did not return a valid user:", res.data);
+          }
+        } catch (err) {
+          console.error("XPDisplay: Error fetching user XP data:", err);
+        }
       };
 
       // Initial fetch
@@ -676,9 +685,9 @@ function XPDisplay() {
       const interval = setInterval(fetchXP, 5000);
       return () => clearInterval(interval);
     } else {
-      console.log("XPDisplay: Not connected or walletAddress missing:", { isConnected, walletAddress });
+      console.error("XPDisplay: Not connected or kasware.getAccounts not available");
     }
-  }, [isConnected, walletAddress, apiUrl]);
+  }, [isConnected, apiUrl]);
 
   // If a user has any XP but the level is 0, force display level 1.
   const displayLevel = userData.totalXp > 0 ? Math.max(userData.level, 1) : 0;
@@ -700,8 +709,7 @@ function XPDisplay() {
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges:
-  // 0–24: neon blue, 25–49: yellow, 50–74: orange, 75+: red
+  // Determine border color based on level ranges.
   let borderColorClass = "";
   if (displayLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -756,7 +764,9 @@ function XPDisplay() {
                 </div>
               </>
             ) : (
-              <div className="text-white text-sm text-center">Max Level Reached!</div>
+              <div className="text-white text-sm text-center">
+                Max Level Reached!
+              </div>
             )}
           </motion.div>
         )}
