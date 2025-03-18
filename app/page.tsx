@@ -168,14 +168,6 @@ function MainPageContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Special slug -> dataKey function
-  // If slug=lootbox => "kasper loot box", if slug=kasen-mania => "kasen mania"
-  const getDataKey = (slug: string) => {
-    if (slug === "lootbox") return "kasper loot box";
-    if (slug === "kasen-mania") return "kasen mania";
-    return slug;
-  };
-
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
       <style jsx global>{`
@@ -657,8 +649,12 @@ function XPDisplay() {
       axios
         .get(`/api/user?walletAddress=${walletAddress}`)
         .then((res) => {
-          if (res.data.success && res.data.user) {
-            setUserData(res.data.user);
+          // API returns the user object directly
+          if (res.data && res.data.username) {
+            setUserData({
+              totalXp: res.data.totalXp || 0,
+              level: res.data.level || 0,
+            });
           }
         })
         .catch((err) => console.error("Error fetching user data:", err));
@@ -678,14 +674,12 @@ function XPDisplay() {
 
   const currentLevel = userData.level;
   const currentThreshold = getThreshold(currentLevel);
-  const nextThreshold =
-    currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
+  const nextThreshold = currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges:
-  // 0–24: neon blue, 25–49: yellow, 50–74: orange, 75–100: red
+  // Determine border color based on level ranges
   let borderColorClass = "";
   if (currentLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
