@@ -642,12 +642,17 @@ function XPDisplay() {
   const { isConnected, walletAddress } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  
+  // Use the same base URL as your other API calls.
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   // Fetch user data when connected using the new API endpoint.
   useEffect(() => {
     if (isConnected && walletAddress) {
       axios
-        .get(`/api/all-xp?walletAddress=${walletAddress}`)
+        .get(`${apiUrl}/api/all-xp?walletAddress=${walletAddress}`)
         .then((res) => {
           if (res.data.success && res.data.users && res.data.users.length > 0) {
             const user = res.data.users[0];
@@ -657,11 +662,11 @@ function XPDisplay() {
             });
           }
         })
-        .catch((err) => console.error("Error fetching user data:", err));
+        .catch((err) => console.error("Error fetching user XP data:", err));
     }
-  }, [isConnected, walletAddress]);
+  }, [isConnected, walletAddress, apiUrl]);
 
-  // Calculate cumulative XP threshold for a given level (using same formula as backend)
+  // Calculate cumulative XP threshold for a given level (using the same formula as backend)
   const getThreshold = (level: number) => {
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
@@ -674,7 +679,8 @@ function XPDisplay() {
 
   const currentLevel = userData.level;
   const currentThreshold = getThreshold(currentLevel);
-  const nextThreshold = currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
+  const nextThreshold =
+    currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -735,7 +741,9 @@ function XPDisplay() {
                 </div>
               </>
             ) : (
-              <div className="text-white text-sm text-center">Max Level Reached!</div>
+              <div className="text-white text-sm text-center">
+                Max Level Reached!
+              </div>
             )}
           </motion.div>
         )}
@@ -743,4 +751,5 @@ function XPDisplay() {
     </div>
   );
 }
+
 
