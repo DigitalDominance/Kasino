@@ -643,17 +643,17 @@ function XPDisplay() {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
-  // Fetch user data when connected
+  // Fetch user data when connected using the new API endpoint.
   useEffect(() => {
     if (isConnected && walletAddress) {
       axios
-        .get(`/api/user?walletAddress=${walletAddress}`)
+        .get(`/api/all-xp?walletAddress=${walletAddress}`)
         .then((res) => {
-          // API returns the user object directly
-          if (res.data && res.data.username) {
+          if (res.data.success && res.data.users && res.data.users.length > 0) {
+            const user = res.data.users[0];
             setUserData({
-              totalXp: res.data.totalXp || 0,
-              level: res.data.level || 0,
+              totalXp: user.totalXp || 0,
+              level: user.level || 0,
             });
           }
         })
@@ -679,7 +679,8 @@ function XPDisplay() {
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges
+  // Determine border color based on level ranges:
+  // 0–24: neon blue, 25–49: yellow, 50–74: orange, 75+: red
   let borderColorClass = "";
   if (currentLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -742,3 +743,4 @@ function XPDisplay() {
     </div>
   );
 }
+
