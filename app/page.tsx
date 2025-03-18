@@ -647,7 +647,7 @@ export function XPDisplay() {
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
 
-  // Track initial load to avoid triggering popups on first render
+  // Track initial load so popups are not shown on first render.
   const initialLoadRef = useRef(true);
 
   const apiUrl =
@@ -708,7 +708,6 @@ export function XPDisplay() {
   }, [userData, prevXp, prevLevel]);
 
   const displayLevel = userData.level;
-
   const getThreshold = (level: number) => {
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
@@ -740,8 +739,8 @@ export function XPDisplay() {
   const fontSize =
     levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Common popup styling (glass and same as hover popup)
-  const popupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64";
+  // Smaller popup styling: reduced padding and width.
+  const popupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
     <div
@@ -769,26 +768,26 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className={popupClass + " top-0 right-full mr-2"}
+            className={`${popupClass} top-0 right-full mr-2`}
           >
             {displayLevel < 100 ? (
               <>
-                <div className="text-teal-300 text-sm mb-2">
+                <div className="text-teal-300 mb-1">
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
-                <div className="flex justify-between text-xs text-teal-300 mb-1">
+                <div className="flex justify-between mb-1">
                   <span>{xpProgress.toFixed(0)} XP</span>
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div style={{ width: `${progressPercent}%` }} className="bg-teal-500 h-2 rounded-full"></div>
+                <div className="w-full bg-gray-700 rounded h-1">
+                  <div style={{ width: `${progressPercent}%` }} className="bg-teal-500 h-1 rounded"></div>
                 </div>
-                <div className="text-teal-300 text-xs mt-1 text-center">
+                <div className="mt-1 text-center">
                   {progressPercent.toFixed(1)}% to next level
                 </div>
               </>
             ) : (
-              <div className="text-teal-300 text-sm text-center">Max Level Reached!</div>
+              <div className="text-center">Max Level Reached!</div>
             )}
           </motion.div>
         )}
@@ -802,7 +801,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={popupClass + " left-[-80px] top-1/2 transform -translate-y-1/2"}
+            className={`${popupClass} left-[-60px] top-1/2 transform -translate-y-1/2`}
           >
             +{xpGain} XP
           </motion.div>
@@ -817,7 +816,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30, y: -10 }}
             exit={{ opacity: 0, x: -50, y: -10 }}
             transition={{ duration: 0.5 }}
-            className={popupClass + " left-[-80px] top-0"}
+            className={`${popupClass} left-[-60px] top-0`}
           >
             Leveled Up!
           </motion.div>
