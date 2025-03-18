@@ -88,7 +88,7 @@ function MainPageContent() {
     return () => clearInterval(rotation);
   }, [mainBanners.length]);
 
-  // Resolve wallet addresses to usernames if needed
+  // Resolve wallet addresses to usernames if needed (for live wins)
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
@@ -517,7 +517,7 @@ function MainPageContent() {
                                   <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -598,7 +598,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
@@ -645,19 +645,28 @@ function XPDisplay() {
   useEffect(() => {
     if (isConnected && walletAddress) {
       const fetchXP = () => {
+        const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
+        console.log("XPDisplay: Fetching URL:", requestUrl);
         axios
-          .get(`${apiUrl}/api/user?walletAddress=${walletAddress}`)
+          .get(requestUrl)
           .then((res) => {
+            console.log("XPDisplay: Response received:", res.data);
             if (res.data.success && res.data.user) {
               setUserData({
                 totalXp: res.data.user.totalXp || 0,
                 level: res.data.user.level || 0,
               });
+              console.log("XPDisplay: Updated userData:", {
+                totalXp: res.data.user.totalXp,
+                level: res.data.user.level,
+              });
+            } else {
+              console.error("XPDisplay: API did not return a valid user:", res.data);
             }
           })
-          .catch((err) =>
-            console.error("Error fetching user XP data:", err)
-          );
+          .catch((err) => {
+            console.error("XPDisplay: Error fetching user XP data:", err);
+          });
       };
 
       // Initial fetch
@@ -666,6 +675,8 @@ function XPDisplay() {
       // Set up polling every 5 seconds
       const interval = setInterval(fetchXP, 5000);
       return () => clearInterval(interval);
+    } else {
+      console.log("XPDisplay: Not connected or walletAddress missing:", { isConnected, walletAddress });
     }
   }, [isConnected, walletAddress, apiUrl]);
 
@@ -684,8 +695,7 @@ function XPDisplay() {
   };
 
   const currentThreshold = getThreshold(displayLevel);
-  const nextThreshold =
-    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
+  const nextThreshold = displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -746,9 +756,7 @@ function XPDisplay() {
                 </div>
               </>
             ) : (
-              <div className="text-white text-sm text-center">
-                Max Level Reached!
-              </div>
+              <div className="text-white text-sm text-center">Max Level Reached!</div>
             )}
           </motion.div>
         )}
