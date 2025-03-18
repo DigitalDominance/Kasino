@@ -10,6 +10,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
+// Import the updated XPDisplay component
+import { XPDisplay } from "@/app/page";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
@@ -131,10 +133,13 @@ function SlotsContent() {
             </Link>
           </motion.div>
           <motion.div
+            className="flex items-center gap-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
+            {/* Added XPDisplay next to WalletConnection */}
+            <XPDisplay />
             <WalletConnection />
           </motion.div>
         </header>
@@ -525,10 +530,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           className="w-full h-auto"
         />
 
-        {/* The three characters. 
-            1) We use a normal gap with Tailwind (e.g. gap-12).
-            2) The female is bigger and shifted up individually with relative + top negative.
-        */}
+        {/* The three characters. */}
         <div
           className="absolute flex items-end justify-center gap-14"
           style={{
