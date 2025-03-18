@@ -51,7 +51,7 @@ function XPDisplay() {
     if (userData.totalXp > prevXPRef.current) {
       const diff = userData.totalXp - prevXPRef.current;
       setXpDiff(diff);
-      const timer = setTimeout(() => setXpDiff(0), 1500);
+      const timer = setTimeout(() => setXpDiff(0), 2000);
       prevXPRef.current = userData.totalXp;
       return () => clearTimeout(timer);
     }
@@ -88,43 +88,43 @@ function XPDisplay() {
   }
 
   return (
-    <div className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-      {/* Circular level indicator */}
-      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}>
+    <div className="relative flex items-center" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      {/* Circular level indicator with neon/glass style */}
+      <div className={`w-10 h-10 rounded-full border-2 bg-black/50 backdrop-blur-lg flex items-center justify-center cursor-pointer ${borderColorClass} drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]`}>
         <span className="text-sm">{currentLevel}</span>
       </div>
 
-      {/* Live XP added animation */}
+      {/* Live XP added animation: positioned to the right of the circle */}
       <AnimatePresence>
         {xpDiff > 0 && (
           <motion.div
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 1, x: 0 }}
+            animate={{ opacity: 0, x: 20 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
-            className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-green-500 text-xs font-bold"
+            className="absolute top-0 left-full ml-2 text-green-400 text-xs font-bold"
           >
             +{xpDiff} XP
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hover popup with progress details */}
+      {/* Hover popup with progress details: positioned to the left of the circle */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: -10 }}
+            exit={{ opacity: 0, x: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-3 bg-gray-900 rounded shadow-lg z-50"
+            className="absolute top-0 right-full mr-2 w-64 p-3 bg-black/50 backdrop-blur-lg rounded shadow-xl z-50 border border-white/20"
           >
             {currentLevel < 100 ? (
               <>
                 <div className="text-white text-sm mb-2">
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <div className="flex justify-between text-xs text-gray-300 mb-1">
                   <span>{xpProgress.toFixed(0)} XP</span>
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
@@ -253,26 +253,27 @@ function SlotsContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          {/* XP Display is placed at the start (left side) of the nav */}
-          <XPDisplay />
         </div>
+        {/* Right side of header with XPDisplay and WalletConnection */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
+          className="flex items-center gap-4"
         >
+          <XPDisplay />
           <WalletConnection />
         </motion.div>
       </header>
 
       <div className="flex flex-1">
-        {/* Sidebar and other components remain unchanged */}
+        {/* Sidebar remains unchanged */}
         {/* ... Sidebar code ... */}
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-hidden">
-          {/* Banner Carousel */}
-          {/* ... Banner carousel code remains unchanged ... */}
+          {/* Banner Carousel remains unchanged */}
+          {/* ... Banner carousel code ... */}
 
           {/* Game Content */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
@@ -311,8 +312,8 @@ function SlotsContent() {
             </div>
           </div>
 
-          {/* Kasen Promo Card */}
-          {/* ... Promo card code remains unchanged ... */}
+          {/* Kasen Promo Card remains unchanged */}
+          {/* ... Promo card code ... */}
         </main>
       </div>
 
@@ -763,7 +764,7 @@ export function SlotsControls({
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                   alt="KAS"
                   width={16}
                   height={16}
