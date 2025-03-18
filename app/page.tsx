@@ -639,20 +639,32 @@ export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
-
-  // For detecting changes and animations
-  const [prevXp, setPrevXp] = useState(0);
-  const [prevLevel, setPrevLevel] = useState(0);
   const [xpGain, setXpGain] = useState<number | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
 
-  // Track initial load so popups are not shown on first render.
-  const initialLoadRef = useRef(true);
+  // Use sessionStorage to persist last xp/level markers across page changes.
+  const lastXpRef = useRef<number | null>(null);
+  const lastLevelRef = useRef<number | null>(null);
 
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
+
+  // On mount, load last xp/level from sessionStorage or initialize.
+  useEffect(() => {
+    const storedXp = sessionStorage.getItem("lastXp");
+    const storedLevel = sessionStorage.getItem("lastLevel");
+    if (storedXp !== null && storedLevel !== null) {
+      lastXpRef.current = Number(storedXp);
+      lastLevelRef.current = Number(storedLevel);
+    } else {
+      lastXpRef.current = userData.totalXp;
+      lastLevelRef.current = userData.level;
+      sessionStorage.setItem("lastXp", userData.totalXp.toString());
+      sessionStorage.setItem("lastLevel", userData.level.toString());
+    }
+  }, []); // run once on mount
 
   useEffect(() => {
     const fetchXP = async () => {
@@ -661,9 +673,7 @@ export function XPDisplay() {
           const accounts: string[] = await window.kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
-          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
-            walletAddress
-          )}`;
+          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
           const res = await axios.get(requestUrl);
           if (res.data.success && res.data.user) {
             setUserData({
@@ -682,30 +692,26 @@ export function XPDisplay() {
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // Detect XP gain and level up changes only after initial load.
+  // Detect changes and trigger popups only if there is a new increase.
   useEffect(() => {
-    if (initialLoadRef.current) {
-      initialLoadRef.current = false;
-      setPrevXp(userData.totalXp);
-      setPrevLevel(userData.level);
-      return;
-    }
-    if (userData.totalXp > prevXp) {
-      const gain = userData.totalXp - prevXp;
+    if (lastXpRef.current !== null && userData.totalXp > lastXpRef.current) {
+      const gain = userData.totalXp - lastXpRef.current;
       setXpGain(gain);
+      lastXpRef.current = userData.totalXp;
+      sessionStorage.setItem("lastXp", userData.totalXp.toString());
       setTimeout(() => setXpGain(null), 2000);
     }
-    if (userData.level > prevLevel) {
+    if (lastLevelRef.current !== null && userData.level > lastLevelRef.current) {
       setIsFlipping(true);
       setShowLevelUpPopup(true);
+      lastLevelRef.current = userData.level;
+      sessionStorage.setItem("lastLevel", userData.level.toString());
       setTimeout(() => {
         setIsFlipping(false);
         setShowLevelUpPopup(false);
       }, 1000);
     }
-    setPrevXp(userData.totalXp);
-    setPrevLevel(userData.level);
-  }, [userData, prevXp, prevLevel]);
+  }, [userData]);
 
   const displayLevel = userData.level;
   const getThreshold = (level: number) => {
@@ -736,11 +742,12 @@ export function XPDisplay() {
   }
 
   const levelStr = displayLevel.toString();
-  const fontSize =
-    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+  const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Smaller popup styling: reduced padding and width.
-  const popupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
+  // Larger popup styling for the hover popup.
+  const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
+  // Smaller popup styling for XP gain and level up.
+  const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
     <div
@@ -760,7 +767,7 @@ export function XPDisplay() {
         </div>
       </motion.div>
 
-      {/* Glassy Popup on hover */}
+      {/* Hover Popup (larger) */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -768,7 +775,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className={`${popupClass} top-0 right-full mr-2`}
+            className={`${hoverPopupClass} top-0 right-full mr-2`}
           >
             {displayLevel < 100 ? (
               <>
@@ -793,7 +800,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* XP Gain Popup */}
+      {/* XP Gain Popup (small) */}
       <AnimatePresence>
         {xpGain !== null && (
           <motion.div
@@ -801,14 +808,14 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${popupClass} left-[-60px] top-1/2 transform -translate-y-1/2`}
+            className={`${smallPopupClass} left-[-60px] top-1/2 transform -translate-y-1/2`}
           >
             +{xpGain} XP
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Level Up Popup */}
+      {/* Level Up Popup (small) */}
       <AnimatePresence>
         {showLevelUpPopup && (
           <motion.div
@@ -816,7 +823,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30, y: -10 }}
             exit={{ opacity: 0, x: -50, y: -10 }}
             transition={{ duration: 0.5 }}
-            className={`${popupClass} left-[-60px] top-0`}
+            className={`${smallPopupClass} left-[-60px] top-0`}
           >
             Leveled Up!
           </motion.div>
