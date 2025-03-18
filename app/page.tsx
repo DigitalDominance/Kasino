@@ -648,17 +648,16 @@ function XPDisplay() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Fetch user data when connected using the new API endpoint.
+  // Fetch user data when connected using the /api/user endpoint.
   useEffect(() => {
     if (isConnected && walletAddress) {
       axios
         .get(`${apiUrl}/api/user?walletAddress=${walletAddress}`)
         .then((res) => {
-          if (res.data.success && res.data.users && res.data.users.length > 0) {
-            const user = res.data.users[0];
+          if (res.data.success && res.data.user) {
             setUserData({
-              totalXp: user.totalXp || 0,
-              level: user.level || 0,
+              totalXp: res.data.user.totalXp || 0,
+              level: res.data.user.level || 0,
             });
           }
         })
