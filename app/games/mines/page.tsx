@@ -22,6 +22,7 @@ import { MinesControls } from "./mines-controls";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { XPDisplay } from "@/app/page";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -242,7 +243,11 @@ function MinesContent() {
                 Back to Games
               </Link>
             </motion.div>
-            <WalletConnection />
+            {/* Added XPDisplay next to WalletConnection */}
+            <div className="flex items-center gap-4">
+              <XPDisplay />
+              <WalletConnection />
+            </div>
           </header>
 
           {/* Display deposit TXID so the user can monitor their transaction */}
