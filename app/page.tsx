@@ -642,7 +642,7 @@ function XPDisplay() {
   const { isConnected, walletAddress } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Use the same base URL as your other API calls.
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -652,7 +652,7 @@ function XPDisplay() {
   useEffect(() => {
     if (isConnected && walletAddress) {
       axios
-        .get(`${apiUrl}/api/all-xp?walletAddress=${walletAddress}`)
+        .get(`${apiUrl}/api/user?walletAddress=${walletAddress}`)
         .then((res) => {
           if (res.data.success && res.data.users && res.data.users.length > 0) {
             const user = res.data.users[0];
@@ -751,5 +751,3 @@ function XPDisplay() {
     </div>
   );
 }
-
-
