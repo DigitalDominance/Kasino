@@ -76,8 +76,7 @@ function MainPageContent() {
   ];
 
   // Banner manual controls
-  const nextBanner = () =>
-    setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
+  const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
@@ -93,9 +92,7 @@ function MainPageContent() {
   const resolveUsername = async (win: Win): Promise<Win> => {
     if (win.username.startsWith("kaspa:")) {
       try {
-        const res = await axios.get(
-          `/api/user?walletAddress=${encodeURIComponent(win.username)}`
-        );
+        const res = await axios.get(`/api/user?walletAddress=${encodeURIComponent(win.username)}`);
         if (res.data && res.data.username) {
           return { ...win, username: res.data.username };
         }
@@ -112,9 +109,7 @@ function MainPageContent() {
       try {
         const res = await axios.get(`${apiUrl}/api/latest-wins`);
         if (res.data.success) {
-          const resolvedWins = await Promise.all(
-            res.data.wins.map(resolveUsername)
-          );
+          const resolvedWins = await Promise.all(res.data.wins.map(resolveUsername));
           setLiveWins(resolvedWins.slice(0, 10));
         }
       } catch (error) {
@@ -162,9 +157,7 @@ function MainPageContent() {
 
   // Fake loading for demonstration
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
+    const timer = setTimeout(() => setIsLoading(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -648,22 +641,36 @@ function XPDisplay() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Fetch user data when connected using the /api/user endpoint.
+  // Poll the /api/user endpoint every 5 seconds for live XP updates.
   useEffect(() => {
     if (isConnected && walletAddress) {
-      axios
-        .get(`${apiUrl}/api/user?walletAddress=${walletAddress}`)
-        .then((res) => {
-          if (res.data.success && res.data.user) {
-            setUserData({
-              totalXp: res.data.user.totalXp || 0,
-              level: res.data.user.level || 0,
-            });
-          }
-        })
-        .catch((err) => console.error("Error fetching user XP data:", err));
+      const fetchXP = () => {
+        axios
+          .get(`${apiUrl}/api/user?walletAddress=${walletAddress}`)
+          .then((res) => {
+            if (res.data.success && res.data.user) {
+              setUserData({
+                totalXp: res.data.user.totalXp || 0,
+                level: res.data.user.level || 0,
+              });
+            }
+          })
+          .catch((err) =>
+            console.error("Error fetching user XP data:", err)
+          );
+      };
+
+      // Initial fetch
+      fetchXP();
+
+      // Set up polling every 5 seconds
+      const interval = setInterval(fetchXP, 5000);
+      return () => clearInterval(interval);
     }
   }, [isConnected, walletAddress, apiUrl]);
+
+  // If a user has any XP but the level is 0, force display level 1.
+  const displayLevel = userData.totalXp > 0 ? Math.max(userData.level, 1) : 0;
 
   // Calculate cumulative XP threshold for a given level (using the same formula as backend)
   const getThreshold = (level: number) => {
@@ -676,10 +683,9 @@ function XPDisplay() {
     return threshold;
   };
 
-  const currentLevel = userData.level;
-  const currentThreshold = getThreshold(currentLevel);
+  const currentThreshold = getThreshold(displayLevel);
   const nextThreshold =
-    currentLevel < 100 ? getThreshold(currentLevel + 1) : currentThreshold;
+    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -687,11 +693,11 @@ function XPDisplay() {
   // Determine border color based on level ranges:
   // 0–24: neon blue, 25–49: yellow, 50–74: orange, 75+: red
   let borderColorClass = "";
-  if (currentLevel < 25) {
+  if (displayLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
-  } else if (currentLevel < 50) {
+  } else if (displayLevel < 50) {
     borderColorClass = "border-yellow-400 text-yellow-400";
-  } else if (currentLevel < 75) {
+  } else if (displayLevel < 75) {
     borderColorClass = "border-orange-500 text-orange-500";
   } else {
     borderColorClass = "border-red-500 text-red-500";
@@ -703,11 +709,11 @@ function XPDisplay() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Default circle showing just the level number */}
+      {/* Default circle showing the level number */}
       <div
         className={`w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
       >
-        <span className="text-sm">{currentLevel}</span>
+        <span className="text-sm">{displayLevel}</span>
       </div>
 
       {/* Hover popup with progress details */}
@@ -720,7 +726,7 @@ function XPDisplay() {
             transition={{ duration: 0.2 }}
             className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-3 bg-gray-900 rounded shadow-lg z-50"
           >
-            {currentLevel < 100 ? (
+            {displayLevel < 100 ? (
               <>
                 <div className="text-white text-sm mb-2">
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
