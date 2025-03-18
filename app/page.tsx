@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Search, Menu } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
+import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
+import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
 
