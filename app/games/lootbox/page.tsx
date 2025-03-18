@@ -15,9 +15,9 @@ import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 
-// ---------------------------------------------------------
-// Font
-// ---------------------------------------------------------
+// Import the updated XPDisplay component
+import { XPDisplay } from "@/app/page";
+
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
@@ -184,7 +184,14 @@ function KasperLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Insert XPDisplay next to WalletConnection */}
+            <XPDisplay />
             <WalletConnection />
           </motion.div>
         </header>
@@ -222,19 +229,14 @@ function KasperLootBoxContent() {
               {/* Reel Container */}
               <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                 <KasperLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                {/*
-                  Only render left/right overlay cards when the game is playing.
-                */}
                 {isPlaying && (
                   <>
                     <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
                     <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
                   </>
                 )}
-                {/* Pregame Screen */}
                 {!isPlaying && (
                   <>
-                    {/* Interactive Background Images */}
                     <div className="absolute inset-0 z-30">
                       <motion.div
                         whileHover={{ scale: 1.15, rotate: 5 }}
@@ -293,7 +295,6 @@ function KasperLootBoxContent() {
                         />
                       </motion.div>
                     </div>
-                    {/* Pregame Text Overlay */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                       <motion.h1
                         className="text-5xl font-bold mb-4"
@@ -318,7 +319,6 @@ function KasperLootBoxContent() {
             </div>
           </Card>
 
-          {/* Controls */}
           <KasperLootBoxControls
             betAmount={lootBoxCost.toString()}
             isPlaying={isPlaying}
@@ -331,10 +331,9 @@ function KasperLootBoxContent() {
           />
         </div>
 
-        {/* Traits Layout Card */}
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
-            Kasper Loot Box Traits &amp; Rewards
+            Kasper Loot Box Traits & Rewards
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {lootItems.map((item) => {
@@ -351,7 +350,6 @@ function KasperLootBoxContent() {
           </div>
         </Card>
 
-        {/* Promo / Info Card */}
         <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -412,13 +410,12 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
   const controls = useAnimation();
   const containerWidth = 600;
   const itemWidth = 120;
-  const containerCenter = containerWidth / 2;
+  const currentXRef = useRef(0);
+  const randomReelLengthRef = useRef(0);
   const [finalReel, setFinalReel] = useState<any[]>([]);
   const [winningItem, setWinningItem] = useState<any>(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const spinTriggered = useRef(false);
-  const currentXRef = useRef(0);
-  const randomReelLengthRef = useRef(0);
 
   useEffect(() => {
     if (isPlaying && !spinTriggered.current) {
@@ -449,7 +446,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
 
-      // After 3 seconds, stop the loop and decelerate to the nearest aligned offset
+      // After 4 seconds, stop the loop and decelerate to the nearest aligned offset
       setTimeout(() => {
         controls.stop();
         const currentX = currentXRef.current;
@@ -468,7 +465,7 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
       setWinningItem(null);
       setShowResultOverlay(false);
     }
-  }, [isPlaying, controls, itemWidth, containerCenter, onGameEnd]);
+  }, [isPlaying, controls, itemWidth, onGameEnd]);
 
   return (
     <div
@@ -518,16 +515,11 @@ function KasperLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGam
                 height={80}
                 className="mx-auto mb-2"
                 loading="eager"
-                style={{
-                  filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)",
-                }}
+                style={{ filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)" }}
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {winningItem.name}{" "}
-                <span className="text-base text-teal-200">
-                  ({winningItem.tier.replace("-", " ")})
-                </span>
+                {winningItem.name} <span className="text-base text-teal-200">({winningItem.tier.replace("-", " ")})</span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
                 You won <strong>{winningItem.reward} KAS</strong>
