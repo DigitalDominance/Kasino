@@ -634,11 +634,18 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component - Reusable in other files */
+/* XPDisplay Component - Reusable in other files with XP gain and level up animations */
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const [isHovered, setIsHovered] = useState(false);
+
+  // For detecting changes and animations
+  const [prevXp, setPrevXp] = useState(0);
+  const [prevLevel, setPrevLevel] = useState(0);
+  const [xpGain, setXpGain] = useState<number | null>(null);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
 
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -661,7 +668,7 @@ export function XPDisplay() {
           }
         }
       } catch (err) {
-        // Remove logging here for security.
+        // Error handling omitted for security.
       }
     };
 
@@ -669,6 +676,27 @@ export function XPDisplay() {
     const interval = setInterval(fetchXP, 5000);
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
+
+  // Detect XP gain and level up changes
+  useEffect(() => {
+    // XP gain detection
+    if (userData.totalXp > prevXp) {
+      const gain = userData.totalXp - prevXp;
+      setXpGain(gain);
+      setTimeout(() => setXpGain(null), 2000);
+    }
+    // Level up detection
+    if (userData.level > prevLevel) {
+      setIsFlipping(true);
+      setShowLevelUpPopup(true);
+      setTimeout(() => {
+        setIsFlipping(false);
+        setShowLevelUpPopup(false);
+      }, 1000);
+    }
+    setPrevXp(userData.totalXp);
+    setPrevLevel(userData.level);
+  }, [userData, prevXp, prevLevel]);
 
   // Use the level exactly as provided (allowing level 0)
   const displayLevel = userData.level;
@@ -709,18 +737,23 @@ export function XPDisplay() {
 
   return (
     <div
-      className="relative"
+      className="relative inline-block"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* XP Circle */}
-      <div
-        className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
+      {/* XP Circle with flip animation on level up */}
+      <motion.div
+        animate={isFlipping ? { rotateY: 360 } : { rotateY: 0 }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
       >
-        <span style={{ fontSize }} className="whitespace-nowrap">
-          {displayLevel}
-        </span>
-      </div>
+        <div
+          className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
+        >
+          <span style={{ fontSize }} className="whitespace-nowrap">
+            {displayLevel}
+          </span>
+        </div>
+      </motion.div>
 
       {/* Glassy Popup on the LEFT with neon teal accents */}
       <AnimatePresence>
@@ -756,6 +789,36 @@ export function XPDisplay() {
                 Max Level Reached!
               </div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* XP Gain Popup */}
+      <AnimatePresence>
+        {xpGain !== null && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: -30 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.5 }}
+            className="absolute left-[-80px] top-1/2 transform -translate-y-1/2 bg-green-500 text-white px-2 py-1 rounded shadow-lg z-50"
+          >
+            +{xpGain} XP
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Level Up Popup */}
+      <AnimatePresence>
+        {showLevelUpPopup && (
+          <motion.div
+            initial={{ opacity: 0, x: -20, y: -10 }}
+            animate={{ opacity: 1, x: -30, y: -10 }}
+            exit={{ opacity: 0, x: -50, y: -10 }}
+            transition={{ duration: 0.5 }}
+            className="absolute left-[-80px] top-0 bg-blue-500 text-white px-2 py-1 rounded shadow-lg z-50"
+          >
+            Leveled Up!
           </motion.div>
         )}
       </AnimatePresence>
