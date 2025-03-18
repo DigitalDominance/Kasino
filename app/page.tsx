@@ -2,18 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Menu, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Search, Menu } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 import { SiteFooter } from "@/components/site-footer";
-import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { GiCheerful, GiStarFormation } from "react-icons/gi";
-import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -51,7 +47,7 @@ function MainPageContent() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Banners (including Kasen promo as second slot)
+  // Banners
   const mainBanners = [
     "/roulettebanner.webp",
     "/kasenpromo.png",
@@ -75,13 +71,11 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Banner manual controls
   const nextBanner = () =>
     setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
   const prevBanner = () =>
     setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length);
 
-  // Auto-rotate banners every 4 seconds
   useEffect(() => {
     const rotation = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % mainBanners.length);
@@ -160,7 +154,7 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Fake loading for demonstration
+  // Simulate a loading state
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
     return () => clearTimeout(timer);
@@ -429,7 +423,7 @@ function MainPageContent() {
                                   <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -522,7 +516,7 @@ function MainPageContent() {
                                   <span className="text-sm text-gray-400">High Score:</span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -648,9 +642,9 @@ function XPDisplay() {
 
   // Poll the /api/user endpoint every 5 seconds for live XP updates.
   useEffect(() => {
-    if (isConnected && window.kasware && window.kasware.getAccounts) {
-      const fetchXP = async () => {
-        try {
+    const fetchXP = async () => {
+      try {
+        if (isConnected && window.kasware && window.kasware.getAccounts) {
           const accounts: string[] = await window.kasware.getAccounts();
           if (!accounts || accounts.length === 0) {
             console.error("XPDisplay: No accounts returned by kasware.getAccounts()");
@@ -673,26 +667,26 @@ function XPDisplay() {
           } else {
             console.error("XPDisplay: API did not return a valid user:", res.data);
           }
-        } catch (err) {
-          console.error("XPDisplay: Error fetching user XP data:", err);
+        } else {
+          console.error("XPDisplay: Not connected or kasware.getAccounts not available");
         }
-      };
+      } catch (err) {
+        console.error("XPDisplay: Error fetching user XP data:", err);
+      }
+    };
 
-      // Initial fetch
-      fetchXP();
+    // Initial fetch
+    fetchXP();
 
-      // Set up polling every 5 seconds
-      const interval = setInterval(fetchXP, 5000);
-      return () => clearInterval(interval);
-    } else {
-      console.error("XPDisplay: Not connected or kasware.getAccounts not available");
-    }
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchXP, 5000);
+    return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // If a user has any XP but the level is 0, force display level 1.
-  const displayLevel = userData.totalXp > 0 ? Math.max(userData.level, 1) : 0;
+  // Use userData.level directly (allowing level 0 to be displayed)
+  const displayLevel = userData.level;
 
-  // Calculate cumulative XP threshold for a given level (using the same formula as backend)
+  // Calculate cumulative XP threshold for the given level
   const getThreshold = (level: number) => {
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
@@ -709,7 +703,7 @@ function XPDisplay() {
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
 
-  // Determine border color based on level ranges.
+  // Determine border color based on level ranges:
   let borderColorClass = "";
   if (displayLevel < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -727,29 +721,29 @@ function XPDisplay() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Default circle showing the level number */}
+      {/* XP Circle */}
       <div
         className={`w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}
       >
         <span className="text-sm">{displayLevel}</span>
       </div>
 
-      {/* Hover popup with progress details */}
+      {/* Glassy Popup on the LEFT with neon teal accents */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-3 bg-gray-900 rounded shadow-lg z-50"
+            className="absolute top-0 right-full mr-2 w-64 p-4 bg-gray-200/30 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50"
           >
             {displayLevel < 100 ? (
               <>
-                <div className="text-white text-sm mb-2">
+                <div className="text-teal-300 text-sm mb-2">
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
-                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <div className="flex justify-between text-xs text-teal-300 mb-1">
                   <span>{xpProgress.toFixed(0)} XP</span>
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
@@ -759,12 +753,12 @@ function XPDisplay() {
                     className="bg-teal-500 h-2 rounded-full"
                   ></div>
                 </div>
-                <div className="text-white text-xs mt-1 text-center">
+                <div className="text-teal-300 text-xs mt-1 text-center">
                   {progressPercent.toFixed(1)}% to next level
                 </div>
               </>
             ) : (
-              <div className="text-white text-sm text-center">
+              <div className="text-teal-300 text-sm text-center">
                 Max Level Reached!
               </div>
             )}
