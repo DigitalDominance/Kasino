@@ -42,7 +42,7 @@ function MainPageContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Live wins, counters, high scores
+  // Live wins, win counter, high scores
   const [liveWins, setLiveWins] = useState<Win[]>([]);
   const [winCounter, setWinCounter] = useState<any[]>([]);
   const [highScores, setHighScores] = useState<{ [key: string]: number }>({});
@@ -160,7 +160,7 @@ function MainPageContent() {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Fake loading
+  // Fake loading for demonstration
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
