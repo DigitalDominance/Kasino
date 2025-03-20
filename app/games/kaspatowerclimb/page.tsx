@@ -16,6 +16,8 @@ import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
+// Import XPDisplay to integrate the XP level display into the nav
+import { XPDisplay } from "@/app/page";
 
 // ---------------------------------------------------------
 // Font & Constants
@@ -336,7 +338,14 @@ function TowerClimbContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* XPDisplay integrated into the nav */}
+            <XPDisplay />
             <WalletConnection />
           </motion.div>
         </header>
