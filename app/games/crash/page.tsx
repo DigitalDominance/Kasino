@@ -12,6 +12,8 @@ import { CrashControls } from "./crash-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
+// Import XPDisplay the same way as in other games
+import { XPDisplay } from "@/app/page";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Montserrat } from "next/font/google";
@@ -179,7 +181,16 @@ function CrashContent() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Games
             </Link>
-            <WalletConnection />
+            <motion.div
+              className="flex items-center gap-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* XPDisplay integrated into the nav */}
+              <XPDisplay />
+              <WalletConnection />
+            </motion.div>
           </motion.div>
 
           {/* Display deposit TXID */}
@@ -278,9 +289,6 @@ function CrashContent() {
           </motion.div>
         )}
       </AnimatePresence>
-
-
-
 
       {/* Result Modal Popup */}
       <AnimatePresence>
