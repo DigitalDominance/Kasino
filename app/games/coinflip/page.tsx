@@ -12,6 +12,8 @@ import { CoinFlipControls } from "./coinflip-controls";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
+// Import XPDisplay the same way as in the nav for other games
+import { XPDisplay } from "@/app/page";
 import { useWallet } from "@/contexts/WalletContext";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
@@ -33,11 +35,9 @@ function CoinFlipContent() {
   const [selectedMultiplier, setSelectedMultiplier] = useState(2);
   const [selectedSymbol, setSelectedSymbol] = useState<"sun" | "moon">("sun");
   const [gameId, setGameId] = useState<string | null>(null);
-  // State to hold the deposit transaction ID so the user can monitor it
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
-  // API URL for backend calls
+
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
-  // Treasury wallet addresses (for deposit) exposed as public env variables (only addresses)
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
@@ -52,37 +52,29 @@ function CoinFlipContent() {
       return;
     }
     try {
-      // Generate a unique game identifier
       const uniqueHash = uuidv4();
-
-      // Get the connected wallet address directly using kasware
       const accounts = await window.kasware.getAccounts();
       const currentWalletAddress = accounts[0];
       if (!currentWalletAddress) {
         alert("No wallet address found");
         return;
       }
-
-      // Randomly pick one of the two treasury wallet addresses for deposit
       const chosenTreasury =
         Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-
-      // Send the deposit transaction from the user's wallet to the chosen treasury.
-      // (This transaction sends the bet amount in KAS.)
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
         bet * 1e8,
         { priorityFee: 10000 }
       );
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Call backend API to start the game.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "coinflip",
         uniqueHash,
@@ -107,7 +99,6 @@ function CoinFlipContent() {
     setGameResult(result);
     setWinAmount(winAmt);
     setIsPlaying(false);
-    // Call backend API to end the game and disperse prize if applicable.
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
@@ -139,12 +130,18 @@ function CoinFlipContent() {
               Back to Games
             </Link>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* XPDisplay is now integrated into the nav */}
+            <XPDisplay />
             <WalletConnection />
           </motion.div>
         </header>
 
-        {/* Display deposit TXID so the user can monitor their transaction */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -164,7 +161,6 @@ function CoinFlipContent() {
           </p>
         )}
 
-        {/* Game Area */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full">
@@ -209,7 +205,6 @@ function CoinFlipContent() {
       </div>
       <SiteFooter />
 
-      {/* How to Play Modal */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
