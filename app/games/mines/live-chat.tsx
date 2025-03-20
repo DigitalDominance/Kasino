@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/contexts/WalletContext";
+import axios from "axios";
 
 interface ChatMessage {
   username: string;
@@ -18,20 +19,46 @@ interface LiveChatProps {
   textColor?: string;
 }
 
-// Helper to escape a single character for regex.
-function escapeChar(ch: string): string {
-  return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// ---------------------------------------------------------------------
+// New Component: UserLevelBadge
+// ---------------------------------------------------------------------
+// Given a wallet address (assumed to be in the form "kaspa:..."),
+// this component fetches the user's level from our API and displays it
+// in a small circle badge.
+function UserLevelBadge({ walletAddress }: { walletAddress: string }) {
+  const [level, setLevel] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchLevel() {
+      try {
+        const res = await axios.get(
+          `/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+        );
+        if (res.data.success && res.data.user && res.data.user.level !== undefined) {
+          setLevel(res.data.user.level);
+        }
+      } catch (err) {
+        console.error("Error fetching level for", walletAddress, err);
+      }
+    }
+    fetchLevel();
+  }, [walletAddress]);
+
+  if (level === null) return null;
+
+  return (
+    <span
+      className="inline-block w-6 h-6 rounded-full border border-teal-500 flex items-center justify-center text-xs text-teal-500 mr-1"
+      title={`Level ${level}`}
+    >
+      {level}
+    </span>
+  );
 }
 
-// Generate a regex that matches the banned word even if there are spaces between its letters.
-// First remove all spaces from the word, then escape each character individually and join with \s*.
-function createBannedRegex(word: string): RegExp {
-  const trimmed = word.replace(/\s+/g, "");
-  const escapedChars = trimmed.split("").map((ch) => escapeChar(ch));
-  const pattern = escapedChars.join("\\s*");
-  return new RegExp(`\\b${pattern}\\b`, "i");
-}
-
+// ---------------------------------------------------------------------
+// LiveChat Component
+// ---------------------------------------------------------------------
 export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -57,6 +84,19 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     "twatwaffle", "wazzock", "niggaballs",
     "cum", "porn", "no links allowed"
   ];
+
+  // Helper to escape a single character for regex.
+  function escapeChar(ch: string): string {
+    return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Generate a regex that matches the banned word even if there are spaces between its letters.
+  function createBannedRegex(word: string): RegExp {
+    const trimmed = word.replace(/\s+/g, "");
+    const escapedChars = trimmed.split("").map((ch) => escapeChar(ch));
+    const pattern = escapedChars.join("\\s*");
+    return new RegExp(`\\b${pattern}\\b`, "i");
+  }
 
   // Build an array of regexes from the banned words.
   const bannedRegexes = bannedWords.map(createBannedRegex);
@@ -101,7 +141,11 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Live Chat</h3>
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
-            <div key={index} className="mb-2">
+            <div key={index} className="mb-2 flex items-center">
+              {/* If the username looks like a wallet address, display the level badge */}
+              {msg.username.startsWith("kaspa:") && (
+                <UserLevelBadge walletAddress={msg.username} />
+              )}
               <span
                 className="font-bold"
                 style={{
