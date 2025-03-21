@@ -19,12 +19,12 @@ interface LiveChatProps {
   textColor?: string;
 }
 
-// ---------------------------------------------------------------------
-// New Component: UserLevelBadge
-// ---------------------------------------------------------------------
-// Given a wallet address (assumed to be in the form "kaspa:..."),
-// this component fetches the user's level from our API and displays it
-// in a small circle badge.
+/**
+ * UserLevelBadge Component
+ *
+ * Uses the same API call and styling as XPDisplay, but accepts a walletAddress
+ * prop (which in this case is the username from the chat message) and displays the user's level.
+ */
 function UserLevelBadge({ walletAddress }: { walletAddress: string }) {
   const [level, setLevel] = useState<number | null>(null);
 
@@ -56,16 +56,13 @@ function UserLevelBadge({ walletAddress }: { walletAddress: string }) {
   );
 }
 
-// ---------------------------------------------------------------------
-// LiveChat Component
-// ---------------------------------------------------------------------
 export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const { isConnected, username } = useWallet();
 
-  // Comprehensive banned words list (with many variations, phrases, and extra entries)
+  // Banned words list and helper functions remain the same.
   const bannedWords = [
     "anal", "anus", "arse", "ass", "asshole", "ballsack", "balls", "bastard", "bitch", "biatch", "bloody",
     "blowjob", "blow job", "bollock", "bollok", "boner", "boob", "bugger", "bum", "butt", "buttplug",
@@ -85,23 +82,19 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     "cum", "porn", "no links allowed"
   ];
 
-  // Helper to escape a single character for regex.
   function escapeChar(ch: string): string {
     return ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // Generate a regex that matches the banned word even if there are spaces between its letters.
   function createBannedRegex(word: string): RegExp {
     const trimmed = word.replace(/\s+/g, "");
-    const escapedChars = trimmed.split("").map((ch) => escapeChar(ch));
+    const escapedChars = trimmed.split("").map(escapeChar);
     const pattern = escapedChars.join("\\s*");
     return new RegExp(`\\b${pattern}\\b`, "i");
   }
 
-  // Build an array of regexes from the banned words.
   const bannedRegexes = bannedWords.map(createBannedRegex);
 
-  // Custom filter: if any banned regex matches, return "*****"; otherwise, return the original message.
   function filterMessage(message: string): string {
     for (const regex of bannedRegexes) {
       if (regex.test(message)) {
@@ -142,10 +135,8 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* If the username looks like a wallet address, display the level badge */}
-              {msg.username.startsWith("kaspa:") && (
-                <UserLevelBadge walletAddress={msg.username} />
-              )}
+              {/* Always display the level badge next to the username */}
+              <UserLevelBadge walletAddress={msg.username} />
               <span
                 className="font-bold"
                 style={{
