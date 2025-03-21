@@ -17,9 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import * as THREE from "three";
-
-// Remove OrbitControls so camera is locked automatically
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
@@ -27,11 +25,9 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 // Constants & Config
 // ------------------------------------------------------
 const NUM_ROWS = 10; // total steps to cross
-const TILES_PER_ROW = 3; // always 3 columns
-const TILE_SPACING_X = 3; // horizontal gap between columns
-const TILE_SPACING_Z = -3; // negative Z moves “forward” in our scene
+const TILE_SPACING_Z = -4; // negative Z moves “forward”
 const BASE_MULTIPLIER = 1.1; // each successful step multiplies bet by 1.1^row
-const ROAD_LENGTH = 40; // length of the central road plane
+const ROAD_LENGTH = 20; // length of the central road plane
 const SIDE_GRASS_WIDTH = 4; // each side's grass plane width
 
 // ------------------------------------------------------
@@ -259,13 +255,14 @@ function KaspianCrossContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet and press “Spin Kaspian Cross” to begin.</li>
               <li>
-                You’ll see 3 tiles (lanes) per row. Only one tile is safe. Click a tile to move there.
+                You’ll see **one tile** per row. Click the tile to attempt crossing to the next row.
               </li>
               <li>
-                If you pick correctly, your traveler moves forward and your multiplier grows (1.1× each step).
+                Each row has a certain chance to be safe. If it’s safe, your character advances and your
+                multiplier grows (1.1× each step).
               </li>
               <li>
-                If you pick the wrong tile, a car collision ends the game and you lose your bet.
+                If the tile isn’t safe, a car collision ends the game and you lose your bet.
               </li>
               <li>
                 You can **Cash Out** after any successful step to secure your current multiplier.
@@ -285,7 +282,7 @@ function KaspianCrossContent() {
 }
 
 // ------------------------------------------------------
-// KaspianCrossGame – 3D logic
+// KaspianCrossGame – 3D logic (One tile per row)
 // ------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -294,31 +291,29 @@ interface KaspianCrossGameProps {
 }
 
 function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameProps) {
-  // Row-based approach
-  // Each row has exactly 1 safe tile
-  const [rows, setRows] = useState<number[]>(() =>
-    Array.from({ length: NUM_ROWS }, () => Math.floor(Math.random() * TILES_PER_ROW))
+  // Each row is either safe (true) or not safe (false).
+  // For example: 70% chance to be safe
+  const [rows, setRows] = useState<boolean[]>(() =>
+    Array.from({ length: NUM_ROWS }, () => Math.random() < 0.7)
   );
+
   // Current row index
   const [currentRow, setCurrentRow] = useState(0);
   // Has the game ended?
   const [gameOver, setGameOver] = useState(false);
   // Has the user advanced at least 1 row? (for enabling Cash Out)
   const [hasAdvanced, setHasAdvanced] = useState(false);
-
-  // Character position states
-  const [charXIndex, setCharXIndex] = useState<number>(1); // start in middle tile
-  const [charZIndex, setCharZIndex] = useState<number>(-1); // start behind row 0
-
   // Multiplier
   const [multiplier, setMultiplier] = useState(1);
+
+  // Character's row index in Z
+  const [charZIndex, setCharZIndex] = useState(-1); // start behind row 0
 
   // On game start, reset
   useEffect(() => {
     if (isPlaying) {
-      setRows(Array.from({ length: NUM_ROWS }, () => Math.floor(Math.random() * TILES_PER_ROW)));
+      setRows(Array.from({ length: NUM_ROWS }, () => Math.random() < 0.7));
       setCurrentRow(0);
-      setCharXIndex(1);
       setCharZIndex(-1);
       setMultiplier(1);
       setGameOver(false);
@@ -326,36 +321,30 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     }
   }, [isPlaying]);
 
-  // Move to tile (row, tileIndex)
-  const pickTile = (rowIndex: number, tileIndex: number) => {
-    if (gameOver || rowIndex !== currentRow) return; // only pick on current row
-    // Check if tileIndex matches safe tile
-    const safeIndex = rows[rowIndex];
-    if (tileIndex === safeIndex) {
-      // correct pick
-      const newRow = currentRow + 1;
+  // Move to row
+  const pickRow = (rowIndex: number) => {
+    if (gameOver || rowIndex !== currentRow) return;
+    const isSafe = rows[rowIndex];
+    // Move character onto that tile
+    setCharZIndex(rowIndex);
+    if (isSafe) {
+      // success
+      const newRow = rowIndex + 1;
       const newMultiplier = Math.pow(BASE_MULTIPLIER, newRow);
       setMultiplier(Number(newMultiplier.toFixed(2)));
       setHasAdvanced(true);
 
-      // move character to this tile
-      setCharXIndex(tileIndex);
-      setCharZIndex(rowIndex);
-
       if (newRow >= NUM_ROWS) {
-        // Auto-win if we reached the final row
+        // Reached final row => auto-win
         setTimeout(() => {
           onGameEnd("You Win", betAmount * newMultiplier);
           setGameOver(true);
         }, 600);
       } else {
-        // go to next row
         setCurrentRow(newRow);
       }
     } else {
-      // wrong pick => collision
-      setCharXIndex(tileIndex);
-      setCharZIndex(rowIndex);
+      // collision
       setTimeout(() => {
         setGameOver(true);
         onGameEnd("House Wins", 0);
@@ -373,7 +362,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
   return (
     <div className="w-full h-full relative">
-      {/* If not playing, show a pre-game overlay with instructions */}
+      {/* If not playing, show a pre-game overlay */}
       {!isPlaying && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 p-4">
           <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">Get Ready to Cross!</h1>
@@ -381,16 +370,15 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
           <Image src="/crosspreview.png" alt="Preview" width={180} height={100} />
         </div>
       )}
-      {/* The 3D scene */}
-      <CrossScene
+
+      <SingleTileScene
         currentRow={currentRow}
-        charXIndex={charXIndex}
         charZIndex={charZIndex}
         rows={rows}
-        pickTile={pickTile}
+        pickRow={pickRow}
         gameOver={gameOver}
       />
-      {/* Multiplier display & Cash Out button */}
+
       {isPlaying && !gameOver && (
         <>
           <div className="absolute top-4 left-4 text-xl font-bold text-lime-300">
@@ -410,31 +398,29 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 }
 
 // ------------------------------------------------------
-// CrossScene – The Three.js scene
+// SingleTileScene – The Three.js scene with 1 tile/row
 // ------------------------------------------------------
-interface CrossSceneProps {
+interface SingleTileSceneProps {
   currentRow: number;
-  charXIndex: number;
   charZIndex: number; // which row the character is standing on
-  rows: number[]; // each row’s safe tile index
-  pickTile: (rowIndex: number, tileIndex: number) => void;
+  rows: boolean[]; // each row’s safe or not
+  pickRow: (rowIndex: number) => void;
   gameOver: boolean;
 }
 
-function CrossScene({
+function SingleTileScene({
   currentRow,
-  charXIndex,
   charZIndex,
   rows,
-  pickTile,
+  pickRow,
   gameOver,
-}: CrossSceneProps) {
+}: SingleTileSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
-  const characterRef = useRef<THREE.Mesh>(null);
-  const tileMeshesRef = useRef<THREE.Mesh[]>([]);
+  const characterRef = useRef<THREE.Group | null>(null);
+  const tileRefs = useRef<THREE.Mesh[]>([]);
   const requestRef = useRef<number>();
 
   // Setup the scene
@@ -447,7 +433,7 @@ function CrossScene({
 
     // Camera
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 10, 12);
+    camera.position.set(0, 8, 10);
     cameraRef.current = camera;
 
     // Renderer
@@ -460,20 +446,19 @@ function CrossScene({
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
-    // Add a directional light for shadows
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
 
     // Road plane
-    const roadGeom = new THREE.PlaneGeometry(ROAD_LENGTH, NUM_ROWS * Math.abs(TILE_SPACING_Z) + 10);
+    const roadGeom = new THREE.PlaneGeometry(ROAD_LENGTH, NUM_ROWS * Math.abs(TILE_SPACING_Z) + 20);
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b });
     const road = new THREE.Mesh(roadGeom, roadMat);
     road.rotation.x = -Math.PI / 2;
     road.position.z = -(NUM_ROWS * Math.abs(TILE_SPACING_Z)) / 2;
     scene.add(road);
 
-    // Grass on left
+    // Grass left
     const grassGeom = new THREE.PlaneGeometry(SIDE_GRASS_WIDTH, roadGeom.parameters.height);
     const grassMat = new THREE.MeshStandardMaterial({ color: 0x003300 });
     const grassLeft = new THREE.Mesh(grassGeom, grassMat);
@@ -481,41 +466,39 @@ function CrossScene({
     grassLeft.position.set(-ROAD_LENGTH / 2 - SIDE_GRASS_WIDTH / 2, 0, road.position.z);
     scene.add(grassLeft);
 
-    // Grass on right
+    // Grass right
     const grassRight = new THREE.Mesh(grassGeom, grassMat);
     grassRight.rotation.x = -Math.PI / 2;
     grassRight.position.set(ROAD_LENGTH / 2 + SIDE_GRASS_WIDTH / 2, 0, road.position.z);
     scene.add(grassRight);
 
-    // Create all row tiles (for 10 rows, each with 3 columns)
-    tileMeshesRef.current = [];
+    // Create tiles (1 per row)
+    tileRefs.current = [];
     for (let row = 0; row < NUM_ROWS; row++) {
-      for (let col = 0; col < TILES_PER_ROW; col++) {
-        const tileGeom = new THREE.BoxGeometry(2.5, 0.1, 2.5);
-        const tileMat = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.8,
-        });
-        const tileMesh = new THREE.Mesh(tileGeom, tileMat);
-        const xPos = (col - 1) * TILE_SPACING_X;
-        const zPos = row * TILE_SPACING_Z;
-        tileMesh.position.set(xPos, 0.05, zPos);
-        tileMesh.userData = { rowIndex: row, tileIndex: col };
-        scene.add(tileMesh);
-        tileMeshesRef.current.push(tileMesh);
-      }
+      const tileGeom = new THREE.BoxGeometry(3, 0.1, 3);
+      const tileMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8,
+      });
+      const tileMesh = new THREE.Mesh(tileGeom, tileMat);
+      tileMesh.position.set(0, 0.05, row * TILE_SPACING_Z);
+      tileMesh.userData = { rowIndex: row };
+      scene.add(tileMesh);
+      tileRefs.current.push(tileMesh);
     }
 
-    // Character: a greenish “human”
-    const charGeom = new THREE.BoxGeometry(0.8, 1.6, 0.5);
-    const charMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    const character = new THREE.Mesh(charGeom, charMat);
-    character.position.set(0, 0.8, 1.5); // start behind row 0
-    characterRef.current = character;
-    scene.add(character);
+    // Load your custom GLB model as the character
+    const loader = new GLTFLoader();
+    loader.load("/kaspacrosscharacter.glb", (gltf) => {
+      const model = gltf.scene;
+      model.scale.set(1.2, 1.2, 1.2);
+      model.position.set(0, 0, 3); // start behind row 0
+      scene.add(model);
+      characterRef.current = model;
+    });
 
-    // Click detection: raycaster
+    // Click detection: single tile per row
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -523,10 +506,10 @@ function CrossScene({
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(tileMeshesRef.current, false);
+      const intersects = raycaster.intersectObjects(tileRefs.current, false);
       if (intersects.length > 0) {
-        const { rowIndex, tileIndex } = intersects[0].object.userData;
-        pickTile(rowIndex, tileIndex);
+        const { rowIndex } = intersects[0].object.userData;
+        pickRow(rowIndex);
       }
     };
     renderer.domElement.addEventListener("click", onClick);
@@ -534,12 +517,11 @@ function CrossScene({
     // Animation loop
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
-      // Keep camera behind and above the character
+      // Keep camera behind and above the character if loaded
       if (characterRef.current) {
         const { x, z } = characterRef.current.position;
-        // Smooth camera follow
         camera.position.x += (x - camera.position.x) * 0.05;
-        camera.position.z += (z + 12 - camera.position.z) * 0.05; // behind the character
+        camera.position.z += (z + 10 - camera.position.z) * 0.05;
         camera.lookAt(x, 0.8, z);
       }
       renderer.render(scene, camera);
@@ -554,16 +536,13 @@ function CrossScene({
         mountRef.current?.removeChild(renderer.domElement);
       }
     };
-  }, [pickTile]);
+  }, [pickRow]);
 
-  // Each time charXIndex or charZIndex changes, move character
+  // Move the character model forward each time charZIndex changes
   useEffect(() => {
     if (!characterRef.current) return;
-    // Move the character to the correct tile
-    const newX = (charXIndex - 1) * TILE_SPACING_X;
+    // newZ is charZIndex * TILE_SPACING_Z
     const newZ = charZIndex * TILE_SPACING_Z;
-    // Animate from old position to new
-    const startX = characterRef.current.position.x;
     const startZ = characterRef.current.position.z;
     const duration = 400;
     const startTime = performance.now();
@@ -571,36 +550,32 @@ function CrossScene({
     const animateMove = (time: number) => {
       const elapsed = time - startTime;
       const t = Math.min(elapsed / duration, 1);
-      characterRef.current!.position.x = startX + (newX - startX) * t;
       characterRef.current!.position.z = startZ + (newZ - startZ) * t;
       if (t < 1) requestAnimationFrame(animateMove);
     };
     requestAnimationFrame(animateMove);
-  }, [charXIndex, charZIndex]);
+  }, [charZIndex]);
 
-  // If gameOver, spawn a car to collide
+  // If gameOver, spawn a “car”
   useEffect(() => {
     if (gameOver && characterRef.current && sceneRef.current) {
-      // “Realistic” car geometry
-      const carGeom = new THREE.BoxGeometry(1.5, 0.6, 3);
+      const carGeom = new THREE.BoxGeometry(2.5, 1, 4);
       const carMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
       const car = new THREE.Mesh(carGeom, carMat);
       const { x, z } = characterRef.current.position;
-      // spawn from right side
-      car.position.set(x + 5, 0.3, z);
+      // spawn from the right side
+      car.position.set(x + 6, 0.5, z);
       sceneRef.current.add(car);
 
-      // animate in 600ms
       const startTime = performance.now();
       const duration = 600;
       const animateCar = (time: number) => {
         const elapsed = time - startTime;
         const t = Math.min(elapsed / duration, 1);
-        car.position.x = x + 5 - 5 * t;
+        car.position.x = x + 6 - 6 * t;
         if (t < 1) {
           requestAnimationFrame(animateCar);
         } else {
-          // remove car
           sceneRef.current!.remove(car);
         }
       };
