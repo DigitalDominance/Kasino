@@ -8,6 +8,7 @@ import Image from "next/image";
 
 interface Win {
   username: string;
+  walletAddress?: string; // New: wallet address if available
   amount: number;
   game: string;
   timestamp: string;
@@ -17,12 +18,18 @@ interface LiveWinsProps {
   textColor?: string;
 }
 
-// Modified getScale: Accepts a base length so different fields can shrink at different thresholds.
+// Helper: Returns a scale factor based on text length.
 function getScale(text: string, baseLength: number = 10): number {
   const minScale = 0.6;
   if (text.length <= baseLength) return 1;
   const scale = 1 - (text.length - baseLength) * 0.02;
   return Math.max(minScale, scale);
+}
+
+// Helper: Checks if a string looks like a wallet address.
+// (You can adjust this logic as needed.)
+function isWallet(text: string): boolean {
+  return text.includes("kaspa:"); // Example condition; adjust if needed.
 }
 
 export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
@@ -31,15 +38,21 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // If username looks like a wallet address, attempt to resolve it.
+  // Resolve username if it appears to be a wallet address.
   const resolveUsername = async (win: Win): Promise<Win> => {
-    if (win.username.startsWith("kaspa:")) {
+    // If there is no walletAddress and the username looks like a wallet,
+    // then resolve the username.
+    if (!win.walletAddress && isWallet(win.username)) {
       try {
         const res = await axios.get(
           `/api/user?walletAddress=${encodeURIComponent(win.username)}`
         );
         if (res.data && res.data.username) {
-          return { ...win, username: res.data.username };
+          return { 
+            ...win, 
+            username: res.data.username,
+            walletAddress: win.username // Preserve the original wallet address.
+          };
         }
       } catch (err) {
         console.error("Error resolving username for wallet", win.username, err);
@@ -76,7 +89,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         </h3>
         <ScrollArea className="h-[200px]">
           {wins.map((win, index) => {
-            // Compute separate scale factors for username and game name.
+            // Compute scale factors (different base lengths can be used).
             const usernameScale = getScale(win.username, 10);
             const gameScale = getScale(win.game, 8);
 
@@ -86,10 +99,10 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                 className="mb-2 flex items-center justify-between space-x-2 text-xs"
               >
                 <div className="flex items-center space-x-1 flex-grow">
-                  {/* Display WinsXPBadge if username is a wallet address */}
-                  {win.username.startsWith("kaspa:") && (
+                  {/* Render XP badge if walletAddress is available */}
+                  {win.walletAddress && (
                     <WinsXPBadge
-                      walletAddress={win.username}
+                      walletAddress={win.walletAddress}
                       scale={usernameScale}
                     />
                   )}
@@ -144,8 +157,10 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
 /**
  * WinsXPBadge Component
  *
- * Remade for LiveWins. Fetches and displays the XP level for a given wallet address.
- * Renders a circular badge with a background image (xpimage.webp) and responsive sizing.
+ * This component is a direct adaptation of your ChatXPDisplay for LiveWins.
+ * It fetches and displays the XP level for a given wallet address,
+ * renders a circular badge with a background image (xpimage.webp),
+ * and scales responsively.
  */
 function WinsXPBadge({
   walletAddress,
@@ -181,7 +196,7 @@ function WinsXPBadge({
     fetchXP();
   }, [walletAddress, apiUrl]);
 
-  // Determine border styling based on level.
+  // Determine border styling based on the user's level.
   let borderColorClass = "";
   if (userData.level < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
