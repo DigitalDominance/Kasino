@@ -21,22 +21,20 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
-// ------------------------------------------------------
-// Constants & Config
-// ------------------------------------------------------
-const NUM_ROWS = 10; // total steps to cross
-const TILE_SPACING_Z = -5; // negative Z moves “forward”
-const BASE_MULTIPLIER = 1.1; // each successful step multiplies bet by 1.1^row
-const ROAD_WIDTH = 40; // how wide the multi-lane highway is
-const ROAD_HEIGHT = 60; // how long the highway extends front-to-back
-const START_Z_OFFSET = 4; // how far behind row 0 the character starts
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+const NUM_ROWS = 10;                  // total steps to cross
+const TILE_SPACING_Z = -5;            // negative Z moves “forward”
+const BASE_MULTIPLIER = 1.1;          // each successful step multiplies bet by 1.1^row
+const SAFE_PROBABILITY = 0.7;         // 70% chance each tile is safe
+const ROAD_WIDTH = 40;                // how wide the multi-lane highway is
+const ROAD_HEIGHT = 60;               // how long the highway extends
+const COLLISION_POPUP_DELAY = 2000;   // 2s delay before showing the game-over popup
 
-// Probability of each row being safe
-const SAFE_PROBABILITY = 0.7;
-
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Main Page
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
 export default function KaspianCrossPage() {
   return <KaspianCrossContent />;
 }
@@ -51,7 +49,7 @@ function KaspianCrossContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
-  // Example API config
+  // Example backend config
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
@@ -91,7 +89,7 @@ function KaspianCrossContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Start on backend
+      // Notify backend
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kaspian Cross",
         uniqueHash,
@@ -105,6 +103,7 @@ function KaspianCrossContent() {
         alert("Failed to start game on backend");
         return;
       }
+
       // Reset local state
       setIsPlaying(true);
       setGameResult(null);
@@ -291,9 +290,9 @@ function KaspianCrossContent() {
   );
 }
 
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
 // KaspianCrossGame – 3D logic (One tile per row, multi-lane highway)
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
   betAmount: number;
@@ -341,6 +340,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     const isSafe = rows[rowIndex];
     // Move character onto that tile
     setCharZIndex(rowIndex);
+
     if (isSafe) {
       // success
       const newRow = rowIndex + 1;
@@ -357,10 +357,10 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         setCurrentRow(newRow);
       }
     } else {
-      // collision
+      // collision => wait 2s for the car to show up, THEN show popup
       setTimeout(() => {
         handleLose();
-      }, 600);
+      }, COLLISION_POPUP_DELAY);
     }
   };
 
@@ -413,22 +413,35 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         currentRow={currentRow}
         charZIndex={charZIndex}
         rows={rows}
-        pickRow={pickRow}
         gameOver={gameOver}
       />
 
       {/* UI Overlays */}
       {isPlaying && !gameOver && (
         <>
-          <div className="absolute top-4 left-4 text-xl font-bold text-lime-300">
-            Multiplier: {multiplier}×
+          {/* A nicer, bigger multiplier HUD */}
+          <div className="absolute top-6 left-6 bg-black/60 px-4 py-2 rounded-md shadow-md">
+            <div className="text-2xl font-extrabold text-lime-300 tracking-wider">
+              {multiplier.toFixed(2)}×
+            </div>
+            <div className="text-sm text-white opacity-80">Current Multiplier</div>
           </div>
+
+          {/* Cash Out button, more stylized */}
           {hasAdvanced && (
-            <div className="absolute bottom-4 right-4">
-              <Button onClick={cashOut} className="bg-lime-400 text-black hover:bg-lime-300">
+            <motion.div
+              className="absolute bottom-6 right-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <Button
+                onClick={cashOut}
+                className="bg-lime-400 text-black font-bold px-6 py-3 hover:bg-lime-300 text-xl"
+              >
                 Cash Out
               </Button>
-            </div>
+            </motion.div>
           )}
         </>
       )}
@@ -461,14 +474,13 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   );
 }
 
-// ------------------------------------------------------
-// MultiLaneHighwayScene – The Three.js scene
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
+// MultiLaneHighwayScene – The Three.js scene with multipliers on each tile
+// ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentRow: number;
   charZIndex: number;
   rows: boolean[];
-  pickRow: (rowIndex: number) => void;
   gameOver: boolean;
 }
 
@@ -476,7 +488,6 @@ function MultiLaneHighwayScene({
   currentRow,
   charZIndex,
   rows,
-  pickRow,
   gameOver,
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -486,21 +497,17 @@ function MultiLaneHighwayScene({
   const characterRef = useRef<THREE.Group | null>(null);
   const tileRefs = useRef<THREE.Mesh[]>([]);
   const requestRef = useRef<number>();
-
-  // We’ll load the car model once for collisions
   const carModelRef = useRef<THREE.Group | null>(null);
 
-  // Setup the scene
   useEffect(() => {
+    // Scene & camera
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
     scene.background = new THREE.Color(0x000000);
+    sceneRef.current = scene;
 
-    // Camera
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Position the camera behind the character
     camera.position.set(0, 10, 14);
     cameraRef.current = camera;
 
@@ -513,7 +520,6 @@ function MultiLaneHighwayScene({
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
-
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
@@ -523,11 +529,11 @@ function MultiLaneHighwayScene({
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x303030 });
     const road = new THREE.Mesh(roadGeom, roadMat);
     road.rotation.x = -Math.PI / 2;
-    // Move it so that row 0 is near the center
+    // Position so row 0 is near center
     road.position.z = -(ROAD_HEIGHT / 2) + 10;
     scene.add(road);
 
-    // Create tile for each row in the center
+    // Create tile for each row in the center, plus text label
     tileRefs.current = [];
     for (let row = 0; row < NUM_ROWS; row++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
@@ -537,56 +543,44 @@ function MultiLaneHighwayScene({
         opacity: 0.9,
       });
       const tileMesh = new THREE.Mesh(tileGeom, tileMat);
-      // position in the middle of the highway
       tileMesh.position.set(0, 0.05, row * TILE_SPACING_Z);
-      tileMesh.userData = { rowIndex: row };
       scene.add(tileMesh);
       tileRefs.current.push(tileMesh);
+
+      // Attach userData so we can detect clicks
+      tileMesh.userData = { rowIndex: row };
+
+      // Calculate multiplier for this tile: 1.1^(row+1)
+      const tileMultiplier = Math.pow(BASE_MULTIPLIER, row + 1);
+      addMultiplierLabelToTile(tileMesh, tileMultiplier);
     }
 
-    // Load the character model
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.load("/kaspacrosscharacter.glb", (gltf) => {
+    // Load character
+    const loader = new GLTFLoader();
+    loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
       model.scale.set(2, 2, 2);
-      // Rotate 180 so it faces “forward” away from the camera
+      // Face forward away from camera
       model.rotation.y = Math.PI;
-      // Raise it slightly
-      model.position.set(0, 0.5, 5); // behind row 0
+      // Raise up so legs not in ground
+      model.position.set(0, 1.2, 5);
       scene.add(model);
       characterRef.current = model;
     });
 
-    // Load the car model once (for collision usage)
-    gltfLoader.load("/kaspacrosscar.glb", (gltf) => {
+    // Load car
+    loader.load("/kaspacrosscar.glb", (gltf) => {
       carModelRef.current = gltf.scene;
     });
-
-    // Raycasting for tile clicks
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    const onClick = (e: MouseEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(tileRefs.current, false);
-      if (intersects.length > 0) {
-        const { rowIndex } = intersects[0].object.userData;
-        pickRow(rowIndex);
-      }
-    };
-    renderer.domElement.addEventListener("click", onClick);
 
     // Animation loop
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
-      // Keep camera behind the character if loaded
       if (characterRef.current) {
         const { x, z } = characterRef.current.position;
         camera.position.x += (x - camera.position.x) * 0.08;
         camera.position.z += (z + 14 - camera.position.z) * 0.08;
-        camera.lookAt(x, 0.5, z);
+        camera.lookAt(x, 1.2, z);
       }
       renderer.render(scene, camera);
     };
@@ -594,18 +588,16 @@ function MultiLaneHighwayScene({
 
     // Cleanup
     return () => {
-      renderer.domElement.removeEventListener("click", onClick);
       cancelAnimationFrame(requestRef.current!);
       if (renderer) {
         mountRef.current?.removeChild(renderer.domElement);
       }
     };
-  }, [pickRow]);
+  }, []);
 
-  // Move the character model forward each time charZIndex changes
+  // Move character on row change
   useEffect(() => {
     if (!characterRef.current) return;
-    // newZ is charZIndex * TILE_SPACING_Z
     const newZ = charZIndex * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
     const duration = 400;
@@ -620,46 +612,77 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(animateMove);
   }, [charZIndex]);
 
-  // If gameOver, spawn a car model from left or right
+  // Spawn car on gameOver
   useEffect(() => {
-    if (gameOver && characterRef.current && sceneRef.current && carModelRef.current) {
-      // Clone the car model so we can animate it
-      const carClone = carModelRef.current.clone(true);
-      carClone.scale.set(2, 2, 2);
-      // Randomly spawn from left or right
-      const fromLeft = Math.random() < 0.5;
-      const { x, z } = characterRef.current.position;
-      const spawnX = fromLeft ? -20 : 20;
-      carClone.position.set(spawnX, 0.5, z);
-      // If the car is from the left, rotate it 90 deg so it goes left->right
-      // If from the right, rotate it -90 deg
-      carClone.rotation.y = fromLeft ? Math.PI * 0.5 : -Math.PI * 0.5;
-      sceneRef.current.add(carClone);
+    if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current) return;
+    // Clone the car
+    const carClone = carModelRef.current.clone(true);
+    carClone.scale.set(2, 2, 2);
 
-      // Animate across the screen
-      const startTime = performance.now();
-      const duration = 1000;
-      const endX = fromLeft ? 20 : -20;
-      const animateCar = (time: number) => {
-        const elapsed = time - startTime;
-        const t = Math.min(elapsed / duration, 1);
-        carClone.position.x = spawnX + (endX - spawnX) * t;
-        if (t < 1) {
-          requestAnimationFrame(animateCar);
-        } else {
-          sceneRef.current!.remove(carClone);
-        }
-      };
-      requestAnimationFrame(animateCar);
-    }
+    // random left or right
+    const fromLeft = Math.random() < 0.5;
+    const { x, z } = characterRef.current.position;
+    const spawnX = fromLeft ? -20 : 20;
+    carClone.position.set(spawnX, 1, z);
+    carClone.rotation.y = fromLeft ? Math.PI * 0.5 : -Math.PI * 0.5;
+    sceneRef.current.add(carClone);
+
+    // Animate across
+    const startTime = performance.now();
+    const duration = 1000;
+    const endX = fromLeft ? 20 : -20;
+    const animateCar = (time: number) => {
+      const elapsed = time - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      carClone.position.x = spawnX + (endX - spawnX) * t;
+      if (t < 1) {
+        requestAnimationFrame(animateCar);
+      } else {
+        sceneRef.current!.remove(carClone);
+      }
+    };
+    requestAnimationFrame(animateCar);
   }, [gameOver]);
 
   return <div ref={mountRef} className="w-full h-full" />;
 }
 
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
+// addMultiplierLabelToTile
+// Creates a small text sprite above the tile showing its multiplier
+// ---------------------------------------------------------------------------
+function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
+  const labelText = `${multiplier.toFixed(2)}x`;
+
+  // Create a small canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "rgba(255,255,255,1)";
+  ctx.font = "48px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(labelText, canvas.width / 2, canvas.height / 2);
+
+  // Create a texture from the canvas
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+
+  // Create a sprite
+  const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(spriteMaterial);
+  // scale down
+  sprite.scale.set(2, 1, 1);
+
+  // position it above the tile
+  sprite.position.set(0, 1, 0);
+  tile.add(sprite);
+}
+
+// ---------------------------------------------------------------------------
 // Controls
-// ------------------------------------------------------
+// ---------------------------------------------------------------------------
 interface KaspianCrossControlsProps {
   betAmount: string;
   setBetAmount: (amount: string) => void;
@@ -823,10 +846,7 @@ function KaspianCrossControls({
                   : "Spin Kaspian Cross"}
               </Button>
             ) : (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                disabled
-              >
+              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
                 Playing...
               </Button>
             )}
