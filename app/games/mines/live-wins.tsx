@@ -84,7 +84,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                 <span
                   className="font-bold truncate"
                   style={{
-                    fontSize: "12px",
+                    fontSize: "8px",
                     maxWidth: "6rem", // limit how wide the username can grow
                     background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
                     WebkitBackgroundClip: "text",
@@ -96,7 +96,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                 {/* Amount */}
                 <span
                   style={{
-                    fontSize: "11px",
+                    fontSize: "10px",
                     color: textColor,
                   }}
                 >
@@ -111,7 +111,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                 {/* Game name */}
                 <span
                   style={{
-                    fontSize: "10px",
+                    fontSize: "8px",
                     color: textColor + "80",
                   }}
                 >
