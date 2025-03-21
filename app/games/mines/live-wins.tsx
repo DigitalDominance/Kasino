@@ -18,26 +18,6 @@ interface LiveWinsProps {
   textColor?: string;
 }
 
-/**
- * Computes a single scale factor for the entire row based on
- * the combined length of the username, amount, and game name,
- * plus a small overhead for the XP badge.
- * The row is then shrunk proportionally if it exceeds a threshold.
- */
-function computeRowScale(win: Win): number {
-  const amountStr = win.amount.toFixed(2);
-  // Combined length plus a small overhead for the badge
-  const totalLength = win.username.length + amountStr.length + win.game.length + 2;
-  const baseLength = 25;
-  const minScale = 0.4;
-
-  if (totalLength <= baseLength) return 1;
-
-  // For each character beyond baseLength, shrink ~2.5%
-  const scale = 1 - (totalLength - baseLength) * 0.025;
-  return Math.max(minScale, scale);
-}
-
 export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
   const [wins, setWins] = useState<Win[]>([]);
   const apiUrl =
@@ -92,67 +72,65 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
           Live Wins
         </h3>
         <ScrollArea className="h-[200px]">
-          {wins.map((win, index) => {
-            const rowScale = computeRowScale(win);
-
-            return (
-              <div
-                key={index}
-                className="mb-2 w-full overflow-hidden"
-                style={{
-                  // Shrink the entire row so it fits horizontally
-                  transform: `scale(${rowScale})`,
-                  transformOrigin: "left center",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <div className="flex items-center justify-between space-x-2 w-full">
-                  <div className="flex items-center space-x-1">
-                    {/* XP badge if walletAddress is available */}
-                    {win.walletAddress && (
-                      <WinsXPBadge walletAddress={win.walletAddress} />
-                    )}
-                    <span
-                      className="font-bold"
-                      style={{
-                        fontSize: "14px", // smaller base for username
-                        background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                      }}
-                    >
-                      {win.username}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span
-                      style={{
-                        color: textColor,
-                        fontSize: "12px", // smaller base for amount
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {win.amount.toFixed(2)}
-                    </span>
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                      alt="KAS"
-                      width={12}
-                      height={12}
-                    />
-                  </div>
+          {wins.map((win, index) => (
+            <div key={index} className="mb-2 w-full">
+              {/* 
+                Use a flex row with justify-between. 
+                min-w-0 on the row or subcontainers plus "truncate" 
+                ensures the text won't overflow horizontally. 
+              */}
+              <div className="flex items-center justify-between w-full min-w-0 space-x-3">
+                {/* Left side: XP badge + username */}
+                <div className="flex items-center min-w-0 space-x-1 overflow-hidden">
+                  {win.walletAddress && (
+                    <WinsXPBadge walletAddress={win.walletAddress} />
+                  )}
                   <span
+                    className="font-bold truncate"
                     style={{
-                      color: `${textColor}80`,
-                      fontSize: "11px", // smaller base for game
+                      fontSize: "14px",
+                      background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      // This maxWidth ensures the username truncates if too long
+                      maxWidth: "8rem",
                     }}
                   >
-                    {win.game.toUpperCase()}
+                    {win.username}
                   </span>
                 </div>
+
+                {/* Middle: amount + Kaspa icon */}
+                <div className="flex items-center space-x-1 whitespace-nowrap">
+                  <span
+                    style={{
+                      color: textColor,
+                      fontSize: "12px",
+                    }}
+                  >
+                    {win.amount.toFixed(2)}
+                  </span>
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                    alt="KAS"
+                    width={12}
+                    height={12}
+                  />
+                </div>
+
+                {/* Right side: game name */}
+                <span
+                  className="whitespace-nowrap"
+                  style={{
+                    color: `${textColor}80`,
+                    fontSize: "11px",
+                  }}
+                >
+                  {win.game.toUpperCase()}
+                </span>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </ScrollArea>
       </div>
     </Card>
@@ -164,7 +142,6 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
  *
  * Fetches and displays the XP level for a given wallet address.
  * Renders a small circular badge with a background image (xpimage.webp).
- * We keep it at a smaller base size since the entire row may be scaled down further.
  */
 function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
@@ -203,7 +180,6 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
     borderColorClass = "border-red-500 text-red-500";
   }
 
-  // Smaller base size for the badge
   const size = 24;
   let fontSize = 10;
   if (userData.level >= 100) {
@@ -216,7 +192,6 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        marginRight: "0.25rem",
         overflow: "hidden",
       }}
     >
