@@ -238,7 +238,12 @@ function ChatXPDisplay({
 
   // Adjust dimensions based on scale (base size: 32px, base font: 12px).
   const size = 32 * scale;
-  const fontSize = 12 * scale;
+  let fontSize = 12 * scale;
+
+  // If level is 3 digits or more, make the text slightly smaller
+  if (userData.level >= 100) {
+    fontSize *= 0.85; // reduce by ~15%
+  }
 
   return (
     <div
