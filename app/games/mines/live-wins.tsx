@@ -8,7 +8,7 @@ import Image from "next/image";
 
 interface Win {
   username: string;
-  walletAddress?: string; // New: wallet address if available
+  walletAddress?: string;
   amount: number;
   game: string;
   timestamp: string;
@@ -18,18 +18,24 @@ interface LiveWinsProps {
   textColor?: string;
 }
 
-// Helper: Returns a scale factor based on text length.
-function getScale(text: string, baseLength: number = 10): number {
-  const minScale = 0.6;
-  if (text.length <= baseLength) return 1;
-  const scale = 1 - (text.length - baseLength) * 0.02;
-  return Math.max(minScale, scale);
-}
+/**
+ * Computes a single scale factor for an entire row based on
+ * the combined length of the username, amount, and game name.
+ * If it's too long, we shrink the entire row so it won't overflow.
+ */
+function computeRowScale(win: Win): number {
+  // The sum of lengths of username, game, and the string of the amount
+  const amountStr = win.amount.toFixed(2);
+  const totalLength = win.username.length + win.game.length + amountStr.length;
 
-// Helper: Checks if a string looks like a wallet address.
-// (You can adjust this logic as needed.)
-function isWallet(text: string): boolean {
-  return text.includes("kaspa:"); // Example condition; adjust if needed.
+  const baseLength = 25; // Adjust as needed
+  const minScale = 0.5;
+
+  if (totalLength <= baseLength) return 1;
+
+  // For each character over baseLength, shrink ~2%
+  const scale = 1 - (totalLength - baseLength) * 0.02;
+  return Math.max(minScale, scale);
 }
 
 export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
@@ -38,20 +44,20 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Resolve username if it appears to be a wallet address.
+  // Resolve username if it appears to be a wallet address (and store that wallet).
   const resolveUsername = async (win: Win): Promise<Win> => {
-    // If there is no walletAddress and the username looks like a wallet,
-    // then resolve the username.
-    if (!win.walletAddress && isWallet(win.username)) {
+    // If the API returns a "username" for this wallet,
+    // we store that in win.username and keep the original wallet in walletAddress.
+    if (!win.walletAddress && win.username.includes("kaspa:")) {
       try {
         const res = await axios.get(
           `/api/user?walletAddress=${encodeURIComponent(win.username)}`
         );
         if (res.data && res.data.username) {
-          return { 
-            ...win, 
+          return {
+            ...win,
             username: res.data.username,
-            walletAddress: win.username // Preserve the original wallet address.
+            walletAddress: win.username,
           };
         }
       } catch (err) {
@@ -89,62 +95,62 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         </h3>
         <ScrollArea className="h-[200px]">
           {wins.map((win, index) => {
-            // Compute scale factors (different base lengths can be used).
-            const usernameScale = getScale(win.username, 10);
-            const gameScale = getScale(win.game, 8);
+            const rowScale = computeRowScale(win);
 
             return (
+              // Scale the entire row to prevent right-side cutoff
               <div
                 key={index}
-                className="mb-2 flex items-center justify-between space-x-2 text-xs"
+                className="mb-2 w-full overflow-hidden"
+                style={{
+                  transform: `scale(${rowScale})`,
+                  transformOrigin: "left center",
+                }}
               >
-                <div className="flex items-center space-x-1 flex-grow">
-                  {/* Render XP badge if walletAddress is available */}
-                  {win.walletAddress && (
-                    <WinsXPBadge
-                      walletAddress={win.walletAddress}
-                      scale={usernameScale}
+                <div className="flex items-center justify-between space-x-2 text-xs w-full">
+                  <div className="flex items-center space-x-1">
+                    {/* Render XP badge if walletAddress is available */}
+                    {win.walletAddress && (
+                      <WinsXPBadge walletAddress={win.walletAddress} />
+                    )}
+                    <span
+                      className="font-bold"
+                      style={{
+                        fontSize: "16px",
+                        background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}
+                    >
+                      {win.username}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span
+                      style={{
+                        color: textColor,
+                        fontSize: "14px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {win.amount.toFixed(2)}
+                    </span>
+                    <Image
+                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                      alt="KAS"
+                      width={14}
+                      height={14}
                     />
-                  )}
+                  </div>
                   <span
-                    className="font-bold break-words whitespace-normal"
                     style={{
-                      fontSize: `${16 * usernameScale}px`,
-                      background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
+                      color: `${textColor}80`,
+                      fontSize: "12px",
                     }}
                   >
-                    {win.username}
+                    {win.game.toUpperCase()}
                   </span>
                 </div>
-                <div className="flex items-center space-x-1 flex-shrink-0">
-                  <span
-                    className="whitespace-nowrap"
-                    style={{
-                      color: textColor,
-                      fontSize: `${14 * usernameScale}px`,
-                    }}
-                  >
-                    {win.amount.toFixed(2)}
-                  </span>
-                  <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                    alt="KAS"
-                    width={14 * usernameScale}
-                    height={14 * usernameScale}
-                    className="ml-1"
-                  />
-                </div>
-                <span
-                  className="whitespace-normal break-words"
-                  style={{
-                    color: `${textColor}80`,
-                    fontSize: `${12 * gameScale}px`,
-                  }}
-                >
-                  {win.game.toUpperCase()}
-                </span>
               </div>
             );
           })}
@@ -157,18 +163,11 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
 /**
  * WinsXPBadge Component
  *
- * This component is a direct adaptation of your ChatXPDisplay for LiveWins.
- * It fetches and displays the XP level for a given wallet address,
- * renders a circular badge with a background image (xpimage.webp),
- * and scales responsively.
+ * A simplified version of your ChatXPDisplay for LiveWins.
+ * We do NOT scale it here (the entire row is scaled in the parent),
+ * so this badge can stay at a fixed size or small variant.
  */
-function WinsXPBadge({
-  walletAddress,
-  scale = 1,
-}: {
-  walletAddress: string;
-  scale?: number;
-}) {
+function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -178,9 +177,7 @@ function WinsXPBadge({
     const fetchXP = async () => {
       try {
         const res = await axios.get(
-          `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
-            walletAddress
-          )}`
+          `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
         );
         if (res.data.success && res.data.user) {
           setUserData({
@@ -196,7 +193,7 @@ function WinsXPBadge({
     fetchXP();
   }, [walletAddress, apiUrl]);
 
-  // Determine border styling based on the user's level.
+  // Determine border styling based on level.
   let borderColorClass = "";
   if (userData.level < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -208,8 +205,9 @@ function WinsXPBadge({
     borderColorClass = "border-red-500 text-red-500";
   }
 
-  const size = 32 * scale;
-  let fontSize = 12 * scale;
+  // Fixed size since we scale the entire row container
+  const size = 32;
+  let fontSize = 12;
   if (userData.level >= 100) {
     fontSize *= 0.85; // slightly smaller font for 3-digit numbers
   }
