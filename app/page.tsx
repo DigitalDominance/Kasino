@@ -65,7 +65,11 @@ function MainPageContent() {
   const games = [
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
-    { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
+    {
+      name: "Kaspa Tower Climb",
+      slug: "kaspatowerclimb",
+      image: "/kaspatowerclimbcard.webp",
+    },
     { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
     { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
     { name: "Dice", slug: "dice", image: "/dicecard.webp" },
@@ -372,7 +376,9 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
-                      const dataKey = game.slug;
+                      let dataKey = game.slug;
+                      // Exception for Kaspa Tower Climb: adjust key to match win counter and high scores
+                      if (dataKey === "kaspatowerclimb") dataKey = "kaspa tower climb";
                       const totalWins =
                         winCounter.find(
                           (counter) => counter._id.toLowerCase() === dataKey
@@ -525,7 +531,7 @@ function MainPageContent() {
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -608,7 +614,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
