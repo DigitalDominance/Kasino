@@ -60,10 +60,13 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Plinko, Roulette, Dice, Coin Flip
   const games = [
-    { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
+    { name: "Mines", slug: "mines", image: "/minescard.webp" },
+    { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
+    { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
     { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
     { name: "Dice", slug: "dice", image: "/dicecard.webp" },
     { name: "Coin Flip", slug: "coinflip", image: "/coinflipcard.webp" },
@@ -565,10 +568,12 @@ function MainPageContent() {
                         let cardImage = "/placeholder.svg";
                         const lwGame = win.game.toLowerCase();
                         if (lwGame === "crash") cardImage = "/crashcard.webp";
-                        else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
-                        else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
-                        else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
+                        else if (lwGame === "kaspa tower climb") cardImage = "/kaspatowerclimbcard.webp";
+                        else if (lwGame === "plinko") cardImage = "/plinkocard.webp";
+                        else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
+                        else if (lwGame === "dice") cardImage = "/dicecard.webp";
+                        else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
                         else if (lwGame === "kasper loot box") {
                           cardImage = "/kasperlootboxcard.webp";
                         } else if (lwGame === "kasen mania") {
@@ -759,10 +764,7 @@ export function XPDisplay() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 
-        Circle with xpimage.webp in the background, plus flip animation on level up. 
-        We keep the border color logic from your existing code.
-      */}
+      {/* XP Circle with xpimage.webp background and flip animation on level up */}
       <motion.div
         className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
         style={{ width: "48px", height: "48px", overflow: "hidden" }}
