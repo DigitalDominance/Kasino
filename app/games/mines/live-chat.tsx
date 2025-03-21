@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/contexts/WalletContext";
 import axios from "axios";
-// Import XPDisplay the same way as in your nav and other games
+// Import XPDisplay as used in the nav and other games
 import { XPDisplay } from "@/app/page";
 
 interface ChatMessage {
@@ -20,6 +20,20 @@ interface ChatMessage {
 
 interface LiveChatProps {
   textColor?: string;
+}
+
+/**
+ * XPBadge Component
+ *
+ * Wraps XPDisplay in a container that scales it down (to make it smaller)
+ * and disables pointer events so that the hover popup is disabled.
+ */
+function XPBadge({ walletAddress }: { walletAddress: string }) {
+  return (
+    <div style={{ transform: "scale(0.6)", transformOrigin: "left center", pointerEvents: "none" }}>
+      <XPDisplay walletAddress={walletAddress} />
+    </div>
+  );
 }
 
 export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
@@ -96,7 +110,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
-      walletAddress, // Pass the wallet address for XPDisplay to use
+      walletAddress, // Include wallet address so XPDisplay can fetch the level
       message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
@@ -111,9 +125,8 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* Render the XPDisplay badge next to the username using the wallet address */}
-              {msg.walletAddress && <XPDisplay walletAddress={msg.walletAddress} />}
-              {/* Display the username as before */}
+              {/* Render the smaller XPBadge (using XPDisplay) next to the username */}
+              {msg.walletAddress && <XPBadge walletAddress={msg.walletAddress} />}
               <span
                 className="font-bold"
                 style={{
@@ -147,5 +160,20 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         </form>
       </div>
     </Card>
+  );
+}
+
+/**
+ * XPBadge Component
+ *
+ * This wraps the imported XPDisplay component in a container that scales it down
+ * (making it smaller) and disables pointer events (thus disabling any hover popups),
+ * so it can be used inline next to usernames in chat messages.
+ */
+function XPBadge({ walletAddress }: { walletAddress: string }) {
+  return (
+    <div style={{ transform: "scale(0.6)", transformOrigin: "left center", pointerEvents: "none", marginRight: "0.25rem" }}>
+      <XPDisplay walletAddress={walletAddress} />
+    </div>
   );
 }
