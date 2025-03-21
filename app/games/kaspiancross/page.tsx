@@ -18,7 +18,6 @@ import { Card } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import "./styles.css";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
