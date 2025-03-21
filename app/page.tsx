@@ -531,7 +531,7 @@ function MainPageContent() {
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -614,7 +614,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
