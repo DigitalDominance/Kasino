@@ -104,11 +104,11 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
 
   // Helper to calculate scale factor based on username length.
   // The longer the username, the smaller the text and XP badge.
-  const getScale = (username: string) => {
+  const getScale = (uname: string) => {
     const minScale = 0.6;
     const baseLength = 10;
-    if (username.length <= baseLength) return 1;
-    const scale = 1 - (username.length - baseLength) * 0.02;
+    if (uname.length <= baseLength) return 1;
+    const scale = 1 - (uname.length - baseLength) * 0.02;
     return Math.max(minScale, scale);
   };
 
@@ -122,7 +122,9 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
             return (
               <div key={index} className="mb-2 flex items-start">
                 {/* Render the ChatXPDisplay with responsive scale */}
-                {msg.walletAddress && <ChatXPDisplay walletAddress={msg.walletAddress} scale={scale} />}
+                {msg.walletAddress && (
+                  <ChatXPDisplay walletAddress={msg.walletAddress} scale={scale} />
+                )}
                 <div className="flex flex-col">
                   <span
                     className="font-bold break-words"
@@ -133,16 +135,16 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
                       WebkitTextFillColor: "transparent",
                     }}
                   >
-                    {msg.username}: 
+                    {msg.username}:{" "}
                   </span>
-                  <span 
-                    className="text-sm break-words" 
+                  <span
+                    className="text-sm break-words"
                     style={{
                       color: textColor,
                       display: "-webkit-box",
                       WebkitLineClamp: 3,
                       WebkitBoxOrient: "vertical",
-                      overflow: "hidden"
+                      overflow: "hidden",
                     }}
                   >
                     {msg.message}
@@ -184,9 +186,15 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
  * ChatXPDisplay Component
  *
  * Fetches and displays the XP level for a specific wallet address.
- * Its size scales down according to the provided "scale" prop.
+ * Its size scales down according to the provided "scale" prop, but remains a circle.
  */
-function ChatXPDisplay({ walletAddress, scale = 1 }: { walletAddress: string; scale?: number }) {
+function ChatXPDisplay({
+  walletAddress,
+  scale = 1,
+}: {
+  walletAddress: string;
+  scale?: number;
+}) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -233,8 +241,16 @@ function ChatXPDisplay({ walletAddress, scale = 1 }: { walletAddress: string; sc
 
   return (
     <div
-      className={`rounded-full border-2 flex items-center justify-center ${borderColorClass}`}
-      style={{ width: `${size}px`, height: `${size}px`, fontSize: `${fontSize}px`, marginRight: "0.25rem" }}
+      className={`rounded-full border-2 flex items-center justify-center flex-shrink-0 ${borderColorClass}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        fontSize: `${fontSize}px`,
+        marginRight: "0.25rem",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+      }}
     >
       {userData.level}
     </div>
