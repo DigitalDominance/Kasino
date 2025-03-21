@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
@@ -25,24 +25,52 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 // Constants
 // ---------------------------------------------------------------------------
 const NUM_ROWS = 10;
-const TILE_SPACING_Z = -5;
+const TILE_SPACING_Z = -7; // increased spacing
 const BASE_MULTIPLIER = 1.1;
 const SAFE_PROBABILITY = 0.7;
 const ROAD_WIDTH = 40;
 const ROAD_HEIGHT = 60;
-const COLLISION_POPUP_DELAY = 2000; // 2s delay
+const COLLISION_POPUP_DELAY = 5000; // 5s delay for both win and lose
 
-// Paths to your walk/strut/run animations
+// Updated animation paths (FBX versions)
 const WALK_ANIMATIONS = [
-  "/Animation_Walking_withSkin.glb",
-  "/Animation_Confident_Strut_withSkin.glb",
-  "/Animation_Groovy_Walk_withSkin.glb",
-  "/Animation_Proud_Strut_withSkin.glb",
-  "/Animation_Running_withSkin.glb",
+  "/Animation_Walking_frame_rate_60.fbx",
+  "/Animation_Confident_Strut_frame_rate_60.fbx",
+  "/Animation_Groovy_Walk_frame_rate_60.fbx",
+  "/Animation_Proud_Strut_frame_rate_60.fbx",
+  "/Animation_Running_frame_rate_60.fbx",
 ];
 
-// Path to the “dead” animation
-const DEAD_ANIMATION = "/Animation_Dead_withSkin.glb";
+const DEAD_ANIMATION = "/Animation_Dead_frame_rate_60.fbx";
+
+// Asset list for preloading
+const ASSETS = [
+  "/kaspacrosscharacter.fbx",
+  "/Animation_Confident_Strut_frame_rate_60.fbx",
+  "/Animation_Dead_frame_rate_60.fbx",
+  "/Animation_Groovy_Walk_frame_rate_60.fbx",
+  "/Animation_Proud_Strut_frame_rate_60.fbx",
+  "/Animation_Running_frame_rate_60.fbx",
+  "/Animation_Walking_frame_rate_60.fbx",
+  "/kaspacrosscar.fbx",
+];
+
+async function preloadAssets() {
+  const loader = new FBXLoader();
+  await Promise.all(
+    ASSETS.map(
+      (path) =>
+        new Promise<void>((resolve, reject) => {
+          loader.load(
+            path,
+            () => resolve(),
+            undefined,
+            (error) => reject(error)
+          );
+        })
+    )
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -53,6 +81,7 @@ export default function KaspianCrossPage() {
 
 function KaspianCrossContent() {
   const { isConnected, balance } = useWallet();
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("0");
   const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -64,6 +93,23 @@ function KaspianCrossContent() {
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+
+  // Preload assets on mount
+  useEffect(() => {
+    preloadAssets()
+      .then(() => setAssetsLoaded(true))
+      .catch((error) => {
+        console.error("Error preloading assets:", error);
+      });
+  }, []);
+
+  if (!assetsLoaded) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black z-50">
+        <p className="text-2xl text-[#49EACB]">Loading…</p>
+      </div>
+    );
+  }
 
   // Start game
   const handleStartGame = async () => {
@@ -84,7 +130,8 @@ function KaspianCrossContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury =
+        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
@@ -92,7 +139,8 @@ function KaspianCrossContent() {
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
@@ -268,7 +316,7 @@ function KaspianCrossContent() {
                 If the tile isn’t safe, a car collision ends the game and you lose your bet.
               </li>
               <li>
-                You can **Cash Out** after any successful step to secure your current multiplier.
+                You can <strong>Cash Out</strong> after any successful step to secure your current multiplier.
               </li>
             </ol>
             <Button
@@ -337,15 +385,15 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
       setHasAdvanced(true);
 
       if (newRow >= NUM_ROWS) {
-        // Final row => auto-win
+        // Final row => auto-win after 5s delay
         setTimeout(() => {
           handleWin(newMult);
-        }, 600);
+        }, 5000);
       } else {
         setCurrentRow(newRow);
       }
     } else {
-      // collision => 2s delay
+      // collision => 5s delay
       setTimeout(() => {
         handleLose();
       }, COLLISION_POPUP_DELAY);
@@ -362,8 +410,11 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   const handleWin = (finalMult: number) => {
     setGameOver(true);
     const payout = betAmount * finalMult;
-    onGameEnd("You Win", payout);
-    showPopup(`Congratulations! You won ${payout.toFixed(2)} KAS!`);
+    // 5 second delay before ending game to allow animation to finish
+    setTimeout(() => {
+      onGameEnd("You Win", payout);
+      showPopup(`Congratulations! You won ${payout.toFixed(2)} KAS!`);
+    }, 5000);
   };
 
   // Lose
@@ -371,8 +422,11 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     setGameOver(true);
     // Switch to "dead" animation
     playDeadAnimation();
-    onGameEnd("House Wins", 0);
-    showPopup(`You got hit by a car! Better luck next time.`);
+    // 5 second delay before ending game
+    setTimeout(() => {
+      onGameEnd("House Wins", 0);
+      showPopup(`You got hit by a car! Better luck next time.`);
+    }, 5000);
   };
 
   // Show popup
@@ -413,20 +467,19 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     loadAnimationAndPlay(DEAD_ANIMATION, true);
   };
 
-  // Actually load the animation GLB and play it
+  // Actually load the animation FBX and play it
   const loadAnimationAndPlay = (animPath: string, loopOnce: boolean) => {
     if (!baseModelRef.current || !mixerRef.current) return;
-    const loader = new GLTFLoader();
-    loader.load(animPath, (gltf) => {
-      const clip = gltf.animations[0];
+    const loader = new FBXLoader();
+    loader.load(animPath, (fbx) => {
+      // Assuming the animation clip is in fbx.animations[0]
+      const clip = fbx.animations[0];
       const action = mixerRef.current!.clipAction(clip);
       if (loopOnce) {
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
       }
       action.reset().play();
-
-      // Optionally fade out previous animations
       mixerRef.current!.update(0);
     });
   };
@@ -559,7 +612,7 @@ function MultiLaneHighwayScene({
 
     // Zoom camera in more
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 6, 10);
+    camera.position.set(0, 6, 8); // zoomed in (Z changed from 10 to 8)
     cameraRef.current = camera;
 
     // Renderer
@@ -598,10 +651,10 @@ function MultiLaneHighwayScene({
       tileRefs.current.push(tileMesh);
     }
 
-    // Load base model
-    const loader = new GLTFLoader();
-    loader.load("/kaspacrosscharacter.glb", (gltf) => {
-      const model = gltf.scene;
+    // Load base model using FBXLoader
+    const loader = new FBXLoader();
+    loader.load("/kaspacrosscharacter.fbx", (fbx) => {
+      const model = fbx;
       model.scale.set(2, 2, 2);
       model.rotation.y = Math.PI;
       model.position.set(0, 1.2, 5);
@@ -610,9 +663,9 @@ function MultiLaneHighwayScene({
       onBaseModelLoaded(model);
     });
 
-    // Load car
-    loader.load("/kaspacrosscar.glb", (gltf) => {
-      carModelRef.current = gltf.scene;
+    // Load car using FBXLoader
+    loader.load("/kaspacrosscar.fbx", (fbx) => {
+      carModelRef.current = fbx;
     });
 
     // Raycaster for tile clicks
@@ -654,7 +707,7 @@ function MultiLaneHighwayScene({
     };
   }, [onBaseModelLoaded, pickRow]);
 
-  // If charZIndex changes => animate the character
+  // Animate character movement when charZIndex changes
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = charZIndex * TILE_SPACING_Z;
@@ -671,7 +724,7 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(animateMove);
   }, [charZIndex]);
 
-  // If gameOver => spawn car from left/right
+  // Spawn car on game over
   useEffect(() => {
     if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current) return;
     const carClone = carModelRef.current.clone(true);
@@ -726,22 +779,10 @@ function createTileMaterial(tileMultiplier: number) {
   topTexture.minFilter = THREE.LinearFilter;
 
   // We'll create 6 materials for the box geometry
-  // The top face uses the painted texture, the others are plain white
-  const sides = [];
-  // side faces
   const sideMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  for (let i = 0; i < 4; i++) {
-    sides.push(sideMat);
-  }
-  // bottom face
   const bottomMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  // top face
   const topMat = new THREE.MeshStandardMaterial({ map: topTexture });
 
-  // boxMaterial array order: +x, -x, +y, -y, +z, -z
-  // We want the top face = +y face
-  // We want the bottom face = -y face
-  // The rest are sides
   return [
     sideMat,     // +x
     sideMat,     // -x
