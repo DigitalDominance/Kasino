@@ -102,38 +102,71 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     setNewMessage("");
   };
 
+  // Helper to calculate scale factor based on username length.
+  // The longer the username, the smaller the text and XP badge.
+  const getScale = (username: string) => {
+    const minScale = 0.6;
+    const baseLength = 10;
+    if (username.length <= baseLength) return 1;
+    const scale = 1 - (username.length - baseLength) * 0.02;
+    return Math.max(minScale, scale);
+  };
+
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
       <div className="p-4">
         <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Live Chat</h3>
         <ScrollArea className="h-[200px] mb-4">
-          {messages.map((msg, index) => (
-            <div key={index} className="mb-2 flex items-center">
-              {/* Render the ChatXPDisplay next to the username */}
-              {msg.walletAddress && <ChatXPDisplay walletAddress={msg.walletAddress} />}
-              <span
-                className="font-bold"
-                style={{
-                  background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {msg.username}:{" "}
-              </span>
-              <span style={{ color: textColor }}>{msg.message}</span>
-            </div>
-          ))}
+          {messages.map((msg, index) => {
+            const scale = getScale(msg.username);
+            return (
+              <div key={index} className="mb-2 flex items-start">
+                {/* Render the ChatXPDisplay with responsive scale */}
+                {msg.walletAddress && <ChatXPDisplay walletAddress={msg.walletAddress} scale={scale} />}
+                <div className="flex flex-col">
+                  <span
+                    className="font-bold break-words"
+                    style={{
+                      fontSize: `${16 * scale}px`,
+                      background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    {msg.username}: 
+                  </span>
+                  <span 
+                    className="text-sm break-words" 
+                    style={{
+                      color: textColor,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {msg.message}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </ScrollArea>
-        <form onSubmit={handleSendMessage} className="flex space-x-2">
-          <Input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value.slice(0, 100))}
-            placeholder={isConnected ? "Type your message..." : "Connect wallet to chat"}
-            className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white flex-grow"
-            disabled={!isConnected}
-          />
+        <form onSubmit={handleSendMessage} className="flex flex-col space-y-2">
+          <div className="relative w-full">
+            <Input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value.slice(0, 80))}
+              placeholder={isConnected ? "Type your message..." : "Connect wallet to chat"}
+              className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white w-full"
+              disabled={!isConnected}
+              maxLength={80}
+            />
+            <div className="absolute right-2 bottom-1 text-xs">
+              {newMessage.length}/80
+            </div>
+          </div>
           <Button
             type="submit"
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -151,8 +184,9 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
  * ChatXPDisplay Component
  *
  * Fetches and displays the XP level for a specific wallet address.
+ * Its size scales down according to the provided "scale" prop.
  */
-function ChatXPDisplay({ walletAddress }: { walletAddress: string }) {
+function ChatXPDisplay({ walletAddress, scale = 1 }: { walletAddress: string; scale?: number }) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -181,7 +215,7 @@ function ChatXPDisplay({ walletAddress }: { walletAddress: string }) {
     // return () => clearInterval(interval);
   }, [walletAddress, apiUrl]);
 
-  // Determine styling based on the user's level
+  // Determine styling based on the user's level.
   let borderColorClass = "";
   if (userData.level < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -193,10 +227,14 @@ function ChatXPDisplay({ walletAddress }: { walletAddress: string }) {
     borderColorClass = "border-red-500 text-red-500";
   }
 
+  // Adjust dimensions based on scale (base size: 32px, base font: 12px).
+  const size = 32 * scale;
+  const fontSize = 12 * scale;
+
   return (
     <div
-      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${borderColorClass}`}
-      style={{ fontSize: "0.75rem", marginRight: "0.25rem" }}
+      className={`rounded-full border-2 flex items-center justify-center ${borderColorClass}`}
+      style={{ width: `${size}px`, height: `${size}px`, fontSize: `${fontSize}px`, marginRight: "0.25rem" }}
     >
       {userData.level}
     </div>
