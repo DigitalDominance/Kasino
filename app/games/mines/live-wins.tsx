@@ -17,6 +17,14 @@ interface LiveWinsProps {
   textColor?: string;
 }
 
+// Modified getScale: Accepts a base length so different fields can shrink at different thresholds.
+function getScale(text: string, baseLength: number = 10): number {
+  const minScale = 0.6;
+  if (text.length <= baseLength) return 1;
+  const scale = 1 - (text.length - baseLength) * 0.02;
+  return Math.max(minScale, scale);
+}
+
 export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
   const [wins, setWins] = useState<Win[]>([]);
   const apiUrl =
@@ -60,15 +68,6 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
     return () => clearInterval(interval);
   }, [apiUrl]);
 
-  // Scale helper: the longer the string, the smaller the scale.
-  const getScale = (str: string) => {
-    const minScale = 0.6;
-    const baseLength = 10;
-    if (str.length <= baseLength) return 1;
-    const scale = 1 - (str.length - baseLength) * 0.02;
-    return Math.max(minScale, scale);
-  };
-
   return (
     <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
       <div className="p-3">
@@ -77,25 +76,30 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         </h3>
         <ScrollArea className="h-[200px]">
           {wins.map((win, index) => {
-            const scale = getScale(win.username);
+            // Compute separate scale factors for username and game name.
+            const usernameScale = getScale(win.username, 10);
+            const gameScale = getScale(win.game, 8);
+
             return (
               <div
                 key={index}
                 className="mb-2 flex items-center justify-between space-x-2 text-xs"
               >
                 <div className="flex items-center space-x-1 flex-grow">
-                  {/* Display wins XP badge if username appears to be a wallet */}
+                  {/* Display WinsXPBadge if username is a wallet address */}
                   {win.username.startsWith("kaspa:") && (
-                    <WinsXPBadge walletAddress={win.username} scale={scale} />
+                    <WinsXPBadge
+                      walletAddress={win.username}
+                      scale={usernameScale}
+                    />
                   )}
                   <span
-                    className="font-bold truncate"
+                    className="font-bold break-words whitespace-normal"
                     style={{
-                      fontSize: `${16 * scale}px`,
+                      fontSize: `${16 * usernameScale}px`,
                       background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      maxWidth: "120px",
                     }}
                   >
                     {win.username}
@@ -103,10 +107,10 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                 </div>
                 <div className="flex items-center space-x-1 flex-shrink-0">
                   <span
-                    className="truncate"
+                    className="whitespace-nowrap"
                     style={{
                       color: textColor,
-                      fontSize: `${14 * scale}px`,
+                      fontSize: `${14 * usernameScale}px`,
                     }}
                   >
                     {win.amount.toFixed(2)}
@@ -114,17 +118,16 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                     alt="KAS"
-                    width={14 * scale}
-                    height={14 * scale}
+                    width={14 * usernameScale}
+                    height={14 * usernameScale}
                     className="ml-1"
                   />
                 </div>
                 <span
-                  className="truncate"
+                  className="whitespace-normal break-words"
                   style={{
                     color: `${textColor}80`,
-                    fontSize: `${12 * scale}px`,
-                    maxWidth: "80px",
+                    fontSize: `${12 * gameScale}px`,
                   }}
                 >
                   {win.game.toUpperCase()}
@@ -141,8 +144,8 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
 /**
  * WinsXPBadge Component
  *
- * Similar to ChatXPDisplay, this component fetches and displays the XP level for a given wallet address.
- * It renders a circular badge with a background image (xpimage.webp) and responsive sizing.
+ * Remade for LiveWins. Fetches and displays the XP level for a given wallet address.
+ * Renders a circular badge with a background image (xpimage.webp) and responsive sizing.
  */
 function WinsXPBadge({
   walletAddress,
