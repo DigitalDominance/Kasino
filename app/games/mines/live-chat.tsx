@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/contexts/WalletContext";
 import axios from "axios";
-// Import XPDisplay as used in your nav and other games
-import { XPDisplay } from "@/app/page";
 
 interface ChatMessage {
   username: string;
@@ -96,7 +94,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
-      walletAddress, // Include wallet address so XPBadge can fetch the level
+      walletAddress, // Include wallet address so ChatXPDisplay can fetch the level
       message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
@@ -111,8 +109,8 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* Render a smaller XPBadge next to the username */}
-              {msg.walletAddress && <XPBadge walletAddress={msg.walletAddress} />}
+              {/* Render the ChatXPDisplay next to the username */}
+              {msg.walletAddress && <ChatXPDisplay walletAddress={msg.walletAddress} />}
               <span
                 className="font-bold"
                 style={{
@@ -150,22 +148,57 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
 }
 
 /**
- * XPBadge Component
+ * ChatXPDisplay Component
  *
- * Wraps the imported XPDisplay component (from the nav) in a container that scales it down
- * (making it smaller) and disables pointer events (thus disabling any hover popups).
+ * Fetches and displays the XP level for a specific wallet address.
  */
-function XPBadge({ walletAddress }: { walletAddress: string }) {
+function ChatXPDisplay({ walletAddress }: { walletAddress: string }) {
+  const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://kasino-backend-4818b4b69870.herokuapp.com";
+
+  useEffect(() => {
+    const fetchXP = async () => {
+      try {
+        const res = await axios.get(
+          `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+        );
+        if (res.data.success && res.data.user) {
+          setUserData({
+            totalXp: res.data.user.totalXp || 0,
+            level: res.data.user.level || 0,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching XP for wallet", walletAddress, err);
+      }
+    };
+
+    fetchXP();
+    // Optionally, you can add a polling interval if you want updates.
+    // const interval = setInterval(fetchXP, 5000);
+    // return () => clearInterval(interval);
+  }, [walletAddress, apiUrl]);
+
+  // Determine styling based on the user's level
+  let borderColorClass = "";
+  if (userData.level < 25) {
+    borderColorClass = "border-[#49EACB] text-[#49EACB]";
+  } else if (userData.level < 50) {
+    borderColorClass = "border-yellow-400 text-yellow-400";
+  } else if (userData.level < 75) {
+    borderColorClass = "border-orange-500 text-orange-500";
+  } else {
+    borderColorClass = "border-red-500 text-red-500";
+  }
+
   return (
     <div
-      style={{
-        transform: "scale(0.6)",
-        transformOrigin: "left center",
-        pointerEvents: "none",
-        marginRight: "0.25rem",
-      }}
+      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${borderColorClass}`}
+      style={{ fontSize: "0.75rem", marginRight: "0.25rem" }}
     >
-      <XPDisplay walletAddress={walletAddress} />
+      {userData.level}
     </div>
   );
 }
