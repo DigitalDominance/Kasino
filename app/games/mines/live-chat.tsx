@@ -8,8 +8,52 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/contexts/WalletContext";
 import axios from "axios";
-// Import XPDisplay as used in your nav and other games
-import { XPDisplay } from "@/app/page";
+
+// XPBadge Component for chat messages
+function XPBadge({ walletAddress }: { walletAddress: string }) {
+  const [level, setLevel] = useState<number | null>(null);
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://kasino-backend-4818b4b69870.herokuapp.com";
+
+  useEffect(() => {
+    async function fetchLevel() {
+      try {
+        const res = await axios.get(
+          `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+        );
+        if (res.data && res.data.success && res.data.user && res.data.user.level !== undefined) {
+          setLevel(res.data.user.level);
+        }
+      } catch (err) {
+        console.error("Error fetching level for", walletAddress, err);
+      }
+    }
+    fetchLevel();
+  }, [walletAddress, apiUrl]);
+
+  if (level === null) return null;
+
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        width: "1rem",
+        height: "1rem",
+        borderRadius: "50%",
+        border: "1px solid #49EACB",
+        color: "#49EACB",
+        fontSize: "0.6rem",
+        textAlign: "center",
+        lineHeight: "1rem",
+        marginRight: "0.25rem",
+      }}
+      title={`Level ${level}`}
+    >
+      {level}
+    </span>
+  );
+}
 
 interface ChatMessage {
   username: string;
@@ -96,7 +140,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
-      walletAddress, // XPDisplay will use this wallet address
+      walletAddress, // Include wallet address so XPBadge can fetch the level
       message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
@@ -111,7 +155,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* Render a smaller XPDisplay badge next to the username */}
+              {/* Render a smaller XPBadge next to the username */}
               {msg.walletAddress && <XPBadge walletAddress={msg.walletAddress} />}
               <span
                 className="font-bold"
@@ -152,8 +196,9 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
 /**
  * XPBadge Component
  *
- * Wraps the imported XPDisplay component in a container that scales it down (making it smaller)
- * and disables pointer events to disable the hover popup. This is used inline next to usernames in chat messages.
+ * Wraps the imported XPDisplay component (from the nav) in a container that scales it down
+ * (making it smaller) and disables pointer events (thus disabling any hover popups),
+ * so it can be used inline next to usernames in chat messages.
  */
 function XPBadge({ walletAddress }: { walletAddress: string }) {
   return (
