@@ -78,7 +78,8 @@
     "framer-motion": "^11.0.5",
     "underscore": "^1.13.6",
     "mongodb": "^6.3.0",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^2.4.3",
+    "three": "^0.150.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
