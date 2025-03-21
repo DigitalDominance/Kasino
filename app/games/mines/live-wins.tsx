@@ -71,59 +71,48 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         <h3 className="text-base font-semibold text-[#49EACB] mb-2">
           Live Wins
         </h3>
-        <ScrollArea className="h-[200px]">
+        <ScrollArea className="h-[200px] pr-2">
           {wins.map((win, index) => (
-            <div key={index} className="mb-2 w-full">
+            <div key={index} className="mb-1 w-full">
               {/* 
-                Use a flex row with justify-between. 
-                min-w-0 on the row or subcontainers plus "truncate" 
-                ensures the text won't overflow horizontally. 
+                One horizontal row, tight spacing, smaller text.
+                The username is truncated; the game name is fully shown.
               */}
-              <div className="flex items-center justify-between w-full min-w-0 space-x-3">
-                {/* Left side: XP badge + username */}
-                <div className="flex items-center min-w-0 space-x-1 overflow-hidden">
-                  {win.walletAddress && (
-                    <WinsXPBadge walletAddress={win.walletAddress} />
-                  )}
-                  <span
-                    className="font-bold truncate"
-                    style={{
-                      fontSize: "14px",
-                      background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      // This maxWidth ensures the username truncates if too long
-                      maxWidth: "8rem",
-                    }}
-                  >
-                    {win.username}
-                  </span>
-                </div>
-
-                {/* Middle: amount + Kaspa icon */}
-                <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <span
-                    style={{
-                      color: textColor,
-                      fontSize: "12px",
-                    }}
-                  >
-                    {win.amount.toFixed(2)}
-                  </span>
-                  <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                    alt="KAS"
-                    width={12}
-                    height={12}
-                  />
-                </div>
-
-                {/* Right side: game name */}
+              <div className="flex items-center space-x-1 w-full min-w-0 overflow-hidden whitespace-nowrap">
+                {win.walletAddress && <WinsXPBadge walletAddress={win.walletAddress} size={18} />}
+                {/* Username */}
                 <span
-                  className="whitespace-nowrap"
+                  className="font-bold truncate"
                   style={{
-                    color: `${textColor}80`,
+                    fontSize: "12px",
+                    maxWidth: "6rem", // limit how wide the username can grow
+                    background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {win.username}
+                </span>
+                {/* Amount */}
+                <span
+                  style={{
                     fontSize: "11px",
+                    color: textColor,
+                  }}
+                >
+                  {win.amount.toFixed(2)}
+                </span>
+                <Image
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                  alt="KAS"
+                  width={10}
+                  height={10}
+                />
+                {/* Game name */}
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: textColor + "80",
                   }}
                 >
                   {win.game.toUpperCase()}
@@ -137,13 +126,13 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
   );
 }
 
-/**
- * WinsXPBadge Component
- *
- * Fetches and displays the XP level for a given wallet address.
- * Renders a small circular badge with a background image (xpimage.webp).
- */
-function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
+function WinsXPBadge({
+  walletAddress,
+  size = 24,
+}: {
+  walletAddress: string;
+  size?: number;
+}) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
@@ -180,15 +169,15 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
     borderColorClass = "border-red-500 text-red-500";
   }
 
-  const size = 24;
-  let fontSize = 10;
+  // Slightly smaller badge
+  let fontSize = Math.floor(size * 0.4);
   if (userData.level >= 100) {
-    fontSize *= 0.85; // slightly smaller for 3-digit levels
+    fontSize *= 0.85; // smaller for 3-digit levels
   }
 
   return (
     <div
-      className={`relative rounded-full border-2 flex-shrink-0 ${borderColorClass}`}
+      className={`relative rounded-full border flex-shrink-0 ${borderColorClass}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
