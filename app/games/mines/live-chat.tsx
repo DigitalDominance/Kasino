@@ -11,6 +11,7 @@ import axios from "axios";
 
 interface ChatMessage {
   username: string;
+  walletAddress?: string;
   message: string;
   timestamp: string;
 }
@@ -22,19 +23,20 @@ interface LiveChatProps {
 /**
  * UserLevelBadge Component
  *
- * Uses the same API call and styling as XPDisplay, but accepts a walletAddress
- * prop (which in this case is the username from the chat message) and displays the user's level.
+ * If a walletAddress is provided (from kasware), fetch the user's level via the API
+ * and display it in a small badge.
  */
 function UserLevelBadge({ walletAddress }: { walletAddress: string }) {
   const [level, setLevel] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!walletAddress) return;
     async function fetchLevel() {
       try {
         const res = await axios.get(
           `/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
         );
-        if (res.data.success && res.data.user && res.data.user.level !== undefined) {
+        if (res.data && res.data.success && res.data.user && res.data.user.level !== undefined) {
           setLevel(res.data.user.level);
         }
       } catch (err) {
@@ -62,7 +64,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
   const socketRef = useRef<Socket | null>(null);
   const { isConnected, username } = useWallet();
 
-  // Banned words list and helper functions remain the same.
+  // Banned words list and helper functions
   const bannedWords = [
     "anal", "anus", "arse", "ass", "asshole", "ballsack", "balls", "bastard", "bitch", "biatch", "bloody",
     "blowjob", "blow job", "bollock", "bollok", "boner", "boob", "bugger", "bum", "butt", "buttplug",
@@ -114,13 +116,23 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     };
   }, []);
 
-  const handleSendMessage = (e: FormEvent) => {
+  const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
     if (!isConnected || !username) return;
+
+    let walletAddress = "";
+    try {
+      const accounts = await window.kasware.getAccounts();
+      walletAddress = accounts[0] || "";
+    } catch (err) {
+      console.error("Error fetching wallet address:", err);
+    }
+
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
+      walletAddress, // include the wallet address for fetching the level
       message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
@@ -135,8 +147,11 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* Always display the level badge next to the username */}
-              <UserLevelBadge walletAddress={msg.username} />
+              {/* Render the level badge using the walletAddress */}
+              {msg.walletAddress && (
+                <UserLevelBadge walletAddress={msg.walletAddress} />
+              )}
+              {/* Display the username as before */}
               <span
                 className="font-bold"
                 style={{
