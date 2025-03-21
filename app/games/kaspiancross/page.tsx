@@ -651,9 +651,25 @@ function MultiLaneHighwayScene({
       tileRefs.current.push(tileMesh);
     }
 
-    // Load base model using FBXLoader
+    // Load base model using FBXLoader and apply character texture
     const loader = new FBXLoader();
+    const texLoader = new THREE.TextureLoader();
     loader.load("/kaspacrosscharacter.fbx", (fbx) => {
+      const texture = texLoader.load("/kaspacrosscharactertexture.png");
+      fbx.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((mat) => {
+              (mat as THREE.MeshStandardMaterial).map = texture;
+              mat.needsUpdate = true;
+            });
+          } else {
+            (mesh.material as THREE.MeshStandardMaterial).map = texture;
+            mesh.material.needsUpdate = true;
+          }
+        }
+      });
       const model = fbx;
       model.scale.set(2, 2, 2);
       model.rotation.y = Math.PI;
@@ -663,8 +679,23 @@ function MultiLaneHighwayScene({
       onBaseModelLoaded(model);
     });
 
-    // Load car using FBXLoader
+    // Load car using FBXLoader and apply car texture
     loader.load("/kaspacrosscar.fbx", (fbx) => {
+      const texture = texLoader.load("/kaspacrosscartexture.png");
+      fbx.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((mat) => {
+              (mat as THREE.MeshStandardMaterial).map = texture;
+              mat.needsUpdate = true;
+            });
+          } else {
+            (mesh.material as THREE.MeshStandardMaterial).map = texture;
+            mesh.material.needsUpdate = true;
+          }
+        }
+      });
       carModelRef.current = fbx;
     });
 
