@@ -634,7 +634,7 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component - Reusable in other files with XP gain and level up animations */
+/* XPDisplay Component - now uses xpimage.webp in the center with a border outline */
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
@@ -683,7 +683,7 @@ export function XPDisplay() {
           }
         }
       } catch (err) {
-        // Error handling omitted for security.
+        // Error handling omitted for brevity.
       }
     };
 
@@ -725,7 +725,8 @@ export function XPDisplay() {
   };
 
   const currentThreshold = getThreshold(displayLevel);
-  const nextThreshold = displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
+  const nextThreshold =
+    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -742,12 +743,15 @@ export function XPDisplay() {
   }
 
   const levelStr = displayLevel.toString();
-  const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+  const fontSize =
+    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
   // Larger popup styling for the hover popup.
-  const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
+  const hoverPopupClass =
+    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
   // Smaller popup styling for XP gain and level up.
-  const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
+  const smallPopupClass =
+    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
     <div
@@ -755,16 +759,32 @@ export function XPDisplay() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* XP Circle with flip animation on level up */}
+      {/* 
+        Circle with xpimage.webp in the background, plus flip animation on level up. 
+        We keep the border color logic from your existing code.
+      */}
       <motion.div
+        className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
+        style={{ width: "48px", height: "48px", overflow: "hidden" }}
         animate={isFlipping ? { rotateY: 360 } : { rotateY: 0 }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
       >
-        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer ${borderColorClass}`}>
-          <span style={{ fontSize }} className="whitespace-nowrap">
-            {displayLevel}
-          </span>
-        </div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "url('/xpimage.webp')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            zIndex: 0,
+          }}
+        />
+        <span
+          style={{ fontSize }}
+          className="relative flex items-center justify-center h-full w-full whitespace-nowrap z-10"
+        >
+          {displayLevel}
+        </span>
       </motion.div>
 
       {/* Hover Popup (larger) */}
@@ -787,7 +807,10 @@ export function XPDisplay() {
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded h-1">
-                  <div style={{ width: `${progressPercent}%` }} className="bg-teal-500 h-1 rounded"></div>
+                  <div
+                    style={{ width: `${progressPercent}%` }}
+                    className="bg-teal-500 h-1 rounded"
+                  ></div>
                 </div>
                 <div className="mt-1 text-center">
                   {progressPercent.toFixed(1)}% to next level
