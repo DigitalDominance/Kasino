@@ -186,7 +186,8 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
  * ChatXPDisplay Component
  *
  * Fetches and displays the XP level for a specific wallet address.
- * Its size scales down according to the provided "scale" prop, but remains a circle.
+ * Its size scales down according to the provided "scale" prop, 
+ * remains a circle, and uses a background image behind the level text.
  */
 function ChatXPDisplay({
   walletAddress,
@@ -241,18 +242,38 @@ function ChatXPDisplay({
 
   return (
     <div
-      className={`rounded-full border-2 flex items-center justify-center flex-shrink-0 ${borderColorClass}`}
+      className={`relative rounded-full border-2 flex-shrink-0 ${borderColorClass}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        fontSize: `${fontSize}px`,
         marginRight: "0.25rem",
         overflow: "hidden",
-        whiteSpace: "nowrap",
-        textOverflow: "ellipsis",
       }}
     >
-      {userData.level}
+      {/* Background image behind the text */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "url('/xpimage.webp')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          zIndex: 0,
+        }}
+      />
+      {/* Level text on top of background */}
+      <span
+        className="relative flex items-center justify-center h-full w-full"
+        style={{
+          fontSize: `${fontSize}px`,
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          overflow: "hidden",
+          zIndex: 1,
+        }}
+      >
+        {userData.level}
+      </span>
     </div>
   );
 }
