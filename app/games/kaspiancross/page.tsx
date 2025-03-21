@@ -412,7 +412,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
       <MultiLaneHighwayScene
         currentRow={currentRow}
         charZIndex={charZIndex}
-        rows={rows}
+        pickRow={pickRow}      // <--- We pass pickRow so the scene can handle tile clicks
         gameOver={gameOver}
       />
 
@@ -421,7 +421,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         <>
           {/* A nicer, bigger multiplier HUD */}
           <div className="absolute top-6 left-6 bg-black/60 px-4 py-2 rounded-md shadow-md">
-            <div className="text-2xl font-extrabold text-lime-300 tracking-wider">
+            <div className="text-2xl font-extrabold tracking-wider" style={{ color: "#39FF14" }}>
               {multiplier.toFixed(2)}×
             </div>
             <div className="text-sm text-white opacity-80">Current Multiplier</div>
@@ -437,7 +437,8 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
             >
               <Button
                 onClick={cashOut}
-                className="bg-lime-400 text-black font-bold px-6 py-3 hover:bg-lime-300 text-xl"
+                style={{ backgroundColor: "#39FF14", color: "black" }}
+                className="font-bold px-6 py-3 text-xl hover:opacity-90"
               >
                 Cash Out
               </Button>
@@ -476,18 +477,19 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene – The Three.js scene with multipliers on each tile
+// and RAYCASTING for tile clicks
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentRow: number;
   charZIndex: number;
-  rows: boolean[];
+  pickRow: (rowIndex: number) => void;
   gameOver: boolean;
 }
 
 function MultiLaneHighwayScene({
   currentRow,
   charZIndex,
-  rows,
+  pickRow,
   gameOver,
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -573,6 +575,23 @@ function MultiLaneHighwayScene({
       carModelRef.current = gltf.scene;
     });
 
+    // Set up raycasting for tile clicks
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const onClick = (e: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(tileRefs.current, false);
+      if (intersects.length > 0) {
+        const { rowIndex } = intersects[0].object.userData;
+        pickRow(rowIndex);
+      }
+    };
+    renderer.domElement.addEventListener("click", onClick);
+
     // Animation loop
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
@@ -588,12 +607,13 @@ function MultiLaneHighwayScene({
 
     // Cleanup
     return () => {
+      renderer.domElement.removeEventListener("click", onClick);
       cancelAnimationFrame(requestRef.current!);
       if (renderer) {
         mountRef.current?.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [pickRow]);
 
   // Move character on row change
   useEffect(() => {
@@ -650,6 +670,7 @@ function MultiLaneHighwayScene({
 // ---------------------------------------------------------------------------
 // addMultiplierLabelToTile
 // Creates a small text sprite above the tile showing its multiplier
+// in NEON GREEN (#39FF14)
 // ---------------------------------------------------------------------------
 function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
   const labelText = `${multiplier.toFixed(2)}x`;
@@ -659,8 +680,8 @@ function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "rgba(255,255,255,1)";
-  ctx.font = "48px sans-serif";
+  ctx.fillStyle = "#39FF14"; // Neon green text
+  ctx.font = "48px Montserrat, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(labelText, canvas.width / 2, canvas.height / 2);
