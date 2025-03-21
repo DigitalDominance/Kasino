@@ -20,23 +20,21 @@ interface LiveWinsProps {
 
 /**
  * Computes a single scale factor for the entire row based on
- * the combined length of username, amount, and game name.
- * If the total is too large, we shrink everything so it fits on one line.
+ * the combined length of the username, amount, and game name,
+ * plus a small overhead for the XP badge.
+ * The row is then shrunk proportionally if it exceeds a threshold.
  */
 function computeRowScale(win: Win): number {
-  // Convert amount to a string for length calculation
   const amountStr = win.amount.toFixed(2);
-
-  // Combined length of username, amount, and game
-  const totalLength = win.username.length + amountStr.length + win.game.length;
-
-  const baseLength = 25; // Adjust as desired
-  const minScale = 0.5;
+  // Combined length plus a small overhead for the badge
+  const totalLength = win.username.length + amountStr.length + win.game.length + 2;
+  const baseLength = 25;
+  const minScale = 0.4;
 
   if (totalLength <= baseLength) return 1;
 
-  // For each character beyond baseLength, shrink ~2%
-  const scale = 1 - (totalLength - baseLength) * 0.02;
+  // For each character beyond baseLength, shrink ~2.5%
+  const scale = 1 - (totalLength - baseLength) * 0.025;
   return Math.max(minScale, scale);
 }
 
@@ -95,21 +93,20 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
         </h3>
         <ScrollArea className="h-[200px]">
           {wins.map((win, index) => {
-            // Compute scale for the entire row
             const rowScale = computeRowScale(win);
 
             return (
-              // Scale the row so it doesn't overflow horizontally
               <div
                 key={index}
                 className="mb-2 w-full overflow-hidden"
                 style={{
+                  // Shrink the entire row so it fits horizontally
                   transform: `scale(${rowScale})`,
                   transformOrigin: "left center",
                   whiteSpace: "nowrap",
                 }}
               >
-                <div className="flex items-center justify-between space-x-2 text-xs w-full">
+                <div className="flex items-center justify-between space-x-2 w-full">
                   <div className="flex items-center space-x-1">
                     {/* XP badge if walletAddress is available */}
                     {win.walletAddress && (
@@ -118,7 +115,7 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                     <span
                       className="font-bold"
                       style={{
-                        fontSize: "16px",
+                        fontSize: "14px", // smaller base for username
                         background: "linear-gradient(90deg, #49EACB, #B6B6B6)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
@@ -131,7 +128,8 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                     <span
                       style={{
                         color: textColor,
-                        fontSize: "14px",
+                        fontSize: "12px", // smaller base for amount
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {win.amount.toFixed(2)}
@@ -139,14 +137,14 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                       alt="KAS"
-                      width={14}
-                      height={14}
+                      width={12}
+                      height={12}
                     />
                   </div>
                   <span
                     style={{
                       color: `${textColor}80`,
-                      fontSize: "12px",
+                      fontSize: "11px", // smaller base for game
                     }}
                   >
                     {win.game.toUpperCase()}
@@ -164,10 +162,9 @@ export function LiveWins({ textColor = "#FFFFFF" }: LiveWinsProps) {
 /**
  * WinsXPBadge Component
  *
- * A simplified version of ChatXPDisplay. 
- * It fetches the XP level for a given wallet address, 
- * displays a circular badge with a background image (xpimage.webp),
- * and uses a fixed size (the entire row is scaled in the parent).
+ * Fetches and displays the XP level for a given wallet address.
+ * Renders a small circular badge with a background image (xpimage.webp).
+ * We keep it at a smaller base size since the entire row may be scaled down further.
  */
 function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
@@ -195,7 +192,6 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
     fetchXP();
   }, [walletAddress, apiUrl]);
 
-  // Determine border styling based on the user's level
   let borderColorClass = "";
   if (userData.level < 25) {
     borderColorClass = "border-[#49EACB] text-[#49EACB]";
@@ -207,11 +203,11 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
     borderColorClass = "border-red-500 text-red-500";
   }
 
-  // Fixed size; scaled by the row container
-  const size = 32;
-  let fontSize = 12;
+  // Smaller base size for the badge
+  const size = 24;
+  let fontSize = 10;
   if (userData.level >= 100) {
-    fontSize *= 0.85; // slightly smaller font for 3-digit numbers
+    fontSize *= 0.85; // slightly smaller for 3-digit levels
   }
 
   return (
@@ -224,7 +220,6 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
         overflow: "hidden",
       }}
     >
-      {/* Background image clipped to the circle */}
       <div
         className="absolute inset-0"
         style={{
@@ -235,7 +230,6 @@ function WinsXPBadge({ walletAddress }: { walletAddress: string }) {
           zIndex: 0,
         }}
       />
-      {/* XP level text on top */}
       <span
         className="relative flex items-center justify-center h-full w-full"
         style={{
