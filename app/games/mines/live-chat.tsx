@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWallet } from "@/contexts/WalletContext";
 import axios from "axios";
+// Import XPDisplay the same way as in your nav and other games
+import { XPDisplay } from "@/app/page";
 
 interface ChatMessage {
   username: string;
@@ -18,44 +20,6 @@ interface ChatMessage {
 
 interface LiveChatProps {
   textColor?: string;
-}
-
-/**
- * UserLevelBadge Component
- *
- * If a walletAddress is provided (from kasware), fetch the user's level via the API
- * and display it in a small badge.
- */
-function UserLevelBadge({ walletAddress }: { walletAddress: string }) {
-  const [level, setLevel] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!walletAddress) return;
-    async function fetchLevel() {
-      try {
-        const res = await axios.get(
-          `/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
-        );
-        if (res.data && res.data.success && res.data.user && res.data.user.level !== undefined) {
-          setLevel(res.data.user.level);
-        }
-      } catch (err) {
-        console.error("Error fetching level for", walletAddress, err);
-      }
-    }
-    fetchLevel();
-  }, [walletAddress]);
-
-  if (level === null) return null;
-
-  return (
-    <span
-      className="inline-block w-6 h-6 rounded-full border border-teal-500 flex items-center justify-center text-xs text-teal-500 mr-1"
-      title={`Level ${level}`}
-    >
-      {level}
-    </span>
-  );
 }
 
 export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
@@ -132,7 +96,7 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
     const sanitizedMessage = filterMessage(newMessage);
     const userMessage: ChatMessage = {
       username,
-      walletAddress, // include the wallet address for fetching the level
+      walletAddress, // Pass the wallet address for XPDisplay to use
       message: sanitizedMessage,
       timestamp: new Date().toISOString(),
     };
@@ -147,10 +111,8 @@ export function LiveChat({ textColor = "#B6B6B6" }: LiveChatProps) {
         <ScrollArea className="h-[200px] mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2 flex items-center">
-              {/* Render the level badge using the walletAddress */}
-              {msg.walletAddress && (
-                <UserLevelBadge walletAddress={msg.walletAddress} />
-              )}
+              {/* Render the XPDisplay badge next to the username using the wallet address */}
+              {msg.walletAddress && <XPDisplay walletAddress={msg.walletAddress} />}
               {/* Display the username as before */}
               <span
                 className="font-bold"
