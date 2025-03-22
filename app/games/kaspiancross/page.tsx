@@ -19,20 +19,20 @@ import { useWallet } from "@/contexts/WalletContext";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
+// ---------------------------------------------------------------------------
+// Fonts & Constants
+// ---------------------------------------------------------------------------
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
 /**
- * 11 total lanes:
+ * We have 11 total lanes:
  *   lane 0: extra road in front (not clickable)
- *   lanes 1..10: playable
+ *   lanes 1..10: playable lanes
  */
 const REAL_LANES = 10;
-const TOTAL_LANES = REAL_LANES + 1; // 11 total
+const TOTAL_LANES = REAL_LANES + 1;
 
-// Keep your road ratio 4:1 => width=40 => lane height=10 => total height=110
+// Road ratio is 4:1 => width=40 => each lane's height=10 => total=110
 const ROAD_WIDTH = 40;
 const LANE_HEIGHT = ROAD_WIDTH / 4; // 10
 const ROAD_HEIGHT = TOTAL_LANES * LANE_HEIGHT; // 110
@@ -40,7 +40,6 @@ const TILE_SPACING_Z = -LANE_HEIGHT; // -10
 
 const BASE_MULTIPLIER = 1.1;
 const SAFE_PROBABILITY = 0.7;
-const COLLISION_POPUP_DELAY = 2000; // 2s delay
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -59,11 +58,14 @@ function KaspianCrossContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
+  // Example backend config
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Start game
+  // -------------------------------------------------------------------------
+  // Start Game
+  // -------------------------------------------------------------------------
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
@@ -82,18 +84,25 @@ function KaspianCrossContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury =
+        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-      const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
-        priorityFee: 10000,
-      });
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+
+      // Send deposit
+      const depositTx = await window.kasware.sendKaspa(
+        chosenTreasury,
+        bet * 1e8,
+        { priorityFee: 10000 }
+      );
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
+      // Notify backend
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kaspian Cross",
         uniqueHash,
@@ -107,6 +116,7 @@ function KaspianCrossContent() {
         alert("Failed to start game on backend");
         return;
       }
+
       setIsPlaying(true);
       setGameResult(null);
       setWinAmount(null);
@@ -116,7 +126,9 @@ function KaspianCrossContent() {
     }
   };
 
-  // End game
+  // -------------------------------------------------------------------------
+  // End Game
+  // -------------------------------------------------------------------------
   const handleGameEnd = async (result: string, amount: number) => {
     setGameResult(result);
     setWinAmount(amount);
@@ -135,7 +147,9 @@ function KaspianCrossContent() {
     }
   };
 
-  // Reset
+  // -------------------------------------------------------------------------
+  // Reset Game
+  // -------------------------------------------------------------------------
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
@@ -144,6 +158,9 @@ function KaspianCrossContent() {
     setDepositTxid(null);
   };
 
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
@@ -165,6 +182,7 @@ function KaspianCrossContent() {
           </motion.div>
         </header>
 
+        {/* Deposit TXID display */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -186,6 +204,7 @@ function KaspianCrossContent() {
 
         {/* Main layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          {/* Left: game */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full relative">
               <div className="flex justify-between items-center mb-4">
@@ -209,6 +228,7 @@ function KaspianCrossContent() {
             </div>
           </Card>
 
+          {/* Right: controls, chat, wins */}
           <div className="space-y-6">
             <KaspianCrossControls
               betAmount={betAmount}
@@ -249,6 +269,7 @@ function KaspianCrossContent() {
       </div>
       <SiteFooter />
 
+      {/* How to Play Modal */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
@@ -259,14 +280,13 @@ function KaspianCrossContent() {
                 Lane 0 is a non-clickable “starting road.” Lanes 1–10 each have a safe tile (70% chance).
               </li>
               <li>
-                **Click** the **next lane** (current lane + 1). Each success raises your multiplier (1.1×).
+                Click the **next lane** (current lane + 1). Each success raises your multiplier by 1.1×.
               </li>
               <li>
-                If the tile isn’t safe, a car collision ends the game and you lose your bet.
+                If the tile isn’t safe, a car collision ends the game—no pre-delay, you’ll see the car
+                instantly.
               </li>
-              <li>
-                You can <strong>Cash Out</strong> after any successful step to secure your current multiplier.
-              </li>
+              <li>You can **Cash Out** any time after a successful step to lock in your winnings.</li>
             </ol>
             <Button
               onClick={() => setShowHowToPlay(false)}
@@ -282,7 +302,7 @@ function KaspianCrossContent() {
 }
 
 // ---------------------------------------------------------------------------
-// KaspianCrossGame
+// KaspianCrossGame – if tile is unsafe, spawn car immediately, show popup AFTER
 // ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -291,7 +311,7 @@ interface KaspianCrossGameProps {
 }
 
 function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameProps) {
-  // safeStates[i] => is lane i safe? i=0 => non-clickable
+  // safeStates[i] => is lane i safe? (lane 0 => false, not clickable)
   const [safeStates, setSafeStates] = useState<boolean[]>(() => {
     const arr = Array(TOTAL_LANES).fill(false);
     for (let i = 1; i <= REAL_LANES; i++) {
@@ -300,7 +320,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     return arr;
   });
 
-  // currentLane => which lane we are physically on
+  // currentLane => physically on [0..10]
   const [currentLane, setCurrentLane] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [hasAdvanced, setHasAdvanced] = useState(false);
@@ -310,7 +330,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // Reset on start
+  // Reset each time the user starts
   useEffect(() => {
     if (isPlaying) {
       const arr = Array(TOTAL_LANES).fill(false);
@@ -327,37 +347,35 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     }
   }, [isPlaying]);
 
-  // When user clicks a lane
+  // Called when user clicks a lane
   const pickRow = (laneIndex: number) => {
     if (gameOver) return;
-    // Must be exactly one lane ahead: laneIndex === currentLane + 1
+    // Must be next lane
     if (laneIndex !== currentLane + 1) return;
-    // Must not exceed 10
     if (laneIndex < 1 || laneIndex > REAL_LANES) return;
 
     const isSafe = safeStates[laneIndex];
     if (isSafe) {
-      // success => laneIndex + 1
-      const newLane = laneIndex;
+      // success => laneIndex
       const newMultiplier = Math.pow(BASE_MULTIPLIER, laneIndex);
       setMultiplier(Number(newMultiplier.toFixed(2)));
       setHasAdvanced(true);
-      setCurrentLane(newLane);
+      setCurrentLane(laneIndex);
 
-      if (newLane === REAL_LANES) {
-        // final lane => auto-win
+      // if final lane => auto-win after short delay
+      if (laneIndex === REAL_LANES) {
         setTimeout(() => handleWin(newMultiplier), 600);
       }
     } else {
-      // lose
-      setTimeout(() => handleLose(), COLLISION_POPUP_DELAY);
+      // unsafe => setGameOver => car spawns immediately, popup after collision
+      setGameOver(true);
     }
   };
 
-  // Cash out
-  const cashOut = () => {
-    if (!hasAdvanced || gameOver) return;
-    handleWin(multiplier);
+  // Car collision finishes => handleLose
+  const handleCarCollision = () => {
+    // after car animation => show popup
+    handleLose();
   };
 
   // Win
@@ -370,16 +388,20 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
   // Lose
   const handleLose = () => {
-    setGameOver(true);
     onGameEnd("House Wins", 0);
     showPopup(`You got hit by a car! Better luck next time.`);
+  };
+
+  // Cash Out
+  const cashOut = () => {
+    if (!hasAdvanced || gameOver) return;
+    handleWin(multiplier);
   };
 
   const showPopup = (msg: string) => {
     setPopupMessage(msg);
     setPopupVisible(true);
   };
-
   const hidePopup = () => {
     setPopupVisible(false);
     setPopupMessage("");
@@ -387,10 +409,13 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
   return (
     <div className="w-full h-full relative">
+      {/* Pre-game overlay */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 p-4">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 p-4">
           <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">Get Ready to Cross!</h1>
-          <p className="text-sm mb-2 text-white">Place your bet and click “Spin Kaspian Cross” to start.</p>
+          <p className="text-sm mb-2 text-white">
+            Place your bet and click “Spin Kaspian Cross” to start.
+          </p>
           <Image src="/crosspreview.png" alt="Preview" width={180} height={100} />
         </div>
       )}
@@ -399,8 +424,10 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         currentLane={currentLane}
         gameOver={gameOver}
         pickRow={pickRow}
+        onCarCollision={handleCarCollision}
       />
 
+      {/* In-game UI */}
       {isPlaying && !gameOver && (
         <>
           <div className="absolute top-6 left-6 bg-black/60 px-4 py-2 rounded-md shadow-md">
@@ -429,6 +456,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         </>
       )}
 
+      {/* Popup */}
       <AnimatePresence>
         {popupVisible && (
           <motion.div
@@ -445,7 +473,10 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
             >
               <h2 className="text-2xl font-bold mb-4">Game Over</h2>
               <p className="mb-4">{popupMessage}</p>
-              <Button onClick={hidePopup} className="bg-black text-[#49EACB] w-full hover:bg-[#333]">
+              <Button
+                onClick={hidePopup}
+                className="bg-black text-[#49EACB] w-full hover:bg-[#333]"
+              >
                 Close
               </Button>
             </motion.div>
@@ -458,18 +489,20 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene
-// – Lanes 0..10, camera more front-facing: (0,8,8) => less top-down
+// – If gameOver => spawn car immediately, no pre-delay. Once animation ends => onCarCollision()
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
-  currentLane: number;  // 0..10
+  currentLane: number;   // 0..10
   gameOver: boolean;
   pickRow: (laneIndex: number) => void;
+  onCarCollision: () => void; // called after car finishes
 }
 
 function MultiLaneHighwayScene({
   currentLane,
   gameOver,
   pickRow,
+  onCarCollision,
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>();
@@ -477,19 +510,21 @@ function MultiLaneHighwayScene({
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const characterRef = useRef<THREE.Group | null>(null);
   const tileRefs = useRef<THREE.Mesh[]>([]);
-  const requestRef = useRef<number>();
   const carModelRef = useRef<THREE.Group | null>(null);
+  const requestRef = useRef<number>();
 
+  // Build scene
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Less top-down, more front-facing
+    // Less top-down, more forward
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 8); // lower Y=8, bigger Z=8 => more forward angle
+    camera.position.set(0, 8, 8);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -504,59 +539,61 @@ function MultiLaneHighwayScene({
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
 
-    // Road lanes
+    // Road
     const textureLoader = new THREE.TextureLoader();
     const roadTexture = textureLoader.load("/kaspacrossroad.png");
-    roadTexture.wrapS = THREE.ClampToEdgeWrapping;
-    roadTexture.wrapT = THREE.ClampToEdgeWrapping;
-
     for (let i = 0; i < TOTAL_LANES; i++) {
       const laneGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
       const laneMat = new THREE.MeshStandardMaterial({ map: roadTexture });
       const lane = new THREE.Mesh(laneGeom, laneMat);
       lane.rotation.x = -Math.PI / 2;
-
-      // lane i => z = i * TILE_SPACING_Z
-      lane.position.set(0, 0, i * TILE_SPACING_Z - (LANE_HEIGHT / 2) + (Math.abs(TILE_SPACING_Z) / 2));
+      lane.position.set(
+        0,
+        0,
+        i * TILE_SPACING_Z - (LANE_HEIGHT / 2) + (Math.abs(TILE_SPACING_Z) / 2)
+      );
       scene.add(lane);
     }
 
-    // Create tiles
+    // Create clickable tiles
     tileRefs.current = [];
     for (let i = 0; i < TOTAL_LANES; i++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
-      const tileMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+      const tileMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.9,
+      });
       const tileMesh = new THREE.Mesh(tileGeom, tileMat);
       tileMesh.position.set(0, 0.05, i * TILE_SPACING_Z);
       tileMesh.userData = { laneIndex: i };
       scene.add(tileMesh);
       tileRefs.current.push(tileMesh);
 
-      // lane 0 => no label
+      // lane 0 => no multiplier label
       if (i > 0) {
-        const multVal = Math.pow(BASE_MULTIPLIER, i);
-        addMultiplierLabelToTile(tileMesh, multVal, "#000000");
+        const multiplier = Math.pow(BASE_MULTIPLIER, i);
+        addMultiplierLabelToTile(tileMesh, multiplier, "#000000");
       }
     }
 
-    // Load character
+    // Character
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
       model.scale.set(2, 2, 2);
       model.rotation.y = Math.PI;
-      // Start on lane 0 => z=0
-      model.position.set(0, 1.8, 0);
+      model.position.set(0, 1.8, 0); // lane 0 => z=0
       scene.add(model);
       characterRef.current = model;
     });
 
-    // Load car
+    // Car
     loader.load("/kaspacrosscar.glb", (gltf) => {
       carModelRef.current = gltf.scene;
     });
 
-    // Raycaster
+    // Raycasting
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -578,6 +615,7 @@ function MultiLaneHighwayScene({
       requestRef.current = requestAnimationFrame(animate);
       if (characterRef.current) {
         const { x, z } = characterRef.current.position;
+        // Smooth camera follow
         camera.position.x += (x - camera.position.x) * 0.1;
         camera.position.z += (z + 8 - camera.position.z) * 0.1;
         camera.lookAt(x, 1.8, z);
@@ -586,7 +624,6 @@ function MultiLaneHighwayScene({
     };
     animate();
 
-    // Cleanup
     return () => {
       renderer.domElement.removeEventListener("click", onClick);
       cancelAnimationFrame(requestRef.current!);
@@ -594,7 +631,7 @@ function MultiLaneHighwayScene({
     };
   }, [pickRow]);
 
-  // Animate character movement
+  // Animate character on lane change
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
@@ -611,7 +648,7 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(move);
   }, [currentLane]);
 
-  // Car collision on game over
+  // If gameOver => spawn car right away, popup after collision
   useEffect(() => {
     if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current) return;
     const laneZ = currentLane * TILE_SPACING_Z;
@@ -621,8 +658,9 @@ function MultiLaneHighwayScene({
     carClone.rotation.y = Math.PI / 2;
     sceneRef.current.add(carClone);
 
+    // Animate quickly, no pre-delay
     const startTime = performance.now();
-    const duration = 500;
+    const duration = 500; // half second
     const endX = 10;
     const animateCar = (time: number) => {
       const elapsed = time - startTime;
@@ -636,13 +674,15 @@ function MultiLaneHighwayScene({
           sceneRef.current!.remove(characterRef.current);
           characterRef.current = null;
         }
+        // Wait a moment, remove car, THEN callback => triggers "handleLose"
         setTimeout(() => {
           sceneRef.current!.remove(carClone);
+          onCarCollision();
         }, 500);
       }
     };
     requestAnimationFrame(animateCar);
-  }, [gameOver, currentLane]);
+  }, [gameOver, currentLane, onCarCollision]);
 
   return <div ref={mountRef} className="w-full h-full" />;
 }
@@ -700,6 +740,7 @@ function KaspianCrossControls({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
+  // Clear error after 3s
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
@@ -707,6 +748,7 @@ function KaspianCrossControls({
     }
   }, [errorMessage]);
 
+  // Decrement cooldown
   useEffect(() => {
     if (cooldown > 0) {
       const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
@@ -764,6 +806,8 @@ function KaspianCrossControls({
                 />
               </div>
             </div>
+
+            {/* Quick bet buttons */}
             <div className="grid grid-cols-4 gap-2">
               <Button
                 variant="outline"
@@ -808,6 +852,7 @@ function KaspianCrossControls({
             </div>
           </div>
 
+          {/* Game result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult !== null && (
               <div className="text-center mb-4">
@@ -822,6 +867,7 @@ function KaspianCrossControls({
               </div>
             )}
 
+            {/* Spin / Start button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -835,7 +881,10 @@ function KaspianCrossControls({
                   : "Spin Kaspian Cross"}
               </Button>
             ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+              <Button
+                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                disabled
+              >
                 Playing...
               </Button>
             )}
@@ -843,6 +892,7 @@ function KaspianCrossControls({
         </div>
       </Card>
 
+      {/* Error toast */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
