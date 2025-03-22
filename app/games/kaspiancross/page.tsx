@@ -26,11 +26,11 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 // ---------------------------------------------------------------------------
 const NUM_ROWS = 10;                  // total steps to cross
 const TILE_SPACING_Z = -5;            // negative Z moves “forward”
-const BASE_MULTIPLIER = 1.1;          // each successful step multiplies bet by 1.1^row
+const BASE_MULTIPLIER = 1.1;          // each safe step multiplies by 1.1^row
 const SAFE_PROBABILITY = 0.7;         // 70% chance each tile is safe
-const ROAD_WIDTH = 40;                // how wide the multi-lane highway is
-const ROAD_HEIGHT = 60;               // how long the highway extends
-const COLLISION_POPUP_DELAY = 2000;   // 2s delay before showing the game-over popup
+const ROAD_WIDTH = 40;
+const ROAD_HEIGHT = 60;
+const COLLISION_POPUP_DELAY = 2000;   // 2s delay for game-over
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -54,9 +54,7 @@ function KaspianCrossContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // -------------------------------------------------------------------------
   // Start Game
-  // -------------------------------------------------------------------------
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet <= 0 || bet > balance) {
@@ -75,13 +73,11 @@ function KaspianCrossContent() {
         alert("No wallet address found");
         return;
       }
-      // Randomly pick treasury
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
-      // Send deposit
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
@@ -89,7 +85,6 @@ function KaspianCrossContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Notify backend
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kaspian Cross",
         uniqueHash,
@@ -103,8 +98,6 @@ function KaspianCrossContent() {
         alert("Failed to start game on backend");
         return;
       }
-
-      // Reset local state
       setIsPlaying(true);
       setGameResult(null);
       setWinAmount(null);
@@ -114,14 +107,11 @@ function KaspianCrossContent() {
     }
   };
 
-  // -------------------------------------------------------------------------
   // End Game
-  // -------------------------------------------------------------------------
   const handleGameEnd = async (result: string, amount: number) => {
     setGameResult(result);
     setWinAmount(amount);
     setIsPlaying(false);
-
     if (gameId) {
       try {
         await axios.post(`${apiUrl}/game/end`, {
@@ -135,9 +125,7 @@ function KaspianCrossContent() {
     }
   };
 
-  // -------------------------------------------------------------------------
   // Reset Game
-  // -------------------------------------------------------------------------
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
@@ -167,7 +155,6 @@ function KaspianCrossContent() {
           </motion.div>
         </header>
 
-        {/* Deposit TXID */}
         {depositTxid && (
           <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
             Deposit TXID:{" "}
@@ -189,7 +176,6 @@ function KaspianCrossContent() {
 
         {/* Main layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-          {/* Game area */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full relative">
               <div className="flex justify-between items-center mb-4">
@@ -204,7 +190,6 @@ function KaspianCrossContent() {
                 </Button>
               </div>
               <div className="relative h-[70vh] bg-gradient-to-b from-black to-[#002400] rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl p-0">
-                {/* The 3D game + pre-game overlay */}
                 <KaspianCrossGame
                   isPlaying={isPlaying}
                   betAmount={Number(betAmount)}
@@ -214,7 +199,6 @@ function KaspianCrossContent() {
             </div>
           </Card>
 
-          {/* Right column: controls + chat/wins */}
           <div className="space-y-6">
             <KaspianCrossControls
               betAmount={betAmount}
@@ -232,7 +216,6 @@ function KaspianCrossContent() {
           </div>
         </div>
 
-        {/* Promo Card */}
         <Card className="mt-6 w-full bg-[#49EACB]/5 border border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -255,7 +238,6 @@ function KaspianCrossContent() {
       </div>
       <SiteFooter />
 
-      {/* How to Play Modal */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
@@ -274,7 +256,7 @@ function KaspianCrossContent() {
                 If the tile isn’t safe, a car collision ends the game and you lose your bet.
               </li>
               <li>
-                You can **Cash Out** after any successful step to secure your current multiplier.
+                You can <strong>Cash Out</strong> after any successful step to secure your current multiplier.
               </li>
             </ol>
             <Button
@@ -291,7 +273,7 @@ function KaspianCrossContent() {
 }
 
 // ---------------------------------------------------------------------------
-// KaspianCrossGame – 3D logic (One tile per row, multi-lane highway)
+// KaspianCrossGame – 3D Game Logic (GLB version, no mixer animations)
 // ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -300,23 +282,17 @@ interface KaspianCrossGameProps {
 }
 
 function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameProps) {
-  // Each row is either safe or not
   const [rows, setRows] = useState<boolean[]>(() =>
     Array.from({ length: NUM_ROWS }, () => Math.random() < SAFE_PROBABILITY)
   );
-  // Current row index
   const [currentRow, setCurrentRow] = useState(0);
-  // Has the game ended?
   const [gameOver, setGameOver] = useState(false);
-  // Has advanced at least once => show Cash Out
   const [hasAdvanced, setHasAdvanced] = useState(false);
-  // Multiplier
   const [multiplier, setMultiplier] = useState(1);
+  // This index determines which tile the character should be on.
+  const [charZIndex, setCharZIndex] = useState(-1);
 
-  // Character's row index in Z
-  const [charZIndex, setCharZIndex] = useState(-1); // behind row 0 by default
-
-  // Popup states
+  // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
@@ -325,7 +301,9 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     if (isPlaying) {
       setRows(Array.from({ length: NUM_ROWS }, () => Math.random() < SAFE_PROBABILITY));
       setCurrentRow(0);
-      setCharZIndex(-1);
+      // Do not reset charZIndex so the character remains on the last tile
+      // Only reset if starting a new game.
+      // Here, we assume if game restarts, charZIndex remains at the last safe tile.
       setMultiplier(1);
       setGameOver(false);
       setHasAdvanced(false);
@@ -334,22 +312,21 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     }
   }, [isPlaying]);
 
-  // Move to row
+  // When a tile is clicked
   const pickRow = (rowIndex: number) => {
     if (gameOver || rowIndex !== currentRow) return;
     const isSafe = rows[rowIndex];
-    // Move character onto that tile
+    // Set character to new tile index (do not reset to -1)
     setCharZIndex(rowIndex);
 
     if (isSafe) {
-      // success
       const newRow = rowIndex + 1;
       const newMultiplier = Math.pow(BASE_MULTIPLIER, newRow);
       setMultiplier(Number(newMultiplier.toFixed(2)));
       setHasAdvanced(true);
 
       if (newRow >= NUM_ROWS) {
-        // Reached final row => auto-win
+        // Final row => auto-win quickly
         setTimeout(() => {
           handleWin(newMultiplier);
         }, 600);
@@ -357,20 +334,20 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         setCurrentRow(newRow);
       }
     } else {
-      // collision => wait 2s for the car to show up, THEN show popup
+      // If not safe, wait a bit then lose (to show the car animation)
       setTimeout(() => {
         handleLose();
       }, COLLISION_POPUP_DELAY);
     }
   };
 
-  // Cash out
+  // Cash Out button
   const cashOut = () => {
     if (!hasAdvanced || gameOver) return;
     handleWin(multiplier);
   };
 
-  // Handle Win
+  // Win handling
   const handleWin = (finalMult: number) => {
     setGameOver(true);
     const payout = betAmount * finalMult;
@@ -378,20 +355,18 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     showPopup(`Congratulations! You won ${payout.toFixed(2)} KAS!`);
   };
 
-  // Handle Lose
+  // Lose handling
   const handleLose = () => {
     setGameOver(true);
     onGameEnd("House Wins", 0);
     showPopup(`You got hit by a car! Better luck next time.`);
   };
 
-  // Show a popup message
   const showPopup = (message: string) => {
     setPopupMessage(message);
     setPopupVisible(true);
   };
 
-  // Hide popup
   const hidePopup = () => {
     setPopupVisible(false);
     setPopupMessage("");
@@ -399,7 +374,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
   return (
     <div className="w-full h-full relative">
-      {/* If not playing, show a pre-game overlay */}
       {!isPlaying && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 p-4">
           <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">Get Ready to Cross!</h1>
@@ -408,26 +382,21 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         </div>
       )}
 
-      {/* The 3D scene */}
       <MultiLaneHighwayScene
         currentRow={currentRow}
         charZIndex={charZIndex}
-        pickRow={pickRow}      // <--- We pass pickRow so the scene can handle tile clicks
+        pickRow={pickRow}
         gameOver={gameOver}
       />
 
-      {/* UI Overlays */}
       {isPlaying && !gameOver && (
         <>
-          {/* A nicer, bigger multiplier HUD */}
           <div className="absolute top-6 left-6 bg-black/60 px-4 py-2 rounded-md shadow-md">
             <div className="text-2xl font-extrabold tracking-wider" style={{ color: "#39FF14" }}>
               {multiplier.toFixed(2)}×
             </div>
             <div className="text-sm text-white opacity-80">Current Multiplier</div>
           </div>
-
-          {/* Cash Out button, more stylized */}
           {hasAdvanced && (
             <motion.div
               className="absolute bottom-6 right-6"
@@ -447,7 +416,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         </>
       )}
 
-      {/* Win/Lose Popup */}
       <AnimatePresence>
         {popupVisible && (
           <motion.div
@@ -476,8 +444,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 }
 
 // ---------------------------------------------------------------------------
-// MultiLaneHighwayScene – The Three.js scene with multipliers on each tile
-// and RAYCASTING for tile clicks
+// MultiLaneHighwayScene – The Three.js scene using GLB models
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentRow: number;
@@ -493,16 +460,15 @@ function MultiLaneHighwayScene({
   gameOver,
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer>();
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
+  const rendererRef = useRef<THREE.WebGLRenderer>();
   const characterRef = useRef<THREE.Group | null>(null);
   const tileRefs = useRef<THREE.Mesh[]>([]);
   const requestRef = useRef<number>();
   const carModelRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
-    // Scene & camera
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
     const scene = new THREE.Scene();
@@ -510,10 +476,10 @@ function MultiLaneHighwayScene({
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    // Position camera to get a good view of the current tile.
     camera.position.set(0, 10, 14);
     cameraRef.current = camera;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
     rendererRef.current = renderer;
@@ -526,16 +492,15 @@ function MultiLaneHighwayScene({
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
 
-    // The wide highway plane
+    // Road plane
     const roadGeom = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_HEIGHT);
     const roadMat = new THREE.MeshStandardMaterial({ color: 0x303030 });
     const road = new THREE.Mesh(roadGeom, roadMat);
     road.rotation.x = -Math.PI / 2;
-    // Position so row 0 is near center
     road.position.z = -(ROAD_HEIGHT / 2) + 10;
     scene.add(road);
 
-    // Create tile for each row in the center, plus text label
+    // Create tiles with multiplier labels attached directly on them
     tileRefs.current = [];
     for (let row = 0; row < NUM_ROWS; row++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
@@ -546,43 +511,38 @@ function MultiLaneHighwayScene({
       });
       const tileMesh = new THREE.Mesh(tileGeom, tileMat);
       tileMesh.position.set(0, 0.05, row * TILE_SPACING_Z);
+      tileMesh.userData = { rowIndex: row };
       scene.add(tileMesh);
       tileRefs.current.push(tileMesh);
 
-      // Attach userData so we can detect clicks
-      tileMesh.userData = { rowIndex: row };
-
-      // Calculate multiplier for this tile: 1.1^(row+1)
-      const tileMultiplier = Math.pow(BASE_MULTIPLIER, row + 1);
-      addMultiplierLabelToTile(tileMesh, tileMultiplier);
+      // Add multiplier label directly on the tile (lowered so it's not floating)
+      addMultiplierLabelToTile(tileMesh, Math.pow(BASE_MULTIPLIER, row + 1));
     }
 
-    // Load character
+    // Load character using GLTFLoader
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
       model.scale.set(2, 2, 2);
-      // Face forward away from camera
       model.rotation.y = Math.PI;
-      // Raise up so legs not in ground
-      model.position.set(0, 1.2, 5);
+      // Raise the character so his feet aren't in the ground.
+      model.position.set(0, 1.8, 5);
       scene.add(model);
       characterRef.current = model;
     });
 
-    // Load car
+    // Load car using GLTFLoader
     loader.load("/kaspacrosscar.glb", (gltf) => {
       carModelRef.current = gltf.scene;
     });
 
-    // Set up raycasting for tile clicks
+    // Raycasting for tile clicks
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(tileRefs.current, false);
       if (intersects.length > 0) {
@@ -605,24 +565,20 @@ function MultiLaneHighwayScene({
     };
     animate();
 
-    // Cleanup
     return () => {
       renderer.domElement.removeEventListener("click", onClick);
       cancelAnimationFrame(requestRef.current!);
-      if (renderer) {
-        mountRef.current?.removeChild(renderer.domElement);
-      }
+      mountRef.current?.removeChild(renderer.domElement);
     };
   }, [pickRow]);
 
-  // Move character on row change
+  // Move character when charZIndex changes without resetting to start
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = charZIndex * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 400;
+    const duration = 600; // slower movement for a nicer view
     const startTime = performance.now();
-
     const animateMove = (time: number) => {
       const elapsed = time - startTime;
       const t = Math.min(elapsed / duration, 1);
@@ -632,25 +588,25 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(animateMove);
   }, [charZIndex]);
 
-  // Spawn car on gameOver
+  // When game is over, spawn the car on the current tile and animate it across the tile
   useEffect(() => {
     if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current) return;
-    // Clone the car
+    // Instead of using the character's current position, we use the current row's tile position.
+    const tileZ = currentRow * TILE_SPACING_Z;
     const carClone = carModelRef.current.clone(true);
-    carClone.scale.set(2, 2, 2);
-
-    // random left or right
-    const fromLeft = Math.random() < 0.5;
-    const { x, z } = characterRef.current.position;
-    const spawnX = fromLeft ? -20 : 20;
-    carClone.position.set(spawnX, 1, z);
-    carClone.rotation.y = fromLeft ? Math.PI * 0.5 : -Math.PI * 0.5;
+    // Make the car bigger
+    carClone.scale.set(3, 3, 3);
+    // Spawn the car on the losing tile (centered horizontally)
+    const spawnX = 0; // you can also randomize left/right if needed
+    carClone.position.set(spawnX, 1, tileZ);
+    // Rotate the car to face across the tile (adjust as needed)
+    carClone.rotation.y = Math.PI / 2;
     sceneRef.current.add(carClone);
 
-    // Animate across
+    // Animate the car slowly so we get a good view (2 seconds)
     const startTime = performance.now();
-    const duration = 1000;
-    const endX = fromLeft ? 20 : -20;
+    const duration = 2000;
+    const endX = spawnX + 10; // animate car moving across the tile
     const animateCar = (time: number) => {
       const elapsed = time - startTime;
       const t = Math.min(elapsed / duration, 1);
@@ -658,46 +614,40 @@ function MultiLaneHighwayScene({
       if (t < 1) {
         requestAnimationFrame(animateCar);
       } else {
-        sceneRef.current!.remove(carClone);
+        // Leave the car in view for a few seconds before removing it if desired
+        setTimeout(() => {
+          sceneRef.current!.remove(carClone);
+        }, 2000);
       }
     };
     requestAnimationFrame(animateCar);
-  }, [gameOver]);
+  }, [gameOver, currentRow]);
 
   return <div ref={mountRef} className="w-full h-full" />;
 }
 
 // ---------------------------------------------------------------------------
 // addMultiplierLabelToTile
-// Creates a small text sprite above the tile showing its multiplier
-// in NEON GREEN (#39FF14)
+// Attaches a label (as a sprite) directly on the tile surface
 // ---------------------------------------------------------------------------
 function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
   const labelText = `${multiplier.toFixed(2)}x`;
-
-  // Create a small canvas
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#39FF14"; // Neon green text
+  ctx.fillStyle = "#39FF14"; // Neon green
   ctx.font = "48px Montserrat, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(labelText, canvas.width / 2, canvas.height / 2);
-
-  // Create a texture from the canvas
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
-
-  // Create a sprite
   const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMaterial);
-  // scale down
+  // Scale and position the label so it sits on the tile
   sprite.scale.set(2, 1, 1);
-
-  // position it above the tile
-  sprite.position.set(0, 1, 0);
+  sprite.position.set(0, 0.15, 0);
   tile.add(sprite);
 }
 
@@ -838,7 +788,6 @@ function KaspianCrossControls({
             </div>
           </div>
 
-          {/* Game Result */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult !== null && (
               <div className="text-center mb-4">
@@ -853,7 +802,6 @@ function KaspianCrossControls({
               </div>
             )}
 
-            {/* Spin / Start button */}
             {!isPlaying ? (
               <Button
                 className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -875,7 +823,6 @@ function KaspianCrossControls({
         </div>
       </Card>
 
-      {/* Error message toast */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
