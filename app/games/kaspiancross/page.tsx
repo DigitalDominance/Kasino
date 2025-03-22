@@ -24,13 +24,15 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const NUM_ROWS = 10;                  // total steps to cross
+const NUM_ROWS = 10;                  // total steps (lanes) to cross
 const TILE_SPACING_Z = -5;            // negative Z moves “forward”
-const BASE_MULTIPLIER = 1.1;          // each safe step multiplies by 1.1^row
-const SAFE_PROBABILITY = 0.7;         // 70% chance each tile is safe
-const ROAD_WIDTH = 40;
-const ROAD_HEIGHT = 60;
-const COLLISION_POPUP_DELAY = 2000;   // 2s delay for game-over
+const BASE_MULTIPLIER = 1.1;            // each safe step multiplies by 1.1^(row)
+const SAFE_PROBABILITY = 0.7;           // 70% chance each tile is safe
+const ROAD_WIDTH = 40;                // width of the road
+const ROAD_HEIGHT = 60;               // overall road height in world units
+const COLLISION_POPUP_DELAY = 2000;   // 2s delay before game-over popup
+
+// We'll use GLB models (no animations) for character and car
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -296,14 +298,12 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // On game start, reset
+  // On game start, reset (if starting a new game, reset charZIndex to -1)
   useEffect(() => {
     if (isPlaying) {
       setRows(Array.from({ length: NUM_ROWS }, () => Math.random() < SAFE_PROBABILITY));
       setCurrentRow(0);
-      // Do not reset charZIndex so the character remains on the last tile
-      // Only reset if starting a new game.
-      // Here, we assume if game restarts, charZIndex remains at the last safe tile.
+      setCharZIndex(-1);
       setMultiplier(1);
       setGameOver(false);
       setHasAdvanced(false);
@@ -444,7 +444,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 }
 
 // ---------------------------------------------------------------------------
-// MultiLaneHighwayScene – The Three.js scene using GLB models
+// MultiLaneHighwayScene – The Three.js scene using GLB models and kaspacrossroad.png for lanes
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentRow: number;
@@ -476,8 +476,8 @@ function MultiLaneHighwayScene({
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Position camera to get a good view of the current tile.
-    camera.position.set(0, 10, 14);
+    // Zoom in much more on the character
+    camera.position.set(0, 8, 8);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -492,15 +492,26 @@ function MultiLaneHighwayScene({
     dirLight.position.set(10, 20, 10);
     scene.add(dirLight);
 
-    // Road plane
-    const roadGeom = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_HEIGHT);
-    const roadMat = new THREE.MeshStandardMaterial({ color: 0x303030 });
-    const road = new THREE.Mesh(roadGeom, roadMat);
-    road.rotation.x = -Math.PI / 2;
-    road.position.z = -(ROAD_HEIGHT / 2) + 10;
-    scene.add(road);
+    // Create road lanes using kaspacrossroad.png texture
+    const laneHeight = ROAD_HEIGHT / NUM_ROWS; // each lane's height
+    const textureLoader = new THREE.TextureLoader();
+    const roadTexture = textureLoader.load("/kaspacrossroad.png");
+    roadTexture.wrapS = THREE.ClampToEdgeWrapping;
+    roadTexture.wrapT = THREE.ClampToEdgeWrapping;
+    // For each lane, create a plane using the texture.
+    for (let row = 0; row < NUM_ROWS; row++) {
+      const laneGeom = new THREE.PlaneGeometry(ROAD_WIDTH, laneHeight);
+      const laneMat = new THREE.MeshStandardMaterial({ map: roadTexture });
+      const lane = new THREE.Mesh(laneGeom, laneMat);
+      lane.rotation.x = -Math.PI / 2;
+      // Position lane so that its center aligns with the safe tile for that row.
+      // Calculate lane center Z: each lane's center is at row*TILE_SPACING_Z plus half lane height in Z.
+      const laneZ = row * TILE_SPACING_Z - laneHeight / 2 + 2.5; // adjust offset as needed
+      lane.position.set(0, 0, laneZ);
+      scene.add(lane);
+    }
 
-    // Create tiles with multiplier labels attached directly on them
+    // Create safe tile objects (boxes) on top of each lane
     tileRefs.current = [];
     for (let row = 0; row < NUM_ROWS; row++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
@@ -510,12 +521,12 @@ function MultiLaneHighwayScene({
         opacity: 0.9,
       });
       const tileMesh = new THREE.Mesh(tileGeom, tileMat);
+      // Position the tile at the center of its lane
+      // For consistency with lanes, use: row * TILE_SPACING_Z, and adjust Y so it sits on the lane
       tileMesh.position.set(0, 0.05, row * TILE_SPACING_Z);
       tileMesh.userData = { rowIndex: row };
       scene.add(tileMesh);
       tileRefs.current.push(tileMesh);
-
-      // Add multiplier label directly on the tile (lowered so it's not floating)
       addMultiplierLabelToTile(tileMesh, Math.pow(BASE_MULTIPLIER, row + 1));
     }
 
@@ -525,7 +536,6 @@ function MultiLaneHighwayScene({
       const model = gltf.scene;
       model.scale.set(2, 2, 2);
       model.rotation.y = Math.PI;
-      // Raise the character so his feet aren't in the ground.
       model.position.set(0, 1.8, 5);
       scene.add(model);
       characterRef.current = model;
@@ -536,7 +546,7 @@ function MultiLaneHighwayScene({
       carModelRef.current = gltf.scene;
     });
 
-    // Raycasting for tile clicks
+    // Raycaster for tile clicks
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -572,12 +582,12 @@ function MultiLaneHighwayScene({
     };
   }, [pickRow]);
 
-  // Move character when charZIndex changes without resetting to start
+  // Animate character movement when charZIndex changes without resetting to start
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = charZIndex * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 600; // slower movement for a nicer view
+    const duration = 600;
     const startTime = performance.now();
     const animateMove = (time: number) => {
       const elapsed = time - startTime;
@@ -591,22 +601,18 @@ function MultiLaneHighwayScene({
   // When game is over, spawn the car on the current tile and animate it across the tile
   useEffect(() => {
     if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current) return;
-    // Instead of using the character's current position, we use the current row's tile position.
     const tileZ = currentRow * TILE_SPACING_Z;
     const carClone = carModelRef.current.clone(true);
-    // Make the car bigger
     carClone.scale.set(3, 3, 3);
-    // Spawn the car on the losing tile (centered horizontally)
-    const spawnX = 0; // you can also randomize left/right if needed
+    // Spawn the car further from the left
+    const spawnX = -30;
     carClone.position.set(spawnX, 1, tileZ);
-    // Rotate the car to face across the tile (adjust as needed)
     carClone.rotation.y = Math.PI / 2;
     sceneRef.current.add(carClone);
 
-    // Animate the car slowly so we get a good view (2 seconds)
     const startTime = performance.now();
     const duration = 2000;
-    const endX = spawnX + 10; // animate car moving across the tile
+    const endX = spawnX + 10;
     const animateCar = (time: number) => {
       const elapsed = time - startTime;
       const t = Math.min(elapsed / duration, 1);
@@ -614,10 +620,9 @@ function MultiLaneHighwayScene({
       if (t < 1) {
         requestAnimationFrame(animateCar);
       } else {
-        // Leave the car in view for a few seconds before removing it if desired
         setTimeout(() => {
           sceneRef.current!.remove(carClone);
-        }, 2000);
+        }, 3000);
       }
     };
     requestAnimationFrame(animateCar);
@@ -627,8 +632,7 @@ function MultiLaneHighwayScene({
 }
 
 // ---------------------------------------------------------------------------
-// addMultiplierLabelToTile
-// Attaches a label (as a sprite) directly on the tile surface
+// addMultiplierLabelToTile – Attaches a label directly on the tile surface
 // ---------------------------------------------------------------------------
 function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
   const labelText = `${multiplier.toFixed(2)}x`;
@@ -645,7 +649,6 @@ function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number) {
   texture.minFilter = THREE.LinearFilter;
   const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMaterial);
-  // Scale and position the label so it sits on the tile
   sprite.scale.set(2, 1, 1);
   sprite.position.set(0, 0.15, 0);
   tile.add(sprite);
