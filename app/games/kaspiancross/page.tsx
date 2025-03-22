@@ -25,12 +25,16 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 // Constants
 // ---------------------------------------------------------------------------
 const NUM_ROWS = 10;                  // total lanes to cross
-const TILE_SPACING_Z = -5;            // negative Z moves “forward”
+// Since we want to use the image ratio (1000:250 = 4:1) and set road width to 40,
+// each lane's height will be 40 / 4 = 10 and overall road height = 10 * NUM_ROWS = 100.
+const ROAD_WIDTH = 40;
+const LANE_HEIGHT = ROAD_WIDTH / 4;   // = 10
+const ROAD_HEIGHT = NUM_ROWS * LANE_HEIGHT; // = 100
+// We now set the tile spacing to be equal to the lane height:
+const TILE_SPACING_Z = -LANE_HEIGHT;   // = -10
 const BASE_MULTIPLIER = 1.1;            // each safe step multiplies by 1.1^(row)
 const SAFE_PROBABILITY = 0.7;           // 70% chance each tile is safe
-const ROAD_WIDTH = 40;                // width of the road
-const ROAD_HEIGHT = 60;               // overall road height (world units)
-const COLLISION_POPUP_DELAY = 2000;   // 2s delay before game-over popup
+const COLLISION_POPUP_DELAY = 2000;     // 2s delay for game-over popup
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -282,7 +286,7 @@ interface KaspianCrossGameProps {
 }
 
 function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameProps) {
-  // Each lane represents a safe tile except lane 0 (which is plain road)
+  // Each lane represents a safe tile except lane 0 (plain road) is not clickable.
   const [rows, setRows] = useState<boolean[]>(() =>
     Array.from({ length: NUM_ROWS }, () => Math.random() < SAFE_PROBABILITY)
   );
@@ -290,19 +294,19 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   const [gameOver, setGameOver] = useState(false);
   const [hasAdvanced, setHasAdvanced] = useState(false);
   const [multiplier, setMultiplier] = useState(1);
-  // Start on lane 0 (plain road)
-  const [charZIndex, setCharZIndex] = useState(0);
+  // Start on an empty tile before lane 0, so initial char position = lane -1.
+  const [charZIndex, setCharZIndex] = useState(-1);
 
   // Popup state
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
 
-  // On game start, reset (start character on lane 0)
+  // On game start, reset (starting with character on lane -1)
   useEffect(() => {
     if (isPlaying) {
       setRows(Array.from({ length: NUM_ROWS }, () => Math.random() < SAFE_PROBABILITY));
       setCurrentRow(0);
-      setCharZIndex(0);
+      setCharZIndex(-1);
       setMultiplier(1);
       setGameOver(false);
       setHasAdvanced(false);
@@ -311,11 +315,11 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     }
   }, [isPlaying]);
 
-  // When a tile is clicked
+  // When a tile is clicked, move from current safe tile (lane 0 becomes first clickable).
   const pickRow = (rowIndex: number) => {
     if (gameOver || rowIndex !== currentRow) return;
     const isSafe = rows[rowIndex];
-    // Keep the character on the tile by setting charZIndex to rowIndex.
+    // Set character to new tile index (character will remain on that tile)
     setCharZIndex(rowIndex);
     if (isSafe) {
       const newRow = rowIndex + 1;
@@ -331,7 +335,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
         setCurrentRow(newRow);
       }
     } else {
-      // If unsafe, delay lose until after car animation.
+      // Unsafe tile: delay lose until after car animation.
       setTimeout(() => {
         handleLose();
       }, COLLISION_POPUP_DELAY);
@@ -348,12 +352,12 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
   const handleWin = (finalMult: number) => {
     setGameOver(true);
     const payout = betAmount * finalMult;
-    // Delay game end until after car animation (handled in MultiLaneHighwayScene)
+    // Delay game end until after car animation (handled in scene)
     onGameEnd("You Win", payout);
     showPopup(`Congratulations! You won ${payout.toFixed(2)} KAS!`);
   };
 
-  // Lose handling – character stays on tile until car "collides" and both disappear.
+  // Lose handling – character remains on tile until car "collides".
   const handleLose = () => {
     setGameOver(true);
     onGameEnd("House Wins", 0);
@@ -474,8 +478,8 @@ function MultiLaneHighwayScene({
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Zoom in and add a slight topward view (closer and higher)
-    camera.position.set(0, 10, 6);
+    // Zoom in more on the character with a higher (topward) view.
+    camera.position.set(0, 12, 4);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -491,7 +495,8 @@ function MultiLaneHighwayScene({
     scene.add(dirLight);
 
     // Create road lanes using kaspacrossroad.png texture.
-    const laneHeight = ROAD_HEIGHT / NUM_ROWS;
+    // The image is 1000x250, so with ROAD_WIDTH = 40, each lane's height should be 10.
+    const laneHeight = ROAD_HEIGHT / NUM_ROWS; // = 100/10 = 10
     const textureLoader = new THREE.TextureLoader();
     const roadTexture = textureLoader.load("/kaspacrossroad.png");
     roadTexture.wrapS = THREE.ClampToEdgeWrapping;
@@ -501,7 +506,7 @@ function MultiLaneHighwayScene({
       const laneMat = new THREE.MeshStandardMaterial({ map: roadTexture });
       const lane = new THREE.Mesh(laneGeom, laneMat);
       lane.rotation.x = -Math.PI / 2;
-      // Center the lane with an offset so the safe tile (box) is in the middle.
+      // Center the lane: each lane's center at z = row * TILE_SPACING_Z - laneHeight/2 + (|TILE_SPACING_Z|/2)
       const laneZ = row * TILE_SPACING_Z - laneHeight / 2 + (Math.abs(TILE_SPACING_Z) / 2);
       lane.position.set(0, 0, laneZ);
       scene.add(lane);
@@ -522,20 +527,20 @@ function MultiLaneHighwayScene({
       tileMesh.userData = { rowIndex: row };
       scene.add(tileMesh);
       tileRefs.current.push(tileMesh);
-      // For row 0, do not add a multiplier label.
+      // For lane 0, do not add a multiplier label.
       if (row > 0) {
-        // Multiplier text now in black.
         addMultiplierLabelToTile(tileMesh, Math.pow(BASE_MULTIPLIER, row + 1), "#000000");
       }
     }
 
-    // Load character using GLTFLoader – starting on lane 0 (empty road)
+    // Load character using GLTFLoader – starting on an empty tile (lane -1)
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
       model.scale.set(2, 2, 2);
       model.rotation.y = Math.PI;
-      model.position.set(0, 1.8, 0);
+      // Place the character on lane -1 (empty start area); z = (-1)*TILE_SPACING_Z = 10.
+      model.position.set(0, 1.8, -1 * TILE_SPACING_Z);
       scene.add(model);
       characterRef.current = model;
     });
@@ -610,9 +615,9 @@ function MultiLaneHighwayScene({
     carClone.rotation.y = Math.PI / 2;
     sceneRef.current.add(carClone);
 
-    // Car moves faster (1 second) and once it reaches the character's position, remove both.
+    // Car moves faster (500ms) and once it reaches the character, remove both.
     const startTime = performance.now();
-    const duration = 1000;
+    const duration = 500;
     const endX = spawnX + 10;
     const animateCar = (time: number) => {
       const elapsed = time - startTime;
@@ -626,7 +631,7 @@ function MultiLaneHighwayScene({
           sceneRef.current!.remove(characterRef.current);
           characterRef.current = null;
         }
-        // Delay the game end until after the car is removed.
+        // Delay game end until after car removal.
         setTimeout(() => {
           sceneRef.current!.remove(carClone);
         }, 500);
@@ -640,7 +645,7 @@ function MultiLaneHighwayScene({
 
 // ---------------------------------------------------------------------------
 // addMultiplierLabelToTile – Attaches a label directly on the tile surface
-// The color parameter now lets you set the text color (use black for multiplier text)
+// The label is rendered in bold Montserrat font in the given text color (default black).
 // ---------------------------------------------------------------------------
 function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number, textColor: string = "#000000") {
   const labelText = `${multiplier.toFixed(2)}x`;
@@ -649,7 +654,7 @@ function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number, textColo
   canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
   ctx.fillStyle = textColor;
-  ctx.font = "48px Montserrat, sans-serif";
+  ctx.font = "bold 48px Montserrat, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(labelText, canvas.width / 2, canvas.height / 2);
