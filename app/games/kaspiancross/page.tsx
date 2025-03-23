@@ -523,6 +523,9 @@ function MultiLaneHighwayScene({
   const requestRef = useRef<number>();
   const carAnimationTriggeredRef = useRef(false);
 
+  // A ref for a smoothed lookAt target to avoid rapid tilting.
+  const smoothedLookAtRef = useRef<THREE.Vector3>(new THREE.Vector3());
+
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
@@ -530,7 +533,7 @@ function MultiLaneHighwayScene({
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Camera with smooth follow using lerp and a constant offset relative to the character.
+    // Camera with smooth follow using a constant offset relative to the character.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     // Initial position uses the same offset as later (offset: {x: 0, y: 6, z: 5})
     camera.position.set(0, 6, 5);
@@ -627,7 +630,6 @@ function MultiLaneHighwayScene({
           mixerRef.current = new THREE.AnimationMixer(model);
           const walkAction = mixerRef.current.clipAction(animGltf.animations[0]);
           walkAction.setLoop(THREE.LoopRepeat, Infinity);
-          // Instead of toggling paused, we will control play/stop explicitly.
           walkAction.stop();
           walkActionRef.current = walkAction;
         }
@@ -666,14 +668,19 @@ function MultiLaneHighwayScene({
       if (mixerRef.current) {
         mixerRef.current.update(delta);
       }
-      if (characterRef.current) {
-        // Use a constant offset relative to the character's position.
+      if (characterRef.current && cameraRef.current) {
+        // Desired camera position: character position plus constant offset.
         const offset = new THREE.Vector3(0, 6, 5);
-        const desiredPos = characterRef.current.position.clone().add(offset);
-        camera.position.lerp(desiredPos, 0.1);
-        camera.lookAt(characterRef.current.position);
+        const desiredCamPos = characterRef.current.position.clone().add(offset);
+        cameraRef.current.position.lerp(desiredCamPos, 0.05);
+
+        // Update the smoothed lookAt target.
+        const desiredLookAt = characterRef.current.position.clone().setY(1.8);
+        smoothedLookAtRef.current.lerp(desiredLookAt, 0.05);
+
+        cameraRef.current.lookAt(smoothedLookAtRef.current);
       }
-      renderer.render(scene, camera);
+      renderer.render(scene, cameraRef.current!);
     };
     animate();
 
@@ -726,21 +733,18 @@ function MultiLaneHighwayScene({
       !carModelRef.current
     )
       return;
-    // Only trigger once per game over.
     if (carAnimationTriggeredRef.current) return;
     carAnimationTriggeredRef.current = true;
-    // Delay the car animation to allow the character to reach the tile first.
     setTimeout(() => {
       const scene = sceneRef.current!;
       const laneZ = currentLane * TILE_SPACING_Z;
       const carClone = carModelRef.current!.clone(true);
-      // Scale car 1.75× bigger than original (base scale 3 -> 5.25)
       carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
       carClone.position.set(-10, 1, laneZ);
       carClone.rotation.y = Math.PI / 2;
       scene.add(carClone);
       const startTime = performance.now();
-      const duration = 2000; // extended duration for slower car animation
+      const duration = 2000;
       const startX = -10;
       const endX = 10;
       const animateCar = (time: number) => {
@@ -757,10 +761,10 @@ function MultiLaneHighwayScene({
         }
       };
       requestAnimationFrame(animateCar);
-    }, 2000); // wait 2 seconds before starting the car animation
+    }, 2000);
   }, [gameOver, currentLane, onCarCollision]);
 
-  // Reset car animation trigger when gameOver becomes false (new game)
+  // Reset car animation trigger when gameOver becomes false.
   useEffect(() => {
     if (!gameOver) {
       carAnimationTriggeredRef.current = false;
