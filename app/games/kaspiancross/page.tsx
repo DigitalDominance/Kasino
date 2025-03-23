@@ -21,7 +21,6 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // ---------------------------------------------------------------------------
 // Fonts & Constants
 // ---------------------------------------------------------------------------
-// Increase playable lanes from 10 to 30 (adds 20 more tiles)
 const REAL_LANES = 30;
 const TOTAL_LANES = REAL_LANES + 1;
 
@@ -152,9 +151,7 @@ function KaspianCrossContent() {
   };
 
   return (
-    <div
-      className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}
-    >
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
@@ -220,6 +217,7 @@ function KaspianCrossContent() {
                   isPlaying={isPlaying}
                   betAmount={Number(betAmount)}
                   onGameEnd={handleGameEnd}
+                  onReset={resetGame}
                 />
               </div>
             </div>
@@ -318,9 +316,10 @@ interface KaspianCrossGameProps {
   isPlaying: boolean;
   betAmount: number;
   onGameEnd: (result: string, amount: number) => void;
+  onReset: () => void;
 }
 
-function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameProps) {
+function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianCrossGameProps) {
   const [safeStates, setSafeStates] = useState<boolean[]>(() => {
     const arr = Array(TOTAL_LANES).fill(false);
     for (let i = 1; i <= REAL_LANES; i++) {
@@ -473,8 +472,14 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
             >
               <h2 className="text-2xl font-bold mb-4">Game Over</h2>
               <p className="mb-4">{popupMessage}</p>
-              <Button onClick={hidePopup} className="bg-black text-[#49EACB] w-full hover:bg-[#333]">
-                Close
+              <Button
+                onClick={() => {
+                  hidePopup();
+                  onReset();
+                }}
+                className="bg-black text-[#49EACB] w-full hover:bg-[#333]"
+              >
+                Play Again
               </Button>
             </motion.div>
           </motion.div>
@@ -681,7 +686,7 @@ function MultiLaneHighwayScene({
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 500;
+    const duration = 1000; // increased duration for more visible walking animation
     const startTime = performance.now();
     isMovingRef.current = true;
     // Unpause walking animation when movement starts.
@@ -719,34 +724,35 @@ function MultiLaneHighwayScene({
       !carModelRef.current
     )
       return;
-    // Prevent re-spawning if effect triggers again.
-    if (!sceneRef.current) return;
-    const scene = sceneRef.current;
-    const laneZ = currentLane * TILE_SPACING_Z;
-    const carClone = carModelRef.current.clone(true);
-    // Scale car 1.75× bigger than original (base scale 3 -> 5.25)
-    carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
-    carClone.position.set(-10, 1, laneZ);
-    carClone.rotation.y = Math.PI / 2;
-    scene.add(carClone);
-    const startTime = performance.now();
-    const duration = 1000;
-    const startX = -10;
-    const endX = 10;
-    const animateCar = (time: number) => {
-      const elapsed = time - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      carClone.position.x = startX + (endX - startX) * t;
-      if (t < 1) {
-        requestAnimationFrame(animateCar);
-      } else {
-        setTimeout(() => {
-          scene.remove(carClone);
-          onCarCollision();
-        }, 300);
-      }
-    };
-    requestAnimationFrame(animateCar);
+    // Delay the car animation to allow the character to reach the tile first.
+    setTimeout(() => {
+      const scene = sceneRef.current!;
+      const laneZ = currentLane * TILE_SPACING_Z;
+      const carClone = carModelRef.current!.clone(true);
+      // Scale car 1.75× bigger than original (base scale 3 -> 5.25)
+      carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
+      carClone.position.set(-10, 1, laneZ);
+      carClone.rotation.y = Math.PI / 2;
+      scene.add(carClone);
+      const startTime = performance.now();
+      const duration = 2000; // extended duration for slower car animation
+      const startX = -10;
+      const endX = 10;
+      const animateCar = (time: number) => {
+        const elapsed = time - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        carClone.position.x = startX + (endX - startX) * t;
+        if (t < 1) {
+          requestAnimationFrame(animateCar);
+        } else {
+          setTimeout(() => {
+            scene.remove(carClone);
+            onCarCollision();
+          }, 300);
+        }
+      };
+      requestAnimationFrame(animateCar);
+    }, 2000); // wait 2 seconds before starting the car animation
   }, [gameOver, currentLane, onCarCollision]);
 
   return <div ref={mountRef} className="w-full h-full" />;
