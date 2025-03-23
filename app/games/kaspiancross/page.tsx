@@ -17,7 +17,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
-import * as THREE from "three";
+import * as THREE from 'three';
+import BatchedMesh from 'three/src/objects/BatchedMesh.js';
+(THREE as any).BatchedMesh = BatchedMesh;
 
 // ---------------------------------------------------------------------------
 // Constants & Fonts
