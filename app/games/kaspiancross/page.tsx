@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -422,9 +422,9 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
         currentLane={currentLane}
         gameOver={gameOver}
         pendingUnsafe={pendingUnsafe}
-        onUnsafeLaneReached={() => { setGameOver(true); setPendingUnsafe(null); }}
         pickRow={pickRow}
         onCarCollision={handleCarCollision}
+        onUnsafeLaneReached={() => { setGameOver(true); setPendingUnsafe(null); }}
       />
 
       {/* In-game UI */}
@@ -530,8 +530,9 @@ function MultiLaneHighwayScene({
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Camera with smooth follow using lerp
+    // Camera with smooth follow using lerp and a constant offset relative to the character.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    // Initial position uses the same offset as later (offset: {x: 0, y: 6, z: 5})
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
 
@@ -666,10 +667,11 @@ function MultiLaneHighwayScene({
         mixerRef.current.update(delta);
       }
       if (characterRef.current) {
-        const { x, z } = characterRef.current.position;
-        const desiredPos = new THREE.Vector3(x, 6, z + 5);
+        // Use a constant offset relative to the character's position.
+        const offset = new THREE.Vector3(0, 6, 5);
+        const desiredPos = characterRef.current.position.clone().add(offset);
         camera.position.lerp(desiredPos, 0.1);
-        camera.lookAt(new THREE.Vector3(x, 1.8, z));
+        camera.lookAt(characterRef.current.position);
       }
       renderer.render(scene, camera);
     };
