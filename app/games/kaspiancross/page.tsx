@@ -39,7 +39,7 @@ const BASE_MULTIPLIER = 1.15; // exponential factor
 function getLaneProbability(laneIndex: number) {
   // Lane 0 is the safe “start.” For lane 1, prob=START_PROB
   // Then it decreases by PROB_DECREMENT each lane, never below MIN_PROB
-  if (laneIndex === 0) return 1.0; // always safe or just skip it
+  if (laneIndex === 0) return 1.0; // always safe or skip
   const p = START_PROB - PROB_DECREMENT * (laneIndex - 1);
   return Math.max(MIN_PROB, p);
 }
@@ -548,6 +548,7 @@ function generateLanes(count: number, startIndex: number): boolean[] {
 //   we call pickRow(laneIndex).
 // – If showCar=true => animate the car from left to right, remove the character,
 //   then onCarCollisionDone() => triggers “Lose” logic.
+// – **Fallback**: If the texture fails, we apply a gray color to the roads.
 // ---------------------------------------------------------------------------
 interface InfiniteHighwaySceneProps {
   currentLane: number;
@@ -670,24 +671,42 @@ function InfiniteHighwayScene({
     if (!sceneRef.current) return;
     const scene = sceneRef.current;
 
-    // Because we might expand safeStates, we rebuild roads only for the new range
-    // e.g. if we had 11 before, now we have 21 => build lanes 11..20
-    const existingCount = tilesRef.current.length; // how many lanes we built so far
-    // We'll build from existingCount up to safeStates.length-1
-    for (let i = existingCount; i < safeStates.length; i++) {
-      // Road texture
-      const roadTexture = new THREE.TextureLoader().load("/kaspacrossroad.png");
-      roadTexture.wrapS = THREE.RepeatWrapping;
-      roadTexture.wrapT = THREE.RepeatWrapping;
+    // We'll load the texture once, with fallback
+    const textureLoader = new THREE.TextureLoader();
+    let roadTexture: THREE.Texture | null = null;
+    let roadMaterial: THREE.MeshStandardMaterial;
 
-      const laneMat = new THREE.MeshStandardMaterial({
-        map: roadTexture,
-        side: THREE.DoubleSide,
-      });
+    roadTexture = textureLoader.load(
+      "/kaspacrossroad.png",
+      (tex) => {
+        console.log("Road texture loaded successfully.");
+      },
+      undefined,
+      (err) => {
+        console.warn("Could not load /kaspacrossroad.png. Using fallback color.");
+        roadTexture = null;
+      }
+    );
+
+    // Because we might expand safeStates, we build roads only for new lanes
+    const existingCount = tilesRef.current.length; // how many lanes we built so far
+    for (let i = existingCount; i < safeStates.length; i++) {
+      // If the texture didn't load, fallback to a plain color
+      if (roadTexture) {
+        roadMaterial = new THREE.MeshStandardMaterial({
+          map: roadTexture,
+          side: THREE.DoubleSide,
+        });
+      } else {
+        roadMaterial = new THREE.MeshStandardMaterial({
+          color: 0x444444, // fallback gray
+          side: THREE.DoubleSide,
+        });
+      }
 
       // center plane
       const centerGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const centerLane = new THREE.Mesh(centerGeom, laneMat);
+      const centerLane = new THREE.Mesh(centerGeom, roadMaterial);
       centerLane.rotation.x = -Math.PI / 2;
       centerLane.position.set(
         0,
@@ -698,7 +717,7 @@ function InfiniteHighwayScene({
 
       // left plane
       const leftGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const leftLane = new THREE.Mesh(leftGeom, laneMat);
+      const leftLane = new THREE.Mesh(leftGeom, roadMaterial);
       leftLane.rotation.x = -Math.PI / 2;
       leftLane.position.set(
         -ROAD_WIDTH,
@@ -709,7 +728,7 @@ function InfiniteHighwayScene({
 
       // right plane
       const rightGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const rightLane = new THREE.Mesh(rightGeom, laneMat);
+      const rightLane = new THREE.Mesh(rightGeom, roadMaterial);
       rightLane.rotation.x = -Math.PI / 2;
       rightLane.position.set(
         ROAD_WIDTH,
@@ -724,6 +743,7 @@ function InfiniteHighwayScene({
         color: 0xffffff,
         transparent: true,
         opacity: 0.9,
+        side: THREE.DoubleSide,
       });
       const tileMesh = new THREE.Mesh(tileGeom, tileMat);
       tileMesh.position.set(0, 0.05, i * TILE_SPACING_Z);
@@ -775,7 +795,7 @@ function InfiniteHighwayScene({
     const animateCar = (time: number) => {
       const elapsed = time - startTime;
       const t = Math.min(elapsed / duration, 1);
-      carClone.position.x = -10 + (20 * t);
+      carClone.position.x = -10 + 20 * t;
       if (t < 1) {
         requestAnimationFrame(animateCar);
       } else {
