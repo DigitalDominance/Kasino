@@ -21,24 +21,20 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // ---------------------------------------------------------------------------
 // Fonts & Constants
 // ---------------------------------------------------------------------------
-const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
-
-/**
- * We have 11 total lanes:
- *   lane 0: extra road in front (not clickable)
- *   lanes 1..10: playable lanes
- */
-const REAL_LANES = 10;
+// Increase playable lanes from 10 to 30 (adds 20 more tiles)
+const REAL_LANES = 30;
 const TOTAL_LANES = REAL_LANES + 1;
 
-// Road ratio is 4:1 => width=40 => each lane's height=10 => total=110
+// Road ratio is 4:1 => width=40 => each lane's height=10 => total= (TOTAL_LANES*10)
 const ROAD_WIDTH = 40;
 const LANE_HEIGHT = ROAD_WIDTH / 4; // 10
-const ROAD_HEIGHT = TOTAL_LANES * LANE_HEIGHT; // 110
+const ROAD_HEIGHT = TOTAL_LANES * LANE_HEIGHT;
 const TILE_SPACING_Z = -LANE_HEIGHT; // -10
 
 const BASE_MULTIPLIER = 1.1;
 const SAFE_PROBABILITY = 0.7;
+
+const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -56,11 +52,6 @@ function KaspianCrossContent() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
-
-  // Example backend config
-  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
-  const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
-  const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
   // -------------------------------------------------------------------------
   // Start Game
@@ -84,7 +75,7 @@ function KaspianCrossContent() {
         return;
       }
       const chosenTreasury =
-        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+        Math.random() < 0.5 ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1 : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
@@ -102,7 +93,7 @@ function KaspianCrossContent() {
       setDepositTxid(txidString);
 
       // Notify backend
-      const startRes = await axios.post(`${apiUrl}/game/start`, {
+      const startRes = await axios.post(`${process.env.API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com/api"}/game/start`, {
         gameName: "Kaspian Cross",
         uniqueHash,
         walletAddress: currentWalletAddress,
@@ -135,7 +126,7 @@ function KaspianCrossContent() {
 
     if (gameId) {
       try {
-        await axios.post(`${apiUrl}/game/end`, {
+        await axios.post(`${process.env.API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com/api"}/game/end`, {
           gameId,
           result: result === "You Win" ? "win" : "lose",
           winAmount: amount,
@@ -157,9 +148,6 @@ function KaspianCrossContent() {
     setDepositTxid(null);
   };
 
-  // -------------------------------------------------------------------------
-  // Render
-  // -------------------------------------------------------------------------
   return (
     <div
       className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}
@@ -291,7 +279,7 @@ function KaspianCrossContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet and press “Spin Kaspian Cross” to begin.</li>
               <li>
-                Lane 0 is a non-clickable “starting road.” Lanes 1–10 each have
+                Lane 0 is a non-clickable “starting road.” Lanes 1–{REAL_LANES} each have
                 a safe tile (70% chance).
               </li>
               <li>
@@ -299,8 +287,7 @@ function KaspianCrossContent() {
                 success raises your multiplier by 1.1×.
               </li>
               <li>
-                If the tile isn’t safe, a car collision ends the game—no
-                pre-delay, you’ll see the car instantly.
+                If the tile isn’t safe, a car collision ends the game—after you reach the tile, the car comes in.
               </li>
               <li>
                 You can <strong>Cash Out</strong> any time after a successful
@@ -321,7 +308,8 @@ function KaspianCrossContent() {
 }
 
 // ---------------------------------------------------------------------------
-// KaspianCrossGame – if tile is unsafe, spawn car immediately, show popup AFTER
+// KaspianCrossGame – now uses a pendingUnsafe flag to delay game over until
+// after the character reaches the clicked tile
 // ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -339,11 +327,14 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
     return arr;
   });
 
-  // currentLane => physically on [0..10]
+  // currentLane => physically on [0..REAL_LANES]
   const [currentLane, setCurrentLane] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [hasAdvanced, setHasAdvanced] = useState(false);
   const [multiplier, setMultiplier] = useState(1);
+
+  // New state: if the clicked tile is unsafe, delay game over until after movement
+  const [pendingUnsafe, setPendingUnsafe] = useState<number | null>(null);
 
   // Popup
   const [popupVisible, setPopupVisible] = useState(false);
@@ -363,6 +354,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
       setMultiplier(1);
       setPopupVisible(false);
       setPopupMessage("");
+      setPendingUnsafe(null);
     }
   }, [isPlaying]);
 
@@ -375,19 +367,19 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 
     const isSafe = safeStates[laneIndex];
     if (isSafe) {
-      // success => laneIndex
       const newMultiplier = Math.pow(BASE_MULTIPLIER, laneIndex);
       setMultiplier(Number(newMultiplier.toFixed(2)));
       setHasAdvanced(true);
       setCurrentLane(laneIndex);
-
-      // if final lane => auto-win after short delay
+      // If this is the final lane, auto-win after a short delay.
       if (laneIndex === REAL_LANES) {
         setTimeout(() => handleWin(newMultiplier), 600);
       }
     } else {
-      // unsafe => setGameOver => spawn car immediately, popup after collision
-      setGameOver(true);
+      // For an unsafe tile, mark it as pending unsafe and move to that lane.
+      setPendingUnsafe(laneIndex);
+      setHasAdvanced(true);
+      setCurrentLane(laneIndex);
     }
   };
 
@@ -443,6 +435,9 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
       <MultiLaneHighwayScene
         currentLane={currentLane}
         gameOver={gameOver}
+        pendingUnsafe={pendingUnsafe}
+        // When the lane animation finishes and the pendingUnsafe tile is reached, trigger game over.
+        onUnsafeLaneReached={() => { setGameOver(true); setPendingUnsafe(null); }}
         pickRow={pickRow}
         onCarCollision={handleCarCollision}
       />
@@ -513,20 +508,24 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd }: KaspianCrossGameP
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene
 // – Spawns three planes (center + left + right) per lane for a continuous road
-// – If gameOver => spawn car once, from left to right, then onCarCollision()
+// – When gameOver is triggered (after lane movement finishes on an unsafe tile), spawn car animation.
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
-  currentLane: number; // 0..10
+  currentLane: number; // 0..REAL_LANES
   gameOver: boolean;
+  pendingUnsafe: number | null;
   pickRow: (laneIndex: number) => void;
   onCarCollision: () => void; // called after car finishes
+  onUnsafeLaneReached: () => void; // callback when unsafe tile movement animation finishes
 }
 
 function MultiLaneHighwayScene({
   currentLane,
   gameOver,
+  pendingUnsafe,
   pickRow,
   onCarCollision,
+  onUnsafeLaneReached,
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>();
@@ -550,9 +549,9 @@ function MultiLaneHighwayScene({
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Camera
+    // Camera – zoomed in a bit more (positioned closer)
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 8);
+    camera.position.set(0, 6, 5);
     cameraRef.current = camera;
 
     // Renderer
@@ -599,7 +598,6 @@ function MultiLaneHighwayScene({
       const leftGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
       const leftLane = new THREE.Mesh(leftGeom, laneMat);
       leftLane.rotation.x = -Math.PI / 2;
-      // shift it further left so it lines up seamlessly
       leftLane.position.set(
         -ROAD_WIDTH,
         0,
@@ -657,7 +655,7 @@ function MultiLaneHighwayScene({
       carModelRef.current = gltf.scene;
     });
 
-    // Raycasting
+    // Raycasting for tile clicks
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -679,9 +677,9 @@ function MultiLaneHighwayScene({
       requestRef.current = requestAnimationFrame(animate);
       if (characterRef.current) {
         const { x, z } = characterRef.current.position;
-        // Smooth camera follow
+        // Smooth camera follow with new offset (zoomed in)
         camera.position.x += (x - camera.position.x) * 0.1;
-        camera.position.z += (z + 8 - camera.position.z) * 0.1;
+        camera.position.z += (z + 5 - camera.position.z) * 0.1;
         camera.lookAt(x, 1.8, z);
       }
       renderer.render(scene, camera);
@@ -695,12 +693,12 @@ function MultiLaneHighwayScene({
     };
   }, [pickRow]);
 
-  // Animate character on lane change
+  // Animate character movement on lane change and, if needed, trigger unsafe collision after finishing.
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 500;
+    const duration = 500; // you can adjust this duration for smoother movement
     const startTime = performance.now();
 
     const move = (time: number) => {
@@ -709,12 +707,19 @@ function MultiLaneHighwayScene({
       if (characterRef.current) {
         characterRef.current.position.z = startZ + (newZ - startZ) * t;
       }
-      if (t < 1) requestAnimationFrame(move);
+      if (t < 1) {
+        requestAnimationFrame(move);
+      } else {
+        // When the movement completes, if this tile was flagged as unsafe, trigger game over.
+        if (pendingUnsafe === currentLane) {
+          onUnsafeLaneReached();
+        }
+      }
     };
     requestAnimationFrame(move);
-  }, [currentLane]);
+  }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
 
-  // If gameOver => spawn car once, from left to right, then call onCarCollision
+  // If gameOver => spawn car once, from left to right, then call onCarCollision.
   useEffect(() => {
     if (
       !gameOver ||
@@ -724,23 +729,23 @@ function MultiLaneHighwayScene({
     )
       return;
 
-    // Prevent re-spawning if effect triggers again
+    // Prevent re-spawning if effect triggers again.
     if (carSpawnedRef.current) return;
     carSpawnedRef.current = true;
 
     const scene = sceneRef.current;
     const laneZ = currentLane * TILE_SPACING_Z;
 
-    // Clone the car
+    // Clone the car.
     const carClone = carModelRef.current.clone(true);
     carClone.scale.set(3, 3, 3);
 
-    // Start from the left (x=-10), facing right
+    // Start from the left (x=-10), facing right.
     carClone.position.set(-10, 1, laneZ);
     carClone.rotation.y = Math.PI / 2;
     scene.add(carClone);
 
-    // Animate quickly from left to right
+    // Animate quickly from left to right.
     const startTime = performance.now();
     const duration = 1000; // 1 second
     const startX = -10;
@@ -753,12 +758,9 @@ function MultiLaneHighwayScene({
       if (t < 1) {
         requestAnimationFrame(animateCar);
       } else {
-        // Remove the character from scene to simulate collision
-        if (characterRef.current) {
-          scene.remove(characterRef.current);
-          characterRef.current = null;
-        }
-        // After a brief delay, remove car & trigger collision callback
+        // Instead of removing the character (which could cause the teleport effect),
+        // we simply leave it on the tile.
+        // After a brief delay, remove the car and trigger collision callback.
         setTimeout(() => {
           scene.remove(carClone);
           onCarCollision();
