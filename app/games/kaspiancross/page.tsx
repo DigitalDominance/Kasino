@@ -522,29 +522,9 @@ function MultiLaneHighwayScene({
   const isMovingRef = useRef(false);
   const requestRef = useRef<number>();
   const carAnimationTriggeredRef = useRef(false);
-
-  // A ref for a smoothed lookAt target to avoid rapid tilting.
-  const smoothedLookAtRef = useRef<THREE.Vector3>(new THREE.Vector3());
-
-  // Helper function to spawn red particle effect at a given position.
-  const spawnDeathParticles = (position: THREE.Vector3) => {
-    const particleCount = 100;
-    const particlesGeometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = position.x + (Math.random() - 0.5) * 2;
-      positions[i * 3 + 1] = position.y + (Math.random() - 0.5) * 2;
-      positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
-    }
-    particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.2 });
-    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-    sceneRef.current?.add(particles);
-    setTimeout(() => {
-      sceneRef.current?.remove(particles);
-    }, 2000);
-  };
-
+  // Store last known character position to keep camera stable even when character is hidden.
+  const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
@@ -552,9 +532,8 @@ function MultiLaneHighwayScene({
     scene.background = new THREE.Color(0x000000);
     sceneRef.current = scene;
 
-    // Camera with smooth follow using a constant offset relative to the character.
+    // Camera: fix Y at 6 and follow only X/Z relative to character.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Initial position uses fixed Y=6 and offset in z (e.g. 5)
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
 
@@ -643,6 +622,8 @@ function MultiLaneHighwayScene({
       model.position.set(0, 1.8, 0);
       scene.add(model);
       characterRef.current = model;
+      // Update last known position.
+      lastKnownCharacterPositionRef.current.copy(model.position);
       // Load walking animation from external file
       loader.load("/Animation_Walking_withSkin.glb", (animGltf) => {
         if (animGltf.animations && animGltf.animations.length > 0) {
@@ -688,15 +669,18 @@ function MultiLaneHighwayScene({
         mixerRef.current.update(delta);
       }
       if (characterRef.current && cameraRef.current) {
-        // Follow character's x and z; fix y at 6.
-        const characterPos = characterRef.current.position;
-        const desiredCamPos = new THREE.Vector3(characterPos.x, 6, characterPos.z + 5);
-        cameraRef.current.position.lerp(desiredCamPos, 0.05);
-
-        // For lookAt, fix y to 1.8.
-        const desiredLookAt = new THREE.Vector3(characterPos.x, 1.8, characterPos.z);
-        smoothedLookAtRef.current.lerp(desiredLookAt, 0.05);
-        cameraRef.current.lookAt(smoothedLookAtRef.current);
+        // Use the character's position if visible, otherwise the last known position.
+        const charPos = characterRef.current.visible
+          ? characterRef.current.position
+          : lastKnownCharacterPositionRef.current;
+        if (characterRef.current.visible) {
+          lastKnownCharacterPositionRef.current.copy(characterRef.current.position);
+        }
+        // Update only X and Z; fix Y to 6.
+        const desiredX = THREE.MathUtils.lerp(cameraRef.current.position.x, charPos.x, 0.05);
+        const desiredZ = THREE.MathUtils.lerp(cameraRef.current.position.z, charPos.z + 5, 0.05);
+        cameraRef.current.position.set(desiredX, 6, desiredZ);
+        cameraRef.current.lookAt(new THREE.Vector3(charPos.x, 1.8, charPos.z));
       }
       renderer.render(scene, cameraRef.current!);
     };
@@ -714,7 +698,7 @@ function MultiLaneHighwayScene({
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 1000; // increased duration for visible walking animation
+    const duration = 1000;
     const startTime = performance.now();
     isMovingRef.current = true;
     if (walkActionRef.current) {
@@ -757,14 +741,13 @@ function MultiLaneHighwayScene({
       const scene = sceneRef.current!;
       const laneZ = currentLane * TILE_SPACING_Z;
       const carClone = carModelRef.current!.clone(true);
-      // Scale car 1.75× bigger than original
       carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
-      // Start further left at x = -20
+      // Start further left at x = -20 and move to x = 20 faster.
       carClone.position.set(-20, 1, laneZ);
       carClone.rotation.y = Math.PI / 2;
       scene.add(carClone);
       const startTime = performance.now();
-      const duration = 1000; // faster car: 1 second
+      const duration = 1000;
       const startX = -20;
       const endX = 20;
       const animateCar = (time: number) => {
@@ -795,6 +778,25 @@ function MultiLaneHighwayScene({
       carAnimationTriggeredRef.current = false;
     }
   }, [gameOver]);
+
+  // Helper function to spawn red particle effect at a given position.
+  const spawnDeathParticles = (position: THREE.Vector3) => {
+    const particleCount = 300;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = position.x + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 1] = position.y + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
+    }
+    particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const particlesMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.1 });
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    sceneRef.current?.add(particles);
+    setTimeout(() => {
+      sceneRef.current?.remove(particles);
+    }, 2000);
+  };
 
   return <div ref={mountRef} className="w-full h-full" />;
 }
