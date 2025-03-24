@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -150,7 +150,7 @@ function KaspianCrossContent() {
     setWinAmount(null);
     setGameId(null);
     setDepositTxid(null);
-    setCanvasKey(prev => prev + 1);
+    setCanvasKey((prev) => prev + 1);
   };
 
   return (
@@ -407,7 +407,10 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
         pendingUnsafe={pendingUnsafe}
         pickRow={pickRow}
         onCarCollision={handleCarCollision}
-        onUnsafeLaneReached={() => { setGameOver(true); setPendingUnsafe(null); }}
+        onUnsafeLaneReached={() => {
+          setGameOver(true);
+          setPendingUnsafe(null);
+        }}
       />
       {/* In-game UI */}
       {isPlaying && !gameOver && (
@@ -552,51 +555,44 @@ function MultiLaneHighwayScene({
     greenLight.position.set(-5, 10, 5);
     scene.add(greenLight);
 
-    // Road texture and lanes
-    const roadTexture = new THREE.TextureLoader().load("/kaspacrossroad.png");
-    roadTexture.wrapS = THREE.RepeatWrapping;
-    roadTexture.wrapT = THREE.RepeatWrapping;
-    const laneMat = new THREE.MeshStandardMaterial({ map: roadTexture });
+    // -----------------------------------------------------------------------
+    // Replace plain-plane lanes with road model from GLB.
+    const roadLoader = new GLTFLoader();
+    roadLoader.load("/kaspacrossroad.glb", (gltf) => {
+      const roadModel = gltf.scene;
+      // Compute bounding box to determine scaling.
+      const box = new THREE.Box3().setFromObject(roadModel);
+      const size = box.getSize(new THREE.Vector3());
+      const scaleX = ROAD_WIDTH / size.x;
+      const scaleZ = LANE_HEIGHT / size.z;
+      roadModel.scale.set(scaleX, 1, scaleZ);
+      // For each lane index, clone the model for center, left, and right lanes.
+      for (let i = 0; i < TOTAL_LANES; i++) {
+        const posZ = i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2;
+        // Center lane.
+        const centerLane = roadModel.clone();
+        centerLane.position.set(0, 0, posZ);
+        scene.add(centerLane);
+        // Left lane.
+        const leftLane = roadModel.clone();
+        leftLane.position.set(-ROAD_WIDTH, 0, posZ);
+        scene.add(leftLane);
+        // Right lane.
+        const rightLane = roadModel.clone();
+        rightLane.position.set(ROAD_WIDTH, 0, posZ);
+        scene.add(rightLane);
+      }
+    });
+    // -----------------------------------------------------------------------
 
-    for (let i = 0; i < TOTAL_LANES; i++) {
-      // Center lane
-      const centerGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const centerLane = new THREE.Mesh(centerGeom, laneMat);
-      centerLane.rotation.x = -Math.PI / 2;
-      centerLane.position.set(
-        0,
-        0,
-        i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2
-      );
-      scene.add(centerLane);
-      // Left lane
-      const leftGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const leftLane = new THREE.Mesh(leftGeom, laneMat);
-      leftLane.rotation.x = -Math.PI / 2;
-      leftLane.position.set(
-        -ROAD_WIDTH,
-        0,
-        i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2
-      );
-      scene.add(leftLane);
-      // Right lane
-      const rightGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
-      const rightLane = new THREE.Mesh(rightGeom, laneMat);
-      rightLane.rotation.x = -Math.PI / 2;
-      rightLane.position.set(
-        ROAD_WIDTH,
-        0,
-        i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2
-      );
-      scene.add(rightLane);
-    }
-
-    // Create clickable tiles.
+    // -----------------------------------------------------------------------
+    // Create clickable tiles with updated texture.
     tileRefs.current = [];
+    const tileTexture = new THREE.TextureLoader().load("/kaspacrosstile.png");
     for (let i = 0; i < TOTAL_LANES; i++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
       const tileMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+        map: tileTexture,
         transparent: true,
         opacity: 0.9,
       });
@@ -610,6 +606,7 @@ function MultiLaneHighwayScene({
         addMultiplierLabelToTile(tileMesh, multiplier, "#000000");
       }
     }
+    // -----------------------------------------------------------------------
 
     // Load Character and its walking animation.
     const loader = new GLTFLoader();
@@ -658,7 +655,7 @@ function MultiLaneHighwayScene({
     };
     renderer.domElement.addEventListener("click", onClick);
 
-    // Animation loop: set camera exactly based on character's position (fixed offset).
+    // Animation loop: update camera based on character's position.
     let lastTime = performance.now();
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
@@ -675,7 +672,7 @@ function MultiLaneHighwayScene({
         if (characterRef.current.visible) {
           lastKnownCharacterPositionRef.current.copy(characterRef.current.position);
         }
-        // Set camera position exactly: fixed Y=6, offset Z=+5.
+        // Set camera position: fixed Y=6 with offset Z=+5.
         cameraRef.current.position.set(charPos.x, 6, charPos.z + 5);
         cameraRef.current.lookAt(new THREE.Vector3(charPos.x, 1.8, charPos.z));
       }
