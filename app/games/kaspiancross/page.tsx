@@ -50,7 +50,7 @@ function KaspianCrossContent() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
-  // Force remount of Three.js canvas on reset.
+  // This key forces a remount of the Three.js canvas on reset.
   const [canvasKey, setCanvasKey] = useState(0);
 
   // Start Game
@@ -80,6 +80,7 @@ function KaspianCrossContent() {
         alert("Treasury address not configured");
         return;
       }
+
       // Send deposit
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
@@ -90,6 +91,7 @@ function KaspianCrossContent() {
         typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
+
       // Notify backend
       const startRes = await axios.post(
         `${process.env.API_URL ||
@@ -108,6 +110,7 @@ function KaspianCrossContent() {
         alert("Failed to start game on backend");
         return;
       }
+
       setIsPlaying(true);
       setGameResult(null);
       setWinAmount(null);
@@ -122,6 +125,7 @@ function KaspianCrossContent() {
     setGameResult(result);
     setWinAmount(amount);
     setIsPlaying(false);
+
     if (gameId) {
       try {
         await axios.post(
@@ -139,14 +143,14 @@ function KaspianCrossContent() {
     }
   };
 
-  // Reset Game: force a full remount of the Three.js canvas.
+  // Reset Game: force full remount of Three.js canvas.
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
     setWinAmount(null);
     setGameId(null);
     setDepositTxid(null);
-    setCanvasKey((prev) => prev + 1);
+    setCanvasKey(prev => prev + 1);
   };
 
   return (
@@ -293,7 +297,7 @@ function KaspianCrossContent() {
 }
 
 // ---------------------------------------------------------------------------
-// KaspianCrossGame – handles game logic and movement
+// KaspianCrossGame – handles game logic and movement, including walking animation.
 // ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -466,8 +470,8 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
 }
 
 // ---------------------------------------------------------------------------
-// MultiLaneHighwayScene – handles 3D scene, character movement, car collision,
-// walking animation (using AnimationMixer), and fixed camera follow with a sky.
+// MultiLaneHighwayScene – handles the 3D scene, character movement, car collision,
+// walking animation (using AnimationMixer), and fixed camera follow with a sky and clouds.
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentLane: number;
@@ -500,7 +504,7 @@ function MultiLaneHighwayScene({
   const carAnimationTriggeredRef = useRef(false);
   const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
-  // Helper to create a simple cloud (a white, flattened sphere)
+  // Helper to create a simple cloud (a white, flattened sphere).
   const createCloud = () => {
     const geometry = new THREE.SphereGeometry(5, 8, 8);
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -513,9 +517,9 @@ function MultiLaneHighwayScene({
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
     const scene = new THREE.Scene();
-    // Set background to a pleasant sky blue.
+    // Set a pleasant sky blue background.
     scene.background = new THREE.Color(0x87CEEB);
-    // Add clouds as white blobs.
+    // Create clouds as simple white blobs.
     const cloudsGroup = new THREE.Group();
     for (let i = 0; i < 10; i++) {
       const cloud = createCloud();
@@ -529,7 +533,7 @@ function MultiLaneHighwayScene({
     scene.add(cloudsGroup);
     sceneRef.current = scene;
 
-    // Camera: fixed Y and direct follow (no smoothing).
+    // Camera: Fixed Y=6; directly follow character's X and Z.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
@@ -587,7 +591,7 @@ function MultiLaneHighwayScene({
       scene.add(rightLane);
     }
 
-    // Create clickable tiles
+    // Create clickable tiles.
     tileRefs.current = [];
     for (let i = 0; i < TOTAL_LANES; i++) {
       const tileGeom = new THREE.BoxGeometry(4, 0.1, 4);
@@ -607,7 +611,7 @@ function MultiLaneHighwayScene({
       }
     }
 
-    // Load Character
+    // Load Character and its walking animation.
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
@@ -617,23 +621,27 @@ function MultiLaneHighwayScene({
       scene.add(model);
       characterRef.current = model;
       lastKnownCharacterPositionRef.current.copy(model.position);
+      // Load the walking animation from the public folder.
       loader.load("/Animation_Walking_withSkin.glb", (animGltf) => {
         if (animGltf.animations && animGltf.animations.length > 0) {
+          // Create the mixer for the character model.
           mixerRef.current = new THREE.AnimationMixer(model);
-          const walkAction = mixerRef.current.clipAction(animGltf.animations[0]);
+          // Grab the first animation clip.
+          const walkAction = mixerRef.current.clipAction(animGltf.animations[0], model);
           walkAction.setLoop(THREE.LoopRepeat, Infinity);
+          // Do not auto-play; we'll play it on movement.
           walkAction.stop();
           walkActionRef.current = walkAction;
         }
       });
     });
 
-    // Preload Car Model
+    // Preload Car Model.
     loader.load("/kaspacrosscar.glb", (gltf) => {
       carModelRef.current = gltf.scene;
     });
 
-    // Raycasting for tile clicks
+    // Raycasting for tile clicks.
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -650,7 +658,7 @@ function MultiLaneHighwayScene({
     };
     renderer.domElement.addEventListener("click", onClick);
 
-    // Animation loop: Directly set camera to follow character (fixed offset, no smoothing).
+    // Animation loop: set camera exactly based on character's position (fixed offset).
     let lastTime = performance.now();
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
@@ -667,7 +675,7 @@ function MultiLaneHighwayScene({
         if (characterRef.current.visible) {
           lastKnownCharacterPositionRef.current.copy(characterRef.current.position);
         }
-        // Set camera position exactly based on character's position.
+        // Set camera position exactly: fixed Y=6, offset Z=+5.
         cameraRef.current.position.set(charPos.x, 6, charPos.z + 5);
         cameraRef.current.lookAt(new THREE.Vector3(charPos.x, 1.8, charPos.z));
       }
@@ -754,7 +762,7 @@ function MultiLaneHighwayScene({
     }, 2000);
   }, [gameOver, currentLane, onCarCollision]);
 
-  // Reset car animation trigger when game is not over.
+  // Reset car animation trigger.
   useEffect(() => {
     if (!gameOver) {
       carAnimationTriggeredRef.current = false;
