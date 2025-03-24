@@ -344,6 +344,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
 
   const pickRow = (laneIndex: number) => {
     if (gameOver) return;
+    // Only allow the next tile to be clicked.
     if (laneIndex !== currentLane + 1) return;
     if (laneIndex < 1 || laneIndex > REAL_LANES) return;
     const isSafe = safeStates[laneIndex];
@@ -526,7 +527,7 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles (fewer and smaller).
+  // Helper: Spawn green teleport particles (fewer and smaller, one burst).
   const spawnTeleportParticles = (position: THREE.Vector3) => {
     const particleCount = 75;
     const particlesGeometry = new THREE.BufferGeometry();
@@ -662,13 +663,15 @@ function MultiLaneHighwayScene({
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      // Use the current camera from our ref.
       if (cameraRef.current) {
         raycaster.setFromCamera(mouse, cameraRef.current);
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
-        if (intersects.length > 0) {
-          const { laneIndex } = intersects[0].object.userData;
-          pickRow(laneIndex);
+        // Look for the tile that matches currentLane + 1.
+        const targetTile = intersects.find(
+          (intersect) => intersect.object.userData.laneIndex === (currentLane + 1)
+        );
+        if (targetTile) {
+          pickRow(targetTile.object.userData.laneIndex);
         }
       }
     };
@@ -686,11 +689,13 @@ function MultiLaneHighwayScene({
           cameraTargetRef.current.z + 5
         );
         cameraRef.current.position.lerp(desiredPos, 0.1);
-        cameraRef.current.lookAt(new THREE.Vector3(
-          cameraTargetRef.current.x,
-          1.8,
-          cameraTargetRef.current.z
-        ));
+        cameraRef.current.lookAt(
+          new THREE.Vector3(
+            cameraTargetRef.current.x,
+            1.8,
+            cameraTargetRef.current.z
+          )
+        );
       }
       renderer.render(scene, cameraRef.current!);
     };
@@ -703,15 +708,13 @@ function MultiLaneHighwayScene({
     };
   }, []); // Empty dependency ensures scene is created once
 
-  // Teleport: update character with delays for visibility and camera follow.
+  // Teleport: update character with delay for visibility and camera follow.
   useEffect(() => {
     if (characterRef.current) {
-      // Save the old position and spawn teleport particles.
-      const oldPosition = characterRef.current.position.clone();
-      spawnTeleportParticles(oldPosition);
+      // Remove the first particle burst so that only one burst occurs.
       // Hide the character immediately.
       characterRef.current.visible = false;
-      // After 500ms, update the character's position and make it visible.
+      // After 500ms, update the character's position, spawn particles once, and show it.
       setTimeout(() => {
         characterRef.current!.position.z = currentLane * TILE_SPACING_Z;
         spawnTeleportParticles(characterRef.current!.position.clone());
