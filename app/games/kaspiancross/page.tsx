@@ -514,6 +514,8 @@ function MultiLaneHighwayScene({
   const requestRef = useRef<number>();
   const carAnimationTriggeredRef = useRef(false);
   const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  // New camera target ref for delayed camera follow.
+  const cameraTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   // Helper to create a simple cloud (a white, flattened sphere).
   const createCloud = () => {
@@ -524,9 +526,9 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles.
+  // Helper: Spawn green teleport particles (now with more, smaller particles).
   const spawnTeleportParticles = (position: THREE.Vector3) => {
-    const particleCount = 100;
+    const particleCount = 200;
     const particlesGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
@@ -535,7 +537,7 @@ function MultiLaneHighwayScene({
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
     }
     particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ color: 0x39FF14, size: 0.2 });
+    const particlesMaterial = new THREE.PointsMaterial({ color: 0x39FF14, size: 0.1 });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     sceneRef.current?.add(particles);
     setTimeout(() => {
@@ -643,6 +645,8 @@ function MultiLaneHighwayScene({
       scene.add(model);
       characterRef.current = model;
       lastKnownCharacterPositionRef.current.copy(model.position);
+      // Initialize the camera target to the character's initial position.
+      cameraTargetRef.current.copy(model.position);
     });
 
     // Preload Car Model.
@@ -671,19 +675,18 @@ function MultiLaneHighwayScene({
     let lastTime = performance.now();
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
-      const now = performance.now();
-      const delta = (now - lastTime) / 1000;
-      lastTime = now;
-      // (No animation mixer to update in teleport mode)
-      if (characterRef.current && cameraRef.current) {
-        const charPos = characterRef.current.visible
-          ? characterRef.current.position
-          : lastKnownCharacterPositionRef.current;
-        if (characterRef.current.visible) {
-          lastKnownCharacterPositionRef.current.copy(characterRef.current.position);
-        }
-        cameraRef.current.position.set(charPos.x, 6, charPos.z + 5);
-        cameraRef.current.lookAt(new THREE.Vector3(charPos.x, 1.8, charPos.z));
+      if (cameraRef.current) {
+        // Camera now follows the cameraTargetRef (delayed update).
+        cameraRef.current.position.set(
+          cameraTargetRef.current.x,
+          6,
+          cameraTargetRef.current.z + 5
+        );
+        cameraRef.current.lookAt(new THREE.Vector3(
+          cameraTargetRef.current.x,
+          1.8,
+          cameraTargetRef.current.z
+        ));
       }
       renderer.render(scene, cameraRef.current!);
     };
@@ -696,12 +699,25 @@ function MultiLaneHighwayScene({
     };
   }, []); // Empty dependency ensures scene is created once
 
-  // Teleport: Immediately update character position when currentLane changes,
-  // and spawn green teleport particles.
+  // Teleport: update character with delays for visibility and camera follow.
   useEffect(() => {
     if (characterRef.current) {
-      characterRef.current.position.z = currentLane * TILE_SPACING_Z;
-      spawnTeleportParticles(characterRef.current.position.clone());
+      // Save the old position and spawn teleport particles.
+      const oldPosition = characterRef.current.position.clone();
+      spawnTeleportParticles(oldPosition);
+      // Hide the character immediately.
+      characterRef.current.visible = false;
+      // After 500ms, update the character's position and make it visible.
+      setTimeout(() => {
+        characterRef.current!.position.z = currentLane * TILE_SPACING_Z;
+        spawnTeleportParticles(characterRef.current!.position.clone());
+        characterRef.current!.visible = true;
+      }, 500);
+      // After 1s, update the camera target for delayed follow.
+      setTimeout(() => {
+        cameraTargetRef.current.copy(characterRef.current!.position);
+      }, 1000);
+
       if (pendingUnsafe === currentLane) {
         onUnsafeLaneReached();
       }
