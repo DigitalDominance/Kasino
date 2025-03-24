@@ -32,6 +32,9 @@ const TILE_SPACING_Z = -LANE_HEIGHT; // -10
 const BASE_MULTIPLIER = 1.1;
 const SAFE_PROBABILITY = 0.7;
 
+// Offset the road/ground down (e.g. about the height of a character's foot/ankle)
+const ROAD_OFFSET_Y = -0.5;
+
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
 // ---------------------------------------------------------------------------
@@ -416,7 +419,13 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
       {isPlaying && !gameOver && (
         <>
           <div className="absolute top-6 left-6 bg-black/60 px-4 py-2 rounded-md shadow-md">
-            <div className="text-2xl font-extrabold tracking-wider" style={{ color: "#39FF14" }}>
+            <div
+              className="text-2xl font-extrabold tracking-wider"
+              style={{
+                color: "#39FF14",
+                textShadow: "0 0 10px #39FF14",
+              }}
+            >
               {multiplier.toFixed(2)}×
             </div>
             <div className="text-sm text-white opacity-80">Current Multiplier</div>
@@ -571,15 +580,15 @@ function MultiLaneHighwayScene({
         const posZ = i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2;
         // Center lane.
         const centerLane = roadModel.clone();
-        centerLane.position.set(0, 0, posZ);
+        centerLane.position.set(0, ROAD_OFFSET_Y, posZ);
         scene.add(centerLane);
         // Left lane.
         const leftLane = roadModel.clone();
-        leftLane.position.set(-ROAD_WIDTH, 0, posZ);
+        leftLane.position.set(-ROAD_WIDTH, ROAD_OFFSET_Y, posZ);
         scene.add(leftLane);
         // Right lane.
         const rightLane = roadModel.clone();
-        rightLane.position.set(ROAD_WIDTH, 0, posZ);
+        rightLane.position.set(ROAD_WIDTH, ROAD_OFFSET_Y, posZ);
         scene.add(rightLane);
       }
     });
@@ -797,6 +806,9 @@ function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number, textColo
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
+  // Set green shadow for glowing effect.
+  ctx.shadowColor = "#39FF14";
+  ctx.shadowBlur = 10;
   ctx.fillStyle = textColor;
   ctx.font = "bold 48px Montserrat, sans-serif";
   ctx.textAlign = "center";
