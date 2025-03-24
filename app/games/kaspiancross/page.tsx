@@ -50,6 +50,8 @@ function KaspianCrossContent() {
   const [winAmount, setWinAmount] = useState<number | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  // Force remount of Three.js canvas on reset.
+  const [canvasKey, setCanvasKey] = useState(0);
 
   // Start Game
   const handleStartGame = async () => {
@@ -78,7 +80,6 @@ function KaspianCrossContent() {
         alert("Treasury address not configured");
         return;
       }
-
       // Send deposit
       const depositTx = await window.kasware.sendKaspa(
         chosenTreasury,
@@ -89,7 +90,6 @@ function KaspianCrossContent() {
         typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
-
       // Notify backend
       const startRes = await axios.post(
         `${process.env.API_URL ||
@@ -108,7 +108,6 @@ function KaspianCrossContent() {
         alert("Failed to start game on backend");
         return;
       }
-
       setIsPlaying(true);
       setGameResult(null);
       setWinAmount(null);
@@ -123,7 +122,6 @@ function KaspianCrossContent() {
     setGameResult(result);
     setWinAmount(amount);
     setIsPlaying(false);
-
     if (gameId) {
       try {
         await axios.post(
@@ -141,13 +139,14 @@ function KaspianCrossContent() {
     }
   };
 
-  // Reset Game
+  // Reset Game: force a full remount of the Three.js canvas.
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
     setWinAmount(null);
     setGameId(null);
     setDepositTxid(null);
+    setCanvasKey((prev) => prev + 1);
   };
 
   return (
@@ -156,10 +155,7 @@ function KaspianCrossContent() {
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link
-              href="/"
-              className="inline-flex items-center text-[#49EACB] hover:underline"
-            >
+            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
@@ -200,9 +196,7 @@ function KaspianCrossContent() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full relative">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">
-                  Kaspian Cross
-                </h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Kaspian Cross</h2>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -214,6 +208,7 @@ function KaspianCrossContent() {
               </div>
               <div className="relative h-[70vh] bg-gradient-to-b from-black to-[#002400] rounded-lg mb-6 overflow-hidden border border-gray-600 shadow-2xl p-0">
                 <KaspianCrossGame
+                  key={canvasKey}
                   isPlaying={isPlaying}
                   betAmount={Number(betAmount)}
                   onGameEnd={handleGameEnd}
@@ -248,23 +243,17 @@ function KaspianCrossContent() {
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
             style={{
-              backgroundImage:
-                "linear-gradient(270deg, #0D0D0D, #00FF00, #49EACB)",
+              backgroundImage: "linear-gradient(270deg, #0D0D0D, #00FF00, #49EACB)",
               backgroundSize: "200% 200%",
             }}
           >
             Kaspian Cross
           </motion.h2>
-          <img
-            src="/kaspianpromo.png"
-            alt="Kaspian Cross Promo"
-            className="w-full h-auto mb-4"
-          />
+          <img src="/kaspianpromo.png" alt="Kaspian Cross Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            Kaspian Cross is an electrifying casino experience where bold bets
-            meet immersive 3D visuals. Guide our fearless traveler across a
-            multi-lane highway—each safe step raises your multiplier, but one
-            wrong move and you’re toast!
+            Kaspian Cross is an electrifying casino experience where bold bets meet immersive 3D visuals.
+            Guide our fearless traveler across a multi-lane highway—each safe step raises your multiplier,
+            but one wrong move and you’re toast!
           </p>
         </Card>
       </div>
@@ -274,26 +263,20 @@ function KaspianCrossContent() {
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">
-              How to Play Kaspian Cross
-            </h3>
+            <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Kaspian Cross</h3>
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet and press “Spin Kaspian Cross” to begin.</li>
               <li>
-                Lane 0 is a non-clickable “starting road.” Lanes 1–{REAL_LANES} each
-                have a safe tile (70% chance).
+                Lane 0 is a non-clickable “starting road.” Lanes 1–{REAL_LANES} each have a safe tile (70% chance).
               </li>
               <li>
-                Click the <strong>next lane</strong> (current lane + 1). Each success
-                raises your multiplier by 1.1×.
+                Click the <strong>next lane</strong> (current lane + 1). Each success raises your multiplier by 1.1×.
               </li>
               <li>
-                If the tile isn’t safe, a car collision ends the game—after you reach
-                the tile, the car comes in.
+                If the tile isn’t safe, a car collision ends the game—after you reach the tile, the car comes in.
               </li>
               <li>
-                You can <strong>Cash Out</strong> any time after a successful step to
-                lock in your winnings.
+                You can <strong>Cash Out</strong> any time after a successful step to lock in your winnings.
               </li>
             </ol>
             <Button
@@ -356,7 +339,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
     if (gameOver) return;
     if (laneIndex !== currentLane + 1) return;
     if (laneIndex < 1 || laneIndex > REAL_LANES) return;
-
     const isSafe = safeStates[laneIndex];
     if (isSafe) {
       const newMultiplier = Math.pow(BASE_MULTIPLIER, laneIndex);
@@ -408,16 +390,13 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
       {/* Pre-game overlay */}
       {!isPlaying && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 p-4">
-          <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">
-            Get Ready to Cross!
-          </h1>
+          <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">Get Ready to Cross!</h1>
           <p className="text-sm mb-2 text-white">
             Place your bet and click “Spin Kaspian Cross” to start.
           </p>
           <Image src="/crosspreview.png" alt="Preview" width={180} height={100} />
         </div>
       )}
-
       <MultiLaneHighwayScene
         currentLane={currentLane}
         gameOver={gameOver}
@@ -426,7 +405,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
         onCarCollision={handleCarCollision}
         onUnsafeLaneReached={() => { setGameOver(true); setPendingUnsafe(null); }}
       />
-
       {/* In-game UI */}
       {isPlaying && !gameOver && (
         <>
@@ -436,7 +414,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
             </div>
             <div className="text-sm text-white opacity-80">Current Multiplier</div>
           </div>
-
           {hasAdvanced && (
             <motion.div
               className="absolute bottom-6 right-6"
@@ -455,7 +432,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
           )}
         </>
       )}
-
       <AnimatePresence>
         {popupVisible && (
           <motion.div
@@ -491,7 +467,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
 
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene – handles 3D scene, character movement, car collision,
-// walking animation (using AnimationMixer), and smooth camera follow.
+// walking animation (using AnimationMixer), and fixed camera follow with a sky.
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentLane: number;
@@ -522,17 +498,38 @@ function MultiLaneHighwayScene({
   const isMovingRef = useRef(false);
   const requestRef = useRef<number>();
   const carAnimationTriggeredRef = useRef(false);
-  // Store last known character position to keep camera stable even when character is hidden.
   const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
-  
+
+  // Helper to create a simple cloud (a white, flattened sphere)
+  const createCloud = () => {
+    const geometry = new THREE.SphereGeometry(5, 8, 8);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const cloud = new THREE.Mesh(geometry, material);
+    cloud.scale.set(2, 0.5, 2);
+    return cloud;
+  };
+
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    // Set background to a pleasant sky blue.
+    scene.background = new THREE.Color(0x87CEEB);
+    // Add clouds as white blobs.
+    const cloudsGroup = new THREE.Group();
+    for (let i = 0; i < 10; i++) {
+      const cloud = createCloud();
+      cloud.position.set(
+        (Math.random() - 0.5) * 100,
+        30 + Math.random() * 20,
+        (Math.random() - 0.5) * 100
+      );
+      cloudsGroup.add(cloud);
+    }
+    scene.add(cloudsGroup);
     sceneRef.current = scene;
 
-    // Camera: fix Y at 6 and follow only X/Z relative to character.
+    // Camera: fixed Y and direct follow (no smoothing).
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
@@ -552,8 +549,7 @@ function MultiLaneHighwayScene({
     scene.add(greenLight);
 
     // Road texture and lanes
-    const textureLoader = new THREE.TextureLoader();
-    const roadTexture = textureLoader.load("/kaspacrossroad.png");
+    const roadTexture = new THREE.TextureLoader().load("/kaspacrossroad.png");
     roadTexture.wrapS = THREE.RepeatWrapping;
     roadTexture.wrapT = THREE.RepeatWrapping;
     const laneMat = new THREE.MeshStandardMaterial({ map: roadTexture });
@@ -569,7 +565,6 @@ function MultiLaneHighwayScene({
         i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2
       );
       scene.add(centerLane);
-
       // Left lane
       const leftGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
       const leftLane = new THREE.Mesh(leftGeom, laneMat);
@@ -580,7 +575,6 @@ function MultiLaneHighwayScene({
         i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2
       );
       scene.add(leftLane);
-
       // Right lane
       const rightGeom = new THREE.PlaneGeometry(ROAD_WIDTH, LANE_HEIGHT);
       const rightLane = new THREE.Mesh(rightGeom, laneMat);
@@ -622,9 +616,7 @@ function MultiLaneHighwayScene({
       model.position.set(0, 1.8, 0);
       scene.add(model);
       characterRef.current = model;
-      // Update last known position.
       lastKnownCharacterPositionRef.current.copy(model.position);
-      // Load walking animation from external file
       loader.load("/Animation_Walking_withSkin.glb", (animGltf) => {
         if (animGltf.animations && animGltf.animations.length > 0) {
           mixerRef.current = new THREE.AnimationMixer(model);
@@ -641,7 +633,7 @@ function MultiLaneHighwayScene({
       carModelRef.current = gltf.scene;
     });
 
-    // Raycasting for tile clicks with movement lock
+    // Raycasting for tile clicks
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -658,7 +650,7 @@ function MultiLaneHighwayScene({
     };
     renderer.domElement.addEventListener("click", onClick);
 
-    // Animate loop with mixer update and smooth camera follow
+    // Animation loop: Directly set camera to follow character (fixed offset, no smoothing).
     let lastTime = performance.now();
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
@@ -669,17 +661,14 @@ function MultiLaneHighwayScene({
         mixerRef.current.update(delta);
       }
       if (characterRef.current && cameraRef.current) {
-        // Use the character's position if visible, otherwise the last known position.
         const charPos = characterRef.current.visible
           ? characterRef.current.position
           : lastKnownCharacterPositionRef.current;
         if (characterRef.current.visible) {
           lastKnownCharacterPositionRef.current.copy(characterRef.current.position);
         }
-        // Update only X and Z; fix Y to 6.
-        const desiredX = THREE.MathUtils.lerp(cameraRef.current.position.x, charPos.x, 0.05);
-        const desiredZ = THREE.MathUtils.lerp(cameraRef.current.position.z, charPos.z + 5, 0.05);
-        cameraRef.current.position.set(desiredX, 6, desiredZ);
+        // Set camera position exactly based on character's position.
+        cameraRef.current.position.set(charPos.x, 6, charPos.z + 5);
         cameraRef.current.lookAt(new THREE.Vector3(charPos.x, 1.8, charPos.z));
       }
       renderer.render(scene, cameraRef.current!);
@@ -693,7 +682,7 @@ function MultiLaneHighwayScene({
     };
   }, [pickRow]);
 
-  // Animate character movement with walking animation control.
+  // Animate character movement.
   useEffect(() => {
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
@@ -726,14 +715,9 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(move);
   }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
 
-  // Car collision animation with a bigger car (scaled 1.75×) and death effect.
+  // Car collision animation.
   useEffect(() => {
-    if (
-      !gameOver ||
-      !characterRef.current ||
-      !sceneRef.current ||
-      !carModelRef.current
-    )
+    if (!gameOver || !characterRef.current || !sceneRef.current || !carModelRef.current)
       return;
     if (carAnimationTriggeredRef.current) return;
     carAnimationTriggeredRef.current = true;
@@ -742,7 +726,6 @@ function MultiLaneHighwayScene({
       const laneZ = currentLane * TILE_SPACING_Z;
       const carClone = carModelRef.current!.clone(true);
       carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
-      // Start further left at x = -20 and move to x = 20 faster.
       carClone.position.set(-20, 1, laneZ);
       carClone.rotation.y = Math.PI / 2;
       scene.add(carClone);
@@ -757,7 +740,6 @@ function MultiLaneHighwayScene({
         if (t < 1) {
           requestAnimationFrame(animateCar);
         } else {
-          // On collision, hide the character and spawn death particles.
           if (characterRef.current) {
             characterRef.current.visible = false;
             spawnDeathParticles(characterRef.current.position.clone());
@@ -772,14 +754,14 @@ function MultiLaneHighwayScene({
     }, 2000);
   }, [gameOver, currentLane, onCarCollision]);
 
-  // Reset car animation trigger when gameOver becomes false.
+  // Reset car animation trigger when game is not over.
   useEffect(() => {
     if (!gameOver) {
       carAnimationTriggeredRef.current = false;
     }
   }, [gameOver]);
 
-  // Helper function to spawn red particle effect at a given position.
+  // Spawn red particle effect.
   const spawnDeathParticles = (position: THREE.Vector3) => {
     const particleCount = 300;
     const particlesGeometry = new THREE.BufferGeometry();
