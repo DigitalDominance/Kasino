@@ -526,6 +526,25 @@ function MultiLaneHighwayScene({
   // A ref for a smoothed lookAt target to avoid rapid tilting.
   const smoothedLookAtRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
+  // Helper function to spawn red particle effect at a given position.
+  const spawnDeathParticles = (position: THREE.Vector3) => {
+    const particleCount = 100;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = position.x + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 1] = position.y + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
+    }
+    particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const particlesMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.2 });
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    sceneRef.current?.add(particles);
+    setTimeout(() => {
+      sceneRef.current?.remove(particles);
+    }, 2000);
+  };
+
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
@@ -535,7 +554,7 @@ function MultiLaneHighwayScene({
 
     // Camera with smooth follow using a constant offset relative to the character.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Initial position uses the same offset as later (offset: {x: 0, y: 6, z: 5})
+    // Initial position uses fixed Y=6 and offset in z (e.g. 5)
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
 
@@ -669,15 +688,14 @@ function MultiLaneHighwayScene({
         mixerRef.current.update(delta);
       }
       if (characterRef.current && cameraRef.current) {
-        // Desired camera position: character position plus constant offset.
-        const offset = new THREE.Vector3(0, 6, 5);
-        const desiredCamPos = characterRef.current.position.clone().add(offset);
+        // Follow character's x and z; fix y at 6.
+        const characterPos = characterRef.current.position;
+        const desiredCamPos = new THREE.Vector3(characterPos.x, 6, characterPos.z + 5);
         cameraRef.current.position.lerp(desiredCamPos, 0.05);
 
-        // Update the smoothed lookAt target.
-        const desiredLookAt = characterRef.current.position.clone().setY(1.8);
+        // For lookAt, fix y to 1.8.
+        const desiredLookAt = new THREE.Vector3(characterPos.x, 1.8, characterPos.z);
         smoothedLookAtRef.current.lerp(desiredLookAt, 0.05);
-
         cameraRef.current.lookAt(smoothedLookAtRef.current);
       }
       renderer.render(scene, cameraRef.current!);
@@ -696,7 +714,7 @@ function MultiLaneHighwayScene({
     if (!characterRef.current) return;
     const newZ = currentLane * TILE_SPACING_Z;
     const startZ = characterRef.current.position.z;
-    const duration = 1000; // increased duration for more visible walking animation
+    const duration = 1000; // increased duration for visible walking animation
     const startTime = performance.now();
     isMovingRef.current = true;
     if (walkActionRef.current) {
@@ -724,7 +742,7 @@ function MultiLaneHighwayScene({
     requestAnimationFrame(move);
   }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
 
-  // Car collision animation with a bigger car (scaled 1.75×)
+  // Car collision animation with a bigger car (scaled 1.75×) and death effect.
   useEffect(() => {
     if (
       !gameOver ||
@@ -739,14 +757,16 @@ function MultiLaneHighwayScene({
       const scene = sceneRef.current!;
       const laneZ = currentLane * TILE_SPACING_Z;
       const carClone = carModelRef.current!.clone(true);
+      // Scale car 1.75× bigger than original
       carClone.scale.set(3 * 1.75, 3 * 1.75, 3 * 1.75);
-      carClone.position.set(-10, 1, laneZ);
+      // Start further left at x = -20
+      carClone.position.set(-20, 1, laneZ);
       carClone.rotation.y = Math.PI / 2;
       scene.add(carClone);
       const startTime = performance.now();
-      const duration = 2000;
-      const startX = -10;
-      const endX = 10;
+      const duration = 1000; // faster car: 1 second
+      const startX = -20;
+      const endX = 20;
       const animateCar = (time: number) => {
         const elapsed = time - startTime;
         const t = Math.min(elapsed / duration, 1);
@@ -754,6 +774,11 @@ function MultiLaneHighwayScene({
         if (t < 1) {
           requestAnimationFrame(animateCar);
         } else {
+          // On collision, hide the character and spawn death particles.
+          if (characterRef.current) {
+            characterRef.current.visible = false;
+            spawnDeathParticles(characterRef.current.position.clone());
+          }
           setTimeout(() => {
             scene.remove(carClone);
             onCarCollision();
