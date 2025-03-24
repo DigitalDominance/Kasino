@@ -514,7 +514,7 @@ function MultiLaneHighwayScene({
   const requestRef = useRef<number>();
   const carAnimationTriggeredRef = useRef(false);
   const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
-  // New camera target ref for delayed camera follow.
+  // New camera target ref for smooth camera follow.
   const cameraTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   // Helper to create a simple cloud (a white, flattened sphere).
@@ -526,9 +526,9 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles (now with more, smaller particles).
+  // Helper: Spawn green teleport particles (fewer and smaller).
   const spawnTeleportParticles = (position: THREE.Vector3) => {
-    const particleCount = 200;
+    const particleCount = 75;
     const particlesGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
@@ -537,7 +537,7 @@ function MultiLaneHighwayScene({
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
     }
     particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ color: 0x39FF14, size: 0.1 });
+    const particlesMaterial = new THREE.PointsMaterial({ color: 0x39FF14, size: 0.05 });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     sceneRef.current?.add(particles);
     setTimeout(() => {
@@ -662,11 +662,14 @@ function MultiLaneHighwayScene({
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(tileRefs.current, false);
-      if (intersects.length > 0) {
-        const { laneIndex } = intersects[0].object.userData;
-        pickRow(laneIndex);
+      // Use the current camera from our ref.
+      if (cameraRef.current) {
+        raycaster.setFromCamera(mouse, cameraRef.current);
+        const intersects = raycaster.intersectObjects(tileRefs.current, false);
+        if (intersects.length > 0) {
+          const { laneIndex } = intersects[0].object.userData;
+          pickRow(laneIndex);
+        }
       }
     };
     renderer.domElement.addEventListener("click", onClick);
@@ -676,12 +679,13 @@ function MultiLaneHighwayScene({
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
       if (cameraRef.current) {
-        // Camera now follows the cameraTargetRef (delayed update).
-        cameraRef.current.position.set(
+        // Smoothly move the camera toward the target position.
+        const desiredPos = new THREE.Vector3(
           cameraTargetRef.current.x,
           6,
           cameraTargetRef.current.z + 5
         );
+        cameraRef.current.position.lerp(desiredPos, 0.1);
         cameraRef.current.lookAt(new THREE.Vector3(
           cameraTargetRef.current.x,
           1.8,
@@ -713,7 +717,7 @@ function MultiLaneHighwayScene({
         spawnTeleportParticles(characterRef.current!.position.clone());
         characterRef.current!.visible = true;
       }, 500);
-      // After 1s, update the camera target for delayed follow.
+      // After 1s, update the camera target for smooth follow.
       setTimeout(() => {
         cameraTargetRef.current.copy(characterRef.current!.position);
       }, 1000);
