@@ -272,7 +272,7 @@ function KaspianCrossContent() {
           <div className="bg-[#49EACB]/10 border border-[#49EACB]/20 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-2xl font-bold text-[#49EACB] mb-4">How to Play Kaspian Cross</h3>
             <ol className="list-decimal list-inside space-y-2 text-white">
-              <li>Enter your bet and press “Spin Kaspian Cross” to begin.</li>
+              <li>Enter your bet and click “Play Kaspian Cross” to start.</li>
               <li>
                 Lane 0 is a non-clickable “starting road.” Lanes 1–{REAL_LANES} each have a safe tile (70% chance).
               </li>
@@ -300,7 +300,7 @@ function KaspianCrossContent() {
 }
 
 // ---------------------------------------------------------------------------
-// KaspianCrossGame – handles game logic and movement, including walking animation.
+// KaspianCrossGame – handles game logic and movement (instant movement, no animation).
 // ---------------------------------------------------------------------------
 interface KaspianCrossGameProps {
   isPlaying: boolean;
@@ -392,6 +392,12 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
     setPopupMessage("");
   };
 
+  // Immediately update character position without animation.
+  useEffect(() => {
+    // This effect is handled in the scene (see MultiLaneHighwayScene) via currentLane.
+    // No animation is performed here.
+  }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
+
   return (
     <div className="w-full h-full relative">
       {/* Pre-game overlay */}
@@ -399,9 +405,8 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 p-4">
           <h1 className="text-3xl mb-4 text-[#49EACB] font-bold">Get Ready to Cross!</h1>
           <p className="text-sm mb-2 text-white">
-            Place your bet and click “Spin Kaspian Cross” to start.
+            Place your bet and click “Play Kaspian Cross” to start.
           </p>
-          <Image src="/crosspreview.png" alt="Preview" width={180} height={100} />
         </div>
       )}
       <MultiLaneHighwayScene
@@ -483,7 +488,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
 
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene – handles the 3D scene, character movement, car collision,
-// walking animation (using AnimationMixer), and fixed camera follow with a sky and clouds.
+// and fixed camera follow with a sky and clouds.
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentLane: number;
@@ -617,7 +622,7 @@ function MultiLaneHighwayScene({
     }
     // -----------------------------------------------------------------------
 
-    // Load Character and its walking animation.
+    // Load Character without walking animation.
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
@@ -627,19 +632,7 @@ function MultiLaneHighwayScene({
       scene.add(model);
       characterRef.current = model;
       lastKnownCharacterPositionRef.current.copy(model.position);
-      // Load the walking animation from the public folder.
-      loader.load("/Animation_Walking_withSkin.glb", (animGltf) => {
-        if (animGltf.animations && animGltf.animations.length > 0) {
-          // Create the mixer for the character model.
-          mixerRef.current = new THREE.AnimationMixer(model);
-          // Grab the first animation clip.
-          const walkAction = mixerRef.current.clipAction(animGltf.animations[0], model);
-          walkAction.setLoop(THREE.LoopRepeat, Infinity);
-          // Do not auto-play; we'll play it on movement.
-          walkAction.stop();
-          walkActionRef.current = walkAction;
-        }
-      });
+      // Note: Walking animation has been removed.
     });
 
     // Preload Car Model.
@@ -696,37 +689,14 @@ function MultiLaneHighwayScene({
     };
   }, [pickRow]);
 
-  // Animate character movement.
+  // Immediately update character position when currentLane changes.
   useEffect(() => {
-    if (!characterRef.current) return;
-    const newZ = currentLane * TILE_SPACING_Z;
-    const startZ = characterRef.current.position.z;
-    const duration = 1000;
-    const startTime = performance.now();
-    isMovingRef.current = true;
-    if (walkActionRef.current) {
-      walkActionRef.current.reset();
-      walkActionRef.current.play();
+    if (characterRef.current) {
+      characterRef.current.position.z = currentLane * TILE_SPACING_Z;
+      if (pendingUnsafe === currentLane) {
+        onUnsafeLaneReached();
+      }
     }
-    const move = (time: number) => {
-      const elapsed = time - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      if (characterRef.current) {
-        characterRef.current.position.z = startZ + (newZ - startZ) * t;
-      }
-      if (t < 1) {
-        requestAnimationFrame(move);
-      } else {
-        isMovingRef.current = false;
-        if (walkActionRef.current) {
-          walkActionRef.current.stop();
-        }
-        if (pendingUnsafe === currentLane) {
-          onUnsafeLaneReached();
-        }
-      }
-    };
-    requestAnimationFrame(move);
   }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
 
   // Car collision animation.
@@ -983,8 +953,8 @@ function KaspianCrossControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Spin Kaspian Cross (${cooldown}s)`
-                  : "Spin Kaspian Cross"}
+                  ? `Play Kaspian Cross (${cooldown}s)`
+                  : "Play Kaspian Cross"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black" disabled>
