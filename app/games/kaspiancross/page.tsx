@@ -392,11 +392,8 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
     setPopupMessage("");
   };
 
-  // Immediately update character position without animation.
-  useEffect(() => {
-    // This effect is handled in the scene (see MultiLaneHighwayScene) via currentLane.
-    // No animation is performed here.
-  }, [currentLane, pendingUnsafe, onUnsafeLaneReached]);
+  // The character position update is handled in the scene.
+  // No movement animation is performed here.
 
   return (
     <div className="w-full h-full relative">
@@ -496,7 +493,7 @@ interface MultiLaneHighwaySceneProps {
   pendingUnsafe: number | null;
   pickRow: (laneIndex: number) => void;
   onCarCollision: () => void;
-  onUnsafeLaneReached: () => void;
+  onUnsafeLaneReached?: () => void;
 }
 
 function MultiLaneHighwayScene({
@@ -505,7 +502,7 @@ function MultiLaneHighwayScene({
   pendingUnsafe,
   pickRow,
   onCarCollision,
-  onUnsafeLaneReached,
+  onUnsafeLaneReached = () => {},
 }: MultiLaneHighwaySceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>();
