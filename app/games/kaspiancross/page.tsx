@@ -517,6 +517,11 @@ function MultiLaneHighwayScene({
   const lastKnownCharacterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
   // New camera target ref for smooth camera follow.
   const cameraTargetRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  // Ref to store the currentLane so the onClick always gets the latest value.
+  const currentLaneRef = useRef(currentLane);
+  useEffect(() => {
+    currentLaneRef.current = currentLane;
+  }, [currentLane]);
 
   // Helper to create a simple cloud (a white, flattened sphere).
   const createCloud = () => {
@@ -697,7 +702,7 @@ function MultiLaneHighwayScene({
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
         // Only allow selection if the tile's laneIndex is exactly currentLane + 1
         const validTile = intersects.find(
-          (intersect) => intersect.object.userData.laneIndex === currentLane + 1
+          (intersect) => intersect.object.userData.laneIndex === currentLaneRef.current + 1
         );
         if (validTile) {
           pickRow(validTile.object.userData.laneIndex);
