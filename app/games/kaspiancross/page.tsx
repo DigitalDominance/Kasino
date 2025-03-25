@@ -527,7 +527,7 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles (fewer, slightly bigger, and transparent).
+  // Helper: Spawn green teleport particles (fewer, slightly bigger, transparent, one burst).
   const spawnTeleportParticles = (position: THREE.Vector3) => {
     const particleCount = 50;
     const particlesGeometry = new THREE.BufferGeometry();
@@ -695,11 +695,15 @@ function MultiLaneHighwayScene({
       if (cameraRef.current) {
         raycaster.setFromCamera(mouse, cameraRef.current);
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
-        // Instead of matching exactly currentLane+1, find the tile with the smallest laneIndex greater than currentLane.
+        // Find tiles with laneIndex > currentLane.
         const validTiles = intersects.filter(intersect => intersect.object.userData.laneIndex > currentLane);
         if (validTiles.length) {
           validTiles.sort((a, b) => a.object.userData.laneIndex - b.object.userData.laneIndex);
-          pickRow(validTiles[0].object.userData.laneIndex);
+          const nextTile = validTiles[0].object.userData.laneIndex;
+          // Ensure that the tile is exactly the next lane.
+          if (nextTile === currentLane + 1) {
+            pickRow(nextTile);
+          }
         }
       }
     };
@@ -711,10 +715,11 @@ function MultiLaneHighwayScene({
       requestRef.current = requestAnimationFrame(animate);
       if (cameraRef.current) {
         // Smoothly move the camera toward the target position.
+        // Note: We use a negative offset so the camera is behind the character.
         const desiredPos = new THREE.Vector3(
           cameraTargetRef.current.x,
           6,
-          cameraTargetRef.current.z + 5
+          cameraTargetRef.current.z - 5
         );
         cameraRef.current.position.lerp(desiredPos, 0.1);
         cameraRef.current.lookAt(
