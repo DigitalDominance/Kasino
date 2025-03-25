@@ -27,7 +27,7 @@ const TOTAL_LANES = REAL_LANES + 1;
 const ROAD_WIDTH = 40;
 const LANE_HEIGHT = ROAD_WIDTH / 4; // 10
 const ROAD_HEIGHT = TOTAL_LANES * LANE_HEIGHT;
-const TILE_SPACING_Z = -LANE_HEIGHT; // -10
+const TILE_SPACING_Z = -LANE_HEIGHT; // e.g., -10
 
 const BASE_MULTIPLIER = 1.1;
 const SAFE_PROBABILITY = 0.7;
@@ -669,8 +669,9 @@ function MultiLaneHighwayScene({
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
+      // Use the default rotation so that the character faces -Z (its default forward direction).
+      model.rotation.y = 0;
       model.scale.set(2, 2, 2);
-      model.rotation.y = Math.PI;
       model.position.set(0, 1.8, 0);
       scene.add(model);
       characterRef.current = model;
@@ -688,21 +689,17 @@ function MultiLaneHighwayScene({
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
-      if (isMovingRef.current) return;
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       if (cameraRef.current) {
         raycaster.setFromCamera(mouse, cameraRef.current);
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
-        // Find tiles with laneIndex > currentLane.
-        const validTiles = intersects.filter(intersect => intersect.object.userData.laneIndex > currentLane);
-        if (validTiles.length) {
-          validTiles.sort((a, b) => a.object.userData.laneIndex - b.object.userData.laneIndex);
-          const nextTile = validTiles[0].object.userData.laneIndex;
-          // Ensure that the tile is exactly the next lane.
-          if (nextTile === currentLane + 1) {
-            pickRow(nextTile);
+        // Look for an intersected tile whose laneIndex equals currentLane + 1.
+        for (const intersect of intersects) {
+          if (intersect.object.userData.laneIndex === currentLane + 1) {
+            pickRow(intersect.object.userData.laneIndex);
+            break;
           }
         }
       }
@@ -714,12 +711,11 @@ function MultiLaneHighwayScene({
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
       if (cameraRef.current) {
-        // Smoothly move the camera toward the target position.
-        // Note: We use a negative offset so the camera is behind the character.
+        // Place the camera behind the character.
         const desiredPos = new THREE.Vector3(
           cameraTargetRef.current.x,
           6,
-          cameraTargetRef.current.z - 5
+          cameraTargetRef.current.z + 5
         );
         cameraRef.current.position.lerp(desiredPos, 0.1);
         cameraRef.current.lookAt(
