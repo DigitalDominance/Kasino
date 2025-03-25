@@ -527,9 +527,9 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles (fewer and smaller, one burst).
+  // Helper: Spawn green teleport particles (fewer, slightly bigger, and transparent).
   const spawnTeleportParticles = (position: THREE.Vector3) => {
-    const particleCount = 75;
+    const particleCount = 50;
     const particlesGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
@@ -538,12 +538,41 @@ function MultiLaneHighwayScene({
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
     }
     particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ color: 0x39FF14, size: 0.05 });
+    const particlesMaterial = new THREE.PointsMaterial({ 
+      color: 0x39FF14, 
+      size: 0.1,
+      transparent: true,
+      opacity: 0.5
+    });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     sceneRef.current?.add(particles);
     setTimeout(() => {
       sceneRef.current?.remove(particles);
     }, 1000);
+  };
+
+  // Helper: Spawn red particle effect for death (fewer, with transparency).
+  const spawnDeathParticles = (position: THREE.Vector3) => {
+    const particleCount = 150;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = position.x + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 1] = position.y + (Math.random() - 0.5) * 2;
+      positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
+    }
+    particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    const particlesMaterial = new THREE.PointsMaterial({ 
+      color: 0xff0000, 
+      size: 0.1,
+      transparent: true,
+      opacity: 0.5
+    });
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    sceneRef.current?.add(particles);
+    setTimeout(() => {
+      sceneRef.current?.remove(particles);
+    }, 2000);
   };
 
   // Create the scene only once.
@@ -666,12 +695,11 @@ function MultiLaneHighwayScene({
       if (cameraRef.current) {
         raycaster.setFromCamera(mouse, cameraRef.current);
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
-        // Look for the tile that matches currentLane + 1.
-        const targetTile = intersects.find(
-          (intersect) => intersect.object.userData.laneIndex === (currentLane + 1)
-        );
-        if (targetTile) {
-          pickRow(targetTile.object.userData.laneIndex);
+        // Instead of matching exactly currentLane+1, find the tile with the smallest laneIndex greater than currentLane.
+        const validTiles = intersects.filter(intersect => intersect.object.userData.laneIndex > currentLane);
+        if (validTiles.length) {
+          validTiles.sort((a, b) => a.object.userData.laneIndex - b.object.userData.laneIndex);
+          pickRow(validTiles[0].object.userData.laneIndex);
         }
       }
     };
@@ -711,7 +739,6 @@ function MultiLaneHighwayScene({
   // Teleport: update character with delay for visibility and camera follow.
   useEffect(() => {
     if (characterRef.current) {
-      // Remove the first particle burst so that only one burst occurs.
       // Hide the character immediately.
       characterRef.current.visible = false;
       // After 500ms, update the character's position, spawn particles once, and show it.
@@ -776,25 +803,6 @@ function MultiLaneHighwayScene({
       carAnimationTriggeredRef.current = false;
     }
   }, [gameOver]);
-
-  // Spawn red particle effect for death.
-  const spawnDeathParticles = (position: THREE.Vector3) => {
-    const particleCount = 300;
-    const particlesGeometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = position.x + (Math.random() - 0.5) * 2;
-      positions[i * 3 + 1] = position.y + (Math.random() - 0.5) * 2;
-      positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
-    }
-    particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ color: 0xff0000, size: 0.1 });
-    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-    sceneRef.current?.add(particles);
-    setTimeout(() => {
-      sceneRef.current?.remove(particles);
-    }, 2000);
-  };
 
   return <div ref={mountRef} className="w-full h-full" />;
 }
