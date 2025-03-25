@@ -393,7 +393,6 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
     setPopupMessage("");
   };
 
-  // No animation is performed here—the teleport movement is handled in the scene.
   return (
     <div className="w-full h-full relative">
       {/* Pre-game overlay */}
@@ -532,7 +531,7 @@ function MultiLaneHighwayScene({
     return cloud;
   };
 
-  // Helper: Spawn green teleport particles (fewer, slightly bigger, and transparent).
+  // Helper: Spawn green teleport particles.
   const spawnTeleportParticles = (position: THREE.Vector3) => {
     const particleCount = 50;
     const particlesGeometry = new THREE.BufferGeometry();
@@ -543,11 +542,11 @@ function MultiLaneHighwayScene({
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
     }
     particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ 
-      color: 0x39FF14, 
+    const particlesMaterial = new THREE.PointsMaterial({
+      color: 0x39FF14,
       size: 0.1,
       transparent: true,
-      opacity: 0.5
+      opacity: 0.5,
     });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     sceneRef.current?.add(particles);
@@ -556,7 +555,7 @@ function MultiLaneHighwayScene({
     }, 1000);
   };
 
-  // Helper: Spawn red particle effect for death (fewer, with transparency).
+  // Helper: Spawn red death particles.
   const spawnDeathParticles = (position: THREE.Vector3) => {
     const particleCount = 150;
     const particlesGeometry = new THREE.BufferGeometry();
@@ -567,11 +566,11 @@ function MultiLaneHighwayScene({
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 2;
     }
     particlesGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particlesMaterial = new THREE.PointsMaterial({ 
-      color: 0xff0000, 
+    const particlesMaterial = new THREE.PointsMaterial({
+      color: 0xff0000,
       size: 0.1,
       transparent: true,
-      opacity: 0.5
+      opacity: 0.5,
     });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     sceneRef.current?.add(particles);
@@ -580,28 +579,21 @@ function MultiLaneHighwayScene({
     }, 2000);
   };
 
-  // Create the scene only once.
+  // Create scene (runs once).
   useEffect(() => {
     const width = mountRef.current!.clientWidth;
     const height = mountRef.current!.clientHeight;
     const scene = new THREE.Scene();
-    // Set sky blue background.
     scene.background = new THREE.Color(0x87CEEB);
-    // Create clouds.
     const cloudsGroup = new THREE.Group();
     for (let i = 0; i < 10; i++) {
       const cloud = createCloud();
-      cloud.position.set(
-        (Math.random() - 0.5) * 100,
-        30 + Math.random() * 20,
-        (Math.random() - 0.5) * 100
-      );
+      cloud.position.set((Math.random() - 0.5) * 100, 30 + Math.random() * 20, (Math.random() - 0.5) * 100);
       cloudsGroup.add(cloud);
     }
     scene.add(cloudsGroup);
     sceneRef.current = scene;
 
-    // Camera.
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     camera.position.set(0, 6, 5);
     cameraRef.current = camera;
@@ -611,7 +603,6 @@ function MultiLaneHighwayScene({
     rendererRef.current = renderer;
     mountRef.current!.appendChild(renderer.domElement);
 
-    // Lights.
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
     dirLight.position.set(10, 20, 10);
@@ -620,18 +611,15 @@ function MultiLaneHighwayScene({
     greenLight.position.set(-5, 10, 5);
     scene.add(greenLight);
 
-    // -----------------------------------------------------------------------
-    // Load road model (ground) once.
+    // Load road model.
     const roadLoader = new GLTFLoader();
     roadLoader.load("/kaspacrossroad.glb", (gltf) => {
       const roadModel = gltf.scene;
-      // Compute bounding box for scaling.
       const box = new THREE.Box3().setFromObject(roadModel);
       const size = box.getSize(new THREE.Vector3());
       const scaleX = ROAD_WIDTH / size.x;
       const scaleZ = LANE_HEIGHT / size.z;
       roadModel.scale.set(scaleX, 1, scaleZ);
-      // Clone for each lane.
       for (let i = 0; i < TOTAL_LANES; i++) {
         const posZ = i * TILE_SPACING_Z - LANE_HEIGHT / 2 + Math.abs(TILE_SPACING_Z) / 2;
         const centerLane = roadModel.clone();
@@ -645,9 +633,7 @@ function MultiLaneHighwayScene({
         scene.add(rightLane);
       }
     });
-    // -----------------------------------------------------------------------
 
-    // -----------------------------------------------------------------------
     // Create clickable tiles.
     tileRefs.current = [];
     const tileTexture = new THREE.TextureLoader().load("/kaspacrosstile.png");
@@ -668,9 +654,8 @@ function MultiLaneHighwayScene({
         addMultiplierLabelToTile(tileMesh, multiplier, "#000000");
       }
     }
-    // -----------------------------------------------------------------------
 
-    // Load Character (no walking animation).
+    // Load character.
     const loader = new GLTFLoader();
     loader.load("/kaspacrosscharacter.glb", (gltf) => {
       const model = gltf.scene;
@@ -680,16 +665,16 @@ function MultiLaneHighwayScene({
       scene.add(model);
       characterRef.current = model;
       lastKnownCharacterPositionRef.current.copy(model.position);
-      // Initialize the camera target to the character's initial position.
-      cameraTargetRef.current.copy(model.position);
+      // Initially, set camera target to next tile (tile 1).
+      cameraTargetRef.current.set(0, model.position.y, 1 * TILE_SPACING_Z);
     });
 
-    // Preload Car Model.
+    // Preload car model.
     loader.load("/kaspacrosscar.glb", (gltf) => {
       carModelRef.current = gltf.scene;
     });
 
-    // Raycasting for tile clicks.
+    // Raycasting.
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const onClick = (e: MouseEvent) => {
@@ -700,7 +685,6 @@ function MultiLaneHighwayScene({
       if (cameraRef.current) {
         raycaster.setFromCamera(mouse, cameraRef.current);
         const intersects = raycaster.intersectObjects(tileRefs.current, false);
-        // Only allow selection if the tile's laneIndex is exactly currentLane + 1
         const validTile = intersects.find(
           (intersect) => intersect.object.userData.laneIndex === currentLaneRef.current + 1
         );
@@ -711,12 +695,9 @@ function MultiLaneHighwayScene({
     };
     renderer.domElement.addEventListener("click", onClick);
 
-    // Animation loop.
-    let lastTime = performance.now();
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
       if (cameraRef.current) {
-        // Smoothly move the camera toward the target position.
         const desiredPos = new THREE.Vector3(
           cameraTargetRef.current.x,
           6,
@@ -740,22 +721,24 @@ function MultiLaneHighwayScene({
       cancelAnimationFrame(requestRef.current!);
       mountRef.current?.removeChild(renderer.domElement);
     };
-  }, []); // Empty dependency ensures scene is created once
+  }, []);
 
-  // Teleport: update character with delay for visibility and camera follow.
+  // Teleport effect.
   useEffect(() => {
     if (characterRef.current) {
-      // Hide the character immediately.
+      // Hide character immediately.
       characterRef.current.visible = false;
-      // After 500ms, update the character's position, spawn particles once, and show it.
       setTimeout(() => {
         characterRef.current!.position.z = currentLane * TILE_SPACING_Z;
         spawnTeleportParticles(characterRef.current!.position.clone());
         characterRef.current!.visible = true;
       }, 500);
-      // After 1s, update the camera target for smooth follow.
+      // Update camera target to the NEXT tile's position.
       setTimeout(() => {
-        cameraTargetRef.current.copy(characterRef.current!.position);
+        // Only update if we're not at the last tile.
+        if (currentLane < REAL_LANES) {
+          cameraTargetRef.current.set(0, characterRef.current!.position.y, (currentLane + 1) * TILE_SPACING_Z);
+        }
       }, 1000);
 
       if (pendingUnsafe === currentLane) {
@@ -803,7 +786,6 @@ function MultiLaneHighwayScene({
     }, 2000);
   }, [gameOver, currentLane, onCarCollision]);
 
-  // Reset car animation trigger.
   useEffect(() => {
     if (!gameOver) {
       carAnimationTriggeredRef.current = false;
@@ -822,7 +804,6 @@ function addMultiplierLabelToTile(tile: THREE.Mesh, multiplier: number, textColo
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
-  // Set green shadow for glowing effect.
   ctx.shadowColor = "#39FF14";
   ctx.shadowBlur = 10;
   ctx.fillStyle = textColor;
