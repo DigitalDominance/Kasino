@@ -34,7 +34,7 @@ export const dailyLootItems = [
   { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder6.svg" },
   { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder7.svg" },
   { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder8.svg" },
-  { id: 8, name: "Daily Loot", tier: "daily-rare", reward: 100, image: "/placeholder.svg" },
+  { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 100, image: "/placeholder.svg" },
 ];
 
 // ---------------------------------------------------------
@@ -44,7 +44,7 @@ function getRarityStyle(tier: string) {
   switch (tier) {
     case "daily-common":
       return "border-blue-500 bg-blue-900/30";
-    case "daily-rare":
+    case "daily-ultra-rare":
       return "border-pink-500 bg-pink-900/30";
     default:
       return "border-gray-500 bg-gray-800/30";
@@ -55,7 +55,7 @@ function getRarityOverlayClass(tier: string) {
   switch (tier) {
     case "daily-common":
       return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
-    case "daily-Ultra Rare":
+    case "daily-ultra-rare":
       return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
     default:
       return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
@@ -90,11 +90,12 @@ function DailyLootBoxContent() {
         alert("No wallet address found");
         return;
       }
+      // Note: using betAmount: 1 so that backend validation passes.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Level 1 Daily Loot Box",
         uniqueHash,
         walletAddress: currentWalletAddress,
-        betAmount: 0,
+        betAmount: 1,
       });
       if (startRes.data.success) {
         setGameId(startRes.data.gameId);
@@ -184,7 +185,7 @@ function DailyLootBoxContent() {
                       >
                         <Image
                           src="/placeholder.svg"
-                          alt="Rare Reward"
+                          alt="Ultra Rare Reward"
                           width={100}
                           height={100}
                           className="rounded-full border-4 border-pink-500"
@@ -233,7 +234,7 @@ function DailyLootBoxContent() {
                         />
                       </motion.div>
                     </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
                       <motion.h1
                         className="text-5xl font-bold mb-4"
                         animate={{ scale: [1, 1.1, 1] }}
@@ -273,11 +274,14 @@ function DailyLootBoxContent() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
+              // Display Ultra Rare with proper formatting
+              const displayTier =
+                item.tier === "daily-ultra-rare" ? "Ultra Rare" : item.tier.replace("daily-", "");
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt="Reward" width={40} height={40} />
                   <p className="mt-1 font-semibold text-blue-400 drop-shadow">Reward</p>
-                  <p className="capitalize text-blue-300 drop-shadow">{item.tier.replace("daily-", "")}</p>
+                  <p className="capitalize text-blue-300 drop-shadow">{displayTier}</p>
                   <p className="text-teal-300 drop-shadow">{item.reward} KAS</p>
                 </div>
               );
@@ -299,7 +303,7 @@ function DailyLootBoxContent() {
           </motion.h2>
           <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white-200 mb-4">
-            Play your free Level 1 Daily Loot Box and stand a chance to win a common reward of <strong>0.1 KAS</strong> or a rare reward of{" "}
+            Play your free Level 1 Daily Loot Box and stand a chance to win a common reward of <strong>0.1 KAS</strong> or an Ultra Rare reward of{" "}
             <strong>100 KAS</strong>.
           </p>
         </Card>
@@ -343,8 +347,8 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
         const commonRewards = dailyLootItems.filter(item => item.tier === "daily-common");
         winItem = commonRewards[Math.floor(Math.random() * commonRewards.length)];
       } else {
-        // Rare reward: 100 KAS win
-        winItem = dailyLootItems.find(item => item.tier === "daily-rare");
+        // Ultra Rare reward: 100 KAS win
+        winItem = dailyLootItems.find(item => item.tier === "daily-ultra-rare");
       }
       setWinningItem(winItem);
 
@@ -428,7 +432,10 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
               />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
-                {winningItem.name} <span className="text-base text-teal-200">({winningItem.tier.replace("daily-", "")})</span>
+                {winningItem.name}{" "}
+                <span className="text-base text-teal-200">
+                  {winningItem.tier === "daily-ultra-rare" ? "Ultra Rare" : winningItem.tier.replace("daily-", "")}
+                </span>
               </p>
               <p className="text-lg text-blue-50 mt-2">
                 You won <strong>{winningItem.reward} KAS</strong>
@@ -493,11 +500,12 @@ function DailyLootBoxControls({
             {gameResult && winItem && (
               <div className="text-center mb-4">
                 <div className="text-2xl font-bold text-blue-300">
-                  {gameResult}: {winItem.name} ({winItem.tier.replace("daily-", "")})
+                  {gameResult}: {winItem.name}{" "}
+                  <span className="text-base text-teal-200">
+                    {winItem.tier === "daily-ultra-rare" ? "Ultra Rare" : winItem.tier.replace("daily-", "")}
+                  </span>
                 </div>
-                <div className="text-sm text-blue-200">
-                  Payout: {winItem.reward} KAS
-                </div>
+                <div className="text-sm text-blue-200">Payout: {winItem.reward} KAS</div>
               </div>
             )}
             {!isPlaying ? (
