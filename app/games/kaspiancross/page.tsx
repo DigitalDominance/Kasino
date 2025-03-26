@@ -413,7 +413,7 @@ function KaspianCrossGame({ isPlaying, betAmount, onGameEnd, onReset }: KaspianC
 
 // ---------------------------------------------------------------------------
 // MultiLaneHighwayScene – renders the 3D scene using the GLB file for lanes, the tile texture PNG for clickable tiles,
-// applies a teleport effect (with green particles) when advancing a lane, and uses the old camera follow style.
+// applies a teleport effect (with green particles) when advancing a lane, and uses the updated camera follow style.
 // ---------------------------------------------------------------------------
 interface MultiLaneHighwaySceneProps {
   currentLane: number;
@@ -545,9 +545,10 @@ function MultiLaneHighwayScene({
       }
     }
 
-    // Set up camera (old-style follow)
+    // Set up camera (updated follow style)
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 8);
+    // Initial camera position is now behind the character.
+    camera.position.set(0, 8, -8);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -597,13 +598,14 @@ function MultiLaneHighwayScene({
     };
     renderer.domElement.addEventListener("click", onClick);
 
-    // Animate loop using old camera follow style.
+    // Animate loop using updated camera follow style.
     const animate = () => {
       requestRef.current = requestAnimationFrame(animate);
       if (characterRef.current && cameraRef.current) {
         const { x, z } = characterRef.current.position;
+        // Smoothly move camera's x and z toward target positions.
         cameraRef.current.position.x += (x - cameraRef.current.position.x) * 0.1;
-        cameraRef.current.position.z += (z + 8 - cameraRef.current.position.z) * 0.1;
+        cameraRef.current.position.z += ((z - 8) - cameraRef.current.position.z) * 0.1;
         cameraRef.current.lookAt(x, 1.8, z);
       }
       renderer.render(scene, cameraRef.current!);
