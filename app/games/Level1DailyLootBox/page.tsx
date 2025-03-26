@@ -55,7 +55,7 @@ function getRarityOverlayClass(tier: string) {
   switch (tier) {
     case "daily-common":
       return "bg-gradient-to-br from-blue-400/30 to-blue-900/30";
-    case "daily-rare":
+    case "daily-Ultra Rare":
       return "bg-gradient-to-br from-pink-400/30 to-pink-900/30";
     default:
       return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
