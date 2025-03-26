@@ -545,10 +545,9 @@ function MultiLaneHighwayScene({
       }
     }
 
-    // Set up camera (updated follow style)
+    // Set up camera (using original initial position)
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    // Initial camera position is now behind the character.
-    camera.position.set(0, 8, -8);
+    camera.position.set(0, 8, 8);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -603,9 +602,11 @@ function MultiLaneHighwayScene({
       requestRef.current = requestAnimationFrame(animate);
       if (characterRef.current && cameraRef.current) {
         const { x, z } = characterRef.current.position;
-        // Smoothly move camera's x and z toward target positions.
-        cameraRef.current.position.x += (x - cameraRef.current.position.x) * 0.1;
-        cameraRef.current.position.z += ((z - 8) - cameraRef.current.position.z) * 0.1;
+        // Maintain the original offset (camera should be 8 units ahead along the z-axis relative to the character)
+        const targetX = x;
+        const targetZ = z + 8;
+        cameraRef.current.position.x += (targetX - cameraRef.current.position.x) * 0.1;
+        cameraRef.current.position.z += (targetZ - cameraRef.current.position.z) * 0.1;
         cameraRef.current.lookAt(x, 1.8, z);
       }
       renderer.render(scene, cameraRef.current!);
