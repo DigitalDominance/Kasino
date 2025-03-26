@@ -602,11 +602,13 @@ function MultiLaneHighwayScene({
       requestRef.current = requestAnimationFrame(animate);
       if (characterRef.current && cameraRef.current) {
         const { x, z } = characterRef.current.position;
-        // Maintain the original offset (camera should be 8 units ahead along the z-axis relative to the character)
+        // Target position keeps the same offset behind the character (8 units ahead along the z-axis)
         const targetX = x;
         const targetZ = z + 8;
         cameraRef.current.position.x += (targetX - cameraRef.current.position.x) * 0.1;
-        cameraRef.current.position.z += (targetZ - cameraRef.current.position.z) * 0.1;
+        // When moving to a new tile (i.e. when targetZ is lower), use a smaller factor to smooth the transition.
+        const factorZ = targetZ < cameraRef.current.position.z ? 0.02 : 0.1;
+        cameraRef.current.position.z += (targetZ - cameraRef.current.position.z) * factorZ;
         cameraRef.current.lookAt(x, 1.8, z);
       }
       renderer.render(scene, cameraRef.current!);
