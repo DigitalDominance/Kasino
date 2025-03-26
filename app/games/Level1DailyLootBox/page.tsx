@@ -12,11 +12,16 @@ import { Montserrat } from "next/font/google";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { XPDisplay } from "@/app/page";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
 });
+
+// API endpoint for your backend
+const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 
 // ---------------------------------------------------------
 // Daily Loot Items Distribution for Level 1 Daily Loot Box
@@ -69,25 +74,63 @@ function DailyLootBoxContent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [winItem, setWinItem] = useState<any>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
 
-  // For a free daily game we simply start the spin.
-  const handleOpenLootBox = () => {
+  // Start the game on the backend and then begin the spin
+  const handleOpenLootBox = async () => {
     if (!isConnected) {
       alert("Please connect your wallet");
       return;
     }
-    setIsPlaying(true);
+    try {
+      const uniqueHash = uuidv4();
+      const accounts = await window.kasware.getAccounts();
+      const currentWalletAddress = accounts[0];
+      if (!currentWalletAddress) {
+        alert("No wallet address found");
+        return;
+      }
+      const startRes = await axios.post(`${apiUrl}/game/start`, {
+        gameName: "Level 1 Daily Loot Box",
+        uniqueHash,
+        walletAddress: currentWalletAddress,
+        betAmount: 0,
+      });
+      if (startRes.data.success) {
+        setGameId(startRes.data.gameId);
+      } else {
+        alert("Failed to start game on backend");
+        return;
+      }
+      setIsPlaying(true);
+    } catch (error: any) {
+      console.error("Error starting Level 1 Daily Loot Box game:", error);
+      alert("Error starting game: " + error.message);
+    }
   };
 
-  const handleGameEnd = (item: any) => {
+  // When the game ends, notify the backend
+  const handleGameEnd = async (item: any) => {
     setWinItem(item);
     setGameResult("You Win");
+    if (gameId) {
+      try {
+        await axios.post(`${apiUrl}/game/end`, {
+          gameId,
+          result: "win",
+          winAmount: item.reward,
+        });
+      } catch (error) {
+        console.error("Error ending Level 1 Daily Loot Box game on backend:", error);
+      }
+    }
   };
 
   const resetGame = () => {
     setIsPlaying(false);
     setGameResult(null);
     setWinItem(null);
+    setGameId(null);
   };
 
   return (
