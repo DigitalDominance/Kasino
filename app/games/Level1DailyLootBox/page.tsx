@@ -90,7 +90,7 @@ function DailyLootBoxContent() {
         alert("No wallet address found");
         return;
       }
-      // Note: using betAmount: 1 so that backend validation passes.
+      // Use betAmount: 1 so that backend validation passes.
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Level 1 Daily Loot Box",
         uniqueHash,
@@ -144,12 +144,7 @@ function DailyLootBoxContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -177,61 +172,17 @@ function DailyLootBoxContent() {
                 {!isPlaying && (
                   <>
                     <div className="absolute inset-0 z-30">
-                      <motion.div
-                        whileHover={{ scale: 1.15, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="absolute top-0 left-20"
-                        style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}
-                      >
-                        <Image
-                          src="/placeholder.svg"
-                          alt="Ultra Rare Reward"
-                          width={100}
-                          height={100}
-                          className="rounded-full border-4 border-pink-500"
-                        />
+                      <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
+                        <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                       </motion.div>
-                      <motion.div
-                        whileHover={{ scale: 1.15, rotate: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-0 right-20"
-                        style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}
-                      >
-                        <Image
-                          src="/placeholder2.svg"
-                          alt="Common Reward"
-                          width={80}
-                          height={80}
-                          className="rounded-lg border-4 border-blue-500"
-                        />
+                      <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
+                        <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
                       </motion.div>
-                      <motion.div
-                        whileHover={{ scale: 1.15, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="absolute top-0 right-20"
-                        style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}
-                      >
-                        <Image
-                          src="/placeholder3.svg"
-                          alt="Common Reward"
-                          width={70}
-                          height={70}
-                          className="rounded-md border-4 border-blue-500"
-                        />
+                      <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
+                        <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                       </motion.div>
-                      <motion.div
-                        whileHover={{ scale: 1.15, rotate: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-0 left-20"
-                        style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}
-                      >
-                        <Image
-                          src="/placeholder4.svg"
-                          alt="Common Reward"
-                          width={70}
-                          height={70}
-                          className="rounded-md border-4 border-blue-500"
-                        />
+                      <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
+                        <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                       </motion.div>
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
@@ -258,25 +209,15 @@ function DailyLootBoxContent() {
             </div>
           </Card>
 
-          <DailyLootBoxControls
-            isPlaying={isPlaying}
-            isWalletConnected={isConnected}
-            onOpenLootBox={handleOpenLootBox}
-            gameResult={gameResult}
-            winItem={winItem}
-          />
+          <DailyLootBoxControls isPlaying={isPlaying} isWalletConnected={isConnected} onOpenLootBox={handleOpenLootBox} gameResult={gameResult} winItem={winItem} />
         </div>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">
-            Level 1 Daily Loot Box Rewards
-          </h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 1 Daily Loot Box Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
-              // Display Ultra Rare with proper formatting
-              const displayTier =
-                item.tier === "daily-ultra-rare" ? "Ultra Rare" : item.tier.replace("daily-", "");
+              const displayTier = item.tier === "daily-ultra-rare" ? "Ultra Rare" : item.tier.replace("daily-", "");
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt="Reward" width={40} height={40} />
@@ -289,22 +230,21 @@ function DailyLootBoxContent() {
           </div>
         </Card>
 
+        {/* Promo Section - Image Removed; Text Updated */}
         <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
             style={{
-              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
+              backgroundImage: "linear-gradient(270deg, #FF0080, #FF8C00, #FF0080)",
               backgroundSize: "200% 200%",
             }}
           >
             Level 1 Daily Loot Box
           </motion.h2>
-          <img src="/lootboxpromo.png" alt="Loot Box Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-white-200 mb-4">
-            Play your free Level 1 Daily Loot Box and stand a chance to win a common reward of <strong>0.1 KAS</strong> or an Ultra Rare reward of{" "}
-            <strong>100 KAS</strong>.
+          <p className="text-2xl font-extrabold text-yellow-400 mb-4">
+            Spin and win amazing rewards – common prizes of 0.1 KAS or an Ultra Rare prize of 100 KAS!
           </p>
         </Card>
       </div>
@@ -381,27 +321,12 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
   }, [isPlaying, controls, itemWidth, onGameEnd]);
 
   return (
-    <div
-      className="w-full h-full flex items-center justify-center relative overflow-hidden"
-      style={{ width: containerWidth }}
-    >
-      <motion.div
-        className="flex"
-        animate={controls}
-        onUpdate={(latest) => {
-          currentXRef.current = latest.x;
-        }}
-      >
+    <div className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ width: containerWidth }}>
+      <motion.div className="flex" animate={controls} onUpdate={(latest) => { currentXRef.current = latest.x; }}>
         {finalReel.map((item, i) => (
           <div key={i} style={{ width: itemWidth, flexShrink: 0 }} className="p-0">
             <div className="relative w-full h-full">
-              <Image
-                src={item.image}
-                alt="Reward"
-                width={itemWidth}
-                height={itemWidth}
-                loading="eager"
-              />
+              <Image src={item.image} alt="Reward" width={itemWidth} height={itemWidth} loading="eager" />
               <div className={`absolute inset-0 ${getRarityOverlayClass(item.tier)}`} style={{ pointerEvents: "none" }} />
             </div>
           </div>
@@ -409,27 +334,9 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
       </motion.div>
       <AnimatePresence>
         {showResultOverlay && winningItem && (
-          <motion.div
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: [1, 1.4, 1] }}
-              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
-              className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs"
-            >
-              <Image
-                src={winningItem.image}
-                alt="Reward"
-                width={80}
-                height={80}
-                className="mx-auto mb-2"
-                loading="eager"
-                style={{ filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)" }}
-              />
+          <motion.div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div initial={{ scale: 0.8 }} animate={{ scale: [1, 1.4, 1] }} transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }} className="text-center p-6 rounded-lg border-2 border-teal-400 shadow-[0_0_25px_8px_rgba(0,255,255,0.5)] bg-teal-800/80 max-w-xs">
+              <Image src={winningItem.image} alt="Reward" width={80} height={80} className="mx-auto mb-2" loading="eager" style={{ filter: "drop-shadow(0 0 10px #00FFFF) drop-shadow(0 0 20px #00FFFF)" }} />
               <p className="text-3xl font-extrabold text-teal-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-teal-100">
                 {winningItem.name}{" "}
@@ -509,11 +416,7 @@ function DailyLootBoxControls({
               </div>
             )}
             {!isPlaying ? (
-              <Button
-                className="w-full bg-teal-400 text-black hover:bg-teal-300"
-                onClick={handleOpenBox}
-                disabled={!isWalletConnected || cooldown > 0}
-              >
+              <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" onClick={handleOpenBox} disabled={!isWalletConnected || cooldown > 0}>
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
@@ -530,13 +433,7 @@ function DailyLootBoxControls({
       </Card>
       <AnimatePresence>
         {errorMessage && (
-          <motion.div
-            initial={{ x: -300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
-          >
+          <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }} transition={{ duration: 0.5 }} className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg">
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
               <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
