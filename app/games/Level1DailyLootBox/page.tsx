@@ -111,16 +111,24 @@ function DailyLootBoxContent() {
     }
   };
 
-  // When the game ends, notify the backend using the daily loot box end API
+  // When the game ends, notify the backend using the daily loot box end API.
+  // It now gets the wallet address via kasware.getAccounts() and passes it along.
   const handleGameEnd = async (item: any) => {
     setWinItem(item);
     setGameResult("You Win");
     if (gameId) {
       try {
+        const accounts = await window.kasware.getAccounts();
+        if (!accounts || accounts.length === 0) {
+          alert("No wallet address found");
+          return;
+        }
+        const walletAddress = accounts[0]; // This will be the full "kaspa:..." address.
         await axios.post(`${apiUrl}/daily-lootbox/end`, {
           dailyGameId: gameId,
           result: "win",
           winAmount: item.reward,
+          walletAddress,
         });
       } catch (error) {
         console.error("Error ending Level 1 Daily Loot Box game on backend:", error);
