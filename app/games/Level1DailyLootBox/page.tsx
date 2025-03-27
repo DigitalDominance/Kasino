@@ -62,6 +62,15 @@ function getRarityOverlayClass(tier: string) {
 }
 
 // ---------------------------------------------------------
+// Helper: Format seconds into "Hh Mm"
+// ---------------------------------------------------------
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${minutes}m`;
+}
+
+// ---------------------------------------------------------
 // Main Page Component for Level 1 Daily Loot Box Game
 // ---------------------------------------------------------
 export default function Level1DailyLootBoxGamePage() {
@@ -69,18 +78,19 @@ export default function Level1DailyLootBoxGamePage() {
 }
 
 function DailyLootBoxContent() {
-  // Now assume that your wallet context provides both isConnected and username.
+  // Assume that your wallet context provides both isConnected and username.
   const { isConnected, username } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [winItem, setWinItem] = useState<any>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
     if (!isConnected || !username) {
-      alert("Please connect your wallet and set your username");
+      showError("Please connect your wallet and set your username");
       return;
     }
     try {
@@ -92,27 +102,28 @@ function DailyLootBoxContent() {
         setGameId(startRes.data.dailyGameId);
         setIsPlaying(true);
       } else {
-        alert("Failed to start daily loot box: " + startRes.data.message);
+        showError("Failed to start daily loot box: " + startRes.data.message);
         return;
       }
     } catch (error: any) {
       if (error.response && error.response.status === 403) {
-        // If the backend returns a cooldown error, extract remaining seconds.
+        // Extract remaining seconds from backend message.
         const msg = error.response.data.message;
         const match = msg.match(/(\d+) seconds/);
         if (match && match[1]) {
-          setCooldown(parseInt(match[1]));
+          const remainingSeconds = parseInt(match[1]);
+          setCooldown(remainingSeconds);
+          showError(`Cooldown active. Next daily loot box available in: ${formatTime(remainingSeconds)}`);
         }
-        alert(msg);
       } else {
         console.error("Error starting Level 1 Daily Loot Box game:", error);
-        alert("Error starting game: " + error.message);
+        showError("Error starting game: " + error.message);
       }
     }
   };
 
   // When the game ends, notify the backend using the daily loot box end API.
-  // It now gets the wallet address via kasware.getAccounts() and passes it along.
+  // Retrieves the wallet address via kasware.getAccounts() and passes it along.
   const handleGameEnd = async (item: any) => {
     setWinItem(item);
     setGameResult("You Win");
@@ -120,10 +131,10 @@ function DailyLootBoxContent() {
       try {
         const accounts = await window.kasware.getAccounts();
         if (!accounts || accounts.length === 0) {
-          alert("No wallet address found");
+          showError("No wallet address found");
           return;
         }
-        const walletAddress = accounts[0]; // This will be the full "kaspa:..." address.
+        const walletAddress = accounts[0]; // Full "kaspa:..." address.
         await axios.post(`${apiUrl}/daily-lootbox/end`, {
           dailyGameId: gameId,
           result: "win",
@@ -142,6 +153,9 @@ function DailyLootBoxContent() {
     setWinItem(null);
     setGameId(null);
   };
+
+  // Display error messages in a themed popup.
+  const showError = (msg: string) => setErrorMessage(msg);
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
@@ -265,6 +279,24 @@ function DailyLootBoxContent() {
         </Card>
       </div>
       <SiteFooter />
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -300, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-teal-700 to-black text-white px-4 py-2 rounded shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <span>{errorMessage}</span>
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
+                X
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -390,7 +422,7 @@ function DailyLootBoxControls({
   cooldown: number;
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 4000);
@@ -436,7 +468,7 @@ function DailyLootBoxControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Open Level 1 Daily Loot Box (${cooldown}s)`
+                  ? `Cooldown: ${formatTime(cooldown)}`
                   : "Open Level 1 Daily Loot Box"}
               </Button>
             ) : (
