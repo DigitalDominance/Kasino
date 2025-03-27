@@ -45,7 +45,7 @@ export function DailyLootBoxGate({ requiredLevel, cooldown, children }: DailyLoo
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
           const res = await axios.get(
-            `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+            `${apiUrl}/user?walletAddress=${encodeURIComponent(walletAddress)}`
           );
           if (res.data.success && res.data.user) {
             setUserLevel(res.data.user.level || 0);
