@@ -13,7 +13,6 @@ import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
 import { XPDisplay } from "@/app/page";
 import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -70,54 +69,56 @@ export default function Level1DailyLootBoxGamePage() {
 }
 
 function DailyLootBoxContent() {
-  const { isConnected } = useWallet();
+  // Now assume that your wallet context provides both isConnected and username.
+  const { isConnected, username } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [winItem, setWinItem] = useState<any>(null);
   const [gameId, setGameId] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
-  // Start the game on the backend and then begin the spin
+  // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
-    if (!isConnected) {
-      alert("Please connect your wallet");
+    if (!isConnected || !username) {
+      alert("Please connect your wallet and set your username");
       return;
     }
     try {
-      const uniqueHash = uuidv4();
-      const accounts = await window.kasware.getAccounts();
-      const currentWalletAddress = accounts[0];
-      if (!currentWalletAddress) {
-        alert("No wallet address found");
-        return;
-      }
-      // Use betAmount: 1 so that backend validation passes.
-      const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "Level 1 Daily Loot Box",
-        uniqueHash,
-        walletAddress: currentWalletAddress,
-        betAmount: 1,
+      const startRes = await axios.post(`${apiUrl}/daily-lootbox/start`, {
+        username,
+        level: 1,
       });
       if (startRes.data.success) {
-        setGameId(startRes.data.gameId);
+        setGameId(startRes.data.dailyGameId);
+        setIsPlaying(true);
       } else {
-        alert("Failed to start game on backend");
+        alert("Failed to start daily loot box: " + startRes.data.message);
         return;
       }
-      setIsPlaying(true);
     } catch (error: any) {
-      console.error("Error starting Level 1 Daily Loot Box game:", error);
-      alert("Error starting game: " + error.message);
+      if (error.response && error.response.status === 403) {
+        // If the backend returns a cooldown error, extract remaining seconds.
+        const msg = error.response.data.message;
+        const match = msg.match(/(\d+) seconds/);
+        if (match && match[1]) {
+          setCooldown(parseInt(match[1]));
+        }
+        alert(msg);
+      } else {
+        console.error("Error starting Level 1 Daily Loot Box game:", error);
+        alert("Error starting game: " + error.message);
+      }
     }
   };
 
-  // When the game ends, notify the backend
+  // When the game ends, notify the backend using the daily loot box end API
   const handleGameEnd = async (item: any) => {
     setWinItem(item);
     setGameResult("You Win");
     if (gameId) {
       try {
-        await axios.post(`${apiUrl}/game/end`, {
-          gameId,
+        await axios.post(`${apiUrl}/daily-lootbox/end`, {
+          dailyGameId: gameId,
           result: "win",
           winAmount: item.reward,
         });
@@ -209,7 +210,14 @@ function DailyLootBoxContent() {
             </div>
           </Card>
 
-          <DailyLootBoxControls isPlaying={isPlaying} isWalletConnected={isConnected} onOpenLootBox={handleOpenLootBox} gameResult={gameResult} winItem={winItem} />
+          <DailyLootBoxControls
+            isPlaying={isPlaying}
+            isWalletConnected={isConnected}
+            onOpenLootBox={handleOpenLootBox}
+            gameResult={gameResult}
+            winItem={winItem}
+            cooldown={cooldown}
+          />
         </div>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
@@ -230,7 +238,7 @@ function DailyLootBoxContent() {
           </div>
         </Card>
 
-        {/* Promo Section - Image Removed; Text Updated */}
+        {/* Promo Section */}
         <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -364,16 +372,17 @@ function DailyLootBoxControls({
   onOpenLootBox,
   gameResult,
   winItem,
+  cooldown,
 }: {
   isPlaying: boolean;
   isWalletConnected: boolean;
   onOpenLootBox: () => void;
   gameResult: string | null;
   winItem: any;
+  cooldown: number;
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
-
+  
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 4000);
@@ -396,7 +405,6 @@ function DailyLootBoxControls({
       return;
     }
     onOpenLootBox();
-    setCooldown(10);
   };
 
   return (
