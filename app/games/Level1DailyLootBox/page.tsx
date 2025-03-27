@@ -158,6 +158,19 @@ function DailyLootBoxContent() {
   // REQUIRED_LEVEL can be easily changed per game.
   const REQUIRED_LEVEL = 1;
 
+  // On page load, check localStorage for a stored daily loot box timestamp
+  useEffect(() => {
+    const storedTimestamp = localStorage.getItem("dailyLootBoxTimestamp");
+    if (storedTimestamp) {
+      const elapsed = Date.now() - parseInt(storedTimestamp);
+      const cooldownPeriod = 24 * 60 * 60 * 1000;
+      if (elapsed < cooldownPeriod) {
+        const remainingSeconds = Math.ceil((cooldownPeriod - elapsed) / 1000);
+        setCooldown(remainingSeconds);
+      }
+    }
+  }, []);
+
   // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
     if (!isConnected || !username) {
@@ -172,6 +185,8 @@ function DailyLootBoxContent() {
       if (startRes.data.success) {
         setGameId(startRes.data.dailyGameId);
         setIsPlaying(true);
+        // Save the timestamp so that on page load the cooldown can be computed
+        localStorage.setItem("dailyLootBoxTimestamp", Date.now().toString());
       } else {
         showError("Failed to start daily loot box: " + startRes.data.message);
         return;
