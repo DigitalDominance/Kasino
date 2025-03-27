@@ -156,7 +156,7 @@ function DailyLootBoxContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // REQUIRED_LEVEL can be easily changed per game.
-  const REQUIRED_LEVEL = 10;
+  const REQUIRED_LEVEL = 1;
 
   // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
