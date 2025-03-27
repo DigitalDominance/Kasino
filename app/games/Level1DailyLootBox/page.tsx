@@ -14,6 +14,83 @@ import { useWallet } from "@/contexts/WalletContext";
 import { XPDisplay } from "@/app/page";
 import axios from "axios";
 
+// =============================================================================
+// DAILY LOOT BOX GATE COMPONENT
+// =============================================================================
+
+interface DailyLootBoxGateProps {
+  requiredLevel: number;
+  cooldown: number; // in seconds
+  children: React.ReactNode;
+}
+
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${minutes}m`;
+}
+
+export function DailyLootBoxGate({ requiredLevel, cooldown, children }: DailyLootBoxGateProps) {
+  const { isConnected } = useWallet();
+  const [userLevel, setUserLevel] = useState<number | null>(null);
+
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+
+  // Fetch the user level (similar to XPDisplay)
+  useEffect(() => {
+    async function fetchUserLevel() {
+      if (isConnected && window.kasware && window.kasware.getAccounts) {
+        try {
+          const accounts: string[] = await window.kasware.getAccounts();
+          if (!accounts || accounts.length === 0) return;
+          const walletAddress = accounts[0];
+          const res = await axios.get(
+            `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+          );
+          if (res.data.success && res.data.user) {
+            setUserLevel(res.data.user.level || 0);
+          }
+        } catch (err) {
+          console.error("Error fetching user level", err);
+        }
+      }
+    }
+    fetchUserLevel();
+    const interval = setInterval(fetchUserLevel, 5000);
+    return () => clearInterval(interval);
+  }, [isConnected]);
+
+  let blockMessage = "";
+  if (userLevel === null) {
+    blockMessage = "Loading your level...";
+  } else if (userLevel < requiredLevel) {
+    blockMessage = `Your level is too low to play this game. You need to be at least level ${requiredLevel}.`;
+  } else if (cooldown > 0) {
+    blockMessage = `Cooldown active. Next daily loot box available in: ${formatTime(cooldown)}`;
+  }
+
+  return (
+    <div className="relative">
+      {children}
+      {blockMessage && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-gray-800/90 p-6 rounded-lg border border-teal-500 text-white text-center max-w-sm"
+          >
+            <p>{blockMessage}</p>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// DAILY LOOT BOX GAME COMPONENT & CONTENT
+// =============================================================================
+
 const montserrat = Montserrat({
   weight: "700",
   subsets: ["latin"],
@@ -62,15 +139,6 @@ function getRarityOverlayClass(tier: string) {
 }
 
 // ---------------------------------------------------------
-// Helper: Format seconds into "Hh Mm"
-// ---------------------------------------------------------
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m`;
-}
-
-// ---------------------------------------------------------
 // Main Page Component for Level 1 Daily Loot Box Game
 // ---------------------------------------------------------
 export default function Level1DailyLootBoxGamePage() {
@@ -86,6 +154,9 @@ function DailyLootBoxContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // REQUIRED_LEVEL can be easily changed per game.
+  const REQUIRED_LEVEL = 10;
 
   // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
@@ -173,74 +244,77 @@ function DailyLootBoxContent() {
           </motion.div>
         </header>
 
-        {/* Main Game & Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-          <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
-            <div className="p-6 flex flex-col h-full items-center">
-              <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-blue-300">Level 1 Daily Loot Box</h2>
-                <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
-                  Reset
-                </Button>
+        {/* Wrap game content with the gate.
+            The gate will block interaction if the user’s level is too low or if a cooldown is active. */}
+        <DailyLootBoxGate requiredLevel={REQUIRED_LEVEL} cooldown={cooldown}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
+            <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
+              <div className="p-6 flex flex-col h-full items-center">
+                <div className="flex justify-between items-center w-full mb-4">
+                  <h2 className="text-2xl font-bold text-blue-300">Level 1 Daily Loot Box</h2>
+                  <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
+                    Reset
+                  </Button>
+                </div>
+                {/* Reel Container */}
+                <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
+                  <DailyLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                  {isPlaying && (
+                    <>
+                      <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                      <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
+                    </>
+                  )}
+                  {!isPlaying && (
+                    <>
+                      <div className="absolute inset-0 z-30">
+                        <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
+                          <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
+                          <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
+                          <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
+                          <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                        </motion.div>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
+                        <motion.h1
+                          className="text-5xl font-bold mb-4"
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#49EACB" }}
+                        >
+                          LEVEL 1 DAILY LOOT BOX
+                        </motion.h1>
+                        <motion.p
+                          className="text-xl tracking-wider"
+                          animate={{ opacity: [0.8, 1, 0.8] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#00FFFF" }}
+                        >
+                          SPIN TO WIN
+                        </motion.p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              {/* Reel Container */}
-              <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
-                <DailyLootBoxGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
-                {isPlaying && (
-                  <>
-                    <div className="absolute top-0 bottom-0 left-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                    <div className="absolute top-0 bottom-0 right-0 w-40 bg-teal-900/60 backdrop-blur-md pointer-events-none" />
-                  </>
-                )}
-                {!isPlaying && (
-                  <>
-                    <div className="absolute inset-0 z-30">
-                      <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
-                        <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
-                        <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
-                        <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
-                      </motion.div>
-                      <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
-                        <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
-                      </motion.div>
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
-                      <motion.h1
-                        className="text-5xl font-bold mb-4"
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        style={{ color: "#49EACB" }}
-                      >
-                        LEVEL 1 DAILY LOOT BOX
-                      </motion.h1>
-                      <motion.p
-                        className="text-xl tracking-wider"
-                        animate={{ opacity: [0.8, 1, 0.8] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        style={{ color: "#00FFFF" }}
-                      >
-                        SPIN TO WIN
-                      </motion.p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <DailyLootBoxControls
-            isPlaying={isPlaying}
-            isWalletConnected={isConnected}
-            onOpenLootBox={handleOpenLootBox}
-            gameResult={gameResult}
-            winItem={winItem}
-            cooldown={cooldown}
-          />
-        </div>
+            <DailyLootBoxControls
+              isPlaying={isPlaying}
+              isWalletConnected={isConnected}
+              onOpenLootBox={handleOpenLootBox}
+              gameResult={gameResult}
+              winItem={winItem}
+              cooldown={cooldown}
+            />
+          </div>
+        </DailyLootBoxGate>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
           <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 1 Daily Loot Box Rewards</h3>
