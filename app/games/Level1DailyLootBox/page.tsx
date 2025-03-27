@@ -103,13 +103,13 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 // Daily Loot Items Distribution for Level 1 Daily Loot Box
 // ---------------------------------------------------------
 export const dailyLootItems = [
-  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder2.svg" },
-  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder3.svg" },
-  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder4.svg" },
-  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder5.svg" },
-  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder6.svg" },
-  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder7.svg" },
-  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.1, image: "/placeholder8.svg" },
+  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder2.svg" },
+  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder3.svg" },
+  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder4.svg" },
+  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder5.svg" },
+  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder6.svg" },
+  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder7.svg" },
+  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder8.svg" },
   { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 100, image: "/placeholder.svg" },
 ];
 
