@@ -102,14 +102,14 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 // Daily Loot Items Distribution for Level 80 Daily Loot Box
 // ---------------------------------------------------------
 export const dailyLootItems = [
-  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder2.svg" },
-  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder3.svg" },
-  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder4.svg" },
-  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder5.svg" },
-  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder6.svg" },
-  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder7.svg" },
-  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.8, image: "/placeholder8.svg" },
-  { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 2500, image: "/placeholder.svg" },
+  { id: 1, name: "Stack Of Coins", tier: "daily-common", reward: 0.8, image: "/DailyCommon1.webp" },
+  { id: 2, name: "Gem", tier: "daily-common", reward: 0.8, image: "/DailyCommon2.webp" },
+  { id: 3, name: "Money Bag", tier: "daily-common", reward: 0.8, image: "/DailyCommon3.webp" },
+  { id: 4, name: "Money Slots", tier: "daily-common", reward: 0.8, image: "/DailyCommon4.webp" },
+  { id: 5, name: "Gift of Coins", tier: "daily-common", reward: 0.8, image: "/DailyCommon5.webp" },
+  { id: 6, name: "Gem Slots", tier: "daily-common", reward: 0.8, image: "/DailyCommon6.webp" },
+  { id: 7, name: "Green Workbag", tier: "daily-common", reward: 0.8, image: "/DailyCommon7.webp" },
+  { id: 8, name: "Kasino Chip", tier: "daily-ultra-rare", reward: 2500, image: "/DailyUltraRare.webp" },
 ];
 
 // ---------------------------------------------------------
@@ -145,7 +145,6 @@ export default function Level80DailyLootBoxGamePage() {
 }
 
 function DailyLootBoxContent() {
-  // Assume that your wallet context provides both isConnected and username.
   const { isConnected, username } = useWallet();
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
@@ -157,7 +156,6 @@ function DailyLootBoxContent() {
   // REQUIRED_LEVEL for Level 80 loot box is set to 80.
   const REQUIRED_LEVEL = 80;
 
-  // On page load, check localStorage for a stored daily loot box timestamp for Level 80.
   useEffect(() => {
     const storedTimestamp = localStorage.getItem("dailyLootBoxTimestamp_Level80");
     if (storedTimestamp) {
@@ -170,7 +168,6 @@ function DailyLootBoxContent() {
     }
   }, []);
 
-  // Start the daily loot box game on the backend using the daily API
   const handleOpenLootBox = async () => {
     if (!isConnected || !username) {
       showError("Please connect your wallet and set your username");
@@ -184,7 +181,6 @@ function DailyLootBoxContent() {
       if (startRes.data.success) {
         setGameId(startRes.data.dailyGameId);
         setIsPlaying(true);
-        // Save the timestamp so that on page load the cooldown can be computed
         localStorage.setItem("dailyLootBoxTimestamp_Level80", Date.now().toString());
       } else {
         showError("Failed to start daily loot box: " + startRes.data.message);
@@ -192,7 +188,6 @@ function DailyLootBoxContent() {
       }
     } catch (error: any) {
       if (error.response && error.response.status === 403) {
-        // Extract remaining seconds from backend message.
         const msg = error.response.data.message;
         const match = msg.match(/(\d+) seconds/);
         if (match && match[1]) {
@@ -207,8 +202,6 @@ function DailyLootBoxContent() {
     }
   };
 
-  // When the game ends, notify the backend using the daily loot box end API.
-  // Retrieves the wallet address via kasware.getAccounts() and passes it along.
   const handleGameEnd = async (item: any) => {
     setWinItem(item);
     setGameResult("You Win");
@@ -219,7 +212,7 @@ function DailyLootBoxContent() {
           showError("No wallet address found");
           return;
         }
-        const walletAddress = accounts[0]; // Full "kaspa:..." address.
+        const walletAddress = accounts[0];
         await axios.post(`${apiUrl}/daily-lootbox/end`, {
           dailyGameId: gameId,
           result: "win",
@@ -239,7 +232,6 @@ function DailyLootBoxContent() {
     setGameId(null);
   };
 
-  // Display error messages in a themed popup.
   const showError = (msg: string) => setErrorMessage(msg);
 
   return (
@@ -258,14 +250,13 @@ function DailyLootBoxContent() {
           </motion.div>
         </header>
 
-        {/* Wrap game content with the gate.
-            The gate will block interaction if the user’s level is too low or if a cooldown is active. */}
+        {/* Wrap game content with the gate */}
         <DailyLootBoxGate requiredLevel={REQUIRED_LEVEL} cooldown={cooldown}>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
             <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
               <div className="p-6 flex flex-col h-full items-center">
                 <div className="flex justify-between items-center w-full mb-4">
-                  <h2 className="text-2xl font-bold text-blue-300">Level 80 Daily Loot Box</h2>
+                  <h2 className="text-2xl font-bold text-blue-300">Level 70 Daily Loot Box</h2>
                   <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
                     Reset
                   </Button>
@@ -283,16 +274,16 @@ function DailyLootBoxContent() {
                     <>
                       <div className="absolute inset-0 z-30">
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
-                          <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                          <Image src="/DailyUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
-                          <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
+                          <Image src="/DailyCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
-                          <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
-                          <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
@@ -302,7 +293,7 @@ function DailyLootBoxContent() {
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           style={{ color: "#49EACB" }}
                         >
-                          LEVEL 80 DAILY LOOT BOX
+                          LEVEL 70 DAILY LOOT BOX
                         </motion.h1>
                         <motion.p
                           className="text-xl tracking-wider"
@@ -331,7 +322,7 @@ function DailyLootBoxContent() {
         </DailyLootBoxGate>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 80 Daily Loot Box Rewards</h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 70 Daily Loot Box Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
@@ -348,7 +339,6 @@ function DailyLootBoxContent() {
           </div>
         </Card>
 
-        {/* Promo Section */}
         <Card className="w-full bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
@@ -359,10 +349,10 @@ function DailyLootBoxContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Level 80 Daily Loot Box
+            Level 70 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
-            Spin and win amazing rewards – common prizes of 0.8 KAS or an Ultra Rare prize of 2500 KAS!
+            Spin and win amazing rewards – common prizes of 0.7 KAS or an Ultra Rare prize of 1800 KAS!
           </p>
         </Card>
       </div>
@@ -420,11 +410,11 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
       const r = Math.random();
       let winItem;
       if (r < 0.9999) {
-        // 99.99% chance to win a common reward (0.8 KAS) – update to 0.8 KAS for Level 80
+        // 99.99% chance to win a common reward (0.7 KAS)
         const commonRewards = dailyLootItems.filter(item => item.tier === "daily-common");
         winItem = commonRewards[Math.floor(Math.random() * commonRewards.length)];
       } else {
-        // Ultra Rare reward: 2500 KAS win – update to 2500 KAS for Level 80
+        // Ultra Rare reward: 1800 KAS win
         winItem = dailyLootItems.find(item => item.tier === "daily-ultra-rare");
       }
       setWinningItem(winItem);
@@ -547,7 +537,7 @@ function DailyLootBoxControls({
                 <div className="text-2xl font-bold text-blue-300">
                   {gameResult}: {winItem.name}{" "}
                   <span className="text-base text-teal-200">
-                    {winningItem.tier === "daily-ultra-rare" ? "Ultra Rare" : winItem.tier.replace("daily-", "")}
+                    {winItem.tier === "daily-ultra-rare" ? "Ultra Rare" : winItem.tier.replace("daily-", "")}
                   </span>
                 </div>
                 <div className="text-sm text-blue-200">Payout: {winItem.reward} KAS</div>
