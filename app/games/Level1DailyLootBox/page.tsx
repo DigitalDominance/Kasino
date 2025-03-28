@@ -103,14 +103,14 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 // Daily Loot Items Distribution for Level 1 Daily Loot Box
 // ---------------------------------------------------------
 export const dailyLootItems = [
-  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder2.svg" },
-  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder3.svg" },
-  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder4.svg" },
-  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder5.svg" },
-  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder6.svg" },
-  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder7.svg" },
-  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.2, image: "/placeholder8.svg" },
-  { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 100, image: "/placeholder.svg" },
+  { id: 1, name: "Stack Of Coins", tier: "daily-common", reward: 0.2, image: "/DailyCommon1.webp" },
+  { id: 2, name: "Gem", tier: "daily-common", reward: 0.2, image: "/DailyCommon2.webp" },
+  { id: 3, name: "Money Bag", tier: "daily-common", reward: 0.2, image: "/DailyCommon3.webp" },
+  { id: 4, name: "Money Slots", tier: "daily-common", reward: 0.2, image: "/DailyCommon4.webp" },
+  { id: 5, name: "Gift of Coins", tier: "daily-common", reward: 0.2, image: "/DailyCommon5.webp" },
+  { id: 6, name: "Gem Slots", tier: "daily-common", reward: 0.2, image: "/DailyCommon6.webp" },
+  { id: 7, name: "Green Workbag", tier: "daily-common", reward: 0.2, image: "/DailyCommon7.webp" },
+  { id: 8, name: "Kasino Chip", tier: "daily-ultra-rare", reward: 100, image: "/DailyUltraRare.webp" },
 ];
 
 // ---------------------------------------------------------
