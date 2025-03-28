@@ -539,7 +539,7 @@ function DailyLootBoxControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Cooldown: ${formatTime(cooldown)}`
-                  : "Open Level 80 Daily Loot Box"}
+                  : "Open Level 90 Daily Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
