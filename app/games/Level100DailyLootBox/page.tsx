@@ -339,7 +339,7 @@ function DailyLootBoxContent() {
         </DailyLootBoxGate>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 90 Daily Loot Box Rewards</h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 100 Daily Loot Box Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
@@ -367,7 +367,7 @@ function DailyLootBoxContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Level 90 Daily Loot Box
+            Level 100 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
             Spin and win amazing rewards – common prizes of 0.9 KAS or an Ultra Rare prize of 3500 KAS!
@@ -578,7 +578,7 @@ function DailyLootBoxControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Cooldown: ${formatTime(cooldown)}`
-                  : "Open Level 90 Daily Loot Box"}
+                  : "Open Level 100 Daily Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
