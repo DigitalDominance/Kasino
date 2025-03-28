@@ -256,7 +256,7 @@ function DailyLootBoxContent() {
             <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
               <div className="p-6 flex flex-col h-full items-center">
                 <div className="flex justify-between items-center w-full mb-4">
-                  <h2 className="text-2xl font-bold text-blue-300">Level 70 Daily Loot Box</h2>
+                  <h2 className="text-2xl font-bold text-blue-300">Level 80 Daily Loot Box</h2>
                   <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
                     Reset
                   </Button>
@@ -293,7 +293,7 @@ function DailyLootBoxContent() {
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           style={{ color: "#49EACB" }}
                         >
-                          LEVEL 70 DAILY LOOT BOX
+                          LEVEL 80 DAILY LOOT BOX
                         </motion.h1>
                         <motion.p
                           className="text-xl tracking-wider"
@@ -322,7 +322,7 @@ function DailyLootBoxContent() {
         </DailyLootBoxGate>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 70 Daily Loot Box Rewards</h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 80 Daily Loot Box Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
@@ -349,10 +349,10 @@ function DailyLootBoxContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Level 70 Daily Loot Box
+            Level 90 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
-            Spin and win amazing rewards – common prizes of 0.7 KAS or an Ultra Rare prize of 1800 KAS!
+            Spin and win amazing rewards, common prizes of 0.8 KAS or an Ultra Rare prize of 2500 KAS!
           </p>
         </Card>
       </div>
