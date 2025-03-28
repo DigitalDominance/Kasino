@@ -581,14 +581,7 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {dailyLootBoxes.map((box, i) => {
-                      // Using the slug as the key for win counter and high scores
-                      const dataKey = box.slug.toLowerCase();
-                      const totalWins =
-                        winCounter.find(
-                          (counter) => counter._id.toLowerCase() === dataKey
-                        )?.totalWins || 0;
-                      const rawScore = highScores[dataKey] || 0;
-                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      const requiredLevel = box.name.split(" ")[1];
                       return (
                         <motion.div
                           key={i}
@@ -629,28 +622,8 @@ function MainPageContent() {
                                   {box.name}
                                 </h3>
                                 <p className="text-sm text-gray-400">
-                                  Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
+                                  Required Level: {requiredLevel}
                                 </p>
-                                <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                      alt="KAS"
-                                      width={16}
-                                      height={16}
-                                      className="rounded-full"
-                                    />
-                                    <span className="text-sm text-[#49EACB] font-bold">
-                                      {highScoreVal}
-                                    </span>
-                                  </div>
-                                </div>
                               </div>
                             </MotionCard>
                           </Link>
