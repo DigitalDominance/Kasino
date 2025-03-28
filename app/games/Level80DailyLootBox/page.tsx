@@ -362,7 +362,7 @@ function DailyLootBoxContent() {
             Level 80 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
-            Spin and win amazing rewards – common prizes of 0.7 KAS or an Ultra Rare prize of 1800 KAS!
+            Spin and win amazing rewards – common prizes of 0.8 KAS or an Ultra Rare prize of 2500 KAS!
           </p>
         </Card>
       </div>
