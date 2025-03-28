@@ -103,14 +103,14 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 // Daily Loot Items Distribution for Level 40 Daily Loot Box
 // ---------------------------------------------------------
 export const dailyLootItems = [
-  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder2.svg" },
-  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder3.svg" },
-  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder4.svg" },
-  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder5.svg" },
-  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder6.svg" },
-  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder7.svg" },
-  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.45, image: "/placeholder8.svg" },
-  { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 800, image: "/placeholder.svg" },
+  { id: 1, name: "Stack Of Coins", tier: "daily-common", reward: 0.45, image: "/DailyCommon1.webp" },
+  { id: 2, name: "Gem", tier: "daily-common", reward: 0.45, image: "/DailyCommon2.webp" },
+  { id: 3, name: "Money Bag", tier: "daily-common", reward: 0.45, image: "/DailyCommon3.webp" },
+  { id: 4, name: "Money Slots", tier: "daily-common", reward: 0.45, image: "/DailyCommon4.webp" },
+  { id: 5, name: "Gift of Coins", tier: "daily-common", reward: 0.45, image: "/DailyCommon5.webp" },
+  { id: 6, name: "Gem Slots", tier: "daily-common", reward: 0.45, image: "/DailyCommon6.webp" },
+  { id: 7, name: "Green Workbag", tier: "daily-common", reward: 0.45, image: "/DailyCommon7.webp" },
+  { id: 8, name: "Kasino Chip", tier: "daily-ultra-rare", reward: 800, image: "/DailyUltraRare.webp" },
 ];
 
 // ---------------------------------------------------------
@@ -266,7 +266,7 @@ function DailyLootBoxContent() {
             <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm overflow-hidden">
               <div className="p-6 flex flex-col h-full items-center">
                 <div className="flex justify-between items-center w-full mb-4">
-                  <h2 className="text-2xl font-bold text-blue-300">Level 30 Daily Loot Box</h2>
+                  <h2 className="text-2xl font-bold text-blue-300">Level 40 Daily Loot Box</h2>
                   <Button variant="ghost" size="sm" className="text-blue-300" onClick={resetGame}>
                     Reset
                   </Button>
@@ -284,16 +284,16 @@ function DailyLootBoxContent() {
                     <>
                       <div className="absolute inset-0 z-30">
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
-                          <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                          <Image src="/DailyUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
-                          <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
+                          <Image src="/DailyCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
-                          <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
-                          <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
@@ -303,7 +303,7 @@ function DailyLootBoxContent() {
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                           style={{ color: "#49EACB" }}
                         >
-                          LEVEL 30 DAILY LOOT BOX
+                          LEVEL 40 DAILY LOOT BOX
                         </motion.h1>
                         <motion.p
                           className="text-xl tracking-wider"
@@ -332,7 +332,7 @@ function DailyLootBoxContent() {
         </DailyLootBoxGate>
 
         <Card className="bg-teal-900/50 border border-teal-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 30 Daily Loot Box Rewards</h3>
+          <h3 className="text-xl font-bold text-blue-300 mb-4 text-center">Level 40 Daily Loot Box Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
@@ -360,10 +360,10 @@ function DailyLootBoxContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Level 30 Daily Loot Box
+            Level 40 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
-            Spin and win amazing rewards – common prizes of 0.35 KAS or an Ultra Rare prize of 600 KAS!
+            Spin and win amazing rewards – common prizes of 0.45 KAS or an Ultra Rare prize of 800 KAS!
           </p>
         </Card>
       </div>
