@@ -103,14 +103,14 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 // Daily Loot Items Distribution for Level 30 Daily Loot Box
 // ---------------------------------------------------------
 export const dailyLootItems = [
-  { id: 1, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder2.svg" },
-  { id: 2, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder3.svg" },
-  { id: 3, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder4.svg" },
-  { id: 4, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder5.svg" },
-  { id: 5, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder6.svg" },
-  { id: 6, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder7.svg" },
-  { id: 7, name: "Daily Loot", tier: "daily-common", reward: 0.35, image: "/placeholder8.svg" },
-  { id: 8, name: "Daily Loot", tier: "daily-ultra-rare", reward: 600, image: "/placeholder.svg" },
+  { id: 1, name: "Stack Of Coins", tier: "daily-common", reward: 0.35, image: "/DailyCommon1.webp" },
+  { id: 2, name: "Gem", tier: "daily-common", reward: 0.35, image: "/DailyCommon2.webp" },
+  { id: 3, name: "Money Bag", tier: "daily-common", reward: 0.35, image: "/DailyCommon3.webp" },
+  { id: 4, name: "Money Slots", tier: "daily-common", reward: 0.35, image: "/DailyCommon4.webp" },
+  { id: 5, name: "Gift of Coins", tier: "daily-common", reward: 0.35, image: "/DailyCommon5.webp" },
+  { id: 6, name: "Gem Slots", tier: "daily-common", reward: 0.35, image: "/DailyCommon6.webp" },
+  { id: 7, name: "Green Workbag", tier: "daily-common", reward: 0.35, image: "/DailyCommon7.webp" },
+  { id: 8, name: "Kasino Chip", tier: "daily-ultra-rare", reward: 600, image: "/DailyUltraRare.webp" },
 ];
 
 // ---------------------------------------------------------
@@ -284,16 +284,16 @@ function DailyLootBoxContent() {
                     <>
                       <div className="absolute inset-0 z-30">
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
-                          <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                          <Image src="/DailyUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
-                          <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
+                          <Image src="/DailyCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
-                          <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
-                          <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
@@ -492,10 +492,9 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
   );
 }
 
-// =============================================================================
+// ---------------------------------------------------------
 // Daily Loot Box Controls Component
-// =============================================================================
-
+// ---------------------------------------------------------
 function DailyLootBoxControls({
   isPlaying,
   isWalletConnected,
