@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
@@ -80,6 +80,21 @@ function MainPageContent() {
   const characterGames = [
     { name: "Kasper Loot Box", slug: "lootbox", image: "/kasperlootboxcard.webp" },
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
+  ];
+
+  // Free Daily Loot Boxes – note: here we include 11 items following the provided naming pattern.
+  const dailyLootBoxes = [
+    { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp" },
+    { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp" },
+    { name: "Level 20 Daily Loot Box", slug: "Level20DailyLootBox", image: "/Level20Card.webp" },
+    { name: "Level 30 Daily Loot Box", slug: "Level30DailyLootBox", image: "/Level30Card.webp" },
+    { name: "Level 40 Daily Loot Box", slug: "Level40DailyLootBox", image: "/Level40Card.webp" },
+    { name: "Level 50 Daily Loot Box", slug: "Level50DailyLootBox", image: "/Level50Card.webp" },
+    { name: "Level 60 Daily Loot Box", slug: "Level60DailyLootBox", image: "/Level60Card.webp" },
+    { name: "Level 70 Daily Loot Box", slug: "Level70DailyLootBox", image: "/Level70Card.webp" },
+    { name: "Level 80 Daily Loot Box", slug: "Level80DailyLootBox", image: "/Level80Card.webp" },
+    { name: "Level 90 Daily Loot Box", slug: "Level90DailyLootBox", image: "/Level90Card.webp" },
+    { name: "Level 100 Daily Loot Box", slug: "Level100DailyLootBox", image: "/Level100Card.webp" },
   ];
 
   const nextBanner = () =>
@@ -518,6 +533,100 @@ function MainPageContent() {
                               <div className="p-4">
                                 <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
                                   {game.name}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  Wins:{" "}
+                                  <span className="text-[#49EACB] font-bold">
+                                    {totalWins}
+                                  </span>
+                                </p>
+                                <div className="mt-1 flex items-center gap-1">
+                                  <span className="text-sm text-gray-400">
+                                    High Score:
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <Image
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      alt="KAS"
+                                      width={16}
+                                      height={16}
+                                      className="rounded-full"
+                                    />
+                                    <span className="text-sm text-[#49EACB] font-bold">
+                                      {highScoreVal}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </MotionCard>
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+
+                {/* Free Daily Loot Boxes */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.35, duration: 0.8, ease: "easeOut" }}
+                  className="mb-12"
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
+                      <GiPresent />
+                    </span>
+                    <span className="animate-gradient">Free Daily Loot Boxes</span>
+                  </h2>
+                  <div className="flex flex-wrap items-start gap-3">
+                    {dailyLootBoxes.map((box, i) => {
+                      // Using the slug as the key for win counter and high scores
+                      const dataKey = box.slug.toLowerCase();
+                      const totalWins =
+                        winCounter.find(
+                          (counter) => counter._id.toLowerCase() === dataKey
+                        )?.totalWins || 0;
+                      const rawScore = highScores[dataKey] || 0;
+                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      return (
+                        <motion.div
+                          key={i}
+                          className="w-[90vw] md:w-[25vw] max-w-[400px]"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
+                        >
+                          <Link href={`/games/${box.slug}`}>
+                            <MotionCard
+                              className="group relative overflow-hidden border-none bg-transparent"
+                              whileHover={{
+                                scale: 1.05,
+                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                              }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="relative aspect-[4/3] mt-1">
+                                <Image
+                                  src={box.image}
+                                  alt={`${box.name} thumbnail`}
+                                  fill
+                                  objectFit="cover"
+                                  style={{ bottom: "10px" }}
+                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                  <MotionButton
+                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    Play Now
+                                  </MotionButton>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                  {box.name}
                                 </h3>
                                 <p className="text-sm text-gray-400">
                                   Wins:{" "}
