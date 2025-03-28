@@ -284,16 +284,16 @@ function DailyLootBoxContent() {
                     <>
                       <div className="absolute inset-0 z-30">
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
-                          <Image src="/placeholder.svg" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
+                          <Image src="/DailyUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 right-20" style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}>
-                          <Image src="/placeholder2.svg" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
+                          <Image src="/DailyCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
-                          <Image src="/placeholder3.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
-                          <Image src="/placeholder4.svg" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
                         </motion.div>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
