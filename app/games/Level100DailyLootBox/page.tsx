@@ -276,37 +276,26 @@ function DailyLootBoxContent() {
                   {!isPlaying && (
                     <>
                       <div className="absolute inset-0 z-30">
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: 5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute top-0 left-20"
-                          style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}
-                        >
+                        {/* Top-left: Ultra Rare */}
+                        <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 left-20" style={{ filter: "drop-shadow(0 0 15px #EC4899)" }}>
                           <Image src="/DailyUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-pink-500" />
                         </motion.div>
+                        {/* Bottom-left: Common */}
+                        <motion.div whileHover={{ scale: 1.15, rotate: -5 }} whileTap={{ scale: 0.95 }} className="absolute bottom-0 left-20" style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}>
+                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                        </motion.div>
+                        {/* Top-right: Common */}
+                        <motion.div whileHover={{ scale: 1.15, rotate: 5 }} whileTap={{ scale: 0.95 }} className="absolute top-0 right-20" style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}>
+                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                        </motion.div>
+                        {/* Bottom-right: Legendary (replacing the previous common) */}
                         <motion.div
                           whileHover={{ scale: 1.15, rotate: -5 }}
                           whileTap={{ scale: 0.95 }}
                           className="absolute bottom-0 right-20"
-                          style={{ filter: "drop-shadow(0 0 15px #A855F7)" }}
+                          style={{ filter: "drop-shadow(0 0 15px #FACC15)" }}
                         >
-                          <Image src="/DailyCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-blue-500" />
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: 5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute top-0 right-20"
-                          style={{ filter: "drop-shadow(0 0 15px #3B82F6)" }}
-                        >
-                          <Image src="/DailyCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: -5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute bottom-0 left-20"
-                          style={{ filter: "drop-shadow(0 0 15px #6366F1)" }}
-                        >
-                          <Image src="/DailyCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-blue-500" />
+                          <Image src="/DailyLegendary.webp" alt="Legendary Reward" width={80} height={80} className="rounded-full border-4 border-yellow-500" />
                         </motion.div>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
@@ -347,7 +336,12 @@ function DailyLootBoxContent() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {dailyLootItems.map((item) => {
               const rarityClass = getRarityStyle(item.tier);
-              const displayTier = item.tier === "daily-ultra-rare" ? "Ultra Rare" : item.tier === "daily-legendary" ? "Legendary" : item.tier.replace("daily-", "");
+              const displayTier =
+                item.tier === "daily-ultra-rare"
+                  ? "Ultra Rare"
+                  : item.tier === "daily-legendary"
+                  ? "Legendary"
+                  : item.tier.replace("daily-", "");
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt="Reward" width={40} height={40} />
@@ -418,38 +412,26 @@ function DailyLootBoxGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGame
     if (isPlaying && !spinTriggered.current) {
       spinTriggered.current = true;
       setShowResultOverlay(false);
-
-      // Generate a random reel of 40 items from dailyLootItems
       const randomReel = Array.from({ length: 40 }, () => dailyLootItems[Math.floor(Math.random() * dailyLootItems.length)]);
       randomReelLengthRef.current = randomReel.length;
-      // Duplicate for seamless looping
       const loopReel = randomReel.concat(randomReel);
       setFinalReel(loopReel);
-
-      // Determine winning item via probability logic:
       const r = Math.random();
       let winItem;
       if (r < 0.00001) {
-        // Legendary chance: 1 in 100,000 to win 50,000 KAS
         winItem = dailyLootItems.find(item => item.tier === "daily-legendary");
       } else if (r < 0.9999) {
-        // 99.99% chance to win a common reward (0.9 KAS)
         const commonRewards = dailyLootItems.filter(item => item.tier === "daily-common");
         winItem = commonRewards[Math.floor(Math.random() * commonRewards.length)];
       } else {
-        // Ultra Rare reward: 3500 KAS win
         winItem = dailyLootItems.find(item => item.tier === "daily-ultra-rare");
       }
       setWinningItem(winItem);
-
-      // Start continuous horizontal loop over the first randomReel length
       const loopDistance = randomReel.length * itemWidth;
       controls.start({
         x: [0, -loopDistance],
         transition: { duration: 1, repeat: Infinity, ease: "linear" },
       });
-
-      // After 4 seconds, stop the loop and decelerate to the nearest aligned offset
       setTimeout(() => {
         controls.stop();
         const currentX = currentXRef.current;
@@ -580,7 +562,7 @@ function DailyLootBoxControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Cooldown: ${formatTime(cooldown)}`
-                  : "Open Level 90 Daily Loot Box"}
+                  : "Open Level 100 Daily Loot Box"}
               </Button>
             ) : (
               <Button className="w-full bg-teal-400 text-black hover:bg-teal-300" disabled>
