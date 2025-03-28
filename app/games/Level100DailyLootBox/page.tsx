@@ -370,7 +370,7 @@ function DailyLootBoxContent() {
             Level 100 Daily Loot Box
           </motion.h2>
           <p className="text-2xl font-extrabold text-yellow-400 mb-4">
-            Spin and win amazing rewards – common prizes of 0.9 KAS or an Ultra Rare prize of 3500 KAS!
+            Spin and win amazing rewards, common prizes of 1 KAS, an Ultra Rare prize of 3500 KAS or the Legendary Prize of 50,000 KAS!
           </p>
         </Card>
       </div>
