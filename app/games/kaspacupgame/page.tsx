@@ -106,7 +106,7 @@ function CupGameContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
-  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/apii"; // update with your backend URL
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api"; // update with your backend URL
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
