@@ -13,7 +13,6 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
-import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
@@ -30,13 +29,14 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // ---------------------------------------------------------
-// Cup Game Board Component with Rapid Horizontal Shuffle and Lift Animation
+// Cup Game Board Component with Rapid Shuffle and Lift Animation
 // ---------------------------------------------------------
 interface CupGameBoardProps {
   numCups: number;
   selectedCup: number | null;
-  winningCup: number | null;
-  onCupClick: (index: number) => void;
+  winningCup: number;
+  predeterminedWin: boolean;
+  showWinningCup: boolean;
   animationFinished: boolean;
 }
 
@@ -44,10 +44,11 @@ function CupGameBoard({
   numCups,
   selectedCup,
   winningCup,
-  onCupClick,
+  predeterminedWin,
+  showWinningCup,
   animationFinished,
 }: CupGameBoardProps) {
-  // Updated container dimensions and cup size.
+  // Container and cup sizes
   const containerWidth = 1200; // px
   const containerHeight = 800; // px
   const cupSize = 500; // each cup is 500px
@@ -76,31 +77,55 @@ function CupGameBoard({
       {initialPositions.map((initX, index) => {
         const finalX = finalPositions[index];
 
-        // Decide which content to render:
-        // If the cup is selected and it's the winning cup, we show a smaller ball image.
-        // Otherwise, we show the cup image.
-        const content =
-          selectedCup !== null && index === winningCup ? (
-            <div className="flex items-center justify-center h-full">
-              <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
-            </div>
-          ) : (
-            <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
-          );
+        // Determine what to display:
+        // During preview (animation not finished): show the ball (smaller) for the winning cup
+        // After shuffle: all cups show the cup image unless lifted.
+        let content;
+        if (!animationFinished) {
+          content =
+            index === winningCup ? (
+              <div className="flex items-center justify-center h-full">
+                <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+              </div>
+            ) : (
+              <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
+            );
+        } else {
+          if (selectedCup !== null) {
+            if (index === selectedCup) {
+              // If outcome is win, the clicked cup (which should equal winningCup) reveals the ball.
+              // If outcome is lose, the clicked cup shows nothing.
+              content =
+                predeterminedWin && index === winningCup ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+                  </div>
+                ) : (
+                  <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
+                );
+            } else if (showWinningCup && index === winningCup) {
+              // In a losing scenario, after a delay, reveal the winning cup.
+              content = (
+                <div className="flex items-center justify-center h-full">
+                  <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+                </div>
+              );
+            } else {
+              content = <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />;
+            }
+          } else {
+            content = <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />;
+          }
+        }
 
-        // Define keyframes for the shuffle.
-        // This array makes the cup switch positions rapidly several times.
+        // Define animation variants.
+        // During shuffle: use rapid x-position changes.
         const shuffleVariant = {
           x: [initX, initX + 50, initX - 50, initX + 30, initX - 30, initX + 10, initX - 10, finalX],
           y: initialY,
-          scale: 1, // no scaling effect
         };
-
-        // Static variant: cup settles at its final position.
-        const staticVariant = { x: finalX, y: initialY, scale: 1 };
-
-        // Lift variant: the selected cup lifts upward.
-        const liftVariant = { x: finalX, y: initialY - 150, scale: 1 };
+        const staticVariant = { x: finalX, y: initialY };
+        const liftVariant = { x: finalX, y: initialY - 150 };
 
         const animateProps = !animationFinished
           ? shuffleVariant
@@ -108,11 +133,12 @@ function CupGameBoard({
           ? liftVariant
           : staticVariant;
 
+        // Transition: During shuffle, 0.25s per cycle repeated 10 times (total 2.5s).
         const transitionProps = !animationFinished
-          ? { duration: 0.2, ease: "linear", repeat: Infinity }
+          ? { duration: 0.25, ease: "linear", repeat: 10 }
           : selectedCup === index
           ? { duration: 0.5, ease: "easeOut" }
-          : { duration: 0.2, ease: "linear" };
+          : { duration: 0.25, ease: "linear" };
 
         return (
           <motion.div
@@ -122,7 +148,7 @@ function CupGameBoard({
             onClick={() => {
               if (animationFinished && selectedCup === null) onCupClick(index);
             }}
-            initial={{ x: initX, y: initialY, scale: 1 }}
+            initial={{ x: initX, y: initialY }}
             animate={animateProps}
             transition={transitionProps}
           >
@@ -149,7 +175,9 @@ function CupGameContent() {
   const [multiplier, setMultiplier] = useState<number>(2); // default to 2×
   const [animationFinished, setAnimationFinished] = useState(false);
   const [selectedCup, setSelectedCup] = useState<number | null>(null);
-  const [winningCup, setWinningCup] = useState<number | null>(null);
+  const [winningCup, setWinningCup] = useState(0);
+  const [predeterminedWin, setPredeterminedWin] = useState<boolean | null>(null);
+  const [showWinningCup, setShowWinningCup] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [winPopup, setWinPopup] = useState(false);
   const [losePopup, setLosePopup] = useState(false);
@@ -162,7 +190,7 @@ function CupGameContent() {
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
   // ---------------------------------------------------------
-  // Start Game: Deduct bet and notify backend.
+  // Start Game: Deduct bet and notify backend. Determine outcome beforehand.
   // ---------------------------------------------------------
   const handleStartGame = async () => {
     const bet = Number(betAmount);
@@ -194,6 +222,14 @@ function CupGameContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
+      // Determine win probability based on multiplier.
+      const winProb = multiplier === 2 ? 0.45 : multiplier === 3 ? 0.25 : 0.12;
+      const outcome = Math.random() < winProb;
+      setPredeterminedWin(outcome);
+      // Pick a winning cup randomly.
+      const winCup = Math.floor(Math.random() * multiplier);
+      setWinningCup(winCup);
+
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Kaspa Cup Game",
         uniqueHash,
@@ -212,7 +248,7 @@ function CupGameContent() {
       setPregame(false);
       setGameResult(null);
       setSelectedCup(null);
-      setWinningCup(null);
+      setShowWinningCup(false);
       setAnimationFinished(false);
       // Run the rapid shuffle animation for 2.5 seconds before allowing interaction.
       setTimeout(() => {
@@ -225,30 +261,24 @@ function CupGameContent() {
   };
 
   // ---------------------------------------------------------
-  // Handle Cup Click: Determine win/loss based on multiplier odds.
-  // Regardless of outcome, the clicked cup lifts to reveal its underside.
+  // Handle Cup Click: Compare selected cup with predetermined outcome.
+  // If win: player's click must equal winningCup.
+  // If lose: player's click must differ from winningCup.
+  // Then, lift the clicked cup; if the player loses, also reveal the winning cup.
   // ---------------------------------------------------------
   const handleCupClick = (cupIndex: number) => {
     if (!animationFinished || selectedCup !== null) return;
-    const bet = Number(betAmount);
-    // Win probabilities: 2×: 45%, 3×: 25%, 5×: 12%
-    const winProb = multiplier === 2 ? 0.45 : multiplier === 3 ? 0.25 : 0.12;
-    const isWin = Math.random() < winProb;
-    let winCup: number;
-    if (isWin) {
-      winCup = cupIndex;
-    } else {
-      const candidates = [];
-      for (let i = 0; i < multiplier; i++) {
-        if (i !== cupIndex) candidates.push(i);
-      }
-      winCup = candidates[Math.floor(Math.random() * candidates.length)];
-    }
     setSelectedCup(cupIndex);
-    setWinningCup(winCup);
-    // After a brief delay (to allow the lift animation), reveal the result.
+    const bet = Number(betAmount);
+    let playerWon = false;
+    if (predeterminedWin) {
+      playerWon = cupIndex === winningCup;
+    } else {
+      playerWon = cupIndex !== winningCup;
+    }
+    // After a brief delay, reveal the result.
     setTimeout(() => {
-      if (isWin) {
+      if (playerWon) {
         setGameResult("You Win!");
         setWinPopup(true);
         axios.post(`${apiUrl}/game/end`, {
@@ -259,6 +289,8 @@ function CupGameContent() {
       } else {
         setGameResult("Game Over");
         setLosePopup(true);
+        // In a losing scenario, also reveal the winning cup.
+        setShowWinningCup(true);
         axios.post(`${apiUrl}/game/end`, {
           gameId,
           result: "lose",
@@ -276,7 +308,9 @@ function CupGameContent() {
     setDepositTxid(null);
     setPregame(true);
     setSelectedCup(null);
-    setWinningCup(null);
+    setWinningCup(0);
+    setPredeterminedWin(null);
+    setShowWinningCup(false);
     setAnimationFinished(false);
   };
 
@@ -334,9 +368,9 @@ function CupGameContent() {
                   Reset
                 </Button>
               </div>
-              {/* Pregame Screen (no background images) */}
+              {/* Pregame Screen (darker gradient with an extra ball next to the cup) */}
               {pregame ? (
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#003300] to-[#00cc66] bg-opacity-80">
+                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#001a00] to-[#003300] bg-opacity-80">
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
                       className="text-5xl font-bold mb-4"
@@ -352,10 +386,11 @@ function CupGameContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      Find the ball under the cups!
+                      Follow the ball and pick your cup!
                     </motion.p>
-                    <div className="mt-10">
+                    <div className="flex items-center space-x-4 mt-10">
                       <Image src="/kaspacupgamecup.webp" alt="Cup" width={250} height={250} />
+                      <Image src="/kaspacupgameball.webp" alt="Ball" width={150} height={150} />
                     </div>
                     <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
                       <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
@@ -365,12 +400,13 @@ function CupGameContent() {
                   </div>
                 </div>
               ) : (
-                // Game Board with rapid shuffle and lift animation
+                // Game Board with rapid shuffle and lift animation.
                 <CupGameBoard
                   numCups={multiplier}
                   selectedCup={selectedCup}
                   winningCup={winningCup}
-                  onCupClick={handleCupClick}
+                  predeterminedWin={predeterminedWin as boolean}
+                  showWinningCup={showWinningCup}
                   animationFinished={animationFinished}
                 />
               )}
