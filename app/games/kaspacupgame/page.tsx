@@ -97,7 +97,7 @@ function CupGameBoard({
   const finalVariant = { y: initialY };
   const liftVariant = { y: initialY - 150 }; // Cup lifts upward by 150px
 
-  // Control ball visibility:
+  // Control ball visibility.
   // During preview, the winning cup’s ball is visible.
   // During fast shuffle, no ball is shown.
   // In reveal phase, if the user picked the winning cup (or forced reveal on loss) the ball is shown.
@@ -136,12 +136,15 @@ function CupGameBoard({
           transitionProps = { duration: 0.5, ease: "easeInOut" };
         } else if (!animationFinished) {
           // Fast shuffle phase: continuous fast shuffles.
-          // Added a delay of 2 seconds before the shuffling starts and a longer duration for smoother shuffles.
+          // The y coordinate quickly comes down (0.2s) while the x-axis shuffles over 1.5s.
           animateProps = {
             x: positionsSequence.map((step) => step[index]),
             y: finalVariant.y,
           };
-          transitionProps = { delay: 2, duration: 2, ease: "easeInOut" };
+          transitionProps = {
+            x: { delay: 0, duration: 1.5, ease: "easeInOut" },
+            y: { delay: 0, duration: 0.2, ease: "easeInOut" },
+          };
         } else {
           // Reveal phase: user can reveal a cup.
           targetX = finalPositions[index];
@@ -519,15 +522,15 @@ export default function KaspaCupGamePage() {
       setSelectedCup(null);
       setShowWinningCup(false);
       // Start with a 1‑second preview (winning cup lifted to show ball),
-      // then begin fast shuffles after a delay.
+      // then quickly transition into fast shuffles.
       setPreviewPhase(true);
       setTimeout(() => {
         setPreviewPhase(false);
       }, 1000);
-      // Overall, allow a 2‑second delay before shuffling plus 2 seconds of shuffle animation (total 5 seconds).
+      // Total animation time: 1s preview + 1.5s shuffle = 2.5s.
       setTimeout(() => {
         setAnimationFinished(true);
-      }, 5000);
+      }, 2500);
     } catch (error: any) {
       console.error("Error starting Kaspa Cup Game:", error);
       alert("Error starting game: " + error.message);
