@@ -29,7 +29,7 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // ---------------------------------------------------------
-// Cup Game Board Component
+// Cup Game Board Component (Updated)
 // ---------------------------------------------------------
 interface CupGameBoardProps {
   numCups: number;
@@ -73,6 +73,18 @@ function CupGameBoard({
     return arr;
   }, [numCups, initialPositions]);
 
+  // Define animation variants that depend on each cup's final x-position
+  const staticVariant = (finalX: number) => ({ x: finalX, y: initialY });
+  const shuffleVariant = (initX: number, finalX: number) => ({
+    x: [initX, initX + 20, initX - 20, initX + 40, initX - 40, initX + 10, initX - 10, finalX],
+    y: initialY,
+  });
+  const liftVariant = (finalX: number) => ({ x: finalX, y: initialY - 150 });
+  const previewVariant = (finalX: number) => ({
+    x: finalX,
+    y: [initialY, initialY - 150, initialY],
+  });
+
   return (
     <div
       className="relative mx-auto"
@@ -81,80 +93,44 @@ function CupGameBoard({
       {initialPositions.map((initX, index) => {
         const finalX = finalPositions[index];
 
-        // CONTENT: During preview phase, show the ball on the winning cup.
-        // After preview, all cups show the cup image unless lifted.
-        let content;
-        if (previewPhase) {
-          content =
-            index === winningCup ? (
-              <div className="flex items-center justify-center h-full">
-                <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
-              </div>
-            ) : (
-              <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
-            );
-        } else {
-          if (!animationFinished) {
-            // During the shuffle, show cups only.
-            content = <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />;
-          } else {
-            // After shuffle:
-            if (selectedCup !== null) {
-              if (index === selectedCup) {
-                // If player clicked this cup:
-                content =
-                  predeterminedWin && index === winningCup ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
-                    </div>
-                  ) : (
-                    <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
-                  );
-              } else if (showWinningCup && index === winningCup) {
-                // Reveal winning cup in case of loss.
-                content = (
-                  <div className="flex items-center justify-center h-full">
-                    <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
-                  </div>
-                );
-              } else {
-                content = <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />;
-              }
-            } else {
-              content = <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />;
-            }
-          }
-        }
-
-        // ANIMATION:
-        // If still in preview phase, no animation.
-        // If not in preview and shuffle not finished, animate a rapid x-switch over 5 seconds.
-        // When finished, if this cup is the clicked one, use lift variant.
-        const shuffleVariant = {
-          x: [initX, initX + 20, initX - 20, initX + 40, initX - 40, initX + 10, initX - 10, finalX],
-          y: initialY,
-        };
-        const staticVariant = { x: finalX, y: initialY };
-        const liftVariant = { x: finalX, y: initialY - 150 };
-
+        // Determine the proper animation based on phase:
         let animateProps;
         let transitionProps;
         if (previewPhase) {
-          animateProps = staticVariant;
-          transitionProps = { duration: 0.1 };
+          // In preview: only the winning cup animates a lift–drop; the others remain static.
+          animateProps = index === winningCup ? previewVariant(finalX) : staticVariant(finalX);
+          transitionProps = { duration: 1, ease: "easeInOut" };
         } else if (!animationFinished) {
-          animateProps = shuffleVariant;
+          // During shuffle, animate all cups using a shuffle pattern.
+          animateProps = shuffleVariant(initX, finalX);
           transitionProps = { duration: 5, ease: "easeInOut" };
         } else {
-          animateProps = selectedCup === index ? liftVariant : staticVariant;
-          transitionProps = selectedCup === index ? { duration: 0.5, ease: "easeOut" } : { duration: 0.5 };
+          // After shuffle (reveal phase):
+          // If a cup was clicked OR (in a loss) we need to reveal the winning cup,
+          // use the lift animation.
+          const shouldLift = (selectedCup === index) || (showWinningCup && index === winningCup);
+          animateProps = shouldLift ? liftVariant(finalX) : staticVariant(finalX);
+          transitionProps = { duration: 0.5, ease: "easeOut" };
         }
+
+        // Adjust z-index:
+        // When a cup is lifted (in preview or reveal) we want it to drop behind the ball.
+        const cupStyle = {
+          width: cupSize,
+          height: cupSize,
+          zIndex:
+            (previewPhase && index === winningCup) ||
+            (animationFinished &&
+              ((selectedCup === index && predeterminedWin) || (showWinningCup && index === winningCup)))
+              ? 0
+              : 1,
+        };
 
         return (
           <motion.div
             key={index}
             className="absolute cursor-pointer"
-            style={{ width: cupSize, height: cupSize }}
+            style={cupStyle}
             onClick={() => {
               if (!previewPhase && animationFinished && selectedCup === null) onCupClick(index);
             }}
@@ -162,10 +138,34 @@ function CupGameBoard({
             animate={animateProps}
             transition={transitionProps}
           >
-            {content}
+            <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
           </motion.div>
         );
       })}
+      {/* Render the ball image separately so it stays stationary.
+          It is rendered when:
+          - In preview phase (revealing behind the winning cup), or
+          - In reveal phase when the winning cup is either selected (for a win)
+            or needs to be revealed in case of loss.
+      */}
+      {winningCup !== null &&
+        (previewPhase ||
+          (animationFinished &&
+            ((selectedCup === winningCup && predeterminedWin) || showWinningCup))) && (
+          <div
+            style={{
+              position: "absolute",
+              left: finalPositions[winningCup] + (cupSize - 300) / 2,
+              top: initialY + (cupSize - 300) / 2,
+              width: 300,
+              height: 300,
+              pointerEvents: "none",
+              zIndex: 1, // Render above the lifted cup to appear revealed.
+            }}
+          >
+            <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+          </div>
+        )}
     </div>
   );
 }
