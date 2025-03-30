@@ -29,7 +29,7 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // ---------------------------------------------------------
-// Cup Game Board Component (Updated)
+// Cup Game Board Component (Completely Reworked Animation)
 // ---------------------------------------------------------
 interface CupGameBoardProps {
   numCups: number;
@@ -52,18 +52,25 @@ function CupGameBoard({
   previewPhase,
   onCupClick,
 }: CupGameBoardProps) {
-  // Container and cup sizes
+  // Container & cup dimensions
   const containerWidth = 1200; // px
   const containerHeight = 800; // px
-  const cupSize = 500; // each cup is 500px
+  const cupSize = 500;
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (containerWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
-  // Initial positions for each cup
+  // Ball dimensions & position adjustment:
+  const ballWidth = 200;
+  const ballHeight = 200;
+  // The ball will be centered horizontally within the cup and moved down further vertically.
+  // Here we use 0.8 so that the ball sits lower.
+  const ballOffsetY = initialY + (cupSize - ballHeight) * 0.8;
+
+  // Compute initial positions for each cup.
   const initialPositions = Array.from({ length: numCups }, (_, i) => leftOffset + i * (cupSize + gap));
-  // Shuffled final ordering
+  // Generate a shuffled (final) ordering.
   const finalPositions = useMemo(() => {
     const arr = [...initialPositions];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -73,17 +80,10 @@ function CupGameBoard({
     return arr;
   }, [numCups, initialPositions]);
 
-  // Define animation variants that depend on each cup's final x-position
-  const staticVariant = (finalX: number) => ({ x: finalX, y: initialY });
-  const shuffleVariant = (initX: number, finalX: number) => ({
-    x: [initX, initX + 20, initX - 20, initX + 40, initX - 40, initX + 10, initX - 10, finalX],
-    y: initialY,
-  });
-  const liftVariant = (finalX: number) => ({ x: finalX, y: initialY - 150 });
-  const previewVariant = (finalX: number) => ({
-    x: finalX,
-    y: [initialY, initialY - 150, initialY],
-  });
+  // Define simple variants for our three phases.
+  const initialVariant = { y: initialY };
+  const finalVariant = { y: initialY };
+  const liftVariant = { y: initialY - 150 }; // Cup lifts upward by 150px
 
   return (
     <div
@@ -92,78 +92,85 @@ function CupGameBoard({
     >
       {initialPositions.map((initX, index) => {
         const finalX = finalPositions[index];
-
-        // Determine the proper animation based on phase:
-        let animateProps;
-        let transitionProps;
+        // Determine target x–position based on phase.
+        let targetX;
         if (previewPhase) {
-          // In preview: only the winning cup animates a lift–drop; the others remain static.
-          animateProps = index === winningCup ? previewVariant(finalX) : staticVariant(finalX);
-          transitionProps = { duration: 1, ease: "easeInOut" };
-        } else if (!animationFinished) {
-          // During shuffle, animate all cups using a shuffle pattern.
-          animateProps = shuffleVariant(initX, finalX);
-          transitionProps = { duration: 5, ease: "easeInOut" };
+          // In preview, cups remain at their initial positions.
+          targetX = initX;
         } else {
-          // After shuffle (reveal phase):
-          // If a cup was clicked OR (in a loss) we need to reveal the winning cup,
-          // use the lift animation.
-          const shouldLift = (selectedCup === index) || (showWinningCup && index === winningCup);
-          animateProps = shouldLift ? liftVariant(finalX) : staticVariant(finalX);
+          // In both shuffle and reveal phases, cups will be at final positions.
+          targetX = finalX;
+        }
+
+        // Determine the animation to apply.
+        let animateProps, transitionProps;
+        if (previewPhase) {
+          // In preview: only the winning cup lifts to reveal the ball.
+          animateProps = {
+            x: targetX,
+            y: index === winningCup ? liftVariant.y : initialVariant.y,
+          };
+          transitionProps = { duration: 0.5, ease: "easeInOut" };
+        } else if (!animationFinished) {
+          // Shuffle phase: smoothly move from initial to final positions.
+          animateProps = {
+            x: targetX,
+            y: finalVariant.y,
+          };
+          transitionProps = { duration: 2, ease: "easeInOut" };
+        } else {
+          // Reveal phase: if this cup is clicked (or in case of a loss, the winning cup) lift it.
+          const shouldLift = selectedCup === index || (showWinningCup && index === winningCup);
+          animateProps = {
+            x: targetX,
+            y: shouldLift ? liftVariant.y : finalVariant.y,
+          };
           transitionProps = { duration: 0.5, ease: "easeOut" };
         }
 
-        // Adjust z-index:
-        // When a cup is lifted (in preview or reveal) we want it to drop behind the ball.
+        // Set a static width/height and adjust z-index so a lifted cup appears behind the ball.
         const cupStyle = {
           width: cupSize,
           height: cupSize,
-          zIndex:
-            (previewPhase && index === winningCup) ||
-            (animationFinished &&
-              ((selectedCup === index && predeterminedWin) || (showWinningCup && index === winningCup)))
-              ? 0
-              : 1,
+          zIndex: (previewPhase && index === winningCup) || (animationFinished && (selectedCup === index || (showWinningCup && index === winningCup))) ? 0 : 1,
         };
 
         return (
           <motion.div
             key={index}
             className="absolute cursor-pointer"
-            style={cupStyle}
+            style={{ ...cupStyle, x: initX }} // initial x is set here; y comes from initialVariant.
             onClick={() => {
               if (!previewPhase && animationFinished && selectedCup === null) onCupClick(index);
             }}
             initial={{ x: initX, y: initialY }}
-            animate={animateProps}
+            animate={{ x: animateProps.x, y: animateProps.y }}
             transition={transitionProps}
           >
             <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
           </motion.div>
         );
       })}
-      {/* Render the ball image separately so it stays stationary.
-          It is rendered when:
-          - In preview phase (revealing behind the winning cup), or
-          - In reveal phase when the winning cup is either selected (for a win)
-            or needs to be revealed in case of loss.
+      {/* Render the ball only after the shuffle is done.
+          The ball is small (200x200) and positioned lower inside the cup.
+          It is shown only if:
+           - In a win: the selected cup is the winning cup, or
+           - In a loss: the winning cup is revealed.
       */}
-      {winningCup !== null &&
-        (previewPhase ||
-          (animationFinished &&
-            ((selectedCup === winningCup && predeterminedWin) || showWinningCup))) && (
+      {animationFinished &&
+        ((selectedCup === winningCup && predeterminedWin) || showWinningCup) && (
           <div
             style={{
               position: "absolute",
-              left: finalPositions[winningCup] + (cupSize - 300) / 2,
-              top: initialY + (cupSize - 300) / 2,
-              width: 300,
-              height: 300,
+              left: finalPositions[winningCup] + (cupSize - ballWidth) / 2,
+              top: ballOffsetY,
+              width: ballWidth,
+              height: ballHeight,
               pointerEvents: "none",
-              zIndex: 1, // Render above the lifted cup to appear revealed.
+              zIndex: 1,
             }}
           >
-            <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+            <Image src="/kaspacupgameball.webp" alt="Ball" width={ballWidth} height={ballHeight} />
           </div>
         )}
     </div>
@@ -384,7 +391,6 @@ function CupGameControls({
 // Main Page Export
 // ---------------------------------------------------------
 export default function KaspaCupGamePage() {
-  // States for controlling the phases
   const { isConnected, balance } = useWallet();
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -407,9 +413,6 @@ export default function KaspaCupGamePage() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // ---------------------------------------------------------
-  // Start Game: Determine outcome, trigger preview then shuffle.
-  // ---------------------------------------------------------
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -466,33 +469,25 @@ export default function KaspaCupGamePage() {
       setGameResult(null);
       setSelectedCup(null);
       setShowWinningCup(false);
-      // Start with a 1-second preview (winning cup shows ball), then start a 5-second shuffle.
+      // Begin with a 1-second preview (winning cup lifted with ball), then start the shuffle.
       setPreviewPhase(true);
       setTimeout(() => {
         setPreviewPhase(false);
       }, 1000);
       setTimeout(() => {
         setAnimationFinished(true);
-      }, 6000); // total 6 seconds delay
+      }, 3000); // shuffle phase lasts 2 seconds after preview
     } catch (error: any) {
       console.error("Error starting Kaspa Cup Game:", error);
       alert("Error starting game: " + error.message);
     }
   };
 
-  // ---------------------------------------------------------
-  // Handle Cup Click: Reveal player's selection and, if losing, also reveal winning cup.
-  // ---------------------------------------------------------
   const handleCupClick = (cupIndex: number) => {
     if (!animationFinished || selectedCup !== null) return;
     setSelectedCup(cupIndex);
     const bet = Number(betAmount);
-    let playerWon = false;
-    if (predeterminedWin) {
-      playerWon = cupIndex === winningCup;
-    } else {
-      playerWon = cupIndex !== winningCup;
-    }
+    let playerWon = predeterminedWin ? cupIndex === winningCup : cupIndex !== winningCup;
     setTimeout(() => {
       if (playerWon) {
         setGameResult("You Win!");
@@ -513,7 +508,7 @@ export default function KaspaCupGamePage() {
         });
       }
       setIsPlaying(false);
-    }, 1000);
+    }, 500);
   };
 
   const resetGame = () => {
@@ -611,7 +606,6 @@ export default function KaspaCupGamePage() {
                   </div>
                 </div>
               ) : (
-                // Game Board: Pass previewPhase and other props
                 <CupGameBoard
                   numCups={multiplier}
                   selectedCup={selectedCup}
