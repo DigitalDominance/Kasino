@@ -29,7 +29,7 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // ---------------------------------------------------------
-// Cup Game Board Component (Reworked Animation)
+// Cup Game Board Component (Completely Reworked Animation)
 // ---------------------------------------------------------
 interface CupGameBoardProps {
   numCups: number;
@@ -61,25 +61,38 @@ function CupGameBoard({
   const leftOffset = (containerWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
-  // Ball dimensions & position adjustment.
+  // Ball dimensions & position adjustment:
   const ballWidth = 200;
   const ballHeight = 200;
-  // We want the ball to sit lower inside the cup.
   const ballOffsetY = initialY + (cupSize - ballHeight) * 0.8;
 
   // Compute initial positions for each cup.
   const initialPositions = Array.from({ length: numCups }, (_, i) => leftOffset + i * (cupSize + gap));
-  // Compute final (shuffled) positions.
-  const finalPositions = useMemo(() => {
-    const arr = [...initialPositions];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }, [numCups, initialPositions]);
 
-  // Variants for vertical positions.
+  // ---------------------------------------------------------
+  // NEW: Compute a sequence of positions for the shuffle phase.
+  // We generate a sequence of 4 steps (initial + 3 shuffles) to
+  // make the cups switch positions more times.
+  // ---------------------------------------------------------
+  const totalSteps = 4;
+  const positionsSequence = useMemo(() => {
+    const sequence = [];
+    sequence.push(initialPositions);
+    let current = [...initialPositions];
+    for (let i = 1; i < totalSteps; i++) {
+      const newOrder = [...current];
+      for (let j = newOrder.length - 1; j > 0; j--) {
+        const k = Math.floor(Math.random() * (j + 1));
+        [newOrder[j], newOrder[k]] = [newOrder[k], newOrder[j]];
+      }
+      sequence.push(newOrder);
+      current = newOrder;
+    }
+    return sequence;
+  }, [initialPositions]);
+  const finalPositions = positionsSequence[positionsSequence.length - 1];
+
+  // Define simple variants for our three phases.
   const initialVariant = { y: initialY };
   const finalVariant = { y: initialY };
   const liftVariant = { y: initialY - 150 }; // Cup lifts upward by 150px
@@ -90,33 +103,29 @@ function CupGameBoard({
       style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}
     >
       {initialPositions.map((initX, index) => {
-        // For preview phase, use initial x; otherwise use final x.
-        const targetX = previewPhase ? initX : finalPositions[index];
+        let animateProps, transitionProps, targetX;
 
-        // Determine animation based on phase.
-        let animateProps, transitionProps;
         if (previewPhase) {
-          // In preview: only the winning cup lifts to reveal the ball.
+          // In preview: cups remain at their initial positions,
+          // but the winning cup lifts (revealing the ball).
+          targetX = initialPositions[index];
           animateProps = {
             x: targetX,
             y: index === winningCup ? liftVariant.y : initialVariant.y,
           };
           transitionProps = { duration: 0.5, ease: "easeInOut" };
         } else if (!animationFinished) {
-          // Shuffle phase: switch positions multiple times quickly.
+          // Shuffle phase: smoothly move cups through multiple positions.
+          // Each cup's x position goes from its initial value through several intermediate
+          // positions before landing at its final position.
           animateProps = {
-            x: [
-              initX,
-              initX + (targetX - initX) * 0.3,
-              initX + (targetX - initX) * 0.7,
-              initX + (targetX - initX) * 0.4,
-              targetX,
-            ],
+            x: positionsSequence.map((step) => step[index]),
             y: finalVariant.y,
           };
           transitionProps = { duration: 1.5, ease: "easeInOut" };
         } else {
-          // Reveal phase: if this cup is clicked (or, for a loss, it's the winning cup) lift it.
+          // Reveal phase: if this cup is clicked (or in case of a loss, the winning cup) lift it.
+          targetX = finalPositions[index];
           const shouldLift = selectedCup === index || (showWinningCup && index === winningCup);
           animateProps = {
             x: targetX,
@@ -125,7 +134,7 @@ function CupGameBoard({
           transitionProps = { duration: 0.5, ease: "easeOut" };
         }
 
-        // Adjust z-index so that a lifted cup appears behind the ball.
+        // Set a static width/height and adjust z-index so a lifted cup appears behind the ball.
         const cupStyle = {
           width: cupSize,
           height: cupSize,
@@ -153,15 +162,19 @@ function CupGameBoard({
         );
       })}
       {/* Render the ball.
-          Now the ball is rendered in preview phase (using the winning cup’s initial position)
-          as well as in reveal phase. Its x–position depends on the phase.
+          Now the ball is shown during preview (using the cup’s initial position)
+          and in reveal phases when appropriate.
       */}
-      {((previewPhase && winningCup !== null) ||
+      {(previewPhase ||
         (animationFinished && ((selectedCup === winningCup && predeterminedWin) || showWinningCup))) && (
         <div
           style={{
             position: "absolute",
-            left: (previewPhase ? initialPositions[winningCup] : finalPositions[winningCup]) + (cupSize - ballWidth) / 2,
+            left:
+              (previewPhase
+                ? initialPositions[winningCup]
+                : finalPositions[winningCup]) +
+              (cupSize - ballWidth) / 2,
             top: ballOffsetY,
             width: ballWidth,
             height: ballHeight,
@@ -353,7 +366,9 @@ function CupGameControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Start Game (${cooldown}s)`
+                  ? `Start Game (${
+                      cooldown
+                    }s)`
                   : "Start Kaspa Cup Game"}
               </Button>
             ) : (
@@ -382,69 +397,13 @@ function CupGameControls({
           </motion.div>
         )}
       </AnimatePresence>
-      <SiteFooter />
-      <AnimatePresence>
-        {winPopup && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
-              <p className="text-xl mb-6">You won {Number(betAmount) * multiplier} KAS!</p>
-              <Button
-                className="bg-black text-[#49EACB] hover:bg-black/80"
-                onClick={() => {
-                  setWinPopup(false);
-                  resetGame();
-                }}
-              >
-                Reset Game
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {losePopup && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-red-700 p-6 rounded-lg shadow-2xl text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <h2 className="text-3xl font-bold mb-4">Game Over</h2>
-              <p className="text-xl mb-6">You lost your bet.</p>
-              <Button
-                className="bg-black text-red-700 hover:bg-black/80"
-                onClick={() => {
-                  setLosePopup(false);
-                  resetGame();
-                }}
-              >
-                Reset Game
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
 
+// ---------------------------------------------------------
+// Main Page Export
+// ---------------------------------------------------------
 export default function KaspaCupGamePage() {
   const { isConnected, balance } = useWallet();
   const [pregame, setPregame] = useState(true);
@@ -524,7 +483,7 @@ export default function KaspaCupGamePage() {
       setGameResult(null);
       setSelectedCup(null);
       setShowWinningCup(false);
-      // Begin with a 1-second preview (winning cup lifts to show ball), then shuffle.
+      // Begin with a 1-second preview (winning cup lifted with ball), then start the shuffle.
       setPreviewPhase(true);
       setTimeout(() => {
         setPreviewPhase(false);
@@ -588,175 +547,146 @@ export default function KaspaCupGamePage() {
   }, [cooldown]);
 
   return (
-    <>
-      <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-        <div className="flex-grow p-6">
-          {/* Header */}
-          <header className="flex items-center justify-between mb-6">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
-              </Link>
-            </motion.div>
-            <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              <XPDisplay />
-              <WalletConnection />
-            </motion.div>
-          </header>
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+      <div className="flex-grow p-6">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
+            </Link>
+          </motion.div>
+          <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <XPDisplay />
+            <WalletConnection />
+          </motion.div>
+        </header>
 
-          {/* Deposit TXID */}
-          {depositTxid && (
-            <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
-              Deposit TXID:{" "}
-              <a
-                className="txid-link"
-                style={{ background: "linear-gradient(90deg, #B6B6B6, #49EACB)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-                href={`https://kas.fyi/transaction/${depositTxid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {depositTxid}
-              </a>
-            </p>
-          )}
+        {/* Deposit TXID */}
+        {depositTxid && (
+          <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
+            Deposit TXID:{" "}
+            <a
+              className="txid-link"
+              style={{ background: "linear-gradient(90deg, #B6B6B6, #49EACB)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+              href={`https://kas.fyi/transaction/${depositTxid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {depositTxid}
+            </a>
+          </p>
+        )}
 
-          <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
-            {/* Left Column: Game Container */}
-            <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-              <div className="p-6 flex flex-col h-full items-center">
-                <div className="flex justify-between items-center w-full mb-4">
-                  <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Cup Game</h2>
-                  <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
-                    Reset
-                  </Button>
-                </div>
-                {/* Pregame Screen */}
-                {pregame ? (
-                  <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#002200] to-[#005500] bg-opacity-80">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
-                      <motion.h1
-                        className="text-5xl font-bold mb-4"
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        style={{ color: "#49EACB" }}
-                      >
-                        KASPA CUP GAME
-                      </motion.h1>
-                      <motion.p
-                        className="text-xl tracking-wider mb-4"
-                        animate={{ opacity: [0.8, 1, 0.8] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        style={{ color: "#49EACB" }}
-                      >
-                        Follow the ball and pick your cup!
-                      </motion.p>
-                      <div className="flex items-center space-x-4 mt-10">
-                        <Image src="/kaspacupgamecup.webp" alt="Cup" width={250} height={250} />
-                        <Image src="/kaspacupgameball.webp" alt="Ball" width={150} height={150} />
-                      </div>
-                      <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-                        <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
-                          Place Your Bet &amp; Select Multiplier
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </div>
-                ) : (
-                  <CupGameBoard
-                    numCups={multiplier}
-                    selectedCup={selectedCup}
-                    winningCup={winningCup}
-                    predeterminedWin={predeterminedWin as boolean}
-                    showWinningCup={showWinningCup}
-                    animationFinished={animationFinished}
-                    previewPhase={previewPhase}
-                    onCupClick={handleCupClick}
-                  />
-                )}
+        <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
+          {/* Left Column: Game Container */}
+          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full items-center">
+              <div className="flex justify-between items-center w-full mb-4">
+                <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Cup Game</h2>
+                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
+                  Reset
+                </Button>
               </div>
-            </Card>
-
-            {/* Right Column: Bet Controls, LiveChat & LiveWins */}
-            <div className="space-y-6">
-              <CupGameControls
-                betAmount={betAmount}
-                setBetAmount={setBetAmount}
-                multiplier={multiplier}
-                setMultiplier={setMultiplier}
-                isPlaying={isPlaying}
-                isWalletConnected={isConnected}
-                balance={balance}
-                onStartGame={() => {
-                  handleStartGame();
-                  setCooldown(10);
-                }}
-                gameResult={gameResult}
-                cooldown={cooldown}
-              />
-              <LiveChat textColor="#49EACB" />
-              <LiveWins textColor="#49EACB" />
+              {/* Pregame Screen */}
+              {pregame ? (
+                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#002200] to-[#005500] bg-opacity-80">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+                    <motion.h1
+                      className="text-5xl font-bold mb-4"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#49EACB" }}
+                    >
+                      KASPA CUP GAME
+                    </motion.h1>
+                    <motion.p
+                      className="text-xl tracking-wider mb-4"
+                      animate={{ opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ color: "#49EACB" }}
+                    >
+                      Follow the ball and pick your cup!
+                    </motion.p>
+                    <div className="flex items-center space-x-4 mt-10">
+                      <Image src="/kaspacupgamecup.webp" alt="Cup" width={250} height={250} />
+                      <Image src="/kaspacupgameball.webp" alt="Ball" width={150} height={150} />
+                    </div>
+                    <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+                      <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+                        Place Your Bet &amp; Select Multiplier
+                      </Button>
+                    </motion.div>
+                  </div>
+                </div>
+              ) : (
+                <CupGameBoard
+                  numCups={multiplier}
+                  selectedCup={selectedCup}
+                  winningCup={winningCup}
+                  predeterminedWin={predeterminedWin as boolean}
+                  showWinningCup={showWinningCup}
+                  animationFinished={animationFinished}
+                  previewPhase={previewPhase}
+                  onCupClick={handleCupClick}
+                />
+              )}
             </div>
+          </Card>
+
+          {/* Right Column: Bet Controls, LiveChat & LiveWins */}
+          <div className="space-y-6">
+            <CupGameControls
+              betAmount={betAmount}
+              setBetAmount={setBetAmount}
+              multiplier={multiplier}
+              setMultiplier={setMultiplier}
+              isPlaying={isPlaying}
+              isWalletConnected={isConnected}
+              balance={balance}
+              onStartGame={() => {
+                handleStartGame();
+                setCooldown(10);
+              }}
+              gameResult={gameResult}
+              cooldown={cooldown}
+            />
+            <LiveChat textColor="#49EACB" />
+            <LiveWins textColor="#49EACB" />
           </div>
         </div>
-        <SiteFooter />
-        <AnimatePresence>
-          {winPopup && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
-                <p className="text-xl mb-6">You won {Number(betAmount) * multiplier} KAS!</p>
-                <Button
-                  className="bg-black text-[#49EACB] hover:bg-black/80"
-                  onClick={() => {
-                    setWinPopup(false);
-                    resetGame();
-                  }}
-                >
-                  Reset Game
-                </Button>
-              </motion.div>
+      </div>
+      <SiteFooter />
+
+      {/* Animated Win Popup */}
+      <AnimatePresence>
+        {winPopup && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+              <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
+              <p className="text-xl mb-6">You won {Number(betAmount) * multiplier} KAS!</p>
+              <Button className="bg-black text-[#49EACB] hover:bg-black/80" onClick={() => { setWinPopup(false); resetGame(); }}>
+                Reset Game
+              </Button>
             </motion.div>
-          )}
-        </AnimatePresence>
-        <AnimatePresence>
-          {losePopup && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="bg-red-700 p-6 rounded-lg shadow-2xl text-center"
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                <h2 className="text-3xl font-bold mb-4">Game Over</h2>
-                <p className="text-xl mb-6">You lost your bet.</p>
-                <Button
-                  className="bg-black text-red-700 hover:bg-black/80"
-                  onClick={() => {
-                    setLosePopup(false);
-                    resetGame();
-                  }}
-                >
-                  Reset Game
-                </Button>
-              </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Animated Lose Popup */}
+      <AnimatePresence>
+        {losePopup && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-red-700 p-6 rounded-lg shadow-2xl text-center" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+              <h2 className="text-3xl font-bold mb-4">Game Over</h2>
+              <p className="text-xl mb-6">You lost your bet.</p>
+              <Button className="bg-black text-red-700 hover:bg-black/80" onClick={() => { setLosePopup(false); resetGame(); }}>
+                Reset Game
+              </Button>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
