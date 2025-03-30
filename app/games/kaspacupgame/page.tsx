@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -52,24 +52,31 @@ function CupGameBoard({
   previewPhase,
   onCupClick,
 }: CupGameBoardProps) {
-  // Responsive dimensions
-  const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
+  // Use a ref to measure the container width instead of window.innerWidth.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
   useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+    }
     const handleResize = () => {
-      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Use 15vw for cup size
-  const cupSize = dimensions.width * 0.15;
-  // Set container width to the viewport width and container height proportional to cupSize (ratio 1.6)
-  const containerWidth = dimensions.width;
+  // Use effectiveWidth from the container; if not measured yet, fallback to window.innerWidth.
+  const effectiveWidth = containerWidth || window.innerWidth;
+  const cupSize = effectiveWidth * 0.15;
+  // Set container height proportional to cupSize (ratio 1.6)
   const containerHeight = cupSize * 1.6;
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
-  const leftOffset = (containerWidth - totalWidth) / 2;
+  const leftOffset = (effectiveWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
   // Ball dimensions relative to cup size (30% of cupSize)
@@ -125,10 +132,10 @@ function CupGameBoard({
   }, [previewPhase, animationFinished, selectedCup, winningCup, predeterminedWin, showWinningCup]);
 
   return (
-    // Added flex classes to center content vertically and horizontally
     <div
-      className="relative mx-auto flex items-center justify-center"
-      style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}
+      ref={containerRef}
+      className="relative mx-auto"
+      style={{ width: "100%", height: containerHeight, perspective: 1000 }}
     >
       {initialPositions.map((initX, index) => {
         let animateProps, transitionProps, targetX;
@@ -410,7 +417,9 @@ function CupGameControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Start Game (${cooldown}s)`
+                  ? `Start Game (${
+                      cooldown
+                    }s)`
                   : "Start Guess The Cup"}
               </Button>
             ) : (
@@ -626,8 +635,7 @@ export default function KaspaCupGamePage() {
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           {/* Left Column: Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-            {/* Added justify-center here so the game container is centered vertically */}
-            <div className="p-6 flex flex-col h-full items-center justify-center">
+            <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
                 <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
