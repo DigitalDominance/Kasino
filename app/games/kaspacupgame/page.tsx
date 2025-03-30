@@ -139,7 +139,12 @@ function CupGameBoard({
     <div
       ref={containerRef}
       className="relative mx-auto"
-      style={{ width: "100%", height: containerHeight, perspective: 1000 }}
+      style={{
+        width: "100%",
+        height: containerHeight,
+        perspective: 1000,
+        pointerEvents: animationFinished ? "auto" : "none",
+      }}
     >
       {initialPositions.map((initX, index) => {
         let animateProps, transitionProps, targetX;
@@ -176,8 +181,6 @@ function CupGameBoard({
             x: targetX,
             y: lift ? liftVariant.y : finalVariant.y,
           };
-          // If the player's cup is lifted and it's not the winning cup, animate immediately.
-          // Otherwise, if it's the winning cup (and not the one they picked), delay its lift slightly.
           if (selectedCup === index && selectedCup !== winningCup) {
             transitionProps = { duration: 0.5, ease: "easeOut" };
           } else if (showWinningCup && index === winningCup && selectedCup !== winningCup) {
@@ -195,6 +198,7 @@ function CupGameBoard({
             (animationFinished && (selectedCup === index || (showWinningCup && index === winningCup)))
               ? 0
               : 1,
+          pointerEvents: "auto", // individual cup pointer events are controlled here
         };
 
         return (
@@ -204,7 +208,6 @@ function CupGameBoard({
             style={{
               ...cupStyle,
               x: initX,
-              pointerEvents: animationFinished ? "auto" : "none",
               cursor: animationFinished && selectedCup === null ? "pointer" : "default",
             }}
             onClick={() => {
@@ -645,7 +648,7 @@ export default function KaspaCupGamePage() {
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           {/* Left Column: Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-            <div className="p-6 flex flex-col h-full items-center">
+            <div className="p-6 flex flex-col h-full items-center justify-center">
               <div className="flex justify-between items-center w-full mb-4">
                 <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
