@@ -71,10 +71,10 @@ function CupGameBoard({
 
   // ---------------------------------------------------------
   // Compute a sequence of positions for the shuffle phase.
-  // We generate a sequence with 12 steps (initial + 11 shuffles)
-  // to create fast, continuous switching.
+  // We now generate a sequence with 20 steps (initial + 19 shuffles)
+  // to create more shuffles with smoother transitions.
   // ---------------------------------------------------------
-  const totalSteps = 12;
+  const totalSteps = 20;
   const positionsSequence = useMemo(() => {
     const sequence = [];
     sequence.push(initialPositions);
@@ -136,11 +136,12 @@ function CupGameBoard({
           transitionProps = { duration: 0.5, ease: "easeInOut" };
         } else if (!animationFinished) {
           // Fast shuffle phase: continuous fast shuffles.
+          // Added a delay of 2 seconds before the shuffling starts and a longer duration for smoother shuffles.
           animateProps = {
             x: positionsSequence.map((step) => step[index]),
             y: finalVariant.y,
           };
-          transitionProps = { duration: 1.5, ease: "easeInOut" };
+          transitionProps = { delay: 2, duration: 2, ease: "easeInOut" };
         } else {
           // Reveal phase: user can reveal a cup.
           targetX = finalPositions[index];
@@ -176,7 +177,7 @@ function CupGameBoard({
             style={{
               ...cupStyle,
               x: initX,
-              pointerEvents: animationFinished ? "auto" : "none",
+              pointerEvents: animationFinished ? "auto" : "none", // unclickable during animation
               cursor: animationFinished && selectedCup === null ? "pointer" : "default",
             }}
             onClick={() => {
@@ -518,15 +519,15 @@ export default function KaspaCupGamePage() {
       setSelectedCup(null);
       setShowWinningCup(false);
       // Start with a 1‑second preview (winning cup lifted to show ball),
-      // then begin fast shuffles.
+      // then begin fast shuffles after a delay.
       setPreviewPhase(true);
       setTimeout(() => {
         setPreviewPhase(false);
       }, 1000);
-      // Begin fast shuffles immediately after preview and run them for 3 seconds.
+      // Overall, allow a 2‑second delay before shuffling plus 2 seconds of shuffle animation (total 5 seconds).
       setTimeout(() => {
         setAnimationFinished(true);
-      }, 4000);
+      }, 5000);
     } catch (error: any) {
       console.error("Error starting Kaspa Cup Game:", error);
       alert("Error starting game: " + error.message);
