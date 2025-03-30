@@ -77,7 +77,9 @@ function CupGameBoard({
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (effectiveWidth - totalWidth) / 2;
-  const initialY = (containerHeight - cupSize) / 2;
+  // Add a vertical shift to move the cups down; adjust verticalShift as needed.
+  const verticalShift = 20;
+  const initialY = (containerHeight - cupSize) / 2 + verticalShift;
 
   // Ball dimensions relative to cup size (30% of cupSize)
   const ballWidth = cupSize * 0.3;
@@ -417,9 +419,7 @@ function CupGameControls({
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
-                  ? `Start Game (${
-                      cooldown
-                    }s)`
+                  ? `Start Game (${cooldown}s)`
                   : "Start Guess The Cup"}
               </Button>
             ) : (
