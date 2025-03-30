@@ -30,7 +30,7 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // ---------------------------------------------------------
-// Cup Game Board Component with Circular Animation
+// Cup Game Board Component with Horizontal Shuffle Animation
 // ---------------------------------------------------------
 interface CupGameBoardProps {
   numCups: number;
@@ -47,44 +47,38 @@ function CupGameBoard({
   onCupClick,
   animationFinished,
 }: CupGameBoardProps) {
-  // Define container dimensions and cup size.
-  const containerSize = 600; // px
-  const cupSize = 150; // px
-  const radius = 200; // radius for circular orbit
-  const center = containerSize / 2;
+  // Set container dimensions and cup size.
+  const containerWidth = 800; // px
+  const containerHeight = 300; // px
+  const cupSize = 200; // bigger cups for game
+  const gap = 20;
+  const totalWidth = numCups * cupSize + (numCups - 1) * gap;
+  const leftOffset = (containerWidth - totalWidth) / 2;
+  const initialY = (containerHeight - cupSize) / 2;
 
-  // For each cup, compute its keyframe positions along a circular path.
-  const getKeyframes = (index: number) => {
-    // Each cup gets a unique offset angle.
-    const offsetDeg = (360 / numCups) * index;
-    // Create 5 keyframes at 0%,25%,50%,75%,100% of a full circle.
-    const anglesDeg = [0, 90, 180, 270, 360].map(
-      (angle) => (offsetDeg + angle) * (Math.PI / 180)
-    );
-    const xPositions = anglesDeg.map(
-      (angle) => center + radius * Math.cos(angle) - cupSize / 2
-    );
-    const yPositions = anglesDeg.map(
-      (angle) => center + radius * Math.sin(angle) - cupSize / 2
-    );
-    return { xPositions, yPositions };
-  };
+  // Compute initial positions for each cup.
+  const initialPositions = Array.from({ length: numCups }, (_, i) => leftOffset + i * (cupSize + gap));
+
+  // Compute a randomized final ordering for the shuffle.
+  const finalPositions = useMemo(() => {
+    const arr = [...initialPositions];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [numCups, initialPositions]);
 
   return (
-    <div className="relative w-[600px] h-[600px] mx-auto">
-      {Array.from({ length: numCups }).map((_, index) => {
-        const { xPositions, yPositions } = getKeyframes(index);
-        // When animation is finished, settle at the initial offset position.
-        const finalAngle = (360 / numCups) * index * (Math.PI / 180);
-        const finalX = center + radius * Math.cos(finalAngle) - cupSize / 2;
-        const finalY = center + radius * Math.sin(finalAngle) - cupSize / 2;
+    <div className="relative mx-auto" style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}>
+      {initialPositions.map((initX, index) => {
+        // When animation finishes, each cup settles in its final (shuffled) x position.
+        const finalX = finalPositions[index];
 
         // Determine which image to show.
         let imgSrc = "/kaspacupgamecup.webp";
-        if (selectedCup !== null) {
-          if (index === winningCup) {
-            imgSrc = "/kaspacupgameball.webp";
-          }
+        if (selectedCup !== null && index === winningCup) {
+          imgSrc = "/kaspacupgameball.webp";
         }
 
         return (
@@ -95,20 +89,20 @@ function CupGameBoard({
             onClick={() => {
               if (animationFinished && selectedCup === null) onCupClick(index);
             }}
+            initial={{ x: initX, y: initialY, rotateY: 0, scale: 1 }}
             animate={
               !animationFinished
                 ? {
-                    x: xPositions,
-                    y: yPositions,
-                    rotate: [0, 360],
+                    // Animate from initial x to final x while flipping.
+                    x: finalX,
+                    y: initialY,
+                    rotateY: [0, 180, 0],
+                    // Scale down in mid-flip to simulate moving away, then return.
+                    scale: [1, 0.8, 1],
                   }
-                : { x: finalX, y: finalY, rotate: 0 }
+                : { x: finalX, y: initialY, rotateY: 0, scale: 1 }
             }
-            transition={{
-              duration: 1,
-              ease: "linear",
-              repeat: !animationFinished ? Infinity : 0,
-            }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
           >
             <Image src={imgSrc} alt="Cup" width={cupSize} height={cupSize} />
           </motion.div>
@@ -130,7 +124,7 @@ function CupGameContent() {
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
-  const [multiplier, setMultiplier] = useState<number>(2); // default to 2x
+  const [multiplier, setMultiplier] = useState<number>(2); // default to 2×
   const [animationFinished, setAnimationFinished] = useState(false);
   const [selectedCup, setSelectedCup] = useState<number | null>(null);
   const [winningCup, setWinningCup] = useState<number | null>(null);
@@ -198,10 +192,10 @@ function CupGameContent() {
       setSelectedCup(null);
       setWinningCup(null);
       setAnimationFinished(false);
-      // Start the cup movement animation; allow user interaction after 3 seconds.
+      // Run the shuffle animation; allow user interaction after 1.5 seconds.
       setTimeout(() => {
         setAnimationFinished(true);
-      }, 3000);
+      }, 1500);
     } catch (error: any) {
       console.error("Error starting Kaspa Cup Game:", error);
       alert("Error starting game: " + error.message);
@@ -215,14 +209,13 @@ function CupGameContent() {
     if (!animationFinished || selectedCup !== null) return;
     const bet = Number(betAmount);
     // Define win probabilities based on multiplier:
-    // 2x: 45%, 3x: 25%, 5x: 12%
+    // 2×: 45%, 3×: 25%, 5×: 12%
     const winProb = multiplier === 2 ? 0.45 : multiplier === 3 ? 0.25 : 0.12;
     const isWin = Math.random() < winProb;
     let winCup: number;
     if (isWin) {
       winCup = cupIndex;
     } else {
-      // Force a loss by choosing a winning cup different from the selected one.
       const candidates = [];
       for (let i = 0; i < multiplier; i++) {
         if (i !== cupIndex) candidates.push(i);
@@ -236,7 +229,6 @@ function CupGameContent() {
       if (isWin) {
         setGameResult("You Win!");
         setWinPopup(true);
-        // Inform backend of win
         axios.post(`${apiUrl}/game/end`, {
           gameId,
           result: "win",
@@ -245,7 +237,6 @@ function CupGameContent() {
       } else {
         setGameResult("Game Over");
         setLosePopup(true);
-        // Inform backend of loss
         axios.post(`${apiUrl}/game/end`, {
           gameId,
           result: "lose",
@@ -284,12 +275,7 @@ function CupGameContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -301,11 +287,7 @@ function CupGameContent() {
             Deposit TXID:{" "}
             <a
               className="txid-link"
-              style={{
-                background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
+              style={{ background: "linear-gradient(90deg, #B6B6B6, #49EACB)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
               href={`https://kas.fyi/transaction/${depositTxid}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -327,30 +309,14 @@ function CupGameContent() {
               </div>
               {/* Pregame Screen */}
               {pregame ? (
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
-                  {/* Background cup and ball images */}
+                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#003300] to-[#00cc66] bg-opacity-80">
+                  {/* Manually placed background cups and balls */}
                   <div className="absolute inset-0 opacity-20">
-                    <Image
-                      src="/kaspacupgamecup.webp"
-                      alt="Cup Background"
-                      width={200}
-                      height={200}
-                      className="absolute top-10 left-10"
-                    />
-                    <Image
-                      src="/kaspacupgameball.webp"
-                      alt="Ball Background"
-                      width={150}
-                      height={150}
-                      className="absolute bottom-10 right-10"
-                    />
-                    <Image
-                      src="/kaspacupgamecup.webp"
-                      alt="Cup Background"
-                      width={150}
-                      height={150}
-                      className="absolute bottom-20 left-20"
-                    />
+                    <Image src="/kaspacupgamecup.webp" alt="Cup Background" width={250} height={250} className="absolute top-5 left-5" />
+                    <Image src="/kaspacupgameball.webp" alt="Ball Background" width={200} height={200} className="absolute top-0 right-10" />
+                    <Image src="/kaspacupgamecup.webp" alt="Cup Background" width={200} height={200} className="absolute bottom-5 left-20" />
+                    <Image src="/kaspacupgameball.webp" alt="Ball Background" width={180} height={180} className="absolute bottom-10 right-5" />
+                    <Image src="/kaspacupgameball.webp" alt="Ball Background" width={150} height={150} className="absolute center" />
                   </div>
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
@@ -370,7 +336,7 @@ function CupGameContent() {
                       Find the ball under the cups!
                     </motion.p>
                     <div className="mt-10">
-                      <Image src="/kaspacupgamecup.webp" alt="Cup" width={96} height={96} />
+                      <Image src="/kaspacupgamecup.webp" alt="Cup" width={180} height={180} />
                     </div>
                     <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
                       <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
@@ -380,7 +346,7 @@ function CupGameContent() {
                   </div>
                 </div>
               ) : (
-                // Game Board with animated cups
+                // Game Board with shuffled cups
                 <CupGameBoard
                   numCups={multiplier}
                   selectedCup={selectedCup}
@@ -419,29 +385,11 @@ function CupGameContent() {
       {/* Animated Win Popup */}
       <AnimatePresence>
         {winPopup && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
               <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
-              <p className="text-xl mb-6">
-                You won {Number(betAmount) * multiplier} KAS!
-              </p>
-              <Button
-                className="bg-black text-[#49EACB] hover:bg-black/80"
-                onClick={() => {
-                  setWinPopup(false);
-                  resetGame();
-                }}
-              >
+              <p className="text-xl mb-6">You won {Number(betAmount) * multiplier} KAS!</p>
+              <Button className="bg-black text-[#49EACB] hover:bg-black/80" onClick={() => { setWinPopup(false); resetGame(); }}>
                 Reset Game
               </Button>
             </motion.div>
@@ -452,27 +400,11 @@ function CupGameContent() {
       {/* Animated Lose Popup */}
       <AnimatePresence>
         {losePopup && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-red-700 p-6 rounded-lg shadow-2xl text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-red-700 p-6 rounded-lg shadow-2xl text-center" initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
               <h2 className="text-3xl font-bold mb-4">Game Over</h2>
               <p className="text-xl mb-6">You lost your bet.</p>
-              <Button
-                className="bg-black text-red-700 hover:bg-black/80"
-                onClick={() => {
-                  setLosePopup(false);
-                  resetGame();
-                }}
-              >
+              <Button className="bg-black text-red-700 hover:bg-black/80" onClick={() => { setLosePopup(false); resetGame(); }}>
                 Reset Game
               </Button>
             </motion.div>
@@ -619,18 +551,10 @@ function CupGameControls({
             <label className="text-sm text-[#49EACB]">Select Multiplier</label>
             {/* Row for 2× and 3× */}
             <div className="flex gap-2">
-              <Button
-                variant={multiplier === 2 ? "default" : "outline"}
-                onClick={() => setMultiplier(2)}
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant={multiplier === 2 ? "default" : "outline"} onClick={() => setMultiplier(2)} disabled={isPlaying || !isWalletConnected}>
                 2× (2 cups)
               </Button>
-              <Button
-                variant={multiplier === 3 ? "default" : "outline"}
-                onClick={() => setMultiplier(3)}
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant={multiplier === 3 ? "default" : "outline"} onClick={() => setMultiplier(3)} disabled={isPlaying || !isWalletConnected}>
                 3× (3 cups)
               </Button>
             </div>
@@ -650,9 +574,7 @@ function CupGameControls({
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  Result: {gameResult}
-                </div>
+                <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
               </div>
             )}
             {!isPlaying ? (
@@ -661,11 +583,7 @@ function CupGameControls({
                 onClick={handleStartClick}
                 disabled={!isWalletConnected || cooldown > 0}
               >
-                {!isWalletConnected
-                  ? "Connect Wallet to Play"
-                  : cooldown > 0
-                  ? `Start Game (${cooldown}s)`
-                  : "Start Kaspa Cup Game"}
+                {!isWalletConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Kaspa Cup Game"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
