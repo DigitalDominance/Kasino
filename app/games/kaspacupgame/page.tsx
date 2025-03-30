@@ -64,8 +64,8 @@ function CupGameBoard({
     const handleResize = () => {
       const newContainerWidth = window.innerWidth;
       setContainerWidth(newContainerWidth);
-      // Calculate maximum cup size that fits all cups with the given gap.
-      const newCupSize = (newContainerWidth - (numCups - 1) * gap) / numCups;
+      // Calculate maximum cup size that fits all cups with the given gap and then make them smaller.
+      const newCupSize = ((newContainerWidth - (numCups - 1) * gap) / numCups) * 0.5;
       setCupSize(newCupSize);
     };
     handleResize();
@@ -192,7 +192,7 @@ function CupGameBoard({
             style={{
               ...cupStyle,
               x: initX,
-              pointerEvents: animationFinished ? "auto" : "none", // unclickable during animation
+              pointerEvents: animationFinished ? "auto" : "none",
               cursor: animationFinished && selectedCup === null ? "pointer" : "default",
             }}
             onClick={() => {
