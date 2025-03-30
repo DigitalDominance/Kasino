@@ -52,35 +52,29 @@ function CupGameBoard({
   previewPhase,
   onCupClick,
 }: CupGameBoardProps) {
-  // Fixed gap and container height.
-  const gap = 40;
-  const containerHeight = 800; // px
-
-  // Responsive cup size and container width based on viewport.
-  const [cupSize, setCupSize] = useState(500);
-  const [containerWidth, setContainerWidth] = useState(1200);
-
+  // Responsive dimensions
+  const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
     const handleResize = () => {
-      const newContainerWidth = window.innerWidth;
-      setContainerWidth(newContainerWidth);
-      // Calculate maximum cup size that fits all cups with the given gap and then make them smaller.
-      const newCupSize = ((newContainerWidth - (numCups - 1) * gap) / numCups) * 0.5;
-      setCupSize(newCupSize);
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
     };
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [numCups, gap]);
+  }, []);
 
-  // Compute derived dimensions.
+  // Use 15vw for cup size
+  const cupSize = dimensions.width * 0.15;
+  // Set container width to the viewport width and container height proportional to cupSize (ratio 1.6)
+  const containerWidth = dimensions.width;
+  const containerHeight = cupSize * 1.6;
+  const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (containerWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
-  // Ball dimensions & position adjustment.
-  const ballWidth = 150;
-  const ballHeight = 150;
+  // Ball dimensions relative to cup size (30% of cupSize)
+  const ballWidth = cupSize * 0.3;
+  const ballHeight = cupSize * 0.3;
   const ballOffsetY = initialY + (cupSize - ballHeight) * 0.8;
 
   // Compute initial positions for each cup.
@@ -88,8 +82,6 @@ function CupGameBoard({
 
   // ---------------------------------------------------------
   // Compute a sequence of positions for the shuffle phase.
-  // We now generate a sequence with 20 steps (initial + 19 shuffles)
-  // to create more shuffles with smoother transitions.
   // ---------------------------------------------------------
   const totalSteps = 20;
   const positionsSequence = useMemo(() => {
@@ -374,12 +366,11 @@ function CupGameControls({
           {/* Multiplier Selection */}
           <div className="space-y-2">
             <label className="text-sm text-[#49EACB]">Select Multiplier</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={multiplier === 2 ? "default" : "outline"}
                 onClick={() => setMultiplier(2)}
                 disabled={isPlaying || !isWalletConnected}
-                className="w-1/2"
               >
                 2× (2 cups)
               </Button>
@@ -387,7 +378,6 @@ function CupGameControls({
                 variant={multiplier === 3 ? "default" : "outline"}
                 onClick={() => setMultiplier(3)}
                 disabled={isPlaying || !isWalletConnected}
-                className="w-1/2"
               >
                 3× (3 cups)
               </Button>
@@ -516,6 +506,7 @@ export default function KaspaCupGamePage() {
       const winCup = Math.floor(Math.random() * multiplier);
       setWinningCup(winCup);
 
+      // Update game name to "Guess The Cup"
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Guess The Cup",
         uniqueHash,
@@ -535,8 +526,7 @@ export default function KaspaCupGamePage() {
       setGameResult(null);
       setSelectedCup(null);
       setShowWinningCup(false);
-      // Start with a 1‑second preview (winning cup lifted to show ball),
-      // then quickly transition into fast shuffles.
+      // Start with a 1‑second preview then transition to fast shuffles.
       setPreviewPhase(true);
       setTimeout(() => {
         setPreviewPhase(false);
@@ -652,7 +642,7 @@ export default function KaspaCupGamePage() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      Guess The Cup
+                      GUESS THE CUP
                     </motion.h1>
                     <motion.p
                       className="text-xl tracking-wider mb-4"
