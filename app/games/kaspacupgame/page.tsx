@@ -125,8 +125,9 @@ function CupGameBoard({
   }, [previewPhase, animationFinished, selectedCup, winningCup, predeterminedWin, showWinningCup]);
 
   return (
+    // Added flex classes to center content vertically and horizontally
     <div
-      className="relative mx-auto"
+      className="relative mx-auto flex items-center justify-center"
       style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}
     >
       {initialPositions.map((initX, index) => {
@@ -625,7 +626,8 @@ export default function KaspaCupGamePage() {
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           {/* Left Column: Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-            <div className="p-6 flex flex-col h-full items-center">
+            {/* Added justify-center here so the game container is centered vertically */}
+            <div className="p-6 flex flex-col h-full items-center justify-center">
               <div className="flex justify-between items-center w-full mb-4">
                 <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
