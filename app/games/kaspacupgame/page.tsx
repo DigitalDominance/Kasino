@@ -52,16 +52,33 @@ function CupGameBoard({
   previewPhase,
   onCupClick,
 }: CupGameBoardProps) {
-  // Container & cup dimensions
-  const containerWidth = 1200; // px
-  const containerHeight = 800; // px
-  const cupSize = 500;
+  // Fixed gap and container height.
   const gap = 40;
+  const containerHeight = 800; // px
+
+  // Responsive cup size and container width based on viewport.
+  const [cupSize, setCupSize] = useState(500);
+  const [containerWidth, setContainerWidth] = useState(1200);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newContainerWidth = window.innerWidth;
+      setContainerWidth(newContainerWidth);
+      // Calculate maximum cup size that fits all cups with the given gap.
+      const newCupSize = (newContainerWidth - (numCups - 1) * gap) / numCups;
+      setCupSize(newCupSize);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [numCups, gap]);
+
+  // Compute derived dimensions.
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (containerWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
-  // Ball dimensions & position adjustment: (ball made a little bit smaller)
+  // Ball dimensions & position adjustment.
   const ballWidth = 150;
   const ballHeight = 150;
   const ballOffsetY = initialY + (cupSize - ballHeight) * 0.8;
@@ -98,9 +115,6 @@ function CupGameBoard({
   const liftVariant = { y: initialY - 150 }; // Cup lifts upward by 150px
 
   // Control ball visibility.
-  // During preview, the winning cup’s ball is visible.
-  // During fast shuffle, no ball is shown.
-  // In reveal phase, if the user picked the winning cup (or forced reveal on loss) the ball is shown.
   const [ballVisible, setBallVisible] = useState(false);
 
   useEffect(() => {
@@ -136,7 +150,6 @@ function CupGameBoard({
           transitionProps = { duration: 0.5, ease: "easeInOut" };
         } else if (!animationFinished) {
           // Fast shuffle phase: continuous fast shuffles.
-          // The y coordinate quickly comes down (0.2s) while the x-axis shuffles over 1.5s.
           animateProps = {
             x: positionsSequence.map((step) => step[index]),
             y: finalVariant.y,
@@ -159,7 +172,6 @@ function CupGameBoard({
             x: targetX,
             y: lift ? liftVariant.y : finalVariant.y,
           };
-          // Removed slow transition in reveal phase by setting duration to 0.
           transitionProps = { duration: 0, ease: "easeOut" };
         }
 
@@ -367,6 +379,7 @@ function CupGameControls({
                 variant={multiplier === 2 ? "default" : "outline"}
                 onClick={() => setMultiplier(2)}
                 disabled={isPlaying || !isWalletConnected}
+                className="w-1/2"
               >
                 2× (2 cups)
               </Button>
@@ -374,6 +387,7 @@ function CupGameControls({
                 variant={multiplier === 3 ? "default" : "outline"}
                 onClick={() => setMultiplier(3)}
                 disabled={isPlaying || !isWalletConnected}
+                className="w-1/2"
               >
                 3× (3 cups)
               </Button>
@@ -406,7 +420,7 @@ function CupGameControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Start Game (${cooldown}s)`
-                  : "Start Kaspa Cup Game"}
+                  : "Start Guess The Cup"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
@@ -503,7 +517,7 @@ export default function KaspaCupGamePage() {
       setWinningCup(winCup);
 
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "Kaspa Cup Game",
+        gameName: "Guess The Cup",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
@@ -532,7 +546,7 @@ export default function KaspaCupGamePage() {
         setAnimationFinished(true);
       }, 2500);
     } catch (error: any) {
-      console.error("Error starting Kaspa Cup Game:", error);
+      console.error("Error starting Guess The Cup:", error);
       alert("Error starting game: " + error.message);
     }
   };
@@ -623,7 +637,7 @@ export default function KaspaCupGamePage() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Cup Game</h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
                   Reset
                 </Button>
@@ -638,7 +652,7 @@ export default function KaspaCupGamePage() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      KASPA CUP GAME
+                      Guess The Cup
                     </motion.h1>
                     <motion.p
                       className="text-xl tracking-wider mb-4"
