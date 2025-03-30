@@ -155,7 +155,8 @@ function CupGameBoard({
             x: targetX,
             y: lift ? liftVariant.y : finalVariant.y,
           };
-          transitionProps = { duration: 0.5, ease: "easeOut" };
+          // Removed slow transition in reveal phase by setting duration to 0.
+          transitionProps = { duration: 0, ease: "easeOut" };
         }
 
         const cupStyle = {
