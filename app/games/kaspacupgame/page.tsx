@@ -47,18 +47,18 @@ function CupGameBoard({
   onCupClick,
   animationFinished,
 }: CupGameBoardProps) {
-  // Update container dimensions and cup size
+  // Updated container dimensions and cup size.
   const containerWidth = 1200; // px
   const containerHeight = 800; // px
-  const cupSize = 500; // each cup is now 500px
+  const cupSize = 500; // each cup is 500px
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (containerWidth - totalWidth) / 2;
   const initialY = (containerHeight - cupSize) / 2;
 
-  // Compute initial positions for each cup (their starting x)
+  // Compute initial positions for each cup.
   const initialPositions = Array.from({ length: numCups }, (_, i) => leftOffset + i * (cupSize + gap));
-  // Compute a shuffled final ordering for the cups
+  // Compute a shuffled final ordering for the cups.
   const finalPositions = useMemo(() => {
     const arr = [...initialPositions];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -69,32 +69,39 @@ function CupGameBoard({
   }, [numCups, initialPositions]);
 
   return (
-    <div className="relative mx-auto" style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}>
+    <div
+      className="relative mx-auto"
+      style={{ width: containerWidth, height: containerHeight, perspective: 1000 }}
+    >
       {initialPositions.map((initX, index) => {
         const finalX = finalPositions[index];
 
-        // Determine which image to show.
-        // (If a cup is selected and it happens to be the winning cup, show the ball.)
-        let imgSrc = "/kaspacupgamecup.webp";
-        if (selectedCup !== null && index === winningCup) {
-          imgSrc = "/kaspacupgameball.webp";
-        }
+        // Decide which content to render:
+        // If the cup is selected and it's the winning cup, we show a smaller ball image.
+        // Otherwise, we show the cup image.
+        const content =
+          selectedCup !== null && index === winningCup ? (
+            <div className="flex items-center justify-center h-full">
+              <Image src="/kaspacupgameball.webp" alt="Ball" width={300} height={300} />
+            </div>
+          ) : (
+            <Image src="/kaspacupgamecup.webp" alt="Cup" width={cupSize} height={cupSize} />
+          );
 
-        // Define our animation variants based on state.
-        // "shuffle": Rapid horizontal movement (simulate cups passing each other) with a scaling effect.
-        // "static": The cup stays at its final position.
-        // "lift": The selected cup lifts upward (simulate being revealed).
+        // Define keyframes for the shuffle.
+        // This array makes the cup switch positions rapidly several times.
         const shuffleVariant = {
-          x: [initX, initX + 80, initX - 80, initX + 40, initX - 40, finalX],
+          x: [initX, initX + 50, initX - 50, initX + 30, initX - 30, initX + 10, initX - 10, finalX],
           y: initialY,
-          scale: [1, 1.1, 0.9, 1.05, 0.95, 1],
+          scale: 1, // no scaling effect
         };
-        const staticVariant = { x: finalX, y: initialY, scale: 1 };
-        const liftVariant = { x: finalX, y: initialY - 150, scale: [1, 0.8, 1] };
 
-        // Decide which variant to apply:
-        // – If the shuffle is still running (animationFinished false), use the shuffle variant (with an infinite repeat).
-        // – Once finished, if this cup is the selected cup, use the lift variant; otherwise, remain static.
+        // Static variant: cup settles at its final position.
+        const staticVariant = { x: finalX, y: initialY, scale: 1 };
+
+        // Lift variant: the selected cup lifts upward.
+        const liftVariant = { x: finalX, y: initialY - 150, scale: 1 };
+
         const animateProps = !animationFinished
           ? shuffleVariant
           : selectedCup === index
@@ -102,10 +109,10 @@ function CupGameBoard({
           : staticVariant;
 
         const transitionProps = !animationFinished
-          ? { duration: 0.3, ease: "easeInOut", repeat: Infinity }
+          ? { duration: 0.2, ease: "linear", repeat: Infinity }
           : selectedCup === index
           ? { duration: 0.5, ease: "easeOut" }
-          : { duration: 0.3, ease: "easeInOut" };
+          : { duration: 0.2, ease: "linear" };
 
         return (
           <motion.div
@@ -119,7 +126,7 @@ function CupGameBoard({
             animate={animateProps}
             transition={transitionProps}
           >
-            <Image src={imgSrc} alt="Cup" width={cupSize} height={cupSize} />
+            {content}
           </motion.div>
         );
       })}
@@ -207,7 +214,7 @@ function CupGameContent() {
       setSelectedCup(null);
       setWinningCup(null);
       setAnimationFinished(false);
-      // Run the shuffle animation (which repeats rapidly) and allow interaction after it ends.
+      // Run the rapid shuffle animation for 2.5 seconds before allowing interaction.
       setTimeout(() => {
         setAnimationFinished(true);
       }, 2500);
@@ -219,7 +226,7 @@ function CupGameContent() {
 
   // ---------------------------------------------------------
   // Handle Cup Click: Determine win/loss based on multiplier odds.
-  // Regardless of outcome, the clicked cup will lift to reveal its underside.
+  // Regardless of outcome, the clicked cup lifts to reveal its underside.
   // ---------------------------------------------------------
   const handleCupClick = (cupIndex: number) => {
     if (!animationFinished || selectedCup !== null) return;
@@ -290,7 +297,12 @@ function CupGameContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            className="flex items-center gap-4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -590,7 +602,11 @@ function CupGameControls({
                 onClick={handleStartClick}
                 disabled={!isWalletConnected || cooldown > 0}
               >
-                {!isWalletConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Kaspa Cup Game"}
+                {!isWalletConnected
+                  ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Start Game (${cooldown}s)`
+                  : "Start Kaspa Cup Game"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
