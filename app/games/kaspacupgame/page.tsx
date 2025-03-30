@@ -77,8 +77,8 @@ function CupGameBoard({
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (effectiveWidth - totalWidth) / 2;
-  // Increase vertical shift to bring the cups lower.
-  const verticalShift = 50;
+  // Removed extra vertical shift to center the cups vertically.
+  const verticalShift = 0;
   const initialY = (containerHeight - cupSize) / 2 + verticalShift;
 
   // Ball dimensions relative to cup size (30% of cupSize)
@@ -122,6 +122,8 @@ function CupGameBoard({
     if (previewPhase) {
       setBallVisible(true);
     } else if (animationFinished) {
+      // For a win, show the ball under the selected cup.
+      // For a loss, reveal the winning cup (with ball) after a slight delay.
       if ((selectedCup !== null && selectedCup === winningCup && predeterminedWin) || showWinningCup) {
         const timer = setTimeout(() => setBallVisible(true), 800);
         return () => clearTimeout(timer);
@@ -174,7 +176,15 @@ function CupGameBoard({
             x: targetX,
             y: lift ? liftVariant.y : finalVariant.y,
           };
-          transitionProps = { duration: 0, ease: "easeOut" };
+          // If the player's cup is lifted and it's not the winning cup, animate immediately.
+          // Otherwise, if it's the winning cup (and not the one they picked), delay its lift slightly.
+          if (selectedCup === index && selectedCup !== winningCup) {
+            transitionProps = { duration: 0.5, ease: "easeOut" };
+          } else if (showWinningCup && index === winningCup && selectedCup !== winningCup) {
+            transitionProps = { delay: 0.5, duration: 0.5, ease: "easeOut" };
+          } else {
+            transitionProps = { duration: 0.5, ease: "easeOut" };
+          }
         }
 
         const cupStyle = {
