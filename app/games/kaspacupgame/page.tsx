@@ -77,8 +77,8 @@ function CupGameBoard({
   const gap = 40;
   const totalWidth = numCups * cupSize + (numCups - 1) * gap;
   const leftOffset = (effectiveWidth - totalWidth) / 2;
-  // Add a vertical shift to move the cups down; adjust verticalShift as needed.
-  const verticalShift = 20;
+  // Increase vertical shift to bring the cups lower.
+  const verticalShift = 50;
   const initialY = (containerHeight - cupSize) / 2 + verticalShift;
 
   // Ball dimensions relative to cup size (30% of cupSize)
