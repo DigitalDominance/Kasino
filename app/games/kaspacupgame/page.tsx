@@ -649,12 +649,14 @@ export default function KaspaCupGamePage() {
           {/* Left Column: Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center justify-center">
-              <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
-                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
-                  Reset
-                </Button>
-              </div>
+              {pregame && (
+                <div className="flex justify-between items-center w-full mb-4">
+                  <h2 className="text-2xl font-bold text-[#49EACB]">Guess The Cup</h2>
+                  <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
+                    Reset
+                  </Button>
+                </div>
+              )}
               {/* Pregame Screen */}
               {pregame ? (
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#002200] to-[#005500] bg-opacity-80">
