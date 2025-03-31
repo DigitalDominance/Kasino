@@ -16,7 +16,6 @@ import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
-import { XPDisplay } from "./XPDisplay"; // Assuming XPDisplay is imported from a local file
 
 const montserrat = Montserrat({
   weight: "700",
@@ -61,11 +60,16 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games – New order: Crash, Mines, Kaspa Tower Climb, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Plinko, Roulette, Dice, Coin Flip
   const games = [
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
-    { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
+    {
+      name: "Kaspa Tower Climb",
+      slug: "kaspatowerclimb",
+      image: "/kaspatowerclimbcard.webp",
+    },
     { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
     { name: "Guess The Cup", slug: "kaspacupgame", image: "/guessthecupcard.webp" },
     { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
@@ -656,8 +660,6 @@ function MainPageContent() {
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
                         else if (lwGame === "kaspa tower climb") cardImage = "/kaspatowerclimbcard.webp";
                         else if (lwGame === "plinko") cardImage = "/plinkocard.webp";
-                        else if (lwGame === "guess the cup" || lwGame === "kaspacupgame")
-                          cardImage = "/guessthecupcard.webp";
                         else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
