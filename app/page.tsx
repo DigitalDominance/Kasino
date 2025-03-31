@@ -664,7 +664,7 @@ function MainPageContent() {
                         else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
-                        else if (lwGame === "Guess The Cup") cardImage = "/guessthecupcard.webp";
+                        else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp";
                         else if (lwGame === "kasper loot box") {
                           cardImage = "/kasperlootboxcard.webp";
                         } else if (lwGame === "kasen mania") {
