@@ -402,12 +402,7 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M22.46 6c-.77.35-1.6.58-2.46.69a4.3 4.3 0 001.88-2.37 8.59 8.59 0 01-2.73 1.04 4.28 4.28 0 00-7.3 3.9A12.14 12.14 0 013 4.8a4.28 4.28 0 001.32 5.7 4.24 4.24 0 01-1.94-.54v.06a4.28 4.28 0 003.43 4.19 4.3 4.3 0 01-1.93.07 4.28 4.28 0 004 2.98A8.59 8.59 0 012 19.54a12.12 12.12 0 006.56 1.92c7.88 0 12.2-6.53 12.2-12.2 0-.19-.01-.38-.02-.57A8.67 8.67 0 0024 4.59a8.48 8.48 0 01-2.54.7z" />
             </svg>
           </motion.a>
@@ -418,12 +413,7 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9.7 16.2l-.4 4.3c.6 0 .9-.3 1.2-.6l3.1-3 6.5 4.8c1.2.7 2.1.3 2.4-1l4.3-19c.3-1.2-.4-1.8-1.3-1.8l-19 7.3c-1.1.4-1.1 1.1-.2 1.4l7.4 2.3-7.4 2.3c-1 .3-.9.9.2 1.4l19 7.3c.9.3 1.6-.2 1.3-1.4l-4.3-19c-.3-1.2-1.2-1.6-2.4-1l-6.5 4.8-3.1 3c-.3.3-.6.9-.6 1.5z" />
             </svg>
           </motion.a>
@@ -434,12 +424,7 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm4.93 6h-3.88a25.931 25.931 0 00-.64-3.14A8.014 8.014 0 0116.93 8zm-9.86 0a8.014 8.014 0 013.44-5.14A25.931 25.931 0 009.95 8zm-3.04 2a25.931 25.931 0 010 4h3.88a21.89 21.89 0 000-4zm3.04 6a8.014 8.014 0 01-3.44-5.14 25.931 25.931 0 012.83 3.14zm6.89 0h3.88a8.014 8.014 0 01-3.44 5.14 25.931 25.931 0 01-.64-3.14zm-1.45-6h-3.88a21.89 21.89 0 000 4h3.88a25.931 25.931 0 010-4z" />
             </svg>
           </motion.a>
@@ -531,21 +516,9 @@ export default function UpgradeGame() {
           background-size: contain;
           cursor: pointer;
         }
-        @keyframes buttonGradient {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
         .start-upgrade-btn {
           background: linear-gradient(90deg, #49EACB, #00FF00);
-          background-size: 300% 300%;
-          animation: buttonGradient 3s ease infinite;
+          /* static gradient, no animation */
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .start-upgrade-btn:hover {
