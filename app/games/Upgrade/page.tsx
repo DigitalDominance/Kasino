@@ -27,7 +27,7 @@ const montserrat = Montserrat({
 // ------------------------
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const MIN_MULTIPLIER = 1.75;
+const MIN_MULTIPLIER = 1.9; // updated minimum multiplier
 const MAX_MULTIPLIER = 25;
 const INITIAL_MULTIPLIER = MIN_MULTIPLIER;
 const HOUSE_EDGE = 0.05; // house edge of 5% (i.e. EV = 0.95 × bet)
@@ -57,6 +57,14 @@ export default function UpgradeGame() {
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+
+  // Compute slider background based on multiplier value
+  const sliderBackground =
+    multiplier < 8
+      ? "#007BFF"
+      : multiplier < 17
+      ? "linear-gradient(90deg, #007BFF, #00FF00)"
+      : "linear-gradient(90deg, #9400D3, #00FF00, #007BFF)";
 
   // ------------------------
   // START GAME FUNCTION
@@ -187,19 +195,37 @@ export default function UpgradeGame() {
     handleStartGame();
   };
 
+  // Countdown style based on current countdown value
+  const countdownStyle =
+    countdown === 3
+      ? { color: "#00FF00" }
+      : countdown === 2
+      ? {
+          backgroundImage: "linear-gradient(90deg, #00FF00, #FFFF00)",
+          WebkitBackgroundClip: "text",
+          color: "transparent",
+        }
+      : countdown === 1
+      ? {
+          backgroundImage: "linear-gradient(90deg, #00FF00, #FF0000)",
+          WebkitBackgroundClip: "text",
+          color: "transparent",
+        }
+      : {};
+
   // ------------------------
   // ERROR MESSAGE AUTO CLEAR
   // ------------------------
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
-      return () => clearTimeout(timer);
+      return () => clearInterval(timer);
     }
   }, [errorMessage]);
 
   return (
-    <div className={`${montserrat.className} bg-black min-h-screen`}>
-      <header className="flex items-center justify-between p-6">
+    <div className={`${montserrat.className} bg-black min-h-screen flex flex-col items-center`}>
+      <header className="w-full flex items-center justify-between p-6 max-w-4xl">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
@@ -235,15 +261,15 @@ export default function UpgradeGame() {
         </p>
       )}
 
-      <div className="grid grid-cols-[1fr_300px] gap-6 p-6">
-        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
+      <div className="flex flex-col items-center p-6 w-full max-w-4xl">
+        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm w-full">
           {gamePhase === "pregame" && (
             <div className="p-6 flex flex-col items-center">
-              <h1 className="text-5xl font-bold text-[#49EACB] mb-4">UPGRADE</h1>
+              <h1 className="text-5xl font-bold text-[#49EACB] mb-6">UPGRADE</h1>
               {/* Bet Amount Input */}
-              <div className="w-full mb-4">
-                <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
-                <div className="relative">
+              <div className="w-full mb-6 flex flex-col items-center">
+                <label className="text-xl text-[#49EACB] mb-2">Bet Amount (KAS)</label>
+                <div className="relative w-full max-w-md">
                   <input
                     type="number"
                     value={betAmount}
@@ -253,89 +279,55 @@ export default function UpgradeGame() {
                       val = Math.max(MIN_BET, Math.min(MAX_BET, val));
                       setBetAmount(val.toString());
                     }}
-                    className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full p-2 rounded"
+                    className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-12 w-full p-4 text-2xl rounded"
                     placeholder="0.00"
                     disabled={isPlaying || !isConnected}
                   />
-                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                       alt="KAS"
-                      width={16}
-                      height={16}
+                      width={24}
+                      height={24}
                       className="rounded-full"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  <Button
-                    variant="outline"
-                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                    onClick={() => {
-                      let current = Number(betAmount);
-                      if (isNaN(current)) current = MIN_BET;
-                      setBetAmount((current / 2).toString());
-                    }}
-                    disabled={isPlaying || !isConnected}
-                  >
-                    ½
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                    onClick={() => {
-                      let current = Number(betAmount);
-                      if (isNaN(current)) current = MIN_BET;
-                      setBetAmount((current * 2).toString());
-                    }}
-                    disabled={isPlaying || !isConnected}
-                  >
-                    2×
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                    onClick={() => setBetAmount(MIN_BET.toString())}
-                    disabled={isPlaying || !isConnected}
-                  >
-                    Min
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                    onClick={() =>
-                      setBetAmount(Math.min(MAX_BET, balance).toString())
-                    }
-                    disabled={isPlaying || !isConnected}
-                  >
-                    Max
-                  </Button>
-                </div>
+              </div>
+
+              {/* Multiplier Display */}
+              <div className="mb-6">
+                <span className="text-6xl font-bold text-[#49EACB]">
+                  {multiplier.toFixed(2)}×
+                </span>
               </div>
 
               {/* Multiplier Slider */}
-              <div className="w-full mb-4">
-                <label className="text-sm text-[#49EACB]">
-                  Select Multiplier: {multiplier.toFixed(2)}×
+              <div className="w-full mb-6 flex flex-col items-center">
+                <label className="text-xl text-[#49EACB] mb-2">
+                  Adjust Multiplier
                 </label>
-                <input
-                  type="range"
-                  min={MIN_MULTIPLIER}
-                  max={MAX_MULTIPLIER}
-                  step={0.01}
-                  value={multiplier}
-                  onChange={(e) => setMultiplier(parseFloat(e.target.value))}
-                  className="w-full slider-custom"
-                  disabled={isPlaying || !isConnected}
-                />
-                <div className="mt-2 text-sm text-[#49EACB]">
+                <div className="w-full max-w-md">
+                  <input
+                    type="range"
+                    min={MIN_MULTIPLIER}
+                    max={MAX_MULTIPLIER}
+                    step={0.01}
+                    value={multiplier}
+                    onChange={(e) => setMultiplier(parseFloat(e.target.value))}
+                    className="slider-custom"
+                    disabled={isPlaying || !isConnected}
+                    style={{ background: sliderBackground }}
+                  />
+                </div>
+                <div className="mt-4 text-2xl text-[#49EACB]">
                   Win Chance: {(winChance * 100).toFixed(1)}%
                 </div>
               </div>
 
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
-                  className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                  className="w-full start-upgrade-btn text-black font-bold p-4 rounded"
                   onClick={handleStartClick}
                   disabled={!isConnected || isPlaying}
                 >
@@ -346,11 +338,8 @@ export default function UpgradeGame() {
           )}
 
           {gamePhase === "countdown" && (
-            <div className="p-6 flex flex-col items-center">
-              <h2 className="text-4xl text-[#49EACB] mb-4">
-                Game starting in
-              </h2>
-              <motion.div className="text-6xl font-bold text-[#00FFFF]">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+              <motion.div className="text-9xl font-bold" style={countdownStyle}>
                 {countdown}
               </motion.div>
             </div>
@@ -358,7 +347,7 @@ export default function UpgradeGame() {
 
           {gamePhase === "result" && (
             <div className="p-6 flex flex-col items-center">
-              <h2 className="text-4xl font-bold mb-4">Your Upgrade Result</h2>
+              <h2 className="text-4xl font-bold mb-6">Your Upgrade Result</h2>
               {gameResult && gameResult > 0 ? (
                 <p className="text-2xl text-[#49EACB]">
                   You won <strong>{gameResult.toFixed(2)}</strong> KAS!
@@ -373,14 +362,14 @@ export default function UpgradeGame() {
           )}
         </Card>
 
-        <div className="space-y-6">
-          {/* You may include additional controls or information here if needed */}
+        <div className="mt-6 space-y-6 w-full max-w-md">
+          {/* Additional controls or information */}
           <LiveChat textColor="#49EACB" />
           <LiveWins textColor="#49EACB" />
         </div>
       </div>
 
-      <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center m-6">
+      <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center m-6 max-w-4xl">
         <motion.h2
           className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
           animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
@@ -496,13 +485,12 @@ export default function UpgradeGame() {
         )}
       </AnimatePresence>
 
-      {/* Custom slider styling */}
+      {/* Custom slider and button styling */}
       <style jsx>{`
         .slider-custom {
           -webkit-appearance: none;
           width: 100%;
           height: 10px;
-          background: #49EACB;
           outline: none;
           border-radius: 5px;
           margin: 10px 0;
@@ -510,18 +498,39 @@ export default function UpgradeGame() {
         .slider-custom::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 24px;
-          height: 24px;
+          width: 32px;
+          height: 32px;
           background: url('/draggerpoint.webp') no-repeat center center;
           background-size: contain;
           cursor: pointer;
         }
         .slider-custom::-moz-range-thumb {
-          width: 24px;
-          height: 24px;
+          width: 32px;
+          height: 32px;
           background: url('/draggerpoint.webp') no-repeat center center;
           background-size: contain;
           cursor: pointer;
+        }
+        @keyframes gradientAnimation {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .start-upgrade-btn {
+          background: linear-gradient(90deg, #FF7F50, #FFD700, #ADFF2F);
+          background-size: 200% 200%;
+          animation: gradientAnimation 3s ease infinite;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .start-upgrade-btn:hover {
+          transform: scale(1.05);
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
       `}</style>
     </div>
