@@ -517,8 +517,8 @@ export default function UpgradeGame() {
           cursor: pointer;
         }
         .start-upgrade-btn {
-          background: linear-gradient(90deg, #49EACB, #00FF00);
-          /* static gradient, no animation */
+          background: linear-gradient(90deg, #49EACB, #00FF00) !important;
+          /* Force the gradient background */
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .start-upgrade-btn:hover {
