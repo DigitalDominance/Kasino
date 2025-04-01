@@ -332,10 +332,10 @@ export default function UpgradeGame() {
                   </div>
                 </div>
 
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-10">
                   <Button
                     style={{ background: "linear-gradient(90deg, #49EACB, #00FF00)", color: "black" }}
-                    className="w-full start-upgrade-btn font-bold p-6 rounded"
+                    className="w-full start-upgrade-btn font-bold p-8 text-2xl rounded"
                     onClick={handleStartClick}
                     disabled={!isConnected || isPlaying}
                   >
@@ -357,11 +357,13 @@ export default function UpgradeGame() {
               <div className="p-6 flex flex-col items-center">
                 <h2 className="text-4xl font-bold mb-6">Your Upgrade Result</h2>
                 {gameResult && gameResult > 0 ? (
-                  <p className="text-5xl animate-pulse text-[#49EACB]">
-                    You won <strong>{gameResult.toFixed(2)}</strong> KAS!
+                  <p className="text-4xl animate-pulse uppercase text-[#39FF14]">
+                    YOU WIN <strong>{gameResult.toFixed(2)}</strong> KAS!
                   </p>
                 ) : (
-                  <p className="text-5xl animate-pulse text-red-500">You lost!</p>
+                  <p className="text-4xl animate-pulse uppercase text-red-500">
+                    YOU LOST!
+                  </p>
                 )}
                 <Button onClick={resetGame} className="mt-4">
                   Play Again
@@ -471,19 +473,15 @@ export default function UpgradeGame() {
             >
               <h2 className="text-3xl font-bold mb-4">Your Upgrade Result</h2>
               {gameResult && gameResult > 0 ? (
-                <p className="text-5xl animate-pulse text-[#49EACB]">
-                  You won <strong>{gameResult.toFixed(2)}</strong> KAS!
+                <p className="text-4xl animate-pulse uppercase text-[#39FF14]">
+                  YOU WIN <strong>{gameResult.toFixed(2)}</strong> KAS!
                 </p>
               ) : (
-                <p className="text-5xl animate-pulse text-red-500">You lost!</p>
+                <p className="text-4xl animate-pulse uppercase text-red-500">
+                  YOU LOST!
+                </p>
               )}
-              <Button
-                className="bg-black text-[#49EACB] hover:bg-black/80"
-                onClick={() => {
-                  setResultPopup(false);
-                  resetGame();
-                }}
-              >
+              <Button onClick={resetGame} className="mt-4">
                 Play Again
               </Button>
             </motion.div>
