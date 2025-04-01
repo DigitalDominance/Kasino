@@ -61,16 +61,12 @@ function MainPageContent() {
   ];
 
   // Original Games - New order:
-  // Crash, Mines, Kaspa Tower Climb, Plinko, Roulette, Dice, Coin Flip
+  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
-    {
-      name: "Kaspa Tower Climb",
-      slug: "kaspatowerclimb",
-      image: "/kaspatowerclimbcard.webp",
-    },
+    { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
     { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
     { name: "Guess The Cup", slug: "kaspacupgame", image: "/guessthecupcard.webp" },
     { name: "Roulette", slug: "roulette", image: "/roulettecard.webp" },
@@ -393,8 +389,8 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
-                      let dataKey = game.slug;
-                      // Exception for Kaspa Tower Climb: adjust key to match win counter and high scores
+                      // Convert slug to lowercase so it matches API data
+                      let dataKey = game.slug.toLowerCase();
                       if (dataKey === "kaspatowerclimb") dataKey = "kaspa tower climb";
                       if (dataKey === "kaspacupgame") dataKey = "guess the cup";
                       const totalWins =
@@ -489,7 +485,7 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {characterGames.map((game, i) => {
-                      let dataKey = game.slug;
+                      let dataKey = game.slug.toLowerCase();
                       if (dataKey === "lootbox") dataKey = "kasper loot box";
                       else if (dataKey === "kasen-mania") dataKey = "kasen mania";
                       const totalWins =
@@ -667,18 +663,15 @@ function MainPageContent() {
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
                         else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
                         else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp";
-                        else if (lwGame === "kasper loot box") {
-                          cardImage = "/kasperlootboxcard.webp";
-                        } else if (lwGame === "kasen mania") {
-                          cardImage = "/kasenmaniacard.webp";
-                        }
+                        else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp";
+                        else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp";
                         return (
                           <MotionCard
                             key={i}
                             className="flex-shrink-0 w-[280px] max-md:w-[180px] border-none bg-transparent overflow-hidden"
                             whileHover={{
                               scale: 1.02,
-                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.15)",
+                              boxShadow: "0 0 20px rgba(73,234,203,0.15)",
                             }}
                           >
                             <div className="relative aspect-[4/3] mt-1">
@@ -823,8 +816,7 @@ export function XPDisplay() {
   };
 
   const currentThreshold = getThreshold(displayLevel);
-  const nextThreshold =
-    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
+  const nextThreshold = displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -841,15 +833,12 @@ export function XPDisplay() {
   }
 
   const levelStr = displayLevel.toString();
-  const fontSize =
-    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+  const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
   // Larger popup styling for the hover popup.
-  const hoverPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
+  const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
   // Smaller popup styling for XP gain and level up.
-  const smallPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
+  const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
     <div
