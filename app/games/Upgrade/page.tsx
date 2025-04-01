@@ -334,6 +334,7 @@ export default function UpgradeGame() {
 
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
+                    style={{ background: "linear-gradient(90deg, #49EACB, #00FF00)", color: "white" }}
                     className="w-full start-upgrade-btn font-bold p-4 rounded"
                     onClick={handleStartClick}
                     disabled={!isConnected || isPlaying}
@@ -490,7 +491,7 @@ export default function UpgradeGame() {
         )}
       </AnimatePresence>
 
-      {/* Custom slider and button styling */}
+      {/* Custom slider styling */}
       <style jsx>{`
         .slider-custom {
           -webkit-appearance: none;
@@ -516,9 +517,8 @@ export default function UpgradeGame() {
           background-size: contain;
           cursor: pointer;
         }
+        /* The gradient background is now applied inline on the button element */
         .start-upgrade-btn {
-          background: linear-gradient(90deg, #49EACB, #00FF00) !important;
-          /* Force the gradient background */
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .start-upgrade-btn:hover {
