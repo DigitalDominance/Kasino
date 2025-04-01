@@ -334,8 +334,8 @@ export default function UpgradeGame() {
 
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
-                    style={{ background: "linear-gradient(90deg, #49EACB, #00FF00)", color: "white" }}
-                    className="w-full start-upgrade-btn font-bold p-4 rounded"
+                    style={{ background: "linear-gradient(90deg, #49EACB, #00FF00)", color: "black" }}
+                    className="w-full start-upgrade-btn font-bold p-6 rounded"
                     onClick={handleStartClick}
                     disabled={!isConnected || isPlaying}
                   >
