@@ -660,7 +660,7 @@ function MainPageContent() {
                         const lwGame = win.game.toLowerCase();
                         if (lwGame === "crash") cardImage = "/crashcard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
-                        else if (lwGame === "Upgrade") cardImage = "/upgradecard.webp";
+                        else if (lwGame === "upgrade") cardImage = "/upgradecard.webp";
                         else if (lwGame === "kaspa tower climb") cardImage = "/kaspatowerclimbcard.webp";
                         else if (lwGame === "plinko") cardImage = "/plinkocard.webp";
                         else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
