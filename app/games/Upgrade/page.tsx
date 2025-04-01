@@ -8,120 +8,61 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletConnection } from "@/components/wallet-connection";
-import { XPDisplay } from "@/app/page";
+import { Montserrat } from "next/font/google";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
-import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
+import { XPDisplay } from "@/app/page";
 
-// -----------------------------------------
-// CONSTANTS
-// -----------------------------------------
+const montserrat = Montserrat({
+  weight: "700",
+  subsets: ["latin"],
+});
+
+// ------------------------
+// CONSTANTS & SETTINGS
+// ------------------------
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const MIN_MULTIPLIER = 1.1;
-const MAX_MULTIPLIER = 25; // easily changeable max multiplier
-const SLIDER_HEIGHT = 300; // height of the vertical slider
+const MIN_MULTIPLIER = 1.75;
+const MAX_MULTIPLIER = 25;
+const INITIAL_MULTIPLIER = MIN_MULTIPLIER;
+const HOUSE_EDGE = 0.05; // house edge of 5% (i.e. EV = 0.95 × bet)
 
-// -----------------------------------------
-// HELPER FUNCTIONS
-// -----------------------------------------
-function calculateMultiplier(dragY) {
-  // dragY goes from 0 (top) to SLIDER_HEIGHT (bottom)
-  // When at the bottom (dragY = SLIDER_HEIGHT) multiplier is MIN_MULTIPLIER,
-  // and at the top (dragY = 0) it is MAX_MULTIPLIER.
-  const normalized = 1 - dragY / SLIDER_HEIGHT;
-  return MIN_MULTIPLIER + normalized * (MAX_MULTIPLIER - MIN_MULTIPLIER);
-}
-
-function calculateWinChance(multiplier) {
-  // Fair chance would be 1/multiplier.
-  // Subtract 5 percentage points so that for 2x: 1/2 - 0.05 = 0.45 (45% win chance).
-  // Clamp to a minimum of 1% (0.01) so it never goes negative.
-  return Math.max(1 / multiplier - 0.05, 0.01);
-}
-
-// -----------------------------------------
-// UPGRADE SLIDER COMPONENT
-// -----------------------------------------
-function UpgradeSlider({ multiplier, setMultiplier }) {
-  // Calculate the dragger's y-position based on current multiplier.
-  const normalized = (multiplier - MIN_MULTIPLIER) / (MAX_MULTIPLIER - MIN_MULTIPLIER);
-  const dragY = SLIDER_HEIGHT * (1 - normalized);
-
-  return (
-    <div className="relative w-20 h-[300px] bg-gray-800 rounded-full mx-auto">
-      {/* Fill bar: fills upward from the bottom as the dragger is moved up */}
-      <div
-        className="absolute bottom-0 left-0 w-full bg-blue-500 rounded-full"
-        style={{ height: `${SLIDER_HEIGHT - dragY}px` }}
-      />
-      <motion.div
-        drag="y"
-        dragConstraints={{ top: 0, bottom: SLIDER_HEIGHT }}
-        onDrag={(event, info) => {
-          const containerTop = event.currentTarget.getBoundingClientRect().top;
-          let newY = info.point.y - containerTop;
-          newY = Math.max(0, Math.min(newY, SLIDER_HEIGHT));
-          const newMultiplier = calculateMultiplier(newY);
-          setMultiplier(newMultiplier);
-        }}
-        style={{ y: dragY }}
-        className="absolute left-1/2 -translate-x-1/2"
-      >
-        <Image
-          src="/draggerpoint.webp"
-          alt="Dragger"
-          width={40}
-          height={40}
-          className="cursor-pointer"
-        />
-      </motion.div>
-    </div>
-  );
-}
-
-// -----------------------------------------
-// MAIN UPGRADE GAME PAGE
-// -----------------------------------------
-export default function UpgradePage() {
-  return <UpgradeContent />;
-}
-
-function UpgradeContent() {
+// ------------------------
+// UPGRADE GAME COMPONENT
+// ------------------------
+export default function UpgradeGame() {
   const { isConnected, balance } = useWallet();
+
+  // Game state variables
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
-  const [multiplier, setMultiplier] = useState(MIN_MULTIPLIER);
-  const winChance = calculateWinChance(multiplier);
+  const [multiplier, setMultiplier] = useState(INITIAL_MULTIPLIER);
+  // winChance is calculated as fair chance (1/m) scaled by 0.95 so that p*m = 0.95 (i.e. 5% house edge)
+  const winChance = 0.95 / multiplier;
+  const [countdown, setCountdown] = useState(3);
+  // gamePhase: "pregame" | "countdown" | "result"
+  const [gamePhase, setGamePhase] = useState("pregame");
   const [gameResult, setGameResult] = useState<number | null>(null);
   const [resultPopup, setResultPopup] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
+  // ------------------------
+  // START GAME FUNCTION
+  // ------------------------
   async function handleStartGame() {
     const bet = Number(betAmount);
-    if (!isConnected) {
-      alert("Please connect your wallet first.");
-      return;
-    }
-    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
-      alert(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
-      return;
-    }
-    if (bet > balance) {
-      alert("Insufficient balance");
-      return;
-    }
     try {
       const uniqueHash = uuidv4();
       const accounts = await window.kasware.getAccounts();
@@ -130,23 +71,28 @@ function UpgradeContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury =
+        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
       }
+      // Send deposit (amount in satoshis, adjust conversion as needed)
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx =
+        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
+      // Notify backend to start the game (send gameName, unique hash, wallet, bet, multiplier, and txid)
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Upgrade",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
+        multiplier,
         txid: txidString,
       });
       if (!startRes.data.success) {
@@ -155,250 +101,77 @@ function UpgradeContent() {
       }
       setGameId(startRes.data.gameId);
 
+      // Transition into countdown phase
       setPregame(false);
       setIsPlaying(true);
       setGameResult(null);
-      setCooldown(10);
-
-      // Simulate the game resolution after a short delay (e.g. 2 seconds)
-      setTimeout(() => {
-        const outcome = Math.random() < winChance;
-        let payout = 0;
-        if (outcome) {
-          payout = bet * multiplier;
-        }
-        setGameResult(payout);
-        setResultPopup(true);
-        axios
-          .post(`${apiUrl}/game/end`, {
-            gameId,
-            result: outcome ? "win" : "loss",
-            winAmount: payout,
-          })
-          .catch((error) => {
-            console.error("Error ending Upgrade game on backend:", error);
-          });
-        setIsPlaying(false);
-      }, 2000);
+      setCountdown(3);
+      setGamePhase("countdown");
     } catch (error: any) {
-      console.error("Error starting Upgrade game:", error);
+      console.error("Error starting Upgrade:", error);
       alert("Error starting game: " + error.message);
     }
   }
 
+  // ------------------------
+  // COUNTDOWN & RESOLVE GAME
+  // ------------------------
+  useEffect(() => {
+    if (gamePhase === "countdown") {
+      if (countdown > 0) {
+        const timer = setInterval(() => {
+          setCountdown((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+      } else {
+        // Countdown finished: determine win/loss outcome
+        resolveGame();
+      }
+    }
+  }, [gamePhase, countdown]);
+
+  async function resolveGame() {
+    const bet = Number(betAmount);
+    let payout = 0;
+    const roll = Math.random();
+    if (roll < winChance) {
+      // Player wins: payout equals bet × multiplier
+      payout = bet * multiplier;
+    }
+    setGameResult(payout);
+    setGamePhase("result");
+    setResultPopup(true);
+    try {
+      await axios.post(`${apiUrl}/game/end`, {
+        gameId,
+        result: payout > 0 ? "win" : "lose",
+        winAmount: payout,
+      });
+    } catch (error) {
+      console.error("Error ending Upgrade game on backend:", error);
+    }
+    setIsPlaying(false);
+  }
+
+  // ------------------------
+  // RESET GAME
+  // ------------------------
   function resetGame() {
     setPregame(true);
+    setGamePhase("pregame");
     setIsPlaying(false);
     setGameResult(null);
     setResultPopup(false);
     setDepositTxid(null);
     setGameId(null);
-    setMultiplier(MIN_MULTIPLIER);
+    setCountdown(3);
   }
 
-  useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [cooldown]);
-
-  return (
-    <div className="bg-black min-h-screen">
-      <div className="p-6">
-        <header className="flex items-center justify-between mb-6">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
-            </Link>
-          </motion.div>
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <XPDisplay />
-            <WalletConnection />
-          </motion.div>
-        </header>
-        {depositTxid && (
-          <p className="mb-4 text-sm" style={{ color: "#B6B6B6" }}>
-            Deposit TXID:{" "}
-            <a
-              className="txid-link"
-              style={{
-                background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-              href={`https://kas.fyi/transaction/${depositTxid}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {depositTxid}
-            </a>
-          </p>
-        )}
-        {pregame && (
-          <div className="mb-6 text-center">
-            <motion.h1
-              className="text-5xl font-bold mb-4"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              style={{ color: "#49EACB" }}
-            >
-              UPGRADE
-            </motion.h1>
-            <motion.p
-              className="text-xl tracking-wider mb-4"
-              animate={{ opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              style={{ color: "#00FFFF" }}
-            >
-              Drag the slider to set your multiplier and beat the odds!
-            </motion.p>
-          </div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6 mb-6">
-          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
-            <div className="flex flex-col items-center">
-              <UpgradeSlider multiplier={multiplier} setMultiplier={setMultiplier} />
-              <div className="mt-4 text-white">
-                <div>Multiplier: {multiplier.toFixed(2)}x</div>
-                <div>Win Chance: {(winChance * 100).toFixed(1)}%</div>
-              </div>
-            </div>
-          </Card>
-          <div className="space-y-6">
-            <UpgradeControls
-              betAmount={betAmount}
-              setBetAmount={setBetAmount}
-              isPlaying={isPlaying}
-              isWalletConnected={isConnected}
-              balance={balance}
-              onStartGame={handleStartGame}
-              gameResult={gameResult}
-              cooldown={cooldown}
-            />
-            <LiveChat textColor="#49EACB" />
-            <LiveWins textColor="#49EACB" />
-          </div>
-        </div>
-        <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 text-center">
-          <motion.h2
-            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
-              backgroundSize: "200% 200%",
-            }}
-          >
-            Upgrade
-          </motion.h2>
-          <img src="/upgrade-promo.png" alt="Upgrade Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-white mb-4">
-            Set your desired multiplier using the slider. Beat the odds and win big!
-          </p>
-          <div className="flex justify-center space-x-4 text-xl">
-            <motion.a
-              href="https://x.com/KasenOnKaspa"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTwitter />
-            </motion.a>
-            <motion.a
-              href="https://t.co/W4YDM1cUpY"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTelegramPlane />
-            </motion.a>
-            <motion.a
-              href="https://kasenonkas.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaGlobe />
-            </motion.a>
-          </div>
-        </Card>
-      </div>
-      <SiteFooter />
-      <AnimatePresence>
-        {resultPopup && gameResult !== null && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <h2 className="text-3xl font-bold mb-4">
-                {gameResult > 0 ? "You Won!" : "You Lost"}
-              </h2>
-              {gameResult > 0 ? (
-                <p className="text-xl mb-6">
-                  You won <strong>{gameResult.toFixed(2)}</strong> KAS!
-                </p>
-              ) : (
-                <p className="text-xl mb-6">Better luck next time!</p>
-              )}
-              <Button
-                className="bg-black text-[#49EACB] hover:bg-black/80"
-                onClick={resetGame}
-              >
-                Play Again
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// -----------------------------------------
-// UPGRADE CONTROLS COMPONENT
-// -----------------------------------------
-interface UpgradeControlsProps {
-  betAmount: string;
-  setBetAmount: (val: string) => void;
-  isPlaying: boolean;
-  isWalletConnected: boolean;
-  balance: number;
-  onStartGame: () => void;
-  gameResult: number | null;
-  cooldown: number;
-}
-
-function UpgradeControls({
-  betAmount,
-  setBetAmount,
-  isPlaying,
-  isWalletConnected,
-  balance,
-  onStartGame,
-  gameResult,
-  cooldown,
-}: UpgradeControlsProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  // ------------------------
+  // HANDLE START BUTTON CLICK
+  // ------------------------
   const handleStartClick = () => {
-    if (!isWalletConnected) {
+    if (!isConnected) {
       setErrorMessage("Please connect your wallet first.");
       return;
     }
@@ -411,9 +184,12 @@ function UpgradeControls({
       setErrorMessage("Insufficient balance");
       return;
     }
-    onStartGame();
+    handleStartGame();
   };
 
+  // ------------------------
+  // ERROR MESSAGE AUTO CLEAR
+  // ------------------------
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 3000);
@@ -422,106 +198,248 @@ function UpgradeControls({
   }, [errorMessage]);
 
   return (
-    <>
-      <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
-        <div className="p-6 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
-            <div className="relative">
-              <input
-                type="number"
-                value={betAmount}
-                onChange={(e) => {
-                  let val = Number(e.target.value);
-                  if (isNaN(val)) val = MIN_BET;
-                  val = Math.max(MIN_BET, Math.min(MAX_BET, val));
-                  setBetAmount(val.toString());
-                }}
-                className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full"
-                placeholder="0.00"
-                disabled={isPlaying || !isWalletConnected}
-              />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                  alt="KAS"
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => {
-                  let current = Number(betAmount);
-                  if (isNaN(current)) current = MIN_BET;
-                  setBetAmount((current / 2).toString());
-                }}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                ½
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => {
-                  let current = Number(betAmount);
-                  if (isNaN(current)) current = MIN_BET;
-                  setBetAmount((current * 2).toString());
-                }}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                2×
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(MIN_BET.toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Min
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(Math.min(MAX_BET, balance).toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Max
-              </Button>
-            </div>
-          </div>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameResult !== null && (
-              <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  Last Win: {gameResult > 0 ? gameResult.toFixed(2) : "0.00"} KAS
+    <div className={`${montserrat.className} bg-black min-h-screen`}>
+      <header className="flex items-center justify-between p-6">
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
+          </Link>
+        </motion.div>
+        <motion.div
+          className="flex items-center gap-4"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <XPDisplay />
+          <WalletConnection />
+        </motion.div>
+      </header>
+
+      {depositTxid && (
+        <p className="px-6 text-sm" style={{ color: "#B6B6B6" }}>
+          Deposit TXID:{" "}
+          <a
+            className="txid-link"
+            style={{
+              background: "linear-gradient(90deg, #B6B6B6, #49EACB)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+            href={`https://kas.fyi/transaction/${depositTxid}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {depositTxid}
+          </a>
+        </p>
+      )}
+
+      <div className="grid grid-cols-[1fr_300px] gap-6 p-6">
+        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm">
+          {gamePhase === "pregame" && (
+            <div className="p-6 flex flex-col items-center">
+              <h1 className="text-5xl font-bold text-[#49EACB] mb-4">UPGRADE</h1>
+              {/* Bet Amount Input */}
+              <div className="w-full mb-4">
+                <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={betAmount}
+                    onChange={(e) => {
+                      let val = Number(e.target.value);
+                      if (isNaN(val)) val = MIN_BET;
+                      val = Math.max(MIN_BET, Math.min(MAX_BET, val));
+                      setBetAmount(val.toString());
+                    }}
+                    className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full p-2 rounded"
+                    placeholder="0.00"
+                    disabled={isPlaying || !isConnected}
+                  />
+                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                    <Image
+                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                      alt="KAS"
+                      width={16}
+                      height={16}
+                      className="rounded-full"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                    onClick={() => {
+                      let current = Number(betAmount);
+                      if (isNaN(current)) current = MIN_BET;
+                      setBetAmount((current / 2).toString());
+                    }}
+                    disabled={isPlaying || !isConnected}
+                  >
+                    ½
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                    onClick={() => {
+                      let current = Number(betAmount);
+                      if (isNaN(current)) current = MIN_BET;
+                      setBetAmount((current * 2).toString());
+                    }}
+                    disabled={isPlaying || !isConnected}
+                  >
+                    2×
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                    onClick={() => setBetAmount(MIN_BET.toString())}
+                    disabled={isPlaying || !isConnected}
+                  >
+                    Min
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                    onClick={() =>
+                      setBetAmount(Math.min(MAX_BET, balance).toString())
+                    }
+                    disabled={isPlaying || !isConnected}
+                  >
+                    Max
+                  </Button>
                 </div>
               </div>
-            )}
-            {!isPlaying ? (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={handleStartClick}
-                disabled={!isWalletConnected || cooldown > 0}
-              >
-                {!isWalletConnected
-                  ? "Connect Wallet to Play"
-                  : cooldown > 0
-                  ? `Start Game (${cooldown}s)`
-                  : "Start Upgrade"}
+
+              {/* Multiplier Slider */}
+              <div className="w-full mb-4">
+                <label className="text-sm text-[#49EACB]">
+                  Select Multiplier: {multiplier.toFixed(2)}×
+                </label>
+                <input
+                  type="range"
+                  min={MIN_MULTIPLIER}
+                  max={MAX_MULTIPLIER}
+                  step={0.01}
+                  value={multiplier}
+                  onChange={(e) => setMultiplier(parseFloat(e.target.value))}
+                  className="w-full slider-custom"
+                  disabled={isPlaying || !isConnected}
+                />
+                <div className="mt-2 text-sm text-[#49EACB]">
+                  Win Chance: {(winChance * 100).toFixed(1)}%
+                </div>
+              </div>
+
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                  onClick={handleStartClick}
+                  disabled={!isConnected || isPlaying}
+                >
+                  {isPlaying ? "Game in Progress..." : "Start Upgrade"}
+                </Button>
+              </motion.div>
+            </div>
+          )}
+
+          {gamePhase === "countdown" && (
+            <div className="p-6 flex flex-col items-center">
+              <h2 className="text-4xl text-[#49EACB] mb-4">
+                Game starting in
+              </h2>
+              <motion.div className="text-6xl font-bold text-[#00FFFF]">
+                {countdown}
+              </motion.div>
+            </div>
+          )}
+
+          {gamePhase === "result" && (
+            <div className="p-6 flex flex-col items-center">
+              <h2 className="text-4xl font-bold mb-4">Your Upgrade Result</h2>
+              {gameResult && gameResult > 0 ? (
+                <p className="text-2xl text-[#49EACB]">
+                  You won <strong>{gameResult.toFixed(2)}</strong> KAS!
+                </p>
+              ) : (
+                <p className="text-2xl text-red-500">You lost!</p>
+              )}
+              <Button onClick={resetGame} className="mt-4">
+                Play Again
               </Button>
-            ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
-                Processing...
-              </Button>
-            )}
-          </motion.div>
+            </div>
+          )}
+        </Card>
+
+        <div className="space-y-6">
+          {/* You may include additional controls or information here if needed */}
+          <LiveChat textColor="#49EACB" />
+          <LiveWins textColor="#49EACB" />
+        </div>
+      </div>
+
+      <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center m-6">
+        <motion.h2
+          className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
+          animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+          style={{
+            backgroundImage:
+              "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
+            backgroundSize: "200% 200%",
+          }}
+        >
+          Upgrade
+        </motion.h2>
+        <p className="text-sm text-white mb-4">
+          Choose your multiplier and upgrade your bet. The win chance is calculated
+          in real-time based on your selected multiplier.
+        </p>
+        <div className="flex justify-center space-x-4 text-xl">
+          <motion.a
+            href="https://x.com/KasenOnKaspa"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.2 }}
+            className="text-[#49EACB] hover:text-[#49EACB]/80"
+          >
+            {/* Twitter icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M22.46 6c-.77.35-1.6.58-2.46.69a4.3 4.3 0 001.88-2.37 8.59 8.59 0 01-2.73 1.04 4.28 4.28 0 00-7.3 3.9A12.14 12.14 0 013 4.8a4.28 4.28 0 001.32 5.7 4.24 4.24 0 01-1.94-.54v.06a4.28 4.28 0 003.43 4.19 4.3 4.3 0 01-1.93.07 4.28 4.28 0 004 2.98A8.59 8.59 0 012 19.54a12.12 12.12 0 006.56 1.92c7.88 0 12.2-6.53 12.2-12.2 0-.19-.01-.38-.02-.57A8.67 8.67 0 0024 4.59a8.48 8.48 0 01-2.54.7z" />
+            </svg>
+          </motion.a>
+          <motion.a
+            href="https://t.co/W4YDM1cUpY"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.2 }}
+            className="text-[#49EACB] hover:text-[#49EACB]/80"
+          >
+            {/* Telegram icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9.7 16.2l-.4 4.3c.6 0 .9-.3 1.2-.6l3.1-3 6.5 4.8c1.2.7 2.1.3 2.4-1l4.3-19c.3-1.2-.4-1.8-1.3-1.8l-19 7.3c-1.1.4-1.1 1.1-.2 1.4l7.4 2.3-7.4 2.3c-1 .3-.9.9.2 1.4l19 7.3c.9.3 1.6-.2 1.3-1.4l-4.3-19c-.3-1.2-1.2-1.6-2.4-1l-6.5 4.8-3.1 3c-.3.3-.6.9-.6 1.5z" />
+            </svg>
+          </motion.a>
+          <motion.a
+            href="https://kasenonkas.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.2 }}
+            className="text-[#49EACB] hover:text-[#49EACB]/80"
+          >
+            {/* Globe icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm4.93 6h-3.88a25.931 25.931 0 00-.64-3.14A8.014 8.014 0 0116.93 8zm-9.86 0a8.014 8.014 0 013.44-5.14A25.931 25.931 0 009.95 8zm-3.04 2a25.931 25.931 0 010 4h3.88a21.89 21.89 0 000-4zm3.04 6a8.014 8.014 0 01-3.44-5.14 25.931 25.931 0 012.83 3.14zm6.89 0h3.88a8.014 8.014 0 01-3.44 5.14 25.931 25.931 0 01-.64-3.14zm-1.45-6h-3.88a21.89 21.89 0 000 4h3.88a25.931 25.931 0 010-4z" />
+            </svg>
+          </motion.a>
         </div>
       </Card>
+
+      <SiteFooter />
+
+      {/* Error popup */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
@@ -540,6 +458,72 @@ function UpgradeControls({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+
+      {/* Result popup */}
+      <AnimatePresence>
+        {resultPopup && gameResult !== null && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-[#49EACB] p-6 rounded-lg shadow-2xl text-center"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <h2 className="text-3xl font-bold mb-4">Your Upgrade Result</h2>
+              {gameResult && gameResult > 0 ? (
+                <p className="text-xl mb-6">
+                  You won <strong>{gameResult.toFixed(2)}</strong> KAS!
+                </p>
+              ) : (
+                <p className="text-xl mb-6">You lost!</p>
+              )}
+              <Button
+                className="bg-black text-[#49EACB] hover:bg-black/80"
+                onClick={() => {
+                  setResultPopup(false);
+                  resetGame();
+                }}
+              >
+                Play Again
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom slider styling */}
+      <style jsx>{`
+        .slider-custom {
+          -webkit-appearance: none;
+          width: 100%;
+          height: 10px;
+          background: #49EACB;
+          outline: none;
+          border-radius: 5px;
+          margin: 10px 0;
+        }
+        .slider-custom::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 24px;
+          height: 24px;
+          background: url('/draggerpoint.webp') no-repeat center center;
+          background-size: contain;
+          cursor: pointer;
+        }
+        .slider-custom::-moz-range-thumb {
+          width: 24px;
+          height: 24px;
+          background: url('/draggerpoint.webp') no-repeat center center;
+          background-size: contain;
+          cursor: pointer;
+        }
+      `}</style>
+    </div>
   );
 }
