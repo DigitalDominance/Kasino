@@ -32,6 +32,18 @@ const MAX_MULTIPLIER = 25;
 const INITIAL_MULTIPLIER = MIN_MULTIPLIER;
 const HOUSE_EDGE = 0.05; // house edge of 5% (i.e. EV = 0.95 × bet)
 
+// Compute slider background based on multiplier value.
+// Now the order is: green first, then blue, then violet.
+const getSliderBackground = (multiplier: number) => {
+  if (multiplier < 8) {
+    return "#00FF00"; // green
+  } else if (multiplier < 17) {
+    return "linear-gradient(90deg, #00FF00, #007BFF)"; // green to blue
+  } else {
+    return "linear-gradient(90deg, #00FF00, #007BFF, #9400D3)"; // green, blue, violet
+  }
+};
+
 // ------------------------
 // UPGRADE GAME COMPONENT
 // ------------------------
@@ -43,7 +55,7 @@ export default function UpgradeGame() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
   const [multiplier, setMultiplier] = useState(INITIAL_MULTIPLIER);
-  // winChance is calculated as fair chance (1/m) scaled by 0.95 so that p*m = 0.95 (i.e. 5% house edge)
+  // winChance is calculated as fair chance (1/m) scaled by 0.95 so that p*m = 0.95
   const winChance = 0.95 / multiplier;
   const [countdown, setCountdown] = useState(3);
   // gamePhase: "pregame" | "countdown" | "result"
@@ -57,14 +69,6 @@ export default function UpgradeGame() {
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
-
-  // Compute slider background based on multiplier value
-  const sliderBackground =
-    multiplier < 8
-      ? "#007BFF"
-      : multiplier < 17
-      ? "linear-gradient(90deg, #007BFF, #00FF00)"
-      : "linear-gradient(90deg, #9400D3, #00FF00, #007BFF)";
 
   // ------------------------
   // START GAME FUNCTION
@@ -94,7 +98,7 @@ export default function UpgradeGame() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      // Notify backend to start the game (send gameName, unique hash, wallet, bet, multiplier, and txid)
+      // Notify backend to start the game
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Upgrade",
         uniqueHash,
@@ -224,8 +228,8 @@ export default function UpgradeGame() {
   }, [errorMessage]);
 
   return (
-    <div className={`${montserrat.className} bg-black min-h-screen flex flex-col items-center`}>
-      <header className="w-full flex items-center justify-between p-6 max-w-4xl">
+    <div className={`${montserrat.className} bg-black min-h-screen`}>
+      <header className="w-full flex items-center justify-between p-6 max-w-4xl mx-auto">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
@@ -243,7 +247,7 @@ export default function UpgradeGame() {
       </header>
 
       {depositTxid && (
-        <p className="px-6 text-sm" style={{ color: "#B6B6B6" }}>
+        <p className="px-6 text-sm text-center" style={{ color: "#B6B6B6" }}>
           Deposit TXID:{" "}
           <a
             className="txid-link"
@@ -261,115 +265,119 @@ export default function UpgradeGame() {
         </p>
       )}
 
-      <div className="flex flex-col items-center p-6 w-full max-w-4xl">
-        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm w-full">
-          {gamePhase === "pregame" && (
-            <div className="p-6 flex flex-col items-center">
-              <h1 className="text-5xl font-bold text-[#49EACB] mb-6">UPGRADE</h1>
-              {/* Bet Amount Input */}
-              <div className="w-full mb-6 flex flex-col items-center">
-                <label className="text-xl text-[#49EACB] mb-2">Bet Amount (KAS)</label>
-                <div className="relative w-full max-w-md">
-                  <input
-                    type="number"
-                    value={betAmount}
-                    onChange={(e) => {
-                      let val = Number(e.target.value);
-                      if (isNaN(val)) val = MIN_BET;
-                      val = Math.max(MIN_BET, Math.min(MAX_BET, val));
-                      setBetAmount(val.toString());
-                    }}
-                    className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-12 w-full p-4 text-2xl rounded"
-                    placeholder="0.00"
-                    disabled={isPlaying || !isConnected}
-                  />
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                      alt="KAS"
-                      width={24}
-                      height={24}
-                      className="rounded-full"
+      {/* Grid layout: left column for the game card, right column for extra controls */}
+      <div className="grid grid-cols-[1fr_300px] gap-6 p-6 max-w-4xl mx-auto">
+        {/* Left column: Game Card */}
+        <div className="flex justify-center">
+          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm w-full">
+            {gamePhase === "pregame" && (
+              <div className="p-6 flex flex-col items-center">
+                <h1 className="text-5xl font-bold text-[#49EACB] mb-6">UPGRADE</h1>
+                {/* Bet Amount Input */}
+                <div className="w-full mb-6 flex flex-col items-center">
+                  <label className="text-xl text-[#49EACB] mb-2">Bet Amount (KAS)</label>
+                  <div className="relative w-full max-w-md">
+                    <input
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (isNaN(val)) val = MIN_BET;
+                        val = Math.max(MIN_BET, Math.min(MAX_BET, val));
+                        setBetAmount(val.toString());
+                      }}
+                      className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-12 w-full p-4 text-2xl rounded"
+                      placeholder="0.00"
+                      disabled={isPlaying || !isConnected}
                     />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Multiplier Display */}
-              <div className="mb-6">
-                <span className="text-6xl font-bold text-[#49EACB]">
-                  {multiplier.toFixed(2)}×
-                </span>
-              </div>
-
-              {/* Multiplier Slider */}
-              <div className="w-full mb-6 flex flex-col items-center">
-                <label className="text-xl text-[#49EACB] mb-2">
-                  Adjust Multiplier
-                </label>
-                <div className="w-full max-w-md">
-                  <input
-                    type="range"
-                    min={MIN_MULTIPLIER}
-                    max={MAX_MULTIPLIER}
-                    step={0.01}
-                    value={multiplier}
-                    onChange={(e) => setMultiplier(parseFloat(e.target.value))}
-                    className="slider-custom"
-                    disabled={isPlaying || !isConnected}
-                    style={{ background: sliderBackground }}
-                  />
+                {/* Multiplier Display */}
+                <div className="mb-6">
+                  <span className="text-6xl font-bold text-[#49EACB]">
+                    {multiplier.toFixed(2)}×
+                  </span>
                 </div>
-                <div className="mt-4 text-2xl text-[#49EACB]">
-                  Win Chance: {(winChance * 100).toFixed(1)}%
-                </div>
-              </div>
 
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  className="w-full start-upgrade-btn text-black font-bold p-4 rounded"
-                  onClick={handleStartClick}
-                  disabled={!isConnected || isPlaying}
-                >
-                  {isPlaying ? "Game in Progress..." : "Start Upgrade"}
+                {/* Multiplier Slider */}
+                <div className="w-full mb-6 flex flex-col items-center">
+                  <label className="text-xl text-[#49EACB] mb-2">
+                    Adjust Multiplier
+                  </label>
+                  <div className="w-full max-w-md">
+                    <input
+                      type="range"
+                      min={MIN_MULTIPLIER}
+                      max={MAX_MULTIPLIER}
+                      step={0.01}
+                      value={multiplier}
+                      onChange={(e) => setMultiplier(parseFloat(e.target.value))}
+                      className="slider-custom"
+                      disabled={isPlaying || !isConnected}
+                      style={{ background: getSliderBackground(multiplier) }}
+                    />
+                  </div>
+                  <div className="mt-4 text-2xl text-[#49EACB]">
+                    Win Chance: {(winChance * 100).toFixed(1)}%
+                  </div>
+                </div>
+
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    className="w-full start-upgrade-btn text-white font-bold p-4 rounded"
+                    onClick={handleStartClick}
+                    disabled={!isConnected || isPlaying}
+                  >
+                    {isPlaying ? "Game in Progress..." : "Start Upgrade"}
+                  </Button>
+                </motion.div>
+              </div>
+            )}
+
+            {gamePhase === "countdown" && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+                <motion.div className="text-9xl font-bold" style={countdownStyle}>
+                  {countdown}
+                </motion.div>
+              </div>
+            )}
+
+            {gamePhase === "result" && (
+              <div className="p-6 flex flex-col items-center">
+                <h2 className="text-4xl font-bold mb-6">Your Upgrade Result</h2>
+                {gameResult && gameResult > 0 ? (
+                  <p className="text-2xl text-[#49EACB]">
+                    You won <strong>{gameResult.toFixed(2)}</strong> KAS!
+                  </p>
+                ) : (
+                  <p className="text-2xl text-red-500">You lost!</p>
+                )}
+                <Button onClick={resetGame} className="mt-4">
+                  Play Again
                 </Button>
-              </motion.div>
-            </div>
-          )}
+              </div>
+            )}
+          </Card>
+        </div>
 
-          {gamePhase === "countdown" && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-              <motion.div className="text-9xl font-bold" style={countdownStyle}>
-                {countdown}
-              </motion.div>
-            </div>
-          )}
-
-          {gamePhase === "result" && (
-            <div className="p-6 flex flex-col items-center">
-              <h2 className="text-4xl font-bold mb-6">Your Upgrade Result</h2>
-              {gameResult && gameResult > 0 ? (
-                <p className="text-2xl text-[#49EACB]">
-                  You won <strong>{gameResult.toFixed(2)}</strong> KAS!
-                </p>
-              ) : (
-                <p className="text-2xl text-red-500">You lost!</p>
-              )}
-              <Button onClick={resetGame} className="mt-4">
-                Play Again
-              </Button>
-            </div>
-          )}
-        </Card>
-
-        <div className="mt-6 space-y-6 w-full max-w-md">
-          {/* Additional controls or information */}
+        {/* Right column: Additional Controls */}
+        <div className="space-y-6">
           <LiveChat textColor="#49EACB" />
           <LiveWins textColor="#49EACB" />
         </div>
       </div>
 
-      <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center m-6 max-w-4xl">
+      <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center m-6">
         <motion.h2
           className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
           animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
@@ -394,7 +402,6 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            {/* Twitter icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M22.46 6c-.77.35-1.6.58-2.46.69a4.3 4.3 0 001.88-2.37 8.59 8.59 0 01-2.73 1.04 4.28 4.28 0 00-7.3 3.9A12.14 12.14 0 013 4.8a4.28 4.28 0 001.32 5.7 4.24 4.24 0 01-1.94-.54v.06a4.28 4.28 0 003.43 4.19 4.3 4.3 0 01-1.93.07 4.28 4.28 0 004 2.98A8.59 8.59 0 012 19.54a12.12 12.12 0 006.56 1.92c7.88 0 12.2-6.53 12.2-12.2 0-.19-.01-.38-.02-.57A8.67 8.67 0 0024 4.59a8.48 8.48 0 01-2.54.7z" />
             </svg>
@@ -406,7 +413,6 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            {/* Telegram icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9.7 16.2l-.4 4.3c.6 0 .9-.3 1.2-.6l3.1-3 6.5 4.8c1.2.7 2.1.3 2.4-1l4.3-19c.3-1.2-.4-1.8-1.3-1.8l-19 7.3c-1.1.4-1.1 1.1-.2 1.4l7.4 2.3-7.4 2.3c-1 .3-.9.9.2 1.4l19 7.3c.9.3 1.6-.2 1.3-1.4l-4.3-19c-.3-1.2-1.2-1.6-2.4-1l-6.5 4.8-3.1 3c-.3.3-.6.9-.6 1.5z" />
             </svg>
@@ -418,7 +424,6 @@ export default function UpgradeGame() {
             whileHover={{ scale: 1.2 }}
             className="text-[#49EACB] hover:text-[#49EACB]/80"
           >
-            {/* Globe icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2a10 10 0 1010 10A10.011 10.011 0 0012 2zm4.93 6h-3.88a25.931 25.931 0 00-.64-3.14A8.014 8.014 0 0116.93 8zm-9.86 0a8.014 8.014 0 013.44-5.14A25.931 25.931 0 009.95 8zm-3.04 2a25.931 25.931 0 010 4h3.88a21.89 21.89 0 000-4zm3.04 6a8.014 8.014 0 01-3.44-5.14 25.931 25.931 0 012.83 3.14zm6.89 0h3.88a8.014 8.014 0 01-3.44 5.14 25.931 25.931 0 01-.64-3.14zm-1.45-6h-3.88a21.89 21.89 0 000 4h3.88a25.931 25.931 0 010-4z" />
             </svg>
@@ -511,7 +516,7 @@ export default function UpgradeGame() {
           background-size: contain;
           cursor: pointer;
         }
-        @keyframes gradientAnimation {
+        @keyframes buttonGradient {
           0% {
             background-position: 0% 50%;
           }
@@ -523,10 +528,11 @@ export default function UpgradeGame() {
           }
         }
         .start-upgrade-btn {
-          background: linear-gradient(90deg, #FF7F50, #FFD700, #ADFF2F);
-          background-size: 200% 200%;
-          animation: gradientAnimation 3s ease infinite;
+          background: linear-gradient(90deg, #00FF00, #007BFF, #9400D3);
+          background-size: 300% 300%;
+          animation: buttonGradient 3s ease infinite;
           transition: transform 0.2s, box-shadow 0.2s;
+          color: white;
         }
         .start-upgrade-btn:hover {
           transform: scale(1.05);
