@@ -272,9 +272,9 @@ export default function UpgradeGame() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm w-full">
             {gamePhase === "pregame" && (
               <div className="p-6 flex flex-col items-center">
-                <h1 className="text-5xl font-bold text-[#49EACB] mb-6">UPGRADE</h1>
+                <h1 className="text-5xl font-bold text-[#49EACB] mb-10">UPGRADE</h1>
                 {/* Bet Amount Input */}
-                <div className="w-full mb-6 flex flex-col items-center">
+                <div className="w-full mb-10 flex flex-col items-center">
                   <label className="text-xl text-[#49EACB] mb-2">Bet Amount (KAS)</label>
                   <div className="relative w-full max-w-md">
                     <input
@@ -303,7 +303,7 @@ export default function UpgradeGame() {
                 </div>
 
                 {/* Multiplier Display */}
-                <div className="mb-6">
+                <div className="mb-10">
                   <span className="text-6xl font-bold text-[#49EACB]">
                     {multiplier.toFixed(2)}×
                   </span>
@@ -357,11 +357,11 @@ export default function UpgradeGame() {
               <div className="p-6 flex flex-col items-center">
                 <h2 className="text-4xl font-bold mb-6">Your Upgrade Result</h2>
                 {gameResult && gameResult > 0 ? (
-                  <p className="text-2xl text-[#49EACB]">
+                  <p className="text-5xl animate-pulse text-[#49EACB]">
                     You won <strong>{gameResult.toFixed(2)}</strong> KAS!
                   </p>
                 ) : (
-                  <p className="text-2xl text-red-500">You lost!</p>
+                  <p className="text-5xl animate-pulse text-red-500">You lost!</p>
                 )}
                 <Button onClick={resetGame} className="mt-4">
                   Play Again
@@ -471,11 +471,11 @@ export default function UpgradeGame() {
             >
               <h2 className="text-3xl font-bold mb-4">Your Upgrade Result</h2>
               {gameResult && gameResult > 0 ? (
-                <p className="text-xl mb-6">
+                <p className="text-5xl animate-pulse text-[#49EACB]">
                   You won <strong>{gameResult.toFixed(2)}</strong> KAS!
                 </p>
               ) : (
-                <p className="text-xl mb-6">You lost!</p>
+                <p className="text-5xl animate-pulse text-red-500">You lost!</p>
               )}
               <Button
                 className="bg-black text-[#49EACB] hover:bg-black/80"
@@ -517,7 +517,6 @@ export default function UpgradeGame() {
           background-size: contain;
           cursor: pointer;
         }
-        /* The gradient background is now applied inline on the button element */
         .start-upgrade-btn {
           transition: transform 0.2s, box-shadow 0.2s;
         }
