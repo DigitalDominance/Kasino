@@ -1,20 +1,18 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import { useWallet } from "@/contexts/WalletContext";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
-import Image from "next/image";
-import { useWallet } from "@/contexts/WalletContext";
-import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
-import { LiveChat } from "../mines/live-chat";
-import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
 
 const montserrat = Montserrat({
@@ -22,74 +20,57 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-// -----------------------------------------------------------------
-// Game Constants & Helper Functions
-// -----------------------------------------------------------------
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const FLOOR_HEIGHT = 80; // pixels per floor jump
 const MAX_MULTIPLIER = 50;
-const BASE_MULTIPLIER = 1.1; // each successful jump increases multiplier by 1.1×
-// The win probability is determined to favor the house by 7.5% (i.e. EV = 92.5% of bet)
-const HOUSE_EDGE_FACTOR = 0.925;
 
-// Calculate current multiplier based on floors jumped (capped at 50×)
-const getMultiplier = (floors) => {
-  const mult = Math.pow(BASE_MULTIPLIER, floors);
-  return mult > MAX_MULTIPLIER ? MAX_MULTIPLIER : Number(mult.toFixed(2));
-};
-
-// Calculate win probability given the current multiplier.
-// For example, at floor 0 (multiplier 1×): winChance = 0.925/1 = 92.5%,
-// and as the multiplier increases, win chance decreases.
-const getWinProbability = (multiplier) => {
-  const chance = HOUSE_EDGE_FACTOR / multiplier;
-  return chance > 1 ? 1 : chance;
-};
-
-// -----------------------------------------------------------------
-// Main Ghost Jump Component
-// -----------------------------------------------------------------
-export default function GhostJumpPage() {
-  return <GhostJumpContent />;
+// Calculate multiplier based on floor number.
+// We use an exponential growth of 1.1^floor (floors start at 0 for the ground level),
+// then cap it at 50x.
+function calculateMultiplier(floor: number) {
+  const mult = Math.pow(1.1, floor);
+  return Math.min(Number(mult.toFixed(2)), MAX_MULTIPLIER);
 }
 
-function GhostJumpContent() {
+// The success probability for a jump is set so that expected payout is reduced by a 7.5% house edge.
+// For the next jump (floor + 1), probability = 0.925 / (multiplier for next floor) (clamped at 1).
+function getSuccessProbability(currentFloor: number) {
+  const nextMult = calculateMultiplier(currentFloor + 1);
+  let prob = 0.925 / nextMult;
+  return prob > 1 ? 1 : prob;
+}
+
+export default function GhostJumpPage() {
+  return <GhostJumpGame />;
+}
+
+function GhostJumpGame() {
   const { isConnected, balance } = useWallet();
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
-  const [currentFloor, setCurrentFloor] = useState(0);
-  // ghostState: "idle" (waiting), "jumping" (in mid-jump), or "falling" (loss animation)
-  const [ghostState, setGhostState] = useState("idle");
-  const [gameResult, setGameResult] = useState(null);
-  const [cashoutPopup, setCashoutPopup] = useState(false);
-  const [losePopup, setLosePopup] = useState(false);
+  const [currentFloor, setCurrentFloor] = useState(0); // ground floor
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [jumping, setJumping] = useState(false);
+  const [falling, setFalling] = useState(false);
   const [cashoutClicked, setCashoutClicked] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [gameId, setGameId] = useState(null);
-  const [depositTxid, setDepositTxid] = useState(null);
 
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Decorative elements for the pregame screen (mansion walls/windows)
+  // Decorative elements for the pregame screen
   const decorativeElements = useMemo(() => {
-    return Array.from({ length: 20 }).map(() => ({
+    return Array.from({ length: 30 }).map(() => ({
       top: Math.random() * 80 + "%",
       left: Math.random() * 80 + "%",
-      type: Math.random() > 0.5 ? "mansion" : "window",
     }));
   }, []);
 
-  // Initialize game state
-  const initGame = () => {
-    setCurrentFloor(0);
-    setGhostState("idle");
-  };
-
-  // Start game: deduct bet and notify backend.
+  // Start the game: validate the bet, deduct funds, and notify the backend.
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -108,8 +89,7 @@ function GhostJumpContent() {
         alert("No wallet address found");
         return;
       }
-      const chosenTreasury =
-        Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
+      const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
         return;
@@ -117,11 +97,9 @@ function GhostJumpContent() {
       const depositTx = await window.kasware.sendKaspa(chosenTreasury, bet * 1e8, {
         priorityFee: 10000,
       });
-      const parsedTx =
-        typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
+      const parsedTx = typeof depositTx === "string" ? JSON.parse(depositTx) : depositTx;
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
-
       const startRes = await axios.post(`${apiUrl}/game/start`, {
         gameName: "Ghost Jump",
         uniqueHash,
@@ -135,38 +113,42 @@ function GhostJumpContent() {
         alert("Failed to start game on backend");
         return;
       }
-      initGame();
+      setCurrentFloor(0);
       setIsPlaying(true);
       setPregame(false);
       setGameResult(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting Ghost Jump:", error);
       alert("Error starting game: " + error.message);
     }
   };
 
-  // Handle a jump attempt: decide win or loss based on current win chance.
+  // Handle the jump attempt. When the user clicks the active tile,
+  // we determine success based on getSuccessProbability.
   const handleJump = () => {
-    if (!isPlaying || ghostState !== "idle") return;
-    const currentMult = getMultiplier(currentFloor);
-    const winChance = getWinProbability(currentMult);
-    setGhostState("jumping");
-    // Simulate jump animation (800ms) then determine outcome.
+    if (jumping || falling) return; // avoid multiple clicks during animations
+    const nextFloor = currentFloor + 1;
+    const successProb = getSuccessProbability(currentFloor);
+    const outcome = Math.random() < successProb;
+    setJumping(true);
+    // Animate the jump (simulate a 1-second jump)
     setTimeout(() => {
-      if (Math.random() < winChance) {
-        // Successful jump: move to the next floor.
-        setCurrentFloor((prev) => prev + 1);
-        setGhostState("idle");
-        // Auto-cashout if the multiplier would reach/exceed the max.
-        if (getMultiplier(currentFloor + 1) >= MAX_MULTIPLIER) {
+      if (outcome) {
+        // Win: ghost jumps up to the next floor
+        setCurrentFloor(nextFloor);
+        setJumping(false);
+        // Auto cash out if max multiplier is reached
+        if (calculateMultiplier(nextFloor) >= MAX_MULTIPLIER) {
           handleCashOut();
         }
       } else {
-        // Jump failed: ghost falls.
-        setGhostState("falling");
+        // Loss: animate falling
+        setJumping(false);
+        setFalling(true);
         setTimeout(() => {
           setGameResult("Game Over");
           setIsPlaying(false);
+          setFalling(false);
           if (gameId) {
             axios.post(`${apiUrl}/game/end`, {
               gameId,
@@ -174,22 +156,20 @@ function GhostJumpContent() {
               winAmount: 0,
             });
           }
-          setLosePopup(true);
-        }, 800);
+        }, 1000);
       }
-    }, 800);
+    }, 1000);
   };
 
-  // Handle cashing out: notify backend and display win popup.
+  // Handle cash out manually.
   const handleCashOut = async () => {
     if (cashoutClicked) return;
     setCashoutClicked(true);
     const bet = Number(betAmount);
-    const multiplier = getMultiplier(currentFloor);
+    const multiplier = calculateMultiplier(currentFloor);
     const payout = bet * multiplier;
     setGameResult("Cashed Out");
     setIsPlaying(false);
-    setCashoutPopup(true);
     try {
       await axios.post(`${apiUrl}/game/end`, {
         gameId,
@@ -207,6 +187,10 @@ function GhostJumpContent() {
     setGameId(null);
     setDepositTxid(null);
     setPregame(true);
+    setCurrentFloor(0);
+    setCashoutClicked(false);
+    setJumping(false);
+    setFalling(false);
   };
 
   useEffect(() => {
@@ -216,9 +200,20 @@ function GhostJumpContent() {
     }
   }, [cooldown]);
 
+  // Display a column of floors.
+  // The bottom floor (index 0) is active and clickable.
+  // A few upcoming floors are shown as a preview with multiplier overlays.
+  const floorsToShow = 5;
+  const floors = [];
+  for (let i = 0; i < floorsToShow; i++) {
+    const floorIndex = currentFloor + i;
+    const multiplier = calculateMultiplier(floorIndex);
+    floors.push({ floorIndex, multiplier });
+  }
+
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-      <div className="flex-grow p-6">
+      <div className="flex-grow p-6 relative">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -226,12 +221,7 @@ function GhostJumpContent() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div className="flex items-center gap-4">
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -257,191 +247,142 @@ function GhostJumpContent() {
           </p>
         )}
 
-        <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
-          {/* Left Column: Game Container */}
-          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden relative">
-            <div className="p-6 flex flex-col h-full items-center justify-center relative">
-              {pregame ? (
-                // Pregame screen with spooky mansion imagery.
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-gray-900 to-black">
-                  <Image src="/placeholder.svg" alt="Mansion" fill className="object-cover opacity-50" />
-                  {decorativeElements.map((elem, index) => (
+        {/* Pregame Screen */}
+        {pregame ? (
+          <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-gray-900 to-black bg-opacity-80">
+            {decorativeElements.map((pos, index) => (
+              <motion.div
+                key={index}
+                className="absolute"
+                style={{ top: pos.top, left: pos.left, opacity: 0.3 }}
+                whileHover={{ scale: 1.2 }}
+              >
+                <Image src="/ghosticon.png" alt="Ghost Icon" width={30} height={30} />
+              </motion.div>
+            ))}
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+              <motion.h1
+                className="text-5xl font-bold mb-4"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ color: "#49EACB" }}
+              >
+                GHOST JUMP
+              </motion.h1>
+              <motion.p
+                className="text-xl tracking-wider mb-4"
+                animate={{ opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ color: "#00FFFF" }}
+              >
+                Dare to Climb the Haunted Mansion
+              </motion.p>
+              <div className="mt-20">
+                <Image src="/ghosticon.png" alt="Ghost Icon" width={96} height={96} />
+              </div>
+              <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+                <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
+                  Place Your Bet
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+        ) : (
+          // Main Game Board
+          <div className="relative w-full max-w-sm mx-auto">
+            {/* Mansion background using placeholder.svg */}
+            <div className="absolute inset-0">
+              <Image src="/placeholder.svg" alt="Mansion" layout="fill" objectFit="cover" />
+            </div>
+            {/* Floors column */}
+            <div className="relative z-10 flex flex-col-reverse items-center space-y-4">
+              {floors.map((floor, index) => (
+                <div key={index} className="relative flex items-center justify-center">
+                  {index === 0 ? (
                     <motion.div
-                      key={index}
-                      className="absolute"
-                      style={{
-                        top: elem.top,
-                        left: elem.left,
-                        opacity: 0.7,
-                      }}
-                      whileHover={{ scale: 1.1 }}
+                      className="cursor-pointer"
+                      onClick={handleJump}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <Image
-                        src={elem.type === "mansion" ? "/placeholder.svg" : "/placeholder2.svg"}
-                        alt={elem.type === "mansion" ? "Mansion" : "Window"}
-                        width={50}
-                        height={50}
-                      />
+                      {/* Jump tile image using placeholder3.svg */}
+                      <Image src="/placeholder3.svg" alt="Jump Tile" width={100} height={60} />
+                      {/* Overlay multiplier */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-2xl font-bold text-yellow-300">
+                          {calculateMultiplier(currentFloor)}
+                        </span>
+                      </div>
                     </motion.div>
-                  ))}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
-                    <motion.h1
-                      className="text-5xl font-bold mb-4"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      style={{ color: "#49EACB" }}
-                    >
-                      GHOST JUMP
-                    </motion.h1>
-                    <motion.p
-                      className="text-xl tracking-wider mb-4"
-                      animate={{ opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      style={{ color: "#00FFFF" }}
-                    >
-                      Dare to Climb the Haunted Mansion
-                    </motion.p>
-                    <div className="mt-20">
-                      <Image src="/ghostkasper.webp" alt="Ghost Kasper" width={96} height={96} />
-                    </div>
-                    <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-                      <Button className="bg-[#49EACB] text-black" disabled>
-                        Place Your Bet
-                      </Button>
-                    </motion.div>
-                  </div>
-                </div>
-              ) : (
-                // Game board: a single lane with the jump tile and ghost character.
-                <div className="w-full h-[500px] relative bg-cover bg-center" style={{ backgroundImage: "url('/placeholder.svg')" }}>
-                  {/* Jump Tile (using placeholder3.svg) at the current target floor */}
-                  <motion.div
-                    className="absolute"
-                    style={{
-                      bottom: currentFloor * FLOOR_HEIGHT,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                    }}
-                    animate={{ bottom: currentFloor * FLOOR_HEIGHT }}
-                    transition={{ duration: 0.8 }}
-                  >
-                    <Image src="/placeholder3.svg" alt="Jump Tile" width={80} height={80} />
-                  </motion.div>
-                  {/* Ghost character – switches image when jumping */}
-                  <motion.div
-                    className="absolute"
-                    style={{
-                      bottom: currentFloor * FLOOR_HEIGHT,
-                      left: "30%",
-                    }}
-                    animate={{ bottom: currentFloor * FLOOR_HEIGHT }}
-                    transition={{ duration: 0.8 }}
-                  >
-                    <Image
-                      src={ghostState === "jumping" ? "/ghostkasperjumping.webp" : "/ghostkasper.webp"}
-                      alt="Ghost Kasper"
-                      width={80}
-                      height={80}
-                    />
-                  </motion.div>
-                  {/* Clickable area for jump */}
-                  {isPlaying && ghostState === "idle" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Button onClick={handleJump} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
-                        Jump
-                      </Button>
+                  ) : (
+                    <div className="relative">
+                      <Image src="/placeholder3.svg" alt="Upcoming Tile" width={100} height={60} />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-2xl font-bold text-yellow-300">
+                          {calculateMultiplier(currentFloor + index)}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-              {isPlaying && currentFloor > 0 && (
-                <motion.div className="mt-4">
-                  <Button onClick={handleCashOut} disabled={cashoutClicked} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">
-                    Cash Out (Payout: {Number(betAmount) * getMultiplier(currentFloor)} KAS)
-                  </Button>
-                </motion.div>
-              )}
-              <div className="mt-2">
-                <p>Current Multiplier: {getMultiplier(currentFloor)}x</p>
-                <p>Win Chance: {(getWinProbability(getMultiplier(currentFloor)) * 100).toFixed(1)}%</p>
-              </div>
+              ))}
             </div>
-          </Card>
-
-          {/* Right Column: Bet Controls, LiveChat & LiveWins */}
-          <div className="space-y-6">
-            <GhostJumpControls
-              betAmount={betAmount}
-              setBetAmount={setBetAmount}
-              isPlaying={isPlaying}
-              isWalletConnected={isConnected}
-              balance={balance}
-              onStartGame={() => {
-                handleStartGame();
-                setCooldown(10);
+            {/* Ghost character always visible.
+                When jumping, we use ghostkasperjumping.webp;
+                otherwise ghostkasper.webp. The character’s vertical position is animated based on currentFloor.
+            */}
+            <motion.div
+              className="absolute left-1/2 transform -translate-x-1/2"
+              initial={{ bottom: "5%" }}
+              animate={{
+                bottom: falling ? "5%" : `${5 + currentFloor * 70}px`,
               }}
-              gameResult={gameResult}
-              cooldown={cooldown}
-            />
-            <LiveChat textColor="#49EACB" />
-            <LiveWins textColor="#49EACB" />
+              transition={{ type: "spring", stiffness: 100 }}
+            >
+              <Image
+                src={jumping ? "/ghostkasperjumping.webp" : "/ghostkasper.webp"}
+                alt="Ghost Kasper"
+                width={80}
+                height={80}
+              />
+            </motion.div>
+            {/* Cash Out Button */}
+            {isPlaying && currentFloor > 0 && (
+              <motion.div className="mt-4 text-center">
+                <Button
+                  onClick={handleCashOut}
+                  disabled={cashoutClicked}
+                  className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                >
+                  Cash Out (Payout: {Number(betAmount) * calculateMultiplier(currentFloor)} KAS)
+                </Button>
+              </motion.div>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* Promo / Info Card */}
-        <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
-          <motion.h2
-            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage: "linear-gradient(270deg, #49EACB, #00FFFF, #49EACB)",
-              backgroundSize: "200% 200%",
+        {/* Bet Controls */}
+        <div className="mt-6">
+          <GhostJumpControls
+            betAmount={betAmount}
+            setBetAmount={setBetAmount}
+            isPlaying={isPlaying}
+            isWalletConnected={isConnected}
+            balance={balance}
+            onStartGame={() => {
+              handleStartGame();
+              setCooldown(10);
             }}
-          >
-            Ghost Jump
-          </motion.h2>
-          <img src="/ghostpromo.png" alt="Ghost Jump Promo" className="w-full h-auto mb-4" />
-          <p className="text-sm text-white mb-4">
-            Jump floor by floor in the haunted mansion. Each successful jump increases your multiplier,
-            but one misstep and you'll fall!
-          </p>
-          <div className="flex justify-center space-x-4 text-xl">
-            <motion.a
-              href="https://x.com/KasenOnKaspa"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTwitter />
-            </motion.a>
-            <motion.a
-              href="https://t.co/W4YDM1cUpY"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTelegramPlane />
-            </motion.a>
-            <motion.a
-              href="https://kasenonkas.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaGlobe />
-            </motion.a>
-          </div>
-        </Card>
+            gameResult={gameResult}
+            cooldown={cooldown}
+          />
+        </div>
       </div>
       <SiteFooter />
 
-      {/* Animated Cash Out Popup */}
+      {/* Cash Out Popup */}
       <AnimatePresence>
-        {cashoutPopup && (
+        {gameResult === "Cashed Out" && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
@@ -456,15 +397,9 @@ function GhostJumpContent() {
             >
               <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
               <p className="text-xl mb-6">
-                You cashed out for {Number(betAmount) * getMultiplier(currentFloor)} KAS
+                You cashed out for {Number(betAmount) * calculateMultiplier(currentFloor)} KAS
               </p>
-              <Button
-                className="bg-black text-[#49EACB] hover:bg-black/80"
-                onClick={() => {
-                  setCashoutPopup(false);
-                  resetGame();
-                }}
-              >
+              <Button className="bg-black text-[#49EACB] hover:bg-black/80" onClick={resetGame}>
                 Reset Game
               </Button>
             </motion.div>
@@ -472,9 +407,9 @@ function GhostJumpContent() {
         )}
       </AnimatePresence>
 
-      {/* Animated Loss Popup */}
+      {/* Loss Popup */}
       <AnimatePresence>
-        {losePopup && (
+        {gameResult === "Game Over" && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
             initial={{ opacity: 0 }}
@@ -489,13 +424,7 @@ function GhostJumpContent() {
             >
               <h2 className="text-3xl font-bold mb-4">Game Over</h2>
               <p className="text-xl mb-6">You lost your bet.</p>
-              <Button
-                className="bg-black text-red-700 hover:bg-black/80"
-                onClick={() => {
-                  setLosePopup(false);
-                  resetGame();
-                }}
-              >
+              <Button className="bg-black text-red-700 hover:bg-black/80" onClick={resetGame}>
                 Reset Game
               </Button>
             </motion.div>
@@ -506,11 +435,28 @@ function GhostJumpContent() {
   );
 }
 
-// -----------------------------------------------------------------
-// Ghost Jump Controls Component (Bet Controls, etc.)
-// -----------------------------------------------------------------
-function GhostJumpControls({ betAmount, setBetAmount, isPlaying, isWalletConnected, balance, onStartGame, gameResult, cooldown }) {
-  const [errorMessage, setErrorMessage] = useState(null);
+interface GhostJumpControlsProps {
+  betAmount: string;
+  setBetAmount: (amount: string) => void;
+  isPlaying: boolean;
+  isWalletConnected: boolean;
+  balance: number;
+  onStartGame: () => void;
+  gameResult: string | null;
+  cooldown: number;
+}
+
+function GhostJumpControls({
+  betAmount,
+  setBetAmount,
+  isPlaying,
+  isWalletConnected,
+  balance,
+  onStartGame,
+  gameResult,
+  cooldown,
+}: GhostJumpControlsProps) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (errorMessage) {
@@ -519,7 +465,7 @@ function GhostJumpControls({ betAmount, setBetAmount, isPlaying, isWalletConnect
     }
   }, [errorMessage]);
 
-  const showError = (msg) => setErrorMessage(msg);
+  const showError = (msg: string) => setErrorMessage(msg);
 
   const handleStartClick = () => {
     if (!isWalletConnected) {
@@ -568,75 +514,23 @@ function GhostJumpControls({ betAmount, setBetAmount, isPlaying, isWalletConnect
                 />
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => {
-                  let current = Number(betAmount);
-                  if (isNaN(current)) current = MIN_BET;
-                  setBetAmount((current / 2).toString());
-                }}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                ½
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => {
-                  let current = Number(betAmount);
-                  if (isNaN(current)) current = MIN_BET;
-                  setBetAmount((current * 2).toString());
-                }}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                2×
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(MIN_BET.toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Min
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(Math.min(MAX_BET, balance).toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Max
-              </Button>
-            </div>
           </div>
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameResult && (
-              <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  Result: {gameResult}
-                </div>
-              </div>
-            )}
-            {!isPlaying ? (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={handleStartClick}
-                disabled={!isWalletConnected || cooldown > 0}
-              >
-                {!isWalletConnected
-                  ? "Connect Wallet to Play"
-                  : cooldown > 0
-                  ? `Start Game (${cooldown}s)`
-                  : "Start Ghost Jump"}
-              </Button>
-            ) : (
-              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
-                Game in Progress...
-              </Button>
-            )}
-          </motion.div>
+          <Button
+            className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+            onClick={handleStartClick}
+            disabled={!isWalletConnected || isPlaying || cooldown > 0}
+          >
+            {!isWalletConnected
+              ? "Connect Wallet to Play"
+              : cooldown > 0
+              ? `Start Game (${cooldown}s)`
+              : "Start Ghost Jump"}
+          </Button>
+          {gameResult && (
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#49EACB]">Result: {gameResult}</div>
+            </div>
+          )}
         </div>
       </Card>
       <AnimatePresence>
