@@ -68,7 +68,7 @@ const generateTiles = () => {
   return tiles;
 };
 
-// Ghost Jump Game Component
+// Enhanced Ghost Jump Game Component
 function GhostJumpGame({
   tiles,
   currentPosition,
@@ -92,93 +92,122 @@ function GhostJumpGame({
   );
 
   return (
-    <div className="relative h-96 w-full max-w-md mx-auto">
-      {/* Mansion background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg overflow-hidden">
-        {/* Spooky details */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-20">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
+    <div className="relative h-[600px] w-full mx-auto">
+      {/* Enhanced mansion background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-purple-900 rounded-lg overflow-hidden shadow-2xl">
+        {/* Animated spooky details */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-30">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <motion.div
               key={i}
-              className="absolute bg-gray-700 rounded-full"
+              className="absolute bg-purple-500 rounded-full"
               style={{
-                width: `${Math.random() * 10 + 2}px`,
-                height: `${Math.random() * 10 + 2}px`,
+                width: `${Math.random() * 8 + 2}px`,
+                height: `${Math.random() * 8 + 2}px`,
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [0, -20, 0],
+                opacity: [0.3, 0.8, 0.3],
+              }}
+              transition={{
+                duration: Math.random() * 5 + 3,
+                repeat: Infinity,
+                ease: "easeInOut"
               }}
             />
           ))}
         </div>
       </div>
 
-      {/* Tiles */}
-      <div className="relative h-full flex flex-col-reverse">
+      {/* Tiles container */}
+      <div className="relative h-full flex flex-col-reverse justify-end pb-8">
         {visibleTiles.map((tile, idx) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
           const isPast = tile.position < currentPosition;
-          const distanceFromCurrent = currentPosition - tile.position;
 
           return (
             <motion.div
               key={tile.position}
-              className={`w-24 h-16 mx-auto mb-4 relative ${isPast ? "opacity-60" : ""}`}
-              initial={{ y: 50, opacity: 0 }}
+              className={`w-32 h-24 mx-auto mb-8 relative transition-all duration-300 ${
+                isPast ? "opacity-50" : "opacity-100"
+              }`}
+              initial={{ y: 100, opacity: 0 }}
               animate={{ 
                 y: 0,
-                opacity: isPast ? 0.6 : 1,
-                scale: isCurrent ? 1.1 : 1
+                opacity: isPast ? 0.5 : 1,
+                scale: isCurrent ? 1.15 : 1
               }}
               transition={{ duration: 0.5 }}
             >
-              {/* Tile image - alternate between window and regular mansion tile */}
-              <Image
-                src={idx % 3 === 0 ? WINDOW_TILE : MANSION_TILE}
-                alt="Mansion tile"
-                fill
-                className="object-contain"
-              />
-              
-              {/* Jump target tile */}
-              {isActive && !hasLost && !hasWon && (
-                <motion.div
-                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-20 h-12 cursor-pointer z-20"
-                  onClick={onTileClick}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <Image
-                    src={JUMP_TILE}
-                    alt="Jump target"
-                    fill
-                    className="object-contain"
-                  />
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-xs">
-                    {tile.multiplier}x
-                  </div>
-                </motion.div>
+              {/* Current platform */}
+              {isCurrent && (
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-purple-500 rounded-full blur-sm" />
               )}
 
-              {/* Multiplier display */}
-              {!isActive && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-xs">
+              {/* Tile image */}
+              <div className="relative w-full h-full">
+                <Image
+                  src={idx % 3 === 0 ? WINDOW_TILE : MANSION_TILE}
+                  alt="Mansion tile"
+                  fill
+                  className={`object-contain transition-transform duration-300 ${
+                    isCurrent ? "scale-110" : ""
+                  }`}
+                />
+                
+                {/* Multiplier display */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
                   {tile.multiplier}x
                 </div>
+              </div>
+
+              {/* Next tile indicator */}
+              {isActive && !hasLost && !hasWon && (
+                <motion.div
+                  className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-24 h-20 cursor-pointer z-20"
+                  onClick={onTileClick}
+                  whileHover={{ scale: 1.05 }}
+                  animate={{
+                    y: [0, -10, 0],
+                    opacity: [1, 0.8, 1]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={JUMP_TILE}
+                      alt="Jump target"
+                      fill
+                      className="object-contain drop-shadow-[0_0_8px_rgba(73,234,203,0.5)]"
+                    />
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
+                      {tile.multiplier}x
+                    </div>
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           );
         })}
 
-        {/* Ghost character */}
+        {/* Enhanced ghost character */}
         <motion.div
-          className="absolute left-1/2 w-16 h-16 z-10"
+          className="absolute left-1/2 w-24 h-24 z-10"
           style={{
-            bottom: `calc(${(currentPosition - 1) * 20}% + 4rem)`,
+            bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
             x: "-50%",
           }}
           animate={{
-            y: isJumping ? [-20, -60, 0] : isFalling ? [0, -20, -500] : [0, -10, 0],
-            rotate: isFalling ? [0, 10, 45, 90] : 0,
+            y: isJumping ? [-30, -80, 0] : isFalling ? [0, -30, -600] : [0, -15, 0],
+            rotate: isFalling ? [0, 15, 45, 90] : 0,
+            filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
           transition={{
             duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
