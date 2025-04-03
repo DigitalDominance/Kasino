@@ -32,9 +32,8 @@ const HOUSE_EDGE = 0.075; // 7.5% house edge
 // Image assets
 const GHOST_NORMAL = "/ghostkasper.webp";
 const GHOST_JUMPING = "/ghostkasperjumping.webp";
-const MANSION_TILE = "/ghosttile.webp";
-const WINDOW_TILE = "/ghosttile2.webp";
-const JUMP_TILE = "/ghosttile3.webp";
+const SPACE_TILE = "/placeholder.svg"; // Placeholder for space platform
+const JUMP_TILE = "/placeholder.svg"; // Placeholder for jump target
 
 // Calculate win probability with house edge
 const getWinProbability = (currentMultiplier: number) => {
@@ -68,8 +67,8 @@ const generateTiles = () => {
   return tiles;
 };
 
-// Enhanced Ghost Jump Game Component
-function GhostJumpGame({
+// Enhanced Space Jump Game Component
+function SpaceJumpGame({
   tiles,
   currentPosition,
   onTileClick,
@@ -93,22 +92,21 @@ function GhostJumpGame({
 
   return (
     <div className="relative h-[600px] w-full mx-auto">
-      {/* Enhanced mansion background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-purple-900 rounded-lg overflow-hidden shadow-2xl">
-        {/* Animated spooky details */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-30">
-          {Array.from({ length: 30 }).map((_, i) => (
+      {/* Space background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-blue-900 to-purple-900 rounded-lg overflow-hidden shadow-2xl">
+        {/* Stars */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-80">
+          {Array.from({ length: 100 }).map((_, i) => (
             <motion.div
               key={i}
-              className="absolute bg-purple-500 rounded-full"
+              className="absolute bg-white rounded-full"
               style={{
-                width: `${Math.random() * 8 + 2}px`,
-                height: `${Math.random() * 8 + 2}px`,
+                width: `${Math.random() * 3 + 1}px`,
+                height: `${Math.random() * 3 + 1}px`,
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
               }}
               animate={{
-                y: [0, -20, 0],
                 opacity: [0.3, 0.8, 0.3],
               }}
               transition={{
@@ -118,6 +116,16 @@ function GhostJumpGame({
               }}
             />
           ))}
+        </div>
+
+        {/* Moon in background */}
+        <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-32 h-32 z-0">
+          <Image
+            src="/placeholder.svg" // Moon placeholder
+            alt="Moon"
+            fill
+            className="object-contain opacity-80"
+          />
         </div>
       </div>
 
@@ -142,16 +150,16 @@ function GhostJumpGame({
               }}
               transition={{ duration: 0.5 }}
             >
-              {/* Current platform */}
+              {/* Current platform glow */}
               {isCurrent && (
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-purple-500 rounded-full blur-sm" />
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-blue-400 rounded-full blur-sm" />
               )}
 
               {/* Tile image */}
               <div className="relative w-full h-full">
                 <Image
-                  src={idx % 3 === 0 ? WINDOW_TILE : MANSION_TILE}
-                  alt="Mansion tile"
+                  src={SPACE_TILE}
+                  alt="Space platform"
                   fill
                   className={`object-contain transition-transform duration-300 ${
                     isCurrent ? "scale-110" : ""
@@ -205,7 +213,7 @@ function GhostJumpGame({
             x: "-50%",
           }}
           animate={{
-            y: isJumping ? [-30, -80, 0] : isFalling ? [0, -30, -600] : [0, -15, 0],
+            y: isJumping ? [-30, -80, 0] : isFalling ? [0, 300, 600] : [0, -15, 0],
             rotate: isFalling ? [0, 15, 45, 90] : 0,
             filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
@@ -465,7 +473,7 @@ function GhostJumpContent() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Ghost Jump</h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Space Jump</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
                   Reset
                 </Button>
@@ -473,7 +481,7 @@ function GhostJumpContent() {
               
               {/* Pregame Screen */}
               {pregame ? (
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-purple-900 bg-opacity-80">
+                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-blue-900 bg-opacity-80">
                   {decorativeGhosts.map((ghost, index) => (
                     <motion.div
                       key={index}
@@ -502,7 +510,7 @@ function GhostJumpContent() {
                         className="object-contain"
                       />
                     </motion.div>
-                  ))}
+                  )}
                   
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
@@ -511,7 +519,7 @@ function GhostJumpContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      GHOST JUMP
+                      SPACE JUMP
                     </motion.h1>
                     <motion.p
                       className="text-xl tracking-wider mb-4"
@@ -519,7 +527,7 @@ function GhostJumpContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#B19CD9" }}
                     >
-                      CLIMB THE HAUNTED MANSION
+                      CLIMB THROUGH SPACE
                     </motion.p>
                     <div className="mt-20">
                       <Image src={GHOST_NORMAL} alt="Ghost Icon" width={96} height={96} />
@@ -535,7 +543,7 @@ function GhostJumpContent() {
                         onClick={handleStartGame}
                         disabled={!isConnected || cooldown > 0}
                       >
-                        {!isConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Ghost Jump"}
+                        {!isConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Space Jump"}
                       </Button>
                     </motion.div>
                   </div>
@@ -543,7 +551,7 @@ function GhostJumpContent() {
               ) : (
                 // Game Board
                 <div className="w-full">
-                  <GhostJumpGame
+                  <SpaceJumpGame
                     tiles={tiles}
                     currentPosition={currentPosition}
                     onTileClick={handleJump}
@@ -603,19 +611,19 @@ function GhostJumpContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Ghost Jump
+            Space Jump
           </motion.h2>
-          <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-gray-900 to-purple-900 rounded-lg overflow-hidden">
+          <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-gray-900 to-blue-900 rounded-lg overflow-hidden">
             <Image
               src={GHOST_JUMPING}
-              alt="Ghost Jump Promo"
+              alt="Space Jump Promo"
               fill
               className="object-contain"
             />
           </div>
           <p className="text-sm text-white mb-4">
-            Climb the haunted mansion one floor at a time. Each successful jump increases your payout,
-            but one wrong step sends you falling to the bottom!
+            Jump through space platforms one at a time. Each successful jump increases your payout,
+            but one wrong step sends you falling into the void!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -693,15 +701,15 @@ function GhostJumpContent() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-purple-700 p-6 rounded-lg shadow-2xl text-center"
+              className="bg-blue-700 p-6 rounded-lg shadow-2xl text-center"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <h2 className="text-3xl font-bold mb-4">Game Over</h2>
-              <p className="text-xl mb-6">The ghost fell down the mansion!</p>
+              <p className="text-xl mb-6">The ghost fell into space!</p>
               <Button
-                className="bg-black text-purple-400 hover:bg-black/80"
+                className="bg-black text-blue-400 hover:bg-black/80"
                 onClick={() => {
                   setLosePopup(false);
                   resetGame();
@@ -860,7 +868,7 @@ function GhostJumpControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Start Game (${cooldown}s)`
-                  : "Start Ghost Jump"}
+                  : "Start Space Jump"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
@@ -877,7 +885,7 @@ function GhostJumpControls({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-purple-700 to-black text-white px-4 py-2 rounded shadow-lg"
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-blue-700 to-black text-white px-4 py-2 rounded shadow-lg"
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
