@@ -32,8 +32,8 @@ const HOUSE_EDGE = 0.075; // 7.5% house edge
 // Image assets
 const GHOST_NORMAL = "/ghostkasper.webp";
 const GHOST_JUMPING = "/ghostkasperjumping.webp";
-const MANSION_TILE = "/placeholder.svg";
-const WINDOW_TILE = "/placeholder2.svg";
+const MANSION_TILE = "/ghosttile.webp";
+const WINDOW_TILE = "/ghosttile2.webp";
 const JUMP_TILE = "/placeholder3.svg";
 
 // Calculate win probability with house edge
