@@ -16,7 +16,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
-// Import XPDisplay to integrate the XP level display into the nav
 import { XPDisplay } from "@/app/page";
 
 // ---------------------------------------------------------
@@ -27,170 +26,56 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-// Fixed tower settings
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const NUM_COLS = 6;
-const TOTAL_ROWS = 10; // fixed tower height (floors)
-  
-// Exponential multiplier: multiplier = 1.1^(# finished floors)
-const getMultiplier = (floors: number) =>
-  Number(Math.pow(1.1, floors).toFixed(2));
+const FLOOR_HEIGHT = 80; // pixels per floor (used for ghost’s vertical position)
 
-// Updated image asset paths
-const PLACEHOLDER_IMG = "/kaspatowerclimbbrick.png";
-const WIN_IMG = "/kaspatowerclimbwin.png";
-const LOSE_IMG = "/kaspatowerclimbloss.png";
+// Multiplier: 1.1^(floor), capped at 50×.
+const getMultiplier = (floor: number) => {
+  const mult = Number(Math.pow(1.1, floor).toFixed(2));
+  return mult > 50 ? 50 : mult;
+};
 
-// ---------------------------------------------------------
-// Row Pattern Generator for a given floor
-// ---------------------------------------------------------
-function generateRowPatternForFloor(floor: number) {
-  const maxWinning = NUM_COLS - 1; // best chance on bottom floor
-  const minWinning = 2; // hardest at the top
-  const winningCount = Math.round(
-    maxWinning - ((maxWinning - minWinning) * (floor - 1)) / (TOTAL_ROWS - 1)
-  );
-  const pattern = Array(NUM_COLS).fill(false);
-  const indices = Array.from({ length: NUM_COLS }, (_, i) => i);
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  for (let i = 0; i < winningCount; i++) {
-    pattern[indices[i]] = true;
-  }
-  return pattern;
-}
-
-// ---------------------------------------------------------
-// Tower Climb Game Component
-// ---------------------------------------------------------
-// We now include an optional "revealedIndices" array to track per-cube flipping.
-interface TowerRow {
-  pattern: boolean[]; // true = winning; false = losing
-  revealed: boolean;
-  revealedIndices?: boolean[];
-}
-
-interface TowerClimbGameProps {
-  finishedRows: TowerRow[];
-  activeRow: TowerRow | null;
-  lockedRows: TowerRow[];
-  onCubeClick: (cubeIndex: number) => void;
-  flipBoard: boolean;
-}
-
-function TowerClimbGame({
-  finishedRows,
-  activeRow,
-  lockedRows,
-  onCubeClick,
-  flipBoard,
-}: TowerClimbGameProps) {
-  const allRows = [...finishedRows];
-  if (activeRow) allRows.push(activeRow);
-  allRows.push(...lockedRows);
-
-  return (
-    <div className="flex flex-col-reverse gap-2">
-      {allRows.map((row, rowIndex) => {
-        let rowType: "finished" | "active" | "locked";
-        if (rowIndex < finishedRows.length) {
-          rowType = "finished";
-        } else if (activeRow && rowIndex === finishedRows.length) {
-          rowType = "active";
-        } else {
-          rowType = "locked";
-        }
-        const opacityClass = rowType === "locked" ? "opacity-40" : "opacity-100";
-        return (
-          <div
-            key={rowIndex}
-            className={`flex justify-center gap-2 transition-opacity duration-500 ${opacityClass}`}
-          >
-            {row.pattern.map((cell, colIndex) => {
-              const isRevealed =
-                row.revealed || (row.revealedIndices && row.revealedIndices[colIndex]);
-              const imgSrc = isRevealed ? (cell ? WIN_IMG : LOSE_IMG) : PLACEHOLDER_IMG;
-              return (
-                <motion.div
-                  key={colIndex}
-                  className="w-16 h-16 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
-                  onClick={() => {
-                    if (rowType === "active" && !isRevealed) {
-                      onCubeClick(colIndex);
-                    }
-                  }}
-                  animate={{ rotateY: isRevealed || flipBoard ? 180 : 0 }}
-                  transition={{ duration: 0.8 }}
-                >
-                  <Image src={imgSrc} alt="cube" width={64} height={64} />
-                </motion.div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+// Win chance for each jump is calculated to give the house a 7.5% edge.
+// For the next floor, chance = 0.925 / (current multiplier)
+const getWinChance = (floor: number) => {
+  const multiplier = getMultiplier(floor);
+  return 0.925 / multiplier;
+};
 
 // ---------------------------------------------------------
 // Main Page Component
 // ---------------------------------------------------------
-export default function KaspaTowerClimbPage() {
-  return <TowerClimbContent />;
+export default function GhostJumpGamePage() {
+  return <GhostJumpContent />;
 }
 
-function TowerClimbContent() {
+function GhostJumpContent() {
   const { isConnected, balance } = useWallet();
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
-  const [finishedRows, setFinishedRows] = useState<TowerRow[]>([]);
-  const [activeRow, setActiveRow] = useState<TowerRow | null>(null);
-  const [lockedRows, setLockedRows] = useState<TowerRow[]>([]);
+  const [currentFloor, setCurrentFloor] = useState(0); // ground floor (0)
+  const [isJumping, setIsJumping] = useState(false);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [cashoutPopup, setCashoutPopup] = useState(false);
   const [losePopup, setLosePopup] = useState(false);
-  const [flipBoard, setFlipBoard] = useState(false);
-  const [cashoutClicked, setCashoutClicked] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Generate 50 decorative logos with random positions
-  const decorativeLogos = useMemo(() => {
-    return Array.from({ length: 50 }).map(() => ({
-      top: Math.random() * 80 + "%",
-      left: Math.random() * 80 + "%",
-    }));
-  }, []);
-
-  // Initialize tower board with fixed TOTAL_ROWS floors.
-  const initTower = () => {
-    setFinishedRows([]);
-    setFlipBoard(false);
-    setCashoutClicked(false);
-    const newActive: TowerRow = {
-      pattern: generateRowPatternForFloor(1),
-      revealed: false,
-      revealedIndices: Array(NUM_COLS).fill(false),
-    };
-    setActiveRow(newActive);
-    const locked: TowerRow[] = [];
-    for (let floor = 2; floor <= TOTAL_ROWS; floor++) {
-      locked.push({ pattern: generateRowPatternForFloor(floor), revealed: false });
-    }
-    setLockedRows(locked);
+  // Reset game state for a new game.
+  const initGame = () => {
+    setCurrentFloor(0);
+    setIsJumping(false);
+    setGameResult(null);
   };
 
-  // Start game: deduct bet and notify backend.
+  // Start game: deduct bet, send deposit tx and start on the backend.
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -224,7 +109,7 @@ function TowerClimbContent() {
       setDepositTxid(txidString);
 
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "Kaspa Tower Climb",
+        gameName: "Ghost Jump",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
@@ -236,68 +121,57 @@ function TowerClimbContent() {
         alert("Failed to start game on backend");
         return;
       }
-      initTower();
+      initGame();
       setIsPlaying(true);
       setPregame(false);
       setGameResult(null);
     } catch (error: any) {
-      console.error("Error starting Kaspa Tower Climb:", error);
+      console.error("Error starting Ghost Jump:", error);
       alert("Error starting game: " + error.message);
     }
   };
 
-  // Handle cube click on the active row.
-  const handleCubeClick = (cubeIndex: number) => {
-    if (!activeRow || activeRow.revealed) return;
-    // First, update the clicked cube only.
-    const newRevealedIndices = activeRow.revealedIndices ? [...activeRow.revealedIndices] : Array(NUM_COLS).fill(false);
-    newRevealedIndices[cubeIndex] = true;
-    setActiveRow({ ...activeRow, revealedIndices: newRevealedIndices });
-
-    // After 1 second, fully reveal the active row.
+  // Handle the ghost’s jump attempt.
+  const handleJump = () => {
+    if (!isPlaying || isJumping) return;
+    setIsJumping(true);
+    // Show jumping animation using ghostkasperjumping.webp.
     setTimeout(() => {
-      const fullyRevealedRow: TowerRow = {
-        ...activeRow,
-        revealed: true,
-        revealedIndices: Array(NUM_COLS).fill(true),
-      };
-      setActiveRow(fullyRevealedRow);
-      const outcome = activeRow.pattern[cubeIndex];
-      if (outcome) {
-        setTimeout(() => {
-          const newFinished = [...finishedRows, fullyRevealedRow];
-          setFinishedRows(newFinished);
-          if (newFinished.length < TOTAL_ROWS) {
-            const nextRow = lockedRows[0];
-            setActiveRow({ ...nextRow, revealed: false, revealedIndices: Array(NUM_COLS).fill(false) });
-            setLockedRows(prev => prev.slice(1));
-          } else {
-            handleCashOut();
-          }
-        }, 500);
-      } else {
-        setLockedRows(prev => prev.map(row => ({ ...row, revealed: true })));
-        setFlipBoard(true);
-        setGameResult("Game Over");
-        if (gameId) {
-          axios.post(`${apiUrl}/game/end`, {
-            gameId,
-            result: "lose",
-            winAmount: 0,
-          });
+      // Calculate win chance for the next floor.
+      const winChance = getWinChance(currentFloor + 1);
+      if (Math.random() < winChance) {
+        // Successful jump: ghost climbs to the next floor.
+        setCurrentFloor((prev) => prev + 1);
+        setIsJumping(false);
+        // If maximum multiplier reached, cash out automatically.
+        if (getMultiplier(currentFloor + 1) === 50) {
+          handleCashOut();
         }
-        setIsPlaying(false);
-        setLosePopup(true);
+      } else {
+        // Jump failed: animate ghost falling all the way down.
+        setGameResult("Game Over");
+        setTimeout(() => {
+          setCurrentFloor(0);
+          setIsPlaying(false);
+          setLosePopup(true);
+          // Inform backend of a loss.
+          if (gameId) {
+            axios.post(`${apiUrl}/game/end`, {
+              gameId,
+              result: "lose",
+              winAmount: 0,
+            });
+          }
+        }, 800);
       }
     }, 1000);
   };
 
-  // Handle cash out immediately on click.
+  // Handle cashing out manually.
   const handleCashOut = async () => {
-    if (cashoutClicked) return;
-    setCashoutClicked(true);
+    if (!isPlaying) return;
     const bet = Number(betAmount);
-    const multiplier = getMultiplier(finishedRows.length);
+    const multiplier = getMultiplier(currentFloor);
     const payout = bet * multiplier;
     setGameResult("Cashed Out");
     setIsPlaying(false);
@@ -319,14 +193,18 @@ function TowerClimbContent() {
     setGameId(null);
     setDepositTxid(null);
     setPregame(true);
+    setCurrentFloor(0);
   };
 
   useEffect(() => {
     if (cooldown > 0) {
-      const interval = setInterval(() => setCooldown(c => c - 1), 1000);
+      const interval = setInterval(() => setCooldown((c) => c - 1), 1000);
       return () => clearInterval(interval);
     }
   }, [cooldown]);
+
+  // Calculate ghost’s vertical position.
+  const ghostBottom = currentFloor * FLOOR_HEIGHT;
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
@@ -344,7 +222,6 @@ function TowerClimbContent() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* XPDisplay integrated into the nav */}
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -376,30 +253,27 @@ function TowerClimbContent() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Kaspa Tower Climb</h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Ghost Jump</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
                   Reset
                 </Button>
               </div>
-              {/* Pregame Screen (fills entire container) */}
               {pregame ? (
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225] bg-opacity-80">
-                  {decorativeLogos.map((pos, index) => (
-                    <motion.div
-                      key={index}
-                      className="absolute"
-                      style={{ top: pos.top, left: pos.left, opacity: 0.5 }}
-                      whileHover={{ scale: 1.2 }}
-                    >
-                      <Image
-                        src="/kaspagameicon.png"
-                        alt="Kaspa Logo"
-                        width={30}
-                        height={30}
-                        style={{ border: "2px solid #004d00", borderRadius: "50%" }}
-                      />
-                    </motion.div>
-                  ))}
+                // Pregame Screen with spooky mansion background.
+                <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-gray-900 to-black">
+                  <Image
+                    src="/placeholder.svg"
+                    alt="Spooky Mansion"
+                    fill
+                    className="object-cover opacity-40"
+                  />
+                  <Image
+                    src="/placeholder2.svg"
+                    alt="Mansion Window"
+                    width={200}
+                    height={200}
+                    className="absolute top-10 right-10 opacity-60"
+                  />
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
                       className="text-5xl font-bold mb-4"
@@ -407,7 +281,7 @@ function TowerClimbContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      KASPA TOWER CLIMB
+                      GHOST JUMP
                     </motion.h1>
                     <motion.p
                       className="text-xl tracking-wider mb-4"
@@ -415,10 +289,10 @@ function TowerClimbContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#00FFFF" }}
                     >
-                      CLIMB TO WIN BIG
+                      Dare to climb the haunted mansion?
                     </motion.p>
                     <div className="mt-20">
-                      <Image src="/kaspagameicon.png" alt="Kaspa Icon" width={96} height={96} />
+                      <Image src="/ghostgameicon.png" alt="Ghost Icon" width={96} height={96} />
                     </div>
                     <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
                       <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
@@ -428,34 +302,66 @@ function TowerClimbContent() {
                   </div>
                 </div>
               ) : (
-                // Game Board
-                <div className="w-full max-w-md mx-auto">
-                  <TowerClimbGame
-                    finishedRows={finishedRows}
-                    activeRow={activeRow}
-                    lockedRows={lockedRows}
-                    onCubeClick={handleCubeClick}
-                    flipBoard={flipBoard}
+                // Game Board: Haunted mansion tower with the ghost.
+                <div className="relative w-full max-w-md mx-auto h-[600px] bg-black overflow-hidden">
+                  {/* Mansion wall background */}
+                  <Image
+                    src="/placeholder.svg"
+                    alt="Mansion Wall"
+                    fill
+                    className="object-cover opacity-30"
                   />
+                  {/* Platform for the next floor */}
+                  <div className="absolute left-0 right-0" style={{ bottom: ghostBottom + FLOOR_HEIGHT }}>
+                    <Image src="/placeholder3.svg" alt="Platform" width={300} height={50} className="mx-auto" />
+                  </div>
+                  {/* Ghost character */}
+                  <motion.div
+                    className="absolute left-1/2 transform -translate-x-1/2"
+                    animate={{ bottom: ghostBottom }}
+                    transition={{ duration: isJumping ? 1 : 0.5, ease: "easeInOut" }}
+                  >
+                    <Image
+                      src={isJumping ? "/ghostkasperjumping.webp" : "/ghostkasper.webp"}
+                      alt="Ghost Kasper"
+                      width={64}
+                      height={64}
+                    />
+                  </motion.div>
                 </div>
               )}
-              {isPlaying && finishedRows.length > 0 && (
-                <motion.div className="mt-4">
+              {isPlaying && !pregame && (
+                <div className="mt-4 flex space-x-4">
                   <Button
-                    onClick={handleCashOut}
-                    disabled={cashoutClicked}
+                    onClick={handleJump}
+                    disabled={isJumping}
                     className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
                   >
-                    Cash Out (Payout: {Number(betAmount) * getMultiplier(finishedRows.length)} KAS)
+                    Jump (Floor: {currentFloor + 1})
                   </Button>
+                  {currentFloor > 0 && (
+                    <Button
+                      onClick={handleCashOut}
+                      className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                    >
+                      Cash Out (Payout: {Number(betAmount) * getMultiplier(currentFloor)} KAS)
+                    </Button>
+                  )}
+                </div>
+              )}
+              {!isPlaying && !pregame && gameResult && (
+                <motion.div className="mt-4">
+                  <div className="text-2xl font-bold text-[#49EACB]">
+                    {gameResult}
+                  </div>
                 </motion.div>
               )}
             </div>
           </Card>
 
-          {/* Right Column: Bet Controls, LiveChat & LiveWins */}
+          {/* Right Column: Bet Controls, Live Chat & Live Wins */}
           <div className="space-y-6">
-            <TowerClimbControls
+            <GhostJumpControls
               betAmount={betAmount}
               setBetAmount={setBetAmount}
               isPlaying={isPlaying}
@@ -484,12 +390,12 @@ function TowerClimbContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Kaspa Tower Climb
+            Ghost Jump
           </motion.h2>
-          <img src="/towerpromo.png" alt="Tower Climb Promo" className="w-full h-auto mb-4" />
+          <img src="/ghostjumppromo.png" alt="Ghost Jump Promo" className="w-full h-auto mb-4" />
           <p className="text-sm text-white mb-4">
-            Climb the tower one floor at a time. Each successful floor increases your payout,
-            but one wrong move ends the climb!
+            Leap through the haunted floors of the mansion. Each successful jump increases your multiplier,
+            but one misstep sends you plummeting!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
@@ -541,7 +447,7 @@ function TowerClimbContent() {
             >
               <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
               <p className="text-xl mb-6">
-                You cashed out for {Number(betAmount) * getMultiplier(finishedRows.length)} KAS
+                You cashed out for {Number(betAmount) * getMultiplier(currentFloor)} KAS
               </p>
               <Button
                 className="bg-black text-[#49EACB] hover:bg-black/80"
@@ -573,7 +479,7 @@ function TowerClimbContent() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <h2 className="text-3xl font-bold mb-4">Game Over</h2>
-              <p className="text-xl mb-6">You lost your bet.</p>
+              <p className="text-xl mb-6">You fell through the haunted mansion.</p>
               <Button
                 className="bg-black text-red-700 hover:bg-black/80"
                 onClick={() => {
@@ -592,9 +498,9 @@ function TowerClimbContent() {
 }
 
 // ---------------------------------------------------------
-// Tower Climb Controls Component
+// Ghost Jump Controls Component
 // ---------------------------------------------------------
-interface TowerClimbControlsProps {
+interface GhostJumpControlsProps {
   betAmount: string;
   setBetAmount: (amount: string) => void;
   isPlaying: boolean;
@@ -605,7 +511,7 @@ interface TowerClimbControlsProps {
   cooldown: number;
 }
 
-function TowerClimbControls({
+function GhostJumpControls({
   betAmount,
   setBetAmount,
   isPlaying,
@@ -614,7 +520,7 @@ function TowerClimbControls({
   onStartGame,
   gameResult,
   cooldown,
-}: TowerClimbControlsProps) {
+}: GhostJumpControlsProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -623,13 +529,6 @@ function TowerClimbControls({
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
-
-  useEffect(() => {
-    if (cooldown > 0) {
-      const intervalId = setInterval(() => setCooldown((prev) => prev - 1), 1000);
-      return () => clearInterval(intervalId);
-    }
-  }, [cooldown]);
 
   const showError = (msg: string) => setErrorMessage(msg);
 
@@ -741,7 +640,7 @@ function TowerClimbControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Start Game (${cooldown}s)`
-                  : "Start Kaspa Tower Climb"}
+                  : "Start Ghost Jump"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
