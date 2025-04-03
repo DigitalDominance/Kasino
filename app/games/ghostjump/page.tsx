@@ -34,7 +34,7 @@ const GHOST_NORMAL = "/ghostkasper.webp";
 const GHOST_JUMPING = "/ghostkasperjumping.webp";
 const MANSION_TILE = "/ghosttile.webp";
 const WINDOW_TILE = "/ghosttile2.webp";
-const JUMP_TILE = "/placeholder3.svg";
+const JUMP_TILE = "/ghosttile3.webp";
 
 // Calculate win probability with house edge
 const getWinProbability = (currentMultiplier: number) => {
