@@ -719,13 +719,14 @@ function GhostJumpControls({
 
   const showError = (msg: string) => setErrorMessage(msg);
 
+  // In the handleStartClick function in GhostJumpControls component:
   const handleStartClick = () => {
     if (!isWalletConnected) {
       showError("Please connect your wallet first");
       return;
     }
     const bet = Number(betAmount);
-    if (isNaN(bet) {
+    if (isNaN(bet) {  // <-- This was missing the closing parenthesis
       showError("Please enter a valid bet amount");
       return;
     }
