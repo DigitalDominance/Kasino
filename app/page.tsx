@@ -845,8 +845,9 @@ export function XPDisplay() {
   const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
+    // CHANGED: inline-flex + items-center to ensure the gem display is horizontally next to the circle
     <div
-      className="relative inline-block"
+      className="relative inline-flex items-center"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -875,10 +876,10 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display - grey rectangle with gem count and gem image */}
+      {/* Gem Display - grey rectangle with gem count and larger gem image */}
       <div className="flex items-center bg-gray-700 text-white px-2 py-1 rounded ml-2">
         <span className="mr-1">{userData.gems}</span>
-        <Image src="/gem.webp" alt="Gem" width={20} height={20} />
+        <Image src="/gem.webp" alt="Gem" width={28} height={28} />
       </div>
 
       {/* Hover Popup (larger) */}
