@@ -903,11 +903,11 @@ export function XPDisplay() {
       <AnimatePresence>
         {gemGain !== null && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 30 }}
-            exit={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: -30 }}
+            exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-[60px]`}
+            className={`${smallPopupClass} left-[-60px] top-full mt-1`}
           >
             +{gemGain} GEM
           </motion.div>
@@ -958,7 +958,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-[-10px]`}
+            className={`${smallPopupClass} left-[-60px] top-1/2 transform -translate-y-1/2`}
           >
             +{xpGain} XP
           </motion.div>
@@ -973,7 +973,7 @@ export function XPDisplay() {
             animate={{ opacity: 1, x: -30, y: -10 }}
             exit={{ opacity: 0, x: -50, y: -10 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-[-60px]`}
+            className={`${smallPopupClass} left-[-60px] top-0`}
           >
             Leveled Up!
           </motion.div>
