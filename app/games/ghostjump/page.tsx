@@ -44,23 +44,7 @@ const getWinProbability = (currentMultiplier: number) => {
 // Generate a sequence of tiles with increasing difficulty
 const generateTiles = () => {
   const tiles = [];
-  let currentMultiplier = 1.0; // Start at 1.0x
-  
-  // First tile is always 1.0x (starting position)
-  tiles.push({
-    multiplier: 1.0,
-    isWin: true,
-    position: 1
-  });
-  
-  // Second tile is 1.2x
-  tiles.push({
-    multiplier: 1.2,
-    isWin: Math.random() < getWinProbability(1.2),
-    position: 2
-  });
-  
-  currentMultiplier = 1.5; // Next target after 1.2x
+  let currentMultiplier = 1.2;
   
   while (currentMultiplier <= MAX_MULTIPLIER) {
     const winProbability = getWinProbability(currentMultiplier);
@@ -101,33 +85,13 @@ function SpaceJumpGame({
   hasLost: boolean;
   hasWon: boolean;
 }) {
-  const [offset, setOffset] = useState(0);
-  const [ghostPosition, setGhostPosition] = useState(0);
   const visibleTiles = tiles.slice(
     Math.max(0, currentPosition - 2),
     Math.min(tiles.length, currentPosition + 3)
   );
 
-  useEffect(() => {
-    if (isJumping) {
-      // Animate ghost jumping up
-      setGhostPosition(-200); // Much higher jump
-      const timer = setTimeout(() => {
-        setGhostPosition(0);
-      }, 800); // Slower animation
-      return () => clearTimeout(timer);
-    }
-  }, [isJumping]);
-
-  useEffect(() => {
-    if (!isJumping && currentPosition > 1 && !hasLost && !hasWon) {
-      // After jump completes, move camera up to center the ghost
-      setOffset(prev => prev + 80); // Adjusted camera movement
-    }
-  }, [isJumping, currentPosition, hasLost, hasWon]);
-
   return (
-    <div className="relative h-[600px] w-full mx-auto overflow-hidden">
+    <div className="relative h-[600px] w-full mx-auto">
       {/* Space background */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900 rounded-lg overflow-hidden shadow-2xl">
         {/* Stars */}
@@ -167,7 +131,7 @@ function SpaceJumpGame({
       </div>
 
       {/* Platforms container */}
-      <div className="relative h-full flex flex-col justify-start pt-8" style={{ transform: `translateY(${offset}px)` }}>
+      <div className="relative h-full flex flex-col-reverse justify-end pb-8">
         {visibleTiles.map((tile, idx) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -246,19 +210,18 @@ function SpaceJumpGame({
         <motion.div
           className="absolute left-1/2 w-24 h-24 z-10"
           style={{
-            top: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
+            bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
             x: "-50%",
-            transform: `translateY(${ghostPosition}px)`
           }}
           animate={{
-            y: isFalling ? [0, 200, 600] : [0, -15, 0],
+            y: isJumping ? [-30, -80, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
             rotate: isFalling ? [0, 15, 45, 90] : 0,
             filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
           transition={{
-            duration: isFalling ? 1.5 : 2,
-            repeat: isFalling ? 0 : Infinity,
-            ease: isFalling ? "easeIn" : "easeInOut",
+            duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
+            repeat: isJumping || isFalling ? 0 : Infinity,
+            ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
           }}
         >
           <Image
@@ -360,7 +323,7 @@ function SpaceJumpContent() {
       setDepositTxid(txidString);
 
       const startRes = await axios.post(`${apiUrl}/game/start`, {
-        gameName: "Space Jump",
+        gameName: "Ghost Jump",
         uniqueHash,
         walletAddress: currentWalletAddress,
         betAmount: bet,
@@ -379,7 +342,7 @@ function SpaceJumpContent() {
       setPregame(false);
       setGameResult(null);
     } catch (error: any) {
-      console.error("Error starting Space Jump:", error);
+      console.error("Error starting Ghost Jump:", error);
       alert("Error starting game: " + error.message);
     }
   };
@@ -424,7 +387,7 @@ function SpaceJumpContent() {
           setLosePopup(true);
         }, 1500);
       }
-    }, 1000); // Jump duration
+    }, 800);
   };
 
   // Handle cash out
@@ -511,7 +474,7 @@ function SpaceJumpContent() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Space Jump</h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Ghost Jump</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
                   Reset
                 </Button>
@@ -557,7 +520,7 @@ function SpaceJumpContent() {
                       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       style={{ color: "#49EACB" }}
                     >
-                      SPACE JUMP
+                      Ghost JUMP
                     </motion.h1>
                     <motion.p
                       className="text-xl tracking-wider mb-4"
@@ -581,7 +544,7 @@ function SpaceJumpContent() {
                         onClick={handleStartGame}
                         disabled={!isConnected || cooldown > 0}
                       >
-                        {!isConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Space Jump"}
+                        {!isConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Ghost Jump"}
                       </Button>
                     </motion.div>
                   </div>
@@ -649,12 +612,12 @@ function SpaceJumpContent() {
               backgroundSize: "200% 200%",
             }}
           >
-            Space Jump
+            Ghost Jump
           </motion.h2>
           <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-gray-900 to-blue-900 rounded-lg overflow-hidden">
             <Image
               src={GHOST_JUMPING}
-              alt="Space Jump Promo"
+              alt="Ghost Jump Promo"
               fill
               className="object-contain"
             />
@@ -906,7 +869,7 @@ function SpaceJumpControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Start Game (${cooldown}s)`
-                  : "Start Space Jump"}
+                  : "Start Ghost Jump"}
               </Button>
             ) : (
               <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" disabled>
