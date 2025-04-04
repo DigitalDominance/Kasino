@@ -452,7 +452,7 @@ function MainPageContent() {
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -547,7 +547,7 @@ function MainPageContent() {
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                       alt="KAS"
                                       width={16}
                                       height={16}
@@ -899,53 +899,17 @@ export function XPDisplay() {
         <Image src="/gem.webp" alt="Gem" width={28} height={28} />
       </div>
 
-      {/* Gem Gain Popup */}
+      {/* Gem Gain Popup - now stacked vertically (above XP gain) */}
       <AnimatePresence>
         {gemGain !== null && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 30 }}
-            exit={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: -30 }}
+            exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} right-[-60px] top-1/2 transform -translate-y-1/2`}
+            className={`${smallPopupClass} left-[-60px] top-1/2 transform -translate-y-[150%]`}
           >
             +{gemGain} GEM
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Hover Popup (larger) */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
-            className={`${hoverPopupClass} top-0 right-full mr-2`}
-          >
-            {displayLevel < 100 ? (
-              <>
-                <div className="text-teal-300 mb-1">
-                  XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
-                </div>
-                <div className="flex justify-between mb-1">
-                  <span>{xpProgress.toFixed(0)} XP</span>
-                  <span>{xpNeeded.toFixed(0)} XP</span>
-                </div>
-                <div className="w-full bg-gray-700 rounded h-1">
-                  <div
-                    style={{ width: `${progressPercent}%` }}
-                    className="bg-teal-500 h-1 rounded"
-                  ></div>
-                </div>
-                <div className="mt-1 text-center">
-                  {progressPercent.toFixed(1)}% to next level
-                </div>
-              </>
-            ) : (
-              <div className="text-center">Max Level Reached!</div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
