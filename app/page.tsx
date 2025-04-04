@@ -909,7 +909,7 @@ export function XPDisplay() {
             transition={{ duration: 0.5 }}
             className={`${smallPopupClass} left-[-60px] top-full mt-1`}
           >
-            +{gemGain} GEM
+            {`+${gemGain} ${gemGain === 1 ? "GEM" : "GEMS"}`}
           </motion.div>
         )}
       </AnimatePresence>
