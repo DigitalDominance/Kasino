@@ -44,7 +44,23 @@ const getWinProbability = (currentMultiplier: number) => {
 // Generate a sequence of tiles with increasing difficulty
 const generateTiles = () => {
   const tiles = [];
-  let currentMultiplier = 1.2;
+  let currentMultiplier = 1.0; // Start at 1.0x
+  
+  // First tile is always 1.0x (starting position)
+  tiles.push({
+    multiplier: 1.0,
+    isWin: true,
+    position: 1
+  });
+  
+  // Second tile is 1.2x
+  tiles.push({
+    multiplier: 1.2,
+    isWin: Math.random() < getWinProbability(1.2),
+    position: 2
+  });
+  
+  currentMultiplier = 1.5; // Next target after 1.2x
   
   while (currentMultiplier <= MAX_MULTIPLIER) {
     const winProbability = getWinProbability(currentMultiplier);
@@ -95,10 +111,10 @@ function SpaceJumpGame({
   useEffect(() => {
     if (isJumping) {
       // Animate ghost jumping up
-      setGhostPosition(-100);
+      setGhostPosition(-120); // Higher jump
       const timer = setTimeout(() => {
         setGhostPosition(0);
-      }, 400);
+      }, 600); // Slower animation (600ms instead of 400ms)
       return () => clearTimeout(timer);
     }
   }, [isJumping]);
@@ -412,7 +428,7 @@ function SpaceJumpContent() {
           setLosePopup(true);
         }, 1500);
       }
-    }, 800);
+    }, 1000); // Increased jump duration to 1000ms (1 second)
   };
 
   // Handle cash out
