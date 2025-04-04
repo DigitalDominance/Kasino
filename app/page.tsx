@@ -697,7 +697,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
@@ -858,11 +858,12 @@ export function XPDisplay() {
   const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
-    // CHANGED: inline-flex + items-center to ensure the gem display is horizontally next to the circle
+    // Force same height (48px) for both XP circle & gem container
     <div
-      className="relative inline-flex items-center"
+      className="relative inline-flex items-center h-12"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{ minWidth: "max-content" }}
     >
       {/* XP Circle with xpimage.webp background and flip animation on level up */}
       <motion.div
@@ -889,8 +890,11 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display - glassy dark grey background with green border and larger gem image */}
-      <div className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 py-1 rounded ml-2 border border-[#49EACB]">
+      {/* Gem Display - match XP circle height (48px), keep glass style, green border */}
+      <div
+        className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB]"
+        style={{ height: "48px" }}
+      >
         <span className="mr-1">{userData.gems}</span>
         <Image src="/gem.webp" alt="Gem" width={28} height={28} />
       </div>
