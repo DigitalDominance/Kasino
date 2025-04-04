@@ -44,8 +44,24 @@ const getWinProbability = (currentMultiplier: number) => {
 // Generate a sequence of tiles with increasing difficulty
 const generateTiles = () => {
   const tiles = [];
-  let currentMultiplier = 1.2;
   
+  // First tile: guaranteed 1.0x tile (position 1)
+  tiles.push({
+    multiplier: 1.0,
+    isWin: true,
+    position: tiles.length + 1
+  });
+  
+  // Second tile: 1.2x tile (position 2)
+  const winProbabilityTile2 = getWinProbability(1.2);
+  tiles.push({
+    multiplier: 1.2,
+    isWin: Math.random() < winProbabilityTile2,
+    position: tiles.length + 1
+  });
+  
+  // Continue with 1.7x and beyond as before
+  let currentMultiplier = 1.7;
   while (currentMultiplier <= MAX_MULTIPLIER) {
     const winProbability = getWinProbability(currentMultiplier);
     tiles.push({
