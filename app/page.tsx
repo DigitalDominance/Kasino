@@ -63,7 +63,7 @@ function MainPageContent() {
   // Original Games - New order:
   // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
-    { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp"},
+    { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
@@ -728,10 +728,10 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component - now uses xpimage.webp in the center with a border outline */
+/* XPDisplay Component - now uses xpimage.webp in the center with a border outline and displays gem count */
 export function XPDisplay() {
   const { isConnected } = useWallet();
-  const [userData, setUserData] = useState({ totalXp: 0, level: 0 });
+  const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [xpGain, setXpGain] = useState<number | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -773,6 +773,7 @@ export function XPDisplay() {
             setUserData({
               totalXp: res.data.user.totalXp || 0,
               level: res.data.user.level || 0,
+              gems: res.data.user.gems || 0,
             });
           }
         }
@@ -873,6 +874,12 @@ export function XPDisplay() {
           {displayLevel}
         </span>
       </motion.div>
+
+      {/* Gem Display - grey rectangle with gem count and gem image */}
+      <div className="flex items-center bg-gray-700 text-white px-2 py-1 rounded ml-2">
+        <span className="mr-1">{userData.gems}</span>
+        <Image src="/gem.webp" alt="Gem" width={20} height={20} />
+      </div>
 
       {/* Hover Popup (larger) */}
       <AnimatePresence>
