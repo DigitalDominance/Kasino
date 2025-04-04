@@ -111,22 +111,18 @@ function SpaceJumpGame({
   useEffect(() => {
     if (isJumping) {
       // Animate ghost jumping up
-      setGhostPosition(-120); // Higher jump
+      setGhostPosition(-200); // Much higher jump
       const timer = setTimeout(() => {
         setGhostPosition(0);
-      }, 600); // Slower animation (600ms instead of 400ms)
+      }, 800); // Slower animation
       return () => clearTimeout(timer);
     }
   }, [isJumping]);
 
   useEffect(() => {
     if (!isJumping && currentPosition > 1 && !hasLost && !hasWon) {
-      // After jump completes, slowly move camera up
-      const animation = setTimeout(() => {
-        setOffset(prev => prev + 100);
-      }, 50);
-      
-      return () => clearTimeout(animation);
+      // After jump completes, move camera up to center the ghost
+      setOffset(prev => prev + 80); // Adjusted camera movement
     }
   }, [isJumping, currentPosition, hasLost, hasWon]);
 
@@ -171,7 +167,7 @@ function SpaceJumpGame({
       </div>
 
       {/* Platforms container */}
-      <div className="relative h-full flex flex-col-reverse justify-end pb-8" style={{ transform: `translateY(-${offset}px)` }}>
+      <div className="relative h-full flex flex-col justify-start pt-8" style={{ transform: `translateY(${offset}px)` }}>
         {visibleTiles.map((tile, idx) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -250,7 +246,7 @@ function SpaceJumpGame({
         <motion.div
           className="absolute left-1/2 w-24 h-24 z-10"
           style={{
-            bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
+            top: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
             x: "-50%",
             transform: `translateY(${ghostPosition}px)`
           }}
@@ -428,7 +424,7 @@ function SpaceJumpContent() {
           setLosePopup(true);
         }, 1500);
       }
-    }, 1000); // Increased jump duration to 1000ms (1 second)
+    }, 1000); // Jump duration
   };
 
   // Handle cash out
