@@ -85,13 +85,32 @@ function SpaceJumpGame({
   hasLost: boolean;
   hasWon: boolean;
 }) {
+  const [offset, setOffset] = useState(0);
   const visibleTiles = tiles.slice(
     Math.max(0, currentPosition - 2),
     Math.min(tiles.length, currentPosition + 3)
   );
 
+  useEffect(() => {
+    if (isJumping) {
+      // Reset offset when starting a new jump
+      setOffset(0);
+    }
+  }, [isJumping]);
+
+  useEffect(() => {
+    if (!isJumping && currentPosition > 1 && !hasLost && !hasWon) {
+      // After jump completes, slowly move camera up
+      const animation = setTimeout(() => {
+        setOffset(prev => prev + 100);
+      }, 50);
+      
+      return () => clearTimeout(animation);
+    }
+  }, [isJumping, currentPosition, hasLost, hasWon]);
+
   return (
-    <div className="relative h-[600px] w-full mx-auto">
+    <div className="relative h-[600px] w-full mx-auto overflow-hidden">
       {/* Space background */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-blue-900 to-purple-900 rounded-lg overflow-hidden shadow-2xl">
         {/* Stars */}
@@ -131,7 +150,7 @@ function SpaceJumpGame({
       </div>
 
       {/* Platforms container */}
-      <div className="relative h-full flex flex-col-reverse justify-end pb-8">
+      <div className="relative h-full flex flex-col-reverse justify-end pb-8" style={{ transform: `translateY(-${offset}px)` }}>
         {visibleTiles.map((tile, idx) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -214,7 +233,7 @@ function SpaceJumpGame({
             x: "-50%",
           }}
           animate={{
-            y: isJumping ? [-30, -80, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
+            y: isJumping ? [-100, -200, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
             rotate: isFalling ? [0, 15, 45, 90] : 0,
             filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
