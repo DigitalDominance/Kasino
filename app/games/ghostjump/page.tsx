@@ -86,6 +86,7 @@ function SpaceJumpGame({
   hasWon: boolean;
 }) {
   const [offset, setOffset] = useState(0);
+  const [ghostPosition, setGhostPosition] = useState(0);
   const visibleTiles = tiles.slice(
     Math.max(0, currentPosition - 2),
     Math.min(tiles.length, currentPosition + 3)
@@ -93,8 +94,12 @@ function SpaceJumpGame({
 
   useEffect(() => {
     if (isJumping) {
-      // Reset offset when starting a new jump
-      setOffset(0);
+      // Animate ghost jumping up
+      setGhostPosition(-100);
+      const timer = setTimeout(() => {
+        setGhostPosition(0);
+      }, 400);
+      return () => clearTimeout(timer);
     }
   }, [isJumping]);
 
@@ -231,16 +236,17 @@ function SpaceJumpGame({
           style={{
             bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
             x: "-50%",
+            transform: `translateY(${ghostPosition}px)`
           }}
           animate={{
-            y: isJumping ? [-100, -200, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
+            y: isFalling ? [0, 200, 600] : [0, -15, 0],
             rotate: isFalling ? [0, 15, 45, 90] : 0,
             filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
           transition={{
-            duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
-            repeat: isJumping || isFalling ? 0 : Infinity,
-            ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
+            duration: isFalling ? 1.5 : 2,
+            repeat: isFalling ? 0 : Infinity,
+            ease: isFalling ? "easeIn" : "easeInOut",
           }}
         >
           <Image
