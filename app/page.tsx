@@ -697,7 +697,7 @@ function MainPageContent() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <Image
-                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXdd3dVlow.webp"
                                     alt="KAS"
                                     width={16}
                                     height={16}
@@ -734,29 +734,35 @@ export function XPDisplay() {
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [xpGain, setXpGain] = useState<number | null>(null);
+  const [gemGain, setGemGain] = useState<number | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
 
   // Use sessionStorage to persist last xp/level markers across page changes.
   const lastXpRef = useRef<number | null>(null);
   const lastLevelRef = useRef<number | null>(null);
+  const lastGemRef = useRef<number | null>(null);
 
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // On mount, load last xp/level from sessionStorage or initialize.
+  // On mount, load last xp/level/gem from sessionStorage or initialize.
   useEffect(() => {
     const storedXp = sessionStorage.getItem("lastXp");
     const storedLevel = sessionStorage.getItem("lastLevel");
-    if (storedXp !== null && storedLevel !== null) {
+    const storedGem = sessionStorage.getItem("lastGem");
+    if (storedXp !== null && storedLevel !== null && storedGem !== null) {
       lastXpRef.current = Number(storedXp);
       lastLevelRef.current = Number(storedLevel);
+      lastGemRef.current = Number(storedGem);
     } else {
       lastXpRef.current = userData.totalXp;
       lastLevelRef.current = userData.level;
+      lastGemRef.current = userData.gems;
       sessionStorage.setItem("lastXp", userData.totalXp.toString());
       sessionStorage.setItem("lastLevel", userData.level.toString());
+      sessionStorage.setItem("lastGem", userData.gems.toString());
     }
   }, []); // run once on mount
 
@@ -787,7 +793,7 @@ export function XPDisplay() {
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // Detect changes and trigger popups only if there is a new increase.
+  // Detect changes and trigger popups if there is a new increase.
   useEffect(() => {
     if (lastXpRef.current !== null && userData.totalXp > lastXpRef.current) {
       const gain = userData.totalXp - lastXpRef.current;
@@ -805,6 +811,13 @@ export function XPDisplay() {
         setIsFlipping(false);
         setShowLevelUpPopup(false);
       }, 1000);
+    }
+    if (lastGemRef.current !== null && userData.gems > lastGemRef.current) {
+      const gain = userData.gems - lastGemRef.current;
+      setGemGain(gain);
+      lastGemRef.current = userData.gems;
+      sessionStorage.setItem("lastGem", userData.gems.toString());
+      setTimeout(() => setGemGain(null), 2000);
     }
   }, [userData]);
 
@@ -841,7 +854,7 @@ export function XPDisplay() {
 
   // Larger popup styling for the hover popup.
   const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
-  // Smaller popup styling for XP gain and level up.
+  // Smaller popup styling for XP gain, gem gain, and level up.
   const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
@@ -876,11 +889,26 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display - grey rectangle with gem count and larger gem image */}
-      <div className="flex items-center bg-gray-700 text-white px-2 py-1 rounded ml-2">
+      {/* Gem Display - glassy dark grey background with green border and larger gem image */}
+      <div className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 py-1 rounded ml-2 border border-[#49EACB]">
         <span className="mr-1">{userData.gems}</span>
         <Image src="/gem.webp" alt="Gem" width={28} height={28} />
       </div>
+
+      {/* Gem Gain Popup */}
+      <AnimatePresence>
+        {gemGain !== null && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 30 }}
+            exit={{ opacity: 0, x: 50 }}
+            transition={{ duration: 0.5 }}
+            className={`${smallPopupClass} right-[-60px] top-1/2 transform -translate-y-1/2`}
+          >
+            +{gemGain} GEM
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hover Popup (larger) */}
       <AnimatePresence>
