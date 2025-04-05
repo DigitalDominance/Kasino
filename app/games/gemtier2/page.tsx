@@ -84,10 +84,10 @@ export function GemCrateGate({ requiredGems, children }: GemCrateGateProps) {
 // =============================================================================
 
 const tier2CrateItems = [
-  { id: 1, name: "Lucky Gem", tier: "gem-common", reward: 0.5, image: "/GemCommon1.webp" },
-  { id: 2, name: "Shiny Stone", tier: "gem-common", reward: 0.5, image: "/GemCommon2.webp" },
-  { id: 3, name: "Sparkling Rock", tier: "gem-common", reward: 0.5, image: "/GemCommon3.webp" },
-  { id: 4, name: "Golden Nugget", tier: "gem-common", reward: 0.5, image: "/GemCommon4.webp" },
+  { id: 1, name: "Lucky Gem", tier: "gem-common", reward: 1.5, image: "/GemCommon1.webp" },
+  { id: 2, name: "Shiny Stone", tier: "gem-common", reward: 1.5, image: "/GemCommon2.webp" },
+  { id: 3, name: "Sparkling Rock", tier: "gem-common", reward: 1.5, image: "/GemCommon3.webp" },
+  { id: 4, name: "Golden Nugget", tier: "gem-common", reward: 1.5, image: "/GemCommon4.webp" },
   // Last 3 common items are now "rare" with a 25 KAS reward
   { id: 5, name: "Mystic Orb", tier: "gem-rare", reward: 25, image: "/GemCommon5.webp" },
   { id: 6, name: "Enchanted Crystal", tier: "gem-rare", reward: 25, image: "/GemCommon6.webp" },
@@ -259,61 +259,45 @@ function GemCrateTier2Content() {
                     </>
                   )}
                   {!isPlaying && (
-                    <>
-                      <div className="absolute inset-0 z-30">
-                        {/* Pregame overlay: show one of the rare items */}
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: 5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute top-0 left-20"
-                          style={{ filter: "drop-shadow(0 0 15px #93C5FD)" }}
-                        >
-                          <Image src="/GemCommon5.webp" alt="Rare Reward" width={100} height={100} className="rounded-full border-4 border-blue-300" />
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: -5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute bottom-0 right-20"
-                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
-                        >
-                          <Image src="/GemCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-green-500" />
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: 5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute top-0 right-20"
-                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
-                        >
-                          <Image src="/GemCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-green-500" />
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.15, rotate: -5 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="absolute bottom-0 left-20"
-                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
-                        >
-                          <Image src="/GemCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-green-500" />
-                        </motion.div>
-                      </div>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
-                        <motion.h1
-                          className="text-5xl font-bold mb-4"
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          style={{ color: "#32CD32" }}
-                        >
-                          GEM CRATE TIER 2
-                        </motion.h1>
-                        <motion.p
-                          className="text-xl tracking-wider"
-                          animate={{ opacity: [0.8, 1, 0.8] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          style={{ color: "#00FF7F" }}
-                        >
-                          SPIN TO WIN
-                        </motion.p>
-                      </div>
-                    </>
+                    <div className="absolute inset-0 z-30">
+                      {/* Pregame overlay: 4 images (2 rare/ultra & 2 common) */}
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 15px #93C5FD)" }}
+                      >
+                        {/* Rare: use Ruby Shard */}
+                        <Image src="/GemCommon7.webp" alt="Rare Reward" width={100} height={100} className="rounded-full border-4 border-blue-300" />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute top-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #FBBF24)" }}
+                      >
+                        {/* Ultra Rare: Diamond Prize */}
+                        <Image src="/GemUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-yellow-500" />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-0 left-20"
+                        style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
+                      >
+                        {/* Common: Lucky Gem */}
+                        <Image src="/GemCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-green-500" />
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.15, rotate: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="absolute bottom-0 right-20"
+                        style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
+                      >
+                        {/* Common: Shiny Stone */}
+                        <Image src="/GemCommon2.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-green-500" />
+                      </motion.div>
+                    </div>
                   )}
                 </div>
               </div>
