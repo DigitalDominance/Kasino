@@ -1041,8 +1041,13 @@ export function XPDisplay() {
                               className="rounded-md"
                             />
                           </div>
+                          {/* 
+                            Only change: Make "Gems Required:" bold & white,
+                            and the number in green (#49EACB) and bold.
+                          */}
                           <div className="text-center mt-2">
-                            Gems Required: {requiredGems}
+                            <span className="font-bold text-white">Gems Required: </span>
+                            <span className="font-bold text-[#49EACB]">{requiredGems}</span>
                           </div>
                         </motion.div>
                       </Link>
