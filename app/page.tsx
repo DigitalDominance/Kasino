@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
+import { createPortal } from "react-dom";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -61,7 +61,8 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
@@ -81,7 +82,7 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Free Daily Loot Boxes
+  // Free Daily Loot Boxes – note: here we include 11 items following the provided naming pattern.
   const dailyLootBoxes = [
     { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp" },
     { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp" },
@@ -333,11 +334,8 @@ function MainPageContent() {
                 )}
               </AnimatePresence>
 
-              {/* 
-                IMPORTANT CHANGE: Removed "overflow-hidden" from the main container.
-                This ensures the gem popup is centered and not clipped.
-              */}
-              <main className="flex-1 p-6">
+              {/* Main Content */}
+              <main className="flex-1 p-6 overflow-hidden">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -731,8 +729,9 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component */
-
+/* XPDisplay Component - now uses xpimage.webp in the center with a border outline and displays gem count.
+   Also, when the gem container is clicked, a modal popup is displayed showing the current gems
+   and four gem crate cards for tiers 1-4. */
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
@@ -743,6 +742,7 @@ export function XPDisplay() {
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
   const [showGemPopup, setShowGemPopup] = useState(false);
 
+  // Use sessionStorage to persist last xp/level markers across page changes.
   const lastXpRef = useRef<number | null>(null);
   const lastLevelRef = useRef<number | null>(null);
   const lastGemRef = useRef<number | null>(null);
@@ -756,7 +756,7 @@ export function XPDisplay() {
     const storedXp = sessionStorage.getItem("lastXp");
     const storedLevel = sessionStorage.getItem("lastLevel");
     const storedGem = sessionStorage.getItem("lastGem");
-    if (storedXp && storedLevel && storedGem) {
+    if (storedXp !== null && storedLevel !== null && storedGem !== null) {
       lastXpRef.current = Number(storedXp);
       lastLevelRef.current = Number(storedLevel);
       lastGemRef.current = Number(storedGem);
@@ -768,7 +768,7 @@ export function XPDisplay() {
       sessionStorage.setItem("lastLevel", userData.level.toString());
       sessionStorage.setItem("lastGem", userData.gems.toString());
     }
-  }, []);
+  }, []); // run once on mount
 
   useEffect(() => {
     const fetchXP = async () => {
@@ -777,9 +777,7 @@ export function XPDisplay() {
           const accounts: string[] = await window.kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
-          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
-            walletAddress
-          )}`;
+          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
           const res = await axios.get(requestUrl);
           if (res.data.success && res.data.user) {
             setUserData({
@@ -790,7 +788,7 @@ export function XPDisplay() {
           }
         }
       } catch (err) {
-        // handle error
+        // Error handling omitted for brevity.
       }
     };
 
@@ -799,6 +797,7 @@ export function XPDisplay() {
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
+  // Detect changes and trigger popups if there is a new increase.
   useEffect(() => {
     if (lastXpRef.current !== null && userData.totalXp > lastXpRef.current) {
       const gain = userData.totalXp - lastXpRef.current;
@@ -838,8 +837,7 @@ export function XPDisplay() {
   };
 
   const currentThreshold = getThreshold(displayLevel);
-  const nextThreshold =
-    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
+  const nextThreshold = displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -856,23 +854,22 @@ export function XPDisplay() {
   }
 
   const levelStr = displayLevel.toString();
-  const fontSize =
-    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+  const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Popup classes
-  const hoverPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
-  const smallPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
+  // Larger popup styling for the hover popup.
+  const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
+  // Smaller popup styling for XP gain, gem gain, and level up.
+  const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
+    // Force same height (48px) for both XP circle & gem container
     <div
       className="relative inline-flex items-center h-12"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{ minWidth: "max-content" }}
     >
-      {/* XP Circle */}
+      {/* XP Circle with xpimage.webp background and flip animation on level up */}
       <motion.div
         className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
         style={{ width: "48px", height: "48px", overflow: "hidden" }}
@@ -897,7 +894,8 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display */}
+      {/* Gem Display - match XP circle height (48px), keep glass style, green border.
+          When clicked, it opens the gem popup modal */}
       <div
         onClick={() => setShowGemPopup(true)}
         className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB] cursor-pointer"
@@ -922,7 +920,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Hover Popup */}
+      {/* Hover Popup (larger) */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -958,7 +956,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* XP Gain Popup */}
+      {/* XP Gain Popup (small) */}
       <AnimatePresence>
         {xpGain !== null && (
           <motion.div
@@ -973,7 +971,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Level Up Popup */}
+      {/* Level Up Popup (small) */}
       <AnimatePresence>
         {showLevelUpPopup && (
           <motion.div
@@ -988,11 +986,10 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Gem Popup Modal via Portal */}
-      {showGemPopup &&
-        typeof window !== "undefined" &&
-        createPortal(
-          <AnimatePresence>
+      {/* Gem Popup Modal rendered via a Portal */}
+      {createPortal(
+        <AnimatePresence>
+          {showGemPopup && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1000,12 +997,12 @@ export function XPDisplay() {
               transition={{ duration: 0.3 }}
               className="fixed inset-0 flex items-center justify-center z-50"
             >
-              <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg text-white">
+              <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
                 <motion.button
                   onClick={() => setShowGemPopup(false)}
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute top-2 right-2 text-white font-bold"
+                  className="absolute top-2 right-2 text-[#49EACB] font-bold"
                 >
                   X
                 </motion.button>
@@ -1026,10 +1023,10 @@ export function XPDisplay() {
                         passHref
                       >
                         <motion.div
-                          className="bg-gray-900 text-white rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                          className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
                           whileHover={{ scale: 1.05 }}
                         >
-                          <div className="text-center mb-2 font-bold">
+                          <div className="text-center mb-2 font-bold text-white">
                             Gem Crate Tier {tier}
                           </div>
                           <div className="relative w-full h-32">
@@ -1041,12 +1038,8 @@ export function XPDisplay() {
                               className="rounded-md"
                             />
                           </div>
-                          {/* 
-                            Only change: Make "Gems Required:" bold & white,
-                            and the number in green (#49EACB) and bold.
-                          */}
                           <div className="text-center mt-2">
-                            <span className="font-bold text-white">Gems Required: </span>
+                            <span className="font-bold text-white">Gems Required:</span>{" "}
                             <span className="font-bold text-[#49EACB]">{requiredGems}</span>
                           </div>
                         </motion.div>
@@ -1056,9 +1049,10 @@ export function XPDisplay() {
                 </div>
               </div>
             </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
