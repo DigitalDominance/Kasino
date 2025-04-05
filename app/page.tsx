@@ -82,7 +82,7 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ];
 
-  // Free Daily Loot Boxes – note: here we include 11 items following the provided naming pattern.
+  // Free Daily Loot Boxes – 11 items following the naming pattern.
   const dailyLootBoxes = [
     { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp" },
     { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp" },
@@ -391,7 +391,6 @@ function MainPageContent() {
                   </h2>
                   <div className="flex flex-wrap items-start gap-3">
                     {games.map((game, i) => {
-                      // Convert slug to lowercase so it matches API data
                       let dataKey = game.slug.toLowerCase();
                       if (dataKey === "kaspatowerclimb") dataKey = "kaspa tower climb";
                       if (dataKey === "kaspacupgame") dataKey = "guess the cup";
@@ -729,9 +728,10 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component - now uses xpimage.webp in the center with a border outline and displays gem count.
-   Also, when the gem container is clicked, a modal popup is displayed showing the current gems
-   and four gem crate cards for tiers 1-4. */
+/* XPDisplay Component - now uses xpimage.webp as background with a border outline and displays gem count.
+   When the gem container is clicked, a modal popup is displayed showing the current gems and
+   four gem crate cards for tiers 1-4. The portal for the popup is rendered only after the component mounts.
+*/
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
@@ -741,8 +741,14 @@ export function XPDisplay() {
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
   const [showGemPopup, setShowGemPopup] = useState(false);
+  const [mounted, setMounted] = useState(false); // Track client-side mount
 
-  // Use sessionStorage to persist last xp/level markers across page changes.
+  // Set mounted after component mounts (client only)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Persist last xp/level/gem via sessionStorage.
   const lastXpRef = useRef<number | null>(null);
   const lastLevelRef = useRef<number | null>(null);
   const lastGemRef = useRef<number | null>(null);
@@ -751,7 +757,6 @@ export function XPDisplay() {
     process.env.NEXT_PUBLIC_API_URL ||
     "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // On mount, load last xp/level/gem from sessionStorage or initialize.
   useEffect(() => {
     const storedXp = sessionStorage.getItem("lastXp");
     const storedLevel = sessionStorage.getItem("lastLevel");
@@ -768,7 +773,7 @@ export function XPDisplay() {
       sessionStorage.setItem("lastLevel", userData.level.toString());
       sessionStorage.setItem("lastGem", userData.gems.toString());
     }
-  }, []); // run once on mount
+  }, []);
 
   useEffect(() => {
     const fetchXP = async () => {
@@ -777,7 +782,9 @@ export function XPDisplay() {
           const accounts: string[] = await window.kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
-          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(walletAddress)}`;
+          const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
+            walletAddress
+          )}`;
           const res = await axios.get(requestUrl);
           if (res.data.success && res.data.user) {
             setUserData({
@@ -788,7 +795,7 @@ export function XPDisplay() {
           }
         }
       } catch (err) {
-        // Error handling omitted for brevity.
+        // Error handling omitted.
       }
     };
 
@@ -797,7 +804,6 @@ export function XPDisplay() {
     return () => clearInterval(interval);
   }, [isConnected, apiUrl]);
 
-  // Detect changes and trigger popups if there is a new increase.
   useEffect(() => {
     if (lastXpRef.current !== null && userData.totalXp > lastXpRef.current) {
       const gain = userData.totalXp - lastXpRef.current;
@@ -856,20 +862,18 @@ export function XPDisplay() {
   const levelStr = displayLevel.toString();
   const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Larger popup styling for the hover popup.
+  // Popup styling classes.
   const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
-  // Smaller popup styling for XP gain, gem gain, and level up.
   const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   return (
-    // Force same height (48px) for both XP circle & gem container
     <div
       className="relative inline-flex items-center h-12"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{ minWidth: "max-content" }}
     >
-      {/* XP Circle with xpimage.webp background and flip animation on level up */}
+      {/* XP Circle */}
       <motion.div
         className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
         style={{ width: "48px", height: "48px", overflow: "hidden" }}
@@ -894,8 +898,7 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display - match XP circle height (48px), keep glass style, green border.
-          When clicked, it opens the gem popup modal */}
+      {/* Gem Display */}
       <div
         onClick={() => setShowGemPopup(true)}
         className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB] cursor-pointer"
@@ -920,7 +923,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Hover Popup (larger) */}
+      {/* Hover Popup */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -956,7 +959,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* XP Gain Popup (small) */}
+      {/* XP Gain Popup */}
       <AnimatePresence>
         {xpGain !== null && (
           <motion.div
@@ -971,7 +974,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Level Up Popup (small) */}
+      {/* Level Up Popup */}
       <AnimatePresence>
         {showLevelUpPopup && (
           <motion.div
@@ -986,73 +989,74 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Gem Popup Modal rendered via a Portal */}
-      {createPortal(
-        <AnimatePresence>
-          {showGemPopup && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 flex items-center justify-center z-50"
-            >
-              <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
-                <motion.button
-                  onClick={() => setShowGemPopup(false)}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute top-2 right-2 text-[#49EACB] font-bold"
-                >
-                  X
-                </motion.button>
-                <div className="text-center mb-4">
-                  <div className="flex justify-center items-center gap-2">
-                    <span className="text-xl font-bold">{userData.gems}</span>
-                    <Image src="/gem.webp" alt="Gem" width={40} height={40} />
+      {/* Gem Popup Modal rendered via a Portal (only on client) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {showGemPopup && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 flex items-center justify-center z-50"
+              >
+                <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
+                  <motion.button
+                    onClick={() => setShowGemPopup(false)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute top-2 right-2 text-[#49EACB] font-bold"
+                  >
+                    X
+                  </motion.button>
+                  <div className="text-center mb-4">
+                    <div className="flex justify-center items-center gap-2">
+                      <span className="text-xl font-bold">{userData.gems}</span>
+                      <Image src="/gem.webp" alt="Gem" width={40} height={40} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((tier) => {
+                      const requiredGems =
+                        tier === 1 ? 10 : tier === 2 ? 100 : tier === 3 ? 1000 : 10000;
+                      return (
+                        <Link
+                          href={`https://www.kascasino.xyz/games/gemtier${tier}`}
+                          key={tier}
+                          passHref
+                        >
+                          <motion.div
+                            className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <div className="text-center mb-2 font-bold text-white">
+                              Gem Crate Tier {tier}
+                            </div>
+                            <div className="relative w-full h-32">
+                              <Image
+                                src={`/gemtier${tier}.webp`}
+                                alt={`Gem Crate Tier ${tier}`}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="text-center mt-2">
+                              <span className="font-bold text-white">Gems Required:</span>{" "}
+                              <span className="font-bold text-[#49EACB]">{requiredGems}</span>
+                            </div>
+                          </motion.div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map((tier) => {
-                    const requiredGems =
-                      tier === 1 ? 10 : tier === 2 ? 100 : tier === 3 ? 1000 : 10000;
-                    return (
-                      <Link
-                        href={`https://www.kascasino.xyz/games/gemtier${tier}`}
-                        key={tier}
-                        passHref
-                      >
-                        <motion.div
-                          className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <div className="text-center mb-2 font-bold text-white">
-                            Gem Crate Tier {tier}
-                          </div>
-                          <div className="relative w-full h-32">
-                            <Image
-                              src={`/gemtier${tier}.webp`}
-                              alt={`Gem Crate Tier ${tier}`}
-                              layout="fill"
-                              objectFit="cover"
-                              className="rounded-md"
-                            />
-                          </div>
-                          <div className="text-center mt-2">
-                            <span className="font-bold text-white">Gems Required:</span>{" "}
-                            <span className="font-bold text-[#49EACB]">{requiredGems}</span>
-                          </div>
-                        </motion.div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }
