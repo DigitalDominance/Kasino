@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/site-footer"; // ensure correct import if needed
+import { WalletConnection } from "@/components/wallet-connection";
 import { XPDisplay } from "@/app/page";
 import axios from "axios";
 import Image from "next/image";
