@@ -128,13 +128,34 @@ function GemCrateContent() {
   const [winItem, setWinItem] = useState<any>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
   const REQUIRED_GEMS = 10;
   const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+
+  // Countdown effect for cooldown
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [cooldown]);
 
   // Start the gem crate game on the backend using the gemcrate API
   const handleOpenCrate = async () => {
     if (!isConnected || !username) {
       showError("Please connect your wallet and set your username");
+      return;
+    }
+    if (cooldown > 0) {
+      showError(`Please wait ${cooldown} seconds before spinning again.`);
       return;
     }
     try {
@@ -149,6 +170,7 @@ function GemCrateContent() {
       if (startRes.data.success) {
         setGameId(startRes.data.gameId);
         setIsPlaying(true);
+        setCooldown(15);
       } else {
         showError("Failed to start Gem Crate: " + startRes.data.message);
         return;
@@ -225,6 +247,68 @@ function GemCrateContent() {
                 </div>
                 <div className="relative w-full max-w-[600px] h-72 mx-auto flex items-center justify-center">
                   <GemCrateGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
+                  {isPlaying && (
+                    <>
+                      <div className="absolute top-0 bottom-0 left-0 w-40 bg-green-900/60 backdrop-blur-md pointer-events-none" />
+                      <div className="absolute top-0 bottom-0 right-0 w-40 bg-green-900/60 backdrop-blur-md pointer-events-none" />
+                    </>
+                  )}
+                  {!isPlaying && (
+                    <>
+                      <div className="absolute inset-0 z-30">
+                        <motion.div
+                          whileHover={{ scale: 1.15, rotate: 5 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="absolute top-0 left-20"
+                          style={{ filter: "drop-shadow(0 0 15px #32CD32)" }}
+                        >
+                          <Image src="/GemUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-green-500" />
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.15, rotate: -5 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="absolute bottom-0 right-20"
+                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
+                        >
+                          <Image src="/GemCommon1.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-green-500" />
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.15, rotate: 5 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="absolute top-0 right-20"
+                          style={{ filter: "drop-shadow(0 0 15px #32CD32)" }}
+                        >
+                          <Image src="/GemCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-green-500" />
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.15, rotate: -5 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="absolute bottom-0 left-20"
+                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
+                        >
+                          <Image src="/GemCommon3.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-green-500" />
+                        </motion.div>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
+                        <motion.h1
+                          className="text-5xl font-bold mb-4"
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#32CD32" }}
+                        >
+                          GEM CRATE TIER 1
+                        </motion.h1>
+                        <motion.p
+                          className="text-xl tracking-wider"
+                          animate={{ opacity: [0.8, 1, 0.8] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#00FF7F" }}
+                        >
+                          SPIN TO WIN
+                        </motion.p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>
@@ -235,6 +319,7 @@ function GemCrateContent() {
               onOpenCrate={handleOpenCrate}
               gameResult={gameResult}
               winItem={winItem}
+              cooldown={cooldown}
             />
           </div>
         </GemCrateGate>
@@ -269,7 +354,7 @@ function GemCrateContent() {
           >
             Gem Crate Tier 1
           </motion.h2>
-          <p className="text-2xl font-extrabold text-yellow-400 mb-4">
+          <p className="text-2xl font-extrabold text-green-400 mb-4">
             Open the crate for a chance to win common rewards or a rare diamond prize!
           </p>
           <p className="text-lg text-green-200">Cost per play: 10 Gems</p>
@@ -409,12 +494,14 @@ function GemCrateControls({
   onOpenCrate,
   gameResult,
   winItem,
+  cooldown,
 }: {
   isPlaying: boolean;
   isWalletConnected: boolean;
   onOpenCrate: () => void;
   gameResult: string | null;
   winItem: any;
+  cooldown: number;
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -452,9 +539,11 @@ function GemCrateControls({
               </div>
             )}
             {!isPlaying ? (
-              <Button className="w-full bg-green-400 text-black hover:bg-green-300" onClick={handleOpenCrate} disabled={!isWalletConnected}>
+              <Button className="w-full bg-green-400 text-black hover:bg-green-300" onClick={handleOpenCrate} disabled={!isWalletConnected || cooldown > 0}>
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
+                  : cooldown > 0
+                  ? `Cooldown: ${cooldown}s`
                   : "Open Gem Crate Tier 1 (Cost: 10 Gems)"}
               </Button>
             ) : (
