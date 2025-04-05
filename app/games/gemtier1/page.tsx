@@ -12,6 +12,9 @@ import { XPDisplay } from "@/app/page";
 import axios from "axios";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
 // =============================================================================
 // GEM CRATE GATE COMPONENT (Checks if user has enough gems to play)
@@ -141,7 +144,8 @@ function GemCrateContent() {
         return;
       }
       const walletAddress = accounts[0];
-      const startRes = await axios.post(`${apiUrl}/gemcrate/start`, { walletAddress });
+      // Pass both the walletAddress and the gems being spent (10)
+      const startRes = await axios.post(`${apiUrl}/gemcrate/start`, { walletAddress, gemsSpent: REQUIRED_GEMS });
       if (startRes.data.success) {
         setGameId(startRes.data.gameId);
         setIsPlaying(true);
@@ -189,7 +193,7 @@ function GemCrateContent() {
   const showError = (msg: string) => setErrorMessage(msg);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
