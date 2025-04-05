@@ -260,9 +260,9 @@ function GemCrateContent() {
                           whileHover={{ scale: 1.15, rotate: 5 }}
                           whileTap={{ scale: 0.95 }}
                           className="absolute top-0 left-20"
-                          style={{ filter: "drop-shadow(0 0 15px #32CD32)" }}
+                          style={{ filter: "drop-shadow(0 0 15px #F59E0B)" }}
                         >
-                          <Image src="/GemUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-green-500" />
+                          <Image src="/GemUltraRare.webp" alt="Ultra Rare Reward" width={100} height={100} className="rounded-full border-4 border-yellow-500" />
                         </motion.div>
                         <motion.div
                           whileHover={{ scale: 1.15, rotate: -5 }}
@@ -276,7 +276,7 @@ function GemCrateContent() {
                           whileHover={{ scale: 1.15, rotate: 5 }}
                           whileTap={{ scale: 0.95 }}
                           className="absolute top-0 right-20"
-                          style={{ filter: "drop-shadow(0 0 15px #32CD32)" }}
+                          style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
                         >
                           <Image src="/GemCommon2.webp" alt="Common Reward" width={70} height={70} className="rounded-md border-4 border-green-500" />
                         </motion.div>
@@ -333,7 +333,7 @@ function GemCrateContent() {
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt="Reward" width={40} height={40} />
-                  <p className="mt-1 font-semibold text-green-400 drop-shadow">Reward</p>
+                  <p className="mt-1 font-semibold text-green-400 drop-shadow">{item.name}</p>
                   <p className="capitalize text-green-300 drop-shadow">{displayTier}</p>
                   <p className="text-green-300 drop-shadow">{item.reward} KAS</p>
                 </div>
@@ -508,7 +508,7 @@ function GemCrateControls({
   useEffect(() => {
     if (errorMessage) {
       const timer = setTimeout(() => setErrorMessage(null), 4000);
-      return () => clearTimeout(timer);
+      return () => clearInterval(timer);
     }
   }, [errorMessage]);
 
@@ -544,7 +544,7 @@ function GemCrateControls({
                   ? "Connect Wallet to Play"
                   : cooldown > 0
                   ? `Cooldown: ${cooldown}s`
-                  : "Open Gem Crate Tier 1 (Cost: 10 Gems)"}
+                  : "Open Crate (10 Gems)"}
               </Button>
             ) : (
               <Button className="w-full bg-green-400 text-black hover:bg-green-300" disabled>
