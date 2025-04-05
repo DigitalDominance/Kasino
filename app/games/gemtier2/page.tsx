@@ -88,7 +88,7 @@ const tier2CrateItems = [
   { id: 2, name: "Shiny Stone", tier: "gem-common", reward: 1.5, image: "/GemCommon2.webp" },
   { id: 3, name: "Sparkling Rock", tier: "gem-common", reward: 1.5, image: "/GemCommon3.webp" },
   { id: 4, name: "Golden Nugget", tier: "gem-common", reward: 1.5, image: "/GemCommon4.webp" },
-  // Last 3 common items are now "rare" with a 25 KAS reward
+  // Last 3 items become "rare" with a 25 KAS reward
   { id: 5, name: "Mystic Orb", tier: "gem-rare", reward: 25, image: "/GemCommon5.webp" },
   { id: 6, name: "Enchanted Crystal", tier: "gem-rare", reward: 25, image: "/GemCommon6.webp" },
   { id: 7, name: "Ruby Shard", tier: "gem-rare", reward: 25, image: "/GemCommon7.webp" },
@@ -297,6 +297,25 @@ function GemCrateTier2Content() {
                         {/* Common: Shiny Stone */}
                         <Image src="/GemCommon2.webp" alt="Common Reward" width={80} height={80} className="rounded-lg border-4 border-green-500" />
                       </motion.div>
+                      {/* Text overlay added back */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-40 text-center">
+                        <motion.h1
+                          className="text-5xl font-bold mb-4"
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#32CD32" }}
+                        >
+                          GEM CRATE TIER 2
+                        </motion.h1>
+                        <motion.p
+                          className="text-xl tracking-wider"
+                          animate={{ opacity: [0.8, 1, 0.8] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ color: "#00FF7F" }}
+                        >
+                          SPIN TO WIN
+                        </motion.p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -337,7 +356,7 @@ function GemCrateTier2Content() {
           </div>
         </Card>
 
-        <Card className="w-full bg-green-900/50 border border-green-500 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+        <Card className="w-full bg-green-900/50 border border-green-500 backdrop-blur-sm p-4 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
