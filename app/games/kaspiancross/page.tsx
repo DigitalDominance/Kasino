@@ -31,7 +31,7 @@ const HOUSE_EDGE = 0.075; // 7.5% house edge
 
 // Image assets
 const KASPIAN_NORMAL = "/kaspian.webp";
-const KASPIAN_WALKING = "/kaspian.webp"; // Using same image for walking animation
+const KASPIAN_WALKING = "/kaspian.webp";
 const ROAD_LANE = "/kaspianroadlane.webp";
 const CAR = "/kaspiancar.webp";
 const TILE = "/kaspiantile.webp";
@@ -96,38 +96,37 @@ function KaspianCrossGame({
 }: {
   tiles: { multiplier: number; isWin: boolean; position: number }[];
   currentPosition: number;
-  onTileClick: () => void;
+  onTileClick: (position: number) => void;
   isWalking: boolean;
   isHit: boolean;
   hasLost: boolean;
   hasWon: boolean;
 }) {
   const visibleTiles = tiles.slice(
-    Math.max(0, currentPosition - 2),
-    Math.min(tiles.length, currentPosition + 3)
+    Math.max(0, currentPosition - 1),
+    Math.min(tiles.length, currentPosition + 5)
   );
 
   return (
     <div className="relative h-[400px] w-full mx-auto overflow-hidden">
-      {/* Road background */}
+      {/* Road background with vertical lanes */}
       <div className="absolute inset-0 bg-gray-800 rounded-lg overflow-hidden shadow-2xl">
-        {/* Road lanes */}
-        <div className="absolute top-1/2 left-0 w-full h-24 transform -translate-y-1/2">
+        <div className="absolute inset-0 w-full h-full">
           <Image
             src={ROAD_LANE}
             alt="Road lane"
             fill
-            className="object-cover"
+            className="object-cover rotate-90"
           />
         </div>
       </div>
 
-      {/* Tiles container */}
-      <div className="relative h-full flex items-center justify-center">
-        <div className="flex items-center h-48">
+      {/* Tiles container - positioned to start from left */}
+      <div className="relative h-full flex items-center">
+        <div className="flex items-center h-48 pl-4">
           {visibleTiles.map((tile, idx) => {
-            const isActive = tile.position === currentPosition + 1;
             const isCurrent = tile.position === currentPosition;
+            const isNext = tile.position === currentPosition + 1;
             const isPast = tile.position < currentPosition;
 
             return (
@@ -136,7 +135,7 @@ function KaspianCrossGame({
                 className={`w-32 h-24 mx-2 relative transition-all duration-300 ${
                   isPast ? "opacity-50" : "opacity-100"
                 }`}
-                initial={{ x: idx * 100, opacity: 0 }}
+                initial={{ x: 0, opacity: 0 }}
                 animate={{ 
                   x: 0,
                   opacity: isPast ? 0.5 : 1,
@@ -149,8 +148,11 @@ function KaspianCrossGame({
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-blue-500 rounded-full blur-sm" />
                 )}
 
-                {/* Tile image */}
-                <div className="relative w-full h-full">
+                {/* Tile image - clickable if it's the next tile */}
+                <div 
+                  className={`relative w-full h-full ${isNext && !hasLost && !hasWon ? 'cursor-pointer' : ''}`}
+                  onClick={isNext ? () => onTileClick(tile.position) : undefined}
+                >
                   <Image
                     src={TILE}
                     alt="Tile"
@@ -165,49 +167,20 @@ function KaspianCrossGame({
                     {tile.multiplier}x
                   </div>
                 </div>
-
-                {/* Next tile indicator */}
-                {isActive && !hasLost && !hasWon && (
-                  <motion.div
-                    className="absolute top-0 left-full ml-2 w-24 h-24 cursor-pointer z-20"
-                    onClick={onTileClick}
-                    whileHover={{ scale: 1.05 }}
-                    animate={{
-                      x: [0, 5, 0],
-                      opacity: [1, 0.8, 1]
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={TILE}
-                        alt="Next tile"
-                        fill
-                        className="object-contain drop-shadow-[0_0_8px_rgba(73,234,203,0.5)]"
-                      />
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
-                        {tile.multiplier}x
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
               </motion.div>
             );
           })}
 
-          {/* Kaspian character */}
+          {/* Kaspian character - positioned on current tile */}
           <motion.div
             className="absolute w-24 h-24 z-10"
             style={{
-              left: `calc(50% + ${(currentPosition - 1) * 136}px)`,
-              y: "-50%",
+              left: `${(currentPosition - 1) * 144 + 16}px`,
+              bottom: "50%",
+              transform: "translateY(50%)"
             }}
             animate={{
-              x: isWalking ? [0, 136, 0] : isHit ? [0, 0, 200] : [0, -5, 0],
+              x: isWalking ? [0, 144, 0] : 0,
               y: isHit ? [0, -20, 100] : 0,
               rotate: isHit ? [0, 15, 45, 90] : 0,
               filter: isWalking ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
@@ -226,16 +199,17 @@ function KaspianCrossGame({
             />
           </motion.div>
 
-          {/* Car that hits when losing */}
+          {/* Car that hits when losing - bigger and rotated 180 degrees */}
           {isHit && (
             <motion.div
-              className="absolute w-48 h-24 z-20"
+              className="absolute w-64 h-32 z-20"
               style={{
-                left: `calc(50% + ${(currentPosition) * 136}px)`,
-                y: "-50%",
+                left: `${currentPosition * 144 + 16}px`,
+                bottom: "50%",
+                transform: "translateY(50%) rotate(180deg)"
               }}
-              initial={{ x: 0, y: -200 }}
-              animate={{ x: 0, y: 100 }}
+              initial={{ y: -300 }}
+              animate={{ y: 100 }}
               transition={{ duration: 0.5 }}
             >
               <Image
@@ -270,7 +244,7 @@ function KaspianCrossContent() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [tiles, setTiles] = useState<{ multiplier: number; isWin: boolean; position: number }[]>([]);
-  const [currentPosition, setCurrentPosition] = useState(0);
+  const [currentPosition, setCurrentPosition] = useState(1);
   const [isWalking, setIsWalking] = useState(false);
   const [isHit, setIsHit] = useState(false);
   const [hasLost, setHasLost] = useState(false);
@@ -364,14 +338,14 @@ function KaspianCrossContent() {
   };
 
   // Handle walk to next tile
-  const handleWalk = () => {
+  const handleWalk = (position: number) => {
     if (isWalking || isHit || hasLost || hasWon) return;
     
     setIsWalking(true);
     
     setTimeout(() => {
       setIsWalking(false);
-      const nextTile = tiles.find(t => t.position === currentPosition + 1);
+      const nextTile = tiles.find(t => t.position === position);
       
       if (!nextTile) {
         // Reached the end
@@ -382,7 +356,7 @@ function KaspianCrossContent() {
       
       if (nextTile.isWin) {
         // Successful walk
-        setCurrentPosition(currentPosition + 1);
+        setCurrentPosition(position);
         setCurrentMultiplier(nextTile.multiplier);
       } else {
         // Failed walk - hit by car
