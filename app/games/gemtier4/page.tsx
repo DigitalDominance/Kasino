@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/wallet-connection";
+import { WalletConnection } from "@/components/site-footer"; // ensure correct import if needed
 import { XPDisplay } from "@/app/page";
 import axios from "axios";
 import Image from "next/image";
@@ -104,7 +104,7 @@ function getGemRarityStyle(tier: string) {
     case "gem-ultra-rare":
       return "border-yellow-500 bg-yellow-900/30";
     case "gem-legendary":
-      return "border-red-500 bg-red-900/30"; // Neon red for legendary
+      return "border-red-500 bg-red-900/30"; // Only legendary remains red
     default:
       return "border-gray-500 bg-gray-800/30";
   }
@@ -119,7 +119,7 @@ function getGemRarityOverlayClass(tier: string) {
     case "gem-ultra-rare":
       return "bg-gradient-to-br from-yellow-400/30 to-yellow-900/30";
     case "gem-legendary":
-      return "bg-gradient-to-br from-red-300/30 to-red-900/30"; // Neon red gradient
+      return "bg-gradient-to-br from-red-300/30 to-red-900/30"; // Neon red gradient for legendary
     default:
       return "bg-gradient-to-br from-gray-400/30 to-gray-800/30";
   }
@@ -174,7 +174,7 @@ function GemCrateTier4Content() {
         return;
       }
       const walletAddress = accounts[0];
-      // Pass both the walletAddress and the gems being spent (10000 for Tier 4)
+      // Pass walletAddress and gemsSpent (10000 for Tier 4)
       const startRes = await axios.post(`${apiUrl}/gemcrate/start`, { walletAddress, gemsSpent: REQUIRED_GEMS });
       if (startRes.data.success) {
         setGameId(startRes.data.gameId);
@@ -233,12 +233,7 @@ function GemCrateTier4Content() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
             </Link>
           </motion.div>
-          <motion.div
-            className="flex items-center gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div className="flex items-center gap-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <XPDisplay />
             <WalletConnection />
           </motion.div>
@@ -246,11 +241,12 @@ function GemCrateTier4Content() {
 
         <GemCrateGate requiredGems={REQUIRED_GEMS}>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 mb-6">
-            <Card className="bg-red-900/50 border border-red-500 backdrop-blur-sm overflow-hidden">
+            {/* Main Reel Card – using green theme */}
+            <Card className="bg-green-900/50 border border-green-500 backdrop-blur-sm overflow-hidden">
               <div className="p-6 flex flex-col h-full items-center">
                 <div className="flex justify-between items-center w-full mb-4">
-                  <h2 className="text-2xl font-bold text-red-300">Gem Crate Tier 4</h2>
-                  <Button variant="ghost" size="sm" className="text-red-300" onClick={resetGame}>
+                  <h2 className="text-2xl font-bold text-green-300">Gem Crate Tier 4</h2>
+                  <Button variant="ghost" size="sm" className="text-green-300" onClick={resetGame}>
                     Reset
                   </Button>
                 </div>
@@ -258,8 +254,8 @@ function GemCrateTier4Content() {
                   <GemCrateGame isPlaying={isPlaying} onGameEnd={handleGameEnd} />
                   {isPlaying && (
                     <>
-                      <div className="absolute top-0 bottom-0 left-0 w-40 bg-red-900/60 backdrop-blur-md pointer-events-none" />
-                      <div className="absolute top-0 bottom-0 right-0 w-40 bg-red-900/60 backdrop-blur-md pointer-events-none" />
+                      <div className="absolute top-0 bottom-0 left-0 w-40 bg-green-900/60 backdrop-blur-md pointer-events-none" />
+                      <div className="absolute top-0 bottom-0 right-0 w-40 bg-green-900/60 backdrop-blur-md pointer-events-none" />
                     </>
                   )}
                   {!isPlaying && (
@@ -296,7 +292,7 @@ function GemCrateTier4Content() {
                         whileHover={{ scale: 1.15, rotate: -5 }}
                         whileTap={{ scale: 0.95 }}
                         className="absolute bottom-0 right-20"
-                        style={{ filter: "drop-shadow(0 0 15px #00FF7F)" }}
+                        style={{ filter: "drop-shadow(0 0 15px #FF0000)" }}
                       >
                         {/* Legendary: Diamond Ghost */}
                         <Image src="/GemLegendary.webp" alt="Legendary Reward" width={80} height={80} className="rounded-lg border-4 border-red-500" />
@@ -307,7 +303,7 @@ function GemCrateTier4Content() {
                           className="text-5xl font-bold mb-4"
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          style={{ color: "#FF0000" }}
+                          style={{ color: "#32CD32" }}
                         >
                           GEM CRATE TIER 4
                         </motion.h1>
@@ -315,7 +311,7 @@ function GemCrateTier4Content() {
                           className="text-xl tracking-wider"
                           animate={{ opacity: [0.8, 1, 0.8] }}
                           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          style={{ color: "#FF0000" }}
+                          style={{ color: "#00FF7F" }}
                         >
                           SPIN TO WIN
                         </motion.p>
@@ -337,8 +333,9 @@ function GemCrateTier4Content() {
           </div>
         </GemCrateGate>
 
-        <Card className="bg-red-900/50 border border-red-500 backdrop-blur-sm p-4 mb-6">
-          <h3 className="text-xl font-bold text-red-300 mb-4 text-center">Gem Crate Tier 4 Rewards</h3>
+        {/* Rewards Card – green theme */}
+        <Card className="bg-green-900/50 border border-green-500 backdrop-blur-sm p-4 mb-6">
+          <h3 className="text-xl font-bold text-green-300 mb-4 text-center">Gem Crate Tier 4 Rewards</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {tier4CrateItems.map((item) => {
               const rarityClass = getGemRarityStyle(item.tier);
@@ -353,31 +350,32 @@ function GemCrateTier4Content() {
               return (
                 <div key={item.id} className={`flex flex-col items-center border p-2 rounded text-xs ${rarityClass}`}>
                   <Image src={item.image} alt="Reward" width={40} height={40} />
-                  <p className="mt-1 font-semibold text-red-300 drop-shadow">{item.name}</p>
-                  <p className="capitalize text-red-200 drop-shadow">{displayTier}</p>
-                  <p className="text-red-200 drop-shadow">{item.reward} KAS</p>
+                  <p className="mt-1 font-semibold text-green-400 drop-shadow">{item.name}</p>
+                  <p className="capitalize text-green-300 drop-shadow">{displayTier}</p>
+                  <p className="text-green-300 drop-shadow">{item.reward} KAS</p>
                 </div>
               );
             })}
           </div>
         </Card>
 
-        <Card className="w-full bg-red-900/50 border border-red-500 backdrop-blur-sm p-4 flex flex-col items-center text-center">
+        {/* Promo Card – green theme */}
+        <Card className="bg-green-900/50 border border-green-500 backdrop-blur-sm p-4 flex flex-col items-center text-center">
           <motion.h2
             className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
             animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
             transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
             style={{
-              backgroundImage: "linear-gradient(270deg, #FF0000, #FF5555, #FF0000)",
+              backgroundImage: "linear-gradient(270deg, #00FF7F, #32CD32, #00FF7F)",
               backgroundSize: "200% 200%",
             }}
           >
             Gem Crate Tier 4
           </motion.h2>
-          <p className="text-2xl font-extrabold text-red-400 mb-4">
+          <p className="text-2xl font-extrabold text-green-400 mb-4">
             Open the crate for a chance to win common rewards, rare prizes, ultra-rare treasures, or the legendary Diamond Ghost!
           </p>
-          <p className="text-lg text-red-200">Cost per play: 10000 Gems</p>
+          <p className="text-lg text-green-200">Cost per play: 10000 Gems</p>
         </Card>
       </div>
       <SiteFooter />
@@ -388,7 +386,7 @@ function GemCrateTier4Content() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-red-700 to-black text-white px-4 py-2 rounded shadow-lg"
+            className="fixed bottom-4 left-4 bg-gradient-to-r from-green-700 to-black text-white px-4 py-2 rounded shadow-lg"
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
@@ -492,7 +490,12 @@ function GemCrateGame({ isPlaying, onGameEnd }: { isPlaying: boolean; onGameEnd:
       <AnimatePresence>
         {showResultOverlay && winningItem && (
           <motion.div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div initial={{ scale: 0.8 }} animate={{ scale: [1, 1.4, 1] }} transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }} className="text-center p-6 rounded-lg border-2 border-red-400 shadow-[0_0_25px_8px_rgba(255,0,0,0.5)] bg-red-800/80 max-w-xs">
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ times: [0, 0.5, 1], duration: 2, ease: "easeInOut" }}
+              className="text-center p-6 rounded-lg border-2 border-red-400 shadow-[0_0_25px_8px_rgba(255,0,0,0.5)] bg-red-800/80 max-w-xs"
+            >
               <Image src={winningItem.image} alt="Reward" width={80} height={80} className="mx-auto mb-2" loading="eager" style={{ filter: "drop-shadow(0 0 10px #FF0000) drop-shadow(0 0 20px #FF0000)" }} />
               <p className="text-3xl font-extrabold text-red-400 mb-2">Congratulations!</p>
               <p className="text-xl font-bold text-red-100">
@@ -557,14 +560,14 @@ function GemCrateControls({
 
   return (
     <>
-      <Card className="bg-red-900/50 border border-red-500 backdrop-blur-sm">
+      <Card className="bg-green-900/50 border border-green-500 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {gameResult && winItem && (
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-red-300">
+                <div className="text-2xl font-bold text-green-300">
                   {gameResult}: {winItem.name}{" "}
-                  <span className="text-base text-red-200">
+                  <span className="text-base text-green-200">
                     {winItem.tier === "gem-ultra-rare"
                       ? "Ultra Rare"
                       : winItem.tier === "gem-rare"
@@ -574,11 +577,11 @@ function GemCrateControls({
                       : winItem.tier.replace("gem-", "")}
                   </span>
                 </div>
-                <div className="text-sm text-red-200">Payout: {winItem.reward} KAS</div>
+                <div className="text-sm text-green-200">Payout: {winItem.reward} KAS</div>
               </div>
             )}
             {!isPlaying ? (
-              <Button className="w-full bg-red-400 text-black hover:bg-red-300" onClick={handleOpenCrate} disabled={!isWalletConnected || cooldown > 0}>
+              <Button className="w-full bg-green-400 text-black hover:bg-green-300" onClick={handleOpenCrate} disabled={!isWalletConnected || cooldown > 0}>
                 {!isWalletConnected
                   ? "Connect Wallet to Play"
                   : cooldown > 0
@@ -586,7 +589,7 @@ function GemCrateControls({
                   : "Open Crate (10000 Gems)"}
               </Button>
             ) : (
-              <Button className="w-full bg-red-400 text-black hover:bg-red-300" disabled>
+              <Button className="w-full bg-green-400 text-black hover:bg-green-300" disabled>
                 Opening...
               </Button>
             )}
@@ -595,7 +598,7 @@ function GemCrateControls({
       </Card>
       <AnimatePresence>
         {errorMessage && (
-          <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }} transition={{ duration: 0.5 }} className="fixed bottom-4 left-4 bg-gradient-to-r from-red-700 to-black text-white px-4 py-2 rounded shadow-lg">
+          <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }} transition={{ duration: 0.5 }} className="fixed bottom-4 left-4 bg-gradient-to-r from-green-700 to-black text-white px-4 py-2 rounded shadow-lg">
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
               <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
