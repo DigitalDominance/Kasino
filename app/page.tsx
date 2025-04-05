@@ -904,7 +904,7 @@ export function XPDisplay() {
         className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB] cursor-pointer"
         style={{ height: "48px" }}
       >
-        <span className="mr-1">{userData.gems}</span>
+        <span className="mr-1 text-white text-xl font-bold">{userData.gems}</span>
         <Image src="/gem.webp" alt="Gem" width={28} height={28} />
       </div>
 
@@ -1012,7 +1012,7 @@ export function XPDisplay() {
                   </motion.button>
                   <div className="text-center mb-4">
                     <div className="flex justify-center items-center gap-2">
-                      <span className="text-xl font-bold">{userData.gems}</span>
+                      <span className="text-xl font-bold text-white">{userData.gems}</span>
                       <Image src="/gem.webp" alt="Gem" width={40} height={40} />
                     </div>
                   </div>
