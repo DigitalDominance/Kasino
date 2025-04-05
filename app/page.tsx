@@ -728,7 +728,9 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component - now uses xpimage.webp in the center with a border outline and displays gem count */
+/* XPDisplay Component - now uses xpimage.webp in the center with a border outline and displays gem count.
+   Also, when the gem container is clicked, a modal popup is displayed showing the current gems
+   and four gem crate cards for tiers 1-4. */
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
@@ -737,6 +739,7 @@ export function XPDisplay() {
   const [gemGain, setGemGain] = useState<number | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
+  const [showGemPopup, setShowGemPopup] = useState(false);
 
   // Use sessionStorage to persist last xp/level markers across page changes.
   const lastXpRef = useRef<number | null>(null);
@@ -890,9 +893,11 @@ export function XPDisplay() {
         </span>
       </motion.div>
 
-      {/* Gem Display - match XP circle height (48px), keep glass style, green border */}
+      {/* Gem Display - match XP circle height (48px), keep glass style, green border.
+          When clicked, it opens the gem popup modal */}
       <div
-        className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB]"
+        onClick={() => setShowGemPopup(true)}
+        className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-3 rounded ml-2 border border-[#49EACB] cursor-pointer"
         style={{ height: "48px" }}
       >
         <span className="mr-1">{userData.gems}</span>
@@ -976,6 +981,70 @@ export function XPDisplay() {
             className={`${smallPopupClass} left-[-60px] top-0`}
           >
             Leveled Up!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Gem Popup Modal */}
+      <AnimatePresence>
+        {showGemPopup && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 flex items-center justify-center z-50"
+          >
+            <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
+              <motion.button
+                onClick={() => setShowGemPopup(false)}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-2 right-2 text-[#49EACB] font-bold"
+              >
+                X
+              </motion.button>
+              <div className="text-center mb-4">
+                <div className="flex justify-center items-center gap-2">
+                  <span className="text-xl font-bold">{userData.gems}</span>
+                  <Image src="/gem.webp" alt="Gem" width={40} height={40} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((tier) => {
+                  const requiredGems =
+                    tier === 1 ? 10 : tier === 2 ? 100 : tier === 3 ? 1000 : 10000;
+                  return (
+                    <Link
+                      href={`https://www.kascasino.xyz/games/gemtier${tier}`}
+                      key={tier}
+                      passHref
+                    >
+                      <motion.div
+                        className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="text-center mb-2 font-bold">
+                          Gem Crate Tier {tier}
+                        </div>
+                        <div className="relative w-full h-32">
+                          <Image
+                            src={`/gemtier${tier}.webp`}
+                            alt={`Gem Crate Tier ${tier}`}
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-md"
+                          />
+                        </div>
+                        <div className="text-center mt-2">
+                          Gems Required: {requiredGems}
+                        </div>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
