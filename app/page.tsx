@@ -733,7 +733,6 @@ function MainPageContent() {
 
 /* XPDisplay Component */
 
-
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
@@ -1001,12 +1000,12 @@ export function XPDisplay() {
               transition={{ duration: 0.3 }}
               className="fixed inset-0 flex items-center justify-center z-50"
             >
-              <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
+              <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg text-white">
                 <motion.button
                   onClick={() => setShowGemPopup(false)}
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute top-2 right-2 text-[#49EACB] font-bold"
+                  className="absolute top-2 right-2 text-white font-bold"
                 >
                   X
                 </motion.button>
@@ -1027,7 +1026,7 @@ export function XPDisplay() {
                         passHref
                       >
                         <motion.div
-                          className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                          className="bg-gray-900 text-white rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
                           whileHover={{ scale: 1.05 }}
                         >
                           <div className="text-center mb-2 font-bold">
