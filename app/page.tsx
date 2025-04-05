@@ -731,12 +731,6 @@ function MainPageContent() {
 }
 
 /* XPDisplay Component */
-import { useWallet } from "@/contexts/WalletContext";
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import axios from "axios";
-import Link from "next/link";
 
 export function XPDisplay() {
   const { isConnected } = useWallet();
