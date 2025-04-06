@@ -82,7 +82,7 @@ const generateTiles = () => {
   return tiles;
 };
 
-// Space Jump Game Component
+// Space Jump Game Component (tiles revert to original behavior)
 function SpaceJumpGame({
   tiles,
   currentPosition,
@@ -100,14 +100,6 @@ function SpaceJumpGame({
   hasLost: boolean;
   hasWon: boolean;
 }) {
-  // We shift the entire tile container upward each time currentPosition changes,
-  // so the ghost can remain pinned at the same place on the screen.
-  const containerStyle = {
-    transform: `translateY(-${(currentPosition - 1) * 120}px)`,
-    transition: "transform 0.8s ease-out",
-  };
-
-  // Decide which tiles to render
   const visibleTiles = tiles.slice(
     Math.max(0, currentPosition - 2),
     Math.min(tiles.length, currentPosition + 3)
@@ -151,11 +143,8 @@ function SpaceJumpGame({
         </div>
       </div>
 
-      {/* Platforms container, shifted by currentPosition */}
-      <div
-        className="relative h-full flex flex-col-reverse justify-end pb-8"
-        style={containerStyle}
-      >
+      {/* Platforms container (original layout) */}
+      <div className="relative h-full flex flex-col-reverse justify-end pb-8">
         {visibleTiles.map((tile) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -230,23 +219,26 @@ function SpaceJumpGame({
         })}
       </div>
 
-      {/* Ghost character pinned in place, with a small jump/fall animation */}
+      {/* Ghost character pinned in place, with aesthetic jump/fall animation */}
       <motion.div
         className="absolute left-1/2 w-24 h-24 z-10"
         style={{
-          bottom: "6rem",
+          bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
           x: "-50%",
         }}
         animate={{
-          // purely aesthetic jump/fall
-          y: isJumping ? [0, -60, 0] : isFalling ? [0, 200, 400] : 0,
+          y: isJumping
+            ? [0, -60, 0]
+            : isFalling
+            ? [0, 200, 400]
+            : [0, -15, 0],
           rotate: isFalling ? [0, 15, 45, 90] : 0,
           filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none",
         }}
         transition={{
-          duration: isJumping ? 0.8 : isFalling ? 1.5 : 0,
-          repeat: 0,
-          ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "linear",
+          duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
+          repeat: isJumping || isFalling ? 0 : Infinity,
+          ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
         }}
       >
         <Image
@@ -312,7 +304,7 @@ function SpaceJumpContent() {
     setCashoutClicked(false);
   };
 
-  // Start game
+  // Start game: deduct bet and notify backend
   const handleStartGame = async () => {
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
@@ -371,7 +363,7 @@ function SpaceJumpContent() {
     }
   };
 
-  // Jump to next tile
+  // Handle jump to next tile
   const handleJump = () => {
     if (isJumping || isFalling || hasLost || hasWon) return;
     setIsJumping(true);
@@ -413,7 +405,7 @@ function SpaceJumpContent() {
     }, 800);
   };
 
-  // Cash out
+  // Handle cash out
   const handleCashOut = async () => {
     if (cashoutClicked) return;
     setCashoutClicked(true);
