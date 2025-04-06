@@ -219,11 +219,11 @@ function SpaceJumpGame({
         })}
       </div>
 
-      {/* Ghost character pinned in place, with aesthetic jump/fall animation */}
+      {/* Ghost character pinned in place (ghost stays at the original tile location) */}
       <motion.div
         className="absolute left-1/2 w-24 h-24 z-10"
         style={{
-          bottom: `calc(${(currentPosition - 1) * 20}% + 6rem)`,
+          bottom: "6rem",
           x: "-50%",
         }}
         animate={{
@@ -231,14 +231,13 @@ function SpaceJumpGame({
             ? [0, -60, 0]
             : isFalling
             ? [0, 200, 400]
-            : [0, -15, 0],
+            : 0,
           rotate: isFalling ? [0, 15, 45, 90] : 0,
           filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none",
         }}
         transition={{
-          duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
-          repeat: isJumping || isFalling ? 0 : Infinity,
-          ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
+          duration: isJumping ? 0.8 : isFalling ? 1.5 : 0,
+          ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "linear",
         }}
       >
         <Image
