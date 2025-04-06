@@ -134,9 +134,9 @@ function KaspianCrossGame({
   const characterLeft =
     (currentPosition - 1) * (ROAD_WIDTH + ROAD_GAP) + ROAD_WIDTH / 2 - CHARACTER_SIZE / 2;
 
-  // Kaspian's vertical offset so he's exactly on the tile center
-  // The tile is centered at (ROAD_HEIGHT/2). We want Kaspian's center there too:
-  const characterTop = ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2;
+  // Lowered character so it appears on the tile more properly
+  const characterTop =
+    ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2 + 20; // Adjust this offset as needed
 
   // Car's offset on loss
   const lossCarLeft = characterLeft;
@@ -146,9 +146,9 @@ function KaspianCrossGame({
       {/* Horizontal row of lane containers (no gap) */}
       <div className="flex h-full items-center overflow-x-auto" style={{ gap: ROAD_GAP }}>
         {visibleTiles.map((tile) => {
-          const isActive = tile.position === currentPosition + 1;
-          const isCurrent = tile.position === currentPosition;
           const isPast = tile.position < currentPosition;
+          const isCurrent = tile.position === currentPosition;
+          const isActive = tile.position === currentPosition + 1;
 
           return (
             <motion.div
@@ -775,11 +775,12 @@ function PromoCard() {
         Kaspian Cross
       </motion.h2>
 
-      {/* Row with the 3 images: Kaspa Logo, Kaspian, Car */}
+      {/* Row with the 3 images: Kaspa Logo (left), Kaspian (middle), Car (right) */}
       <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
-        <div className="relative w-full h-full flex items-center justify-center gap-6">
-          {/* Kaspa Logo */}
+        <div className="relative w-full h-full grid grid-cols-3 items-center">
+          {/* Kaspa Logo - pinned left */}
           <motion.div
+            className="justify-self-start"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               repeat: Infinity,
@@ -797,9 +798,9 @@ function PromoCard() {
             />
           </motion.div>
 
-          {/* Kaspian */}
+          {/* Kaspian - center */}
           <motion.div
-            className="z-10"
+            className="justify-self-center z-10"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               repeat: Infinity,
@@ -813,13 +814,12 @@ function PromoCard() {
               alt="Kaspian"
               width={96}
               height={96}
-              className=""
             />
           </motion.div>
 
-          {/* Car */}
+          {/* Car - pinned right */}
           <motion.div
-            className="z-10"
+            className="justify-self-end z-10"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               repeat: Infinity,
