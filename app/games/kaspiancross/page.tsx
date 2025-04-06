@@ -114,6 +114,7 @@ function KaspianCrossGame({
   addNewTile: () => void;
 }) {
   const [visibleTiles, setVisibleTiles] = useState(() => generateTiles(10));
+  const [scrollOffset, setScrollOffset] = useState(0);
 
   // Update visible tiles when position changes
   useEffect(() => {
@@ -121,7 +122,17 @@ function KaspianCrossGame({
       addNewTile();
     }
     setVisibleTiles(tiles);
-  }, [currentPosition, tiles, addNewTile]);
+  }, [currentPosition, tiles, addNewTile, visibleTiles.length]);
+
+  // Auto-scroll camera: shift so upcoming tiles become visible
+  useEffect(() => {
+    const maxVisibleBeforeScroll = 3;
+    if (currentPosition > maxVisibleBeforeScroll) {
+      setScrollOffset((currentPosition - maxVisibleBeforeScroll) * ROAD_WIDTH);
+    } else {
+      setScrollOffset(0);
+    }
+  }, [currentPosition]);
 
   // Position rows in a 600px container
   const mainRowTop = 160; // main row is fully visible at y=160
@@ -134,200 +145,207 @@ function KaspianCrossGame({
   // Move Kaspian up so that about 60% of his body is above the tile center
   const characterTop = tileCenterY - CHARACTER_SIZE * 0.6;
 
-  // Shift the car left by ~30% of its width
+  // Shift the car slightly left
   const lossCarLeft = characterLeft - CAR_SIZE * 0.1;
 
   return (
-    <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
-      {/* Top row (partially visible) */}
-      <div
-        className="absolute left-0 flex"
-        style={{
-          top: -120,
-          height: ROAD_HEIGHT,
-          gap: 0,
-        }}
+    // Outer container allows vertical overflow so the car isn’t clipped
+    <div className="relative h-[600px] w-full mx-auto overflow-x-hidden overflow-y-visible bg-gradient-to-b from-green-900 to-purple-900">
+      {/* Camera container that scrolls horizontally */}
+      <motion.div
+        className="absolute inset-0"
+        animate={{ x: -scrollOffset }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        {visibleTiles.map((tile) => (
-          <div
-            key={"top" + tile.position}
-            className="relative flex-shrink-0"
-            style={{
-              width: ROAD_WIDTH,
-              height: ROAD_HEIGHT,
-            }}
-          >
-            <Image
-              src={ROAD_LANE}
-              alt="Road lane top"
-              fill
-              className="object-cover"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Main row (fully visible) */}
-      <div
-        className="absolute left-0 flex"
-        style={{
-          top: mainRowTop,
-          height: ROAD_HEIGHT,
-          gap: 0,
-          overflow: "hidden",
-        }}
-      >
-        {visibleTiles.map((tile) => {
-          const isPast = tile.position < currentPosition;
-          const isCurrent = tile.position === currentPosition;
-          const isActive = tile.position === currentPosition + 1;
-
-          return (
-            <motion.div
-              key={tile.position}
+        {/* Top row (partially visible) */}
+        <div
+          className="absolute left-0 flex"
+          style={{
+            top: -120,
+            height: ROAD_HEIGHT,
+            gap: 0,
+          }}
+        >
+          {visibleTiles.map((tile) => (
+            <div
+              key={"top" + tile.position}
               className="relative flex-shrink-0"
               style={{
                 width: ROAD_WIDTH,
                 height: ROAD_HEIGHT,
-                opacity: isPast ? 0.5 : 1,
               }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: isPast ? 0.5 : 1 }}
-              transition={{ duration: 0.5 }}
             >
-              {/* Middle lane background */}
               <Image
                 src={ROAD_LANE}
-                alt="Road lane"
+                alt="Road lane top"
                 fill
                 className="object-cover"
               />
+            </div>
+          ))}
+        </div>
 
-              {/* Centered tile */}
-              <div
-                className="absolute"
-                style={{
-                  top: "50%",
-                  left: "50%",
-                  width: TILE_SIZE,
-                  height: TILE_SIZE,
-                  transform: "translate(-50%, -50%)",
-                }}
-              >
-                <Image
-                  src={ROAD_TILE}
-                  alt="Road tile"
-                  fill
-                  className={`object-contain transition-transform duration-300 ${
-                    isCurrent ? "scale-110" : ""
-                  }`}
-                />
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
-                  {tile.multiplier}x
-                </div>
-              </div>
-
-              {/* Clickable overlay for the next tile */}
-              {isActive && !hasLost && !hasWon && (
-                <motion.div
-                  className="absolute top-0 left-0 w-full h-full cursor-pointer z-20"
-                  onClick={onTileClick}
-                  whileHover={{ scale: 1.05 }}
-                />
-              )}
-
-              {/* Glow for current tile */}
-              {isCurrent && (
-                <div className="absolute left-1/2 -bottom-3 transform -translate-x-1/2 w-12 h-2 bg-blue-500 rounded-full blur-sm" />
-              )}
-            </motion.div>
-          );
-        })}
-
-        {/* Kaspian character */}
-        <motion.div
-          className="absolute z-10"
+        {/* Main row (fully visible) */}
+        <div
+          className="absolute left-0 flex"
           style={{
-            width: CHARACTER_SIZE,
-            height: CHARACTER_SIZE,
-            left: characterLeft,
-            top: 0, // Offset is applied in the image style below
-          }}
-          animate={{
-            y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
-            filter: isJumping
-              ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))"
-              : "none",
-          }}
-          transition={{
-            duration: isJumping ? 0.8 : isFalling ? 1.5 : 0.5,
-            ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
+            top: mainRowTop,
+            height: ROAD_HEIGHT,
+            gap: 0,
           }}
         >
-          <Image
-            src={isJumping ? KASPIAN_JUMPING : KASPIAN_NORMAL}
-            alt="Kaspian"
-            fill
-            className="object-contain"
-            style={{
-              position: "absolute",
-              top: characterTop - mainRowTop,
-              left: 0,
-            }}
-          />
-        </motion.div>
+          {visibleTiles.map((tile) => {
+            const isPast = tile.position < currentPosition;
+            const isCurrent = tile.position === currentPosition;
+            const isActive = tile.position === currentPosition + 1;
 
-        {/* Car on loss - animated from top to bottom */}
-        {hasLost && (
+            return (
+              <motion.div
+                key={tile.position}
+                className="relative flex-shrink-0"
+                style={{
+                  width: ROAD_WIDTH,
+                  height: ROAD_HEIGHT,
+                  opacity: isPast ? 0.5 : 1,
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: isPast ? 0.5 : 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Middle lane background */}
+                <Image
+                  src={ROAD_LANE}
+                  alt="Road lane"
+                  fill
+                  className="object-cover"
+                />
+
+                {/* Centered tile */}
+                <div
+                  className="absolute"
+                  style={{
+                    top: "50%",
+                    left: "50%",
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  <Image
+                    src={ROAD_TILE}
+                    alt="Road tile"
+                    fill
+                    className={`object-contain transition-transform duration-300 ${
+                      isCurrent ? "scale-110" : ""
+                    }`}
+                  />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
+                    {tile.multiplier}x
+                  </div>
+                </div>
+
+                {/* Clickable overlay for the next tile */}
+                {isActive && !hasLost && !hasWon && (
+                  <motion.div
+                    className="absolute top-0 left-0 w-full h-full cursor-pointer z-20"
+                    onClick={onTileClick}
+                    whileHover={{ scale: 1.05 }}
+                  />
+                )}
+
+                {/* Glow for current tile */}
+                {isCurrent && (
+                  <div className="absolute left-1/2 -bottom-3 -translate-x-1/2 w-12 h-2 bg-blue-500 rounded-full blur-sm" />
+                )}
+              </motion.div>
+            );
+          })}
+
+          {/* Kaspian character */}
           <motion.div
-            className="absolute z-90"
+            className="absolute z-10"
             style={{
-              width: CAR_SIZE,
-              height: CAR_SIZE,
-              left: lossCarLeft,
+              width: CHARACTER_SIZE,
+              height: CHARACTER_SIZE,
+              left: characterLeft,
               top: 0,
             }}
-            initial={{ y: -1200 }} // Start from well above
-            animate={{ y: 1200 }}  // End below the screen
-            transition={{ duration: 3, ease: "linear" }}
-          >
-            <Image
-              src={KASPIAN_CAR}
-              alt="Car"
-              fill
-              className="object-contain rotate-180"
-            />
-          </motion.div>
-        )}
-      </div>
-
-      {/* Bottom row (partially visible) */}
-      <div
-        className="absolute left-0 flex"
-        style={{
-          top: 440,
-          height: ROAD_HEIGHT,
-          gap: 0,
-        }}
-      >
-        {visibleTiles.map((tile) => (
-          <div
-            key={"bot" + tile.position}
-            className="relative flex-shrink-0"
-            style={{
-              width: ROAD_WIDTH,
-              height: ROAD_HEIGHT,
+            animate={{
+              y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
+              filter: isJumping
+                ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))"
+                : "none",
+            }}
+            transition={{
+              duration: isJumping ? 0.8 : isFalling ? 1.5 : 0.5,
+              ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
             }}
           >
             <Image
-              src={ROAD_LANE}
-              alt="Road lane bottom"
+              src={isJumping ? KASPIAN_JUMPING : KASPIAN_NORMAL}
+              alt="Kaspian"
               fill
-              className="object-cover"
+              className="object-contain"
+              style={{
+                position: "absolute",
+                top: characterTop - mainRowTop,
+                left: 0,
+              }}
             />
-          </div>
-        ))}
-      </div>
+          </motion.div>
+
+          {/* Car on loss – high z-index so it stays on top */}
+          {hasLost && (
+            <motion.div
+              className="absolute z-[9999]"
+              style={{
+                width: CAR_SIZE,
+                height: CAR_SIZE,
+                left: lossCarLeft,
+                top: 0,
+              }}
+              initial={{ y: -1200 }}
+              animate={{ y: 1200 }}
+              transition={{ duration: 3, ease: "linear" }}
+            >
+              <Image
+                src={KASPIAN_CAR}
+                alt="Car"
+                fill
+                className="object-contain rotate-180"
+              />
+            </motion.div>
+          )}
+        </div>
+
+        {/* Bottom row (partially visible) */}
+        <div
+          className="absolute left-0 flex"
+          style={{
+            top: 440,
+            height: ROAD_HEIGHT,
+            gap: 0,
+          }}
+        >
+          {visibleTiles.map((tile) => (
+            <div
+              key={"bot" + tile.position}
+              className="relative flex-shrink-0"
+              style={{
+                width: ROAD_WIDTH,
+                height: ROAD_HEIGHT,
+              }}
+            >
+              <Image
+                src={ROAD_LANE}
+                alt="Road lane bottom"
+                fill
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }
