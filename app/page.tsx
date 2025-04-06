@@ -65,6 +65,7 @@ function MainPageContent() {
   // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
+    { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
@@ -395,6 +396,7 @@ function MainPageContent() {
                       if (dataKey === "kaspatowerclimb") dataKey = "kaspa tower climb";
                       if (dataKey === "kaspacupgame") dataKey = "guess the cup";
                       if (dataKey === "ghostjump") dataKey = "ghost jump";
+                      if (dataKey === "kaspiancross") dataKey = "kaspian cross";
                       const totalWins =
                         winCounter.find(
                           (counter) => counter._id.toLowerCase() === dataKey
@@ -658,6 +660,7 @@ function MainPageContent() {
                         const lwGame = win.game.toLowerCase();
                         if (lwGame === "crash") cardImage = "/crashcard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
+                        else if (lwGame === "kaspian cross") cardImage = "/kaspiancrosscard.webp";
                         else if (lwGame === "ghost jump") cardImage = "/ghostjumpcard.webp";
                         else if (lwGame === "upgrade") cardImage = "/upgradecard.webp";
                         else if (lwGame === "kaspa tower climb") cardImage = "/kaspatowerclimbcard.webp";
