@@ -251,7 +251,7 @@ function KaspianCrossGame({
             width: CHARACTER_SIZE,
             height: CHARACTER_SIZE,
             left: characterLeft,
-            top: 0, // We'll offset the image itself via "top: characterTop - mainRowTop"
+            top: 0, // Offset is applied in the image style below
           }}
           animate={{
             y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
@@ -271,14 +271,13 @@ function KaspianCrossGame({
             className="object-contain"
             style={{
               position: "absolute",
-              // Position Kaspian up/down within this container
               top: characterTop - mainRowTop,
               left: 0,
             }}
           />
         </motion.div>
 
-        {/* Car on loss - come from the very top to the bottom */}
+        {/* Car on loss - animated from top to bottom */}
         {hasLost && (
           <motion.div
             className="absolute z-20"
@@ -288,8 +287,8 @@ function KaspianCrossGame({
               left: lossCarLeft,
               top: 0,
             }}
-            initial={{ y: -600 }}    // Start well above the top
-            animate={{ y: 600 }}     // Go well below the bottom
+            initial={{ y: -600 }} // Start from well above
+            animate={{ y: 600 }}  // End below the screen
             transition={{ duration: 2, ease: "linear" }}
           >
             <Image
@@ -490,7 +489,8 @@ function KaspianCrossContent() {
 
   // Cash out
   const handleCashOut = async () => {
-    if (cashoutClicked) return;
+    // Disable cashout if already clicked or if the player has lost
+    if (cashoutClicked || hasLost) return;
     setCashoutClicked(true);
 
     const bet = Number(betAmount);
@@ -688,7 +688,7 @@ function KaspianCrossContent() {
                       </div>
                       <Button
                         onClick={handleCashOut}
-                        disabled={cashoutClicked}
+                        disabled={cashoutClicked || hasLost}
                         className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
                       >
                         Cash Out (Payout: {Number(betAmount) * currentMultiplier} KAS)
