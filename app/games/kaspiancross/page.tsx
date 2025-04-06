@@ -52,7 +52,8 @@ function getWinProbability(currentMultiplier: number) {
 }
 
 // Generate tiles with increasing difficulty
-function generateTiles(count = 10) {
+// Changed default count from 10 to 15.
+function generateTiles(count = 15) {
   const tiles = [];
 
   // First tile: guaranteed 1.0x
@@ -113,16 +114,19 @@ function KaspianCrossGame({
   hasWon: boolean;
   addNewTile: () => void;
 }) {
-  const [visibleTiles, setVisibleTiles] = useState(() => generateTiles(10));
+  // Use 15 tiles initially
+  const [visibleTiles, setVisibleTiles] = useState(() => generateTiles(15));
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Update visible tiles when position changes
+  // Whenever currentPosition changes, generate one new tile.
   useEffect(() => {
-    if (currentPosition > visibleTiles.length - 3) {
-      addNewTile();
-    }
+    addNewTile();
+  }, [currentPosition]);
+
+  // Whenever tiles update, update visibleTiles.
+  useEffect(() => {
     setVisibleTiles(tiles);
-  }, [currentPosition, tiles, addNewTile, visibleTiles.length]);
+  }, [tiles]);
 
   // Auto-scroll camera: shift so upcoming tiles become visible
   useEffect(() => {
@@ -149,7 +153,7 @@ function KaspianCrossGame({
   const lossCarLeft = characterLeft - CAR_SIZE * 0.1;
 
   return (
-    // Outer container: changed to overflow-hidden so no scroll bar appears
+    // Outer container uses overflow-hidden to prevent scrollbars.
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
       {/* Camera container that scrolls horizontally */}
       <motion.div
@@ -306,7 +310,7 @@ function KaspianCrossGame({
               }}
               initial={{ y: -600 }}
               animate={{ y: 600 }}
-              transition={{ duration: 1, ease: "linear" }}
+              transition={{ duration: 2, ease: "linear" }}
             >
               <Image
                 src={KASPIAN_CAR}
@@ -381,9 +385,9 @@ function KaspianCrossContent() {
   const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
   const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
 
-  // Initialize game
+  // Initialize game with 15 starting tiles
   const initGame = () => {
-    const generatedTiles = generateTiles(10);
+    const generatedTiles = generateTiles(15);
     setTiles(generatedTiles);
     setCurrentPosition(1);
     setCurrentMultiplier(1);
@@ -394,12 +398,10 @@ function KaspianCrossContent() {
     setCashoutClicked(false);
   };
 
-  // Add new tile
+  // Add a new tile (generated individually) after each jump
   const addNewTile = () => {
-    if (tiles.length < 30) {
-      const [newTile] = generateTiles(1);
-      setTiles((prev) => [...prev, { ...newTile, position: prev.length + 1 }]);
-    }
+    const newTile = generateTiles(1)[0];
+    setTiles((prev) => [...prev, { ...newTile, position: prev.length + 1 }]);
   };
 
   // Start game
@@ -480,11 +482,11 @@ function KaspianCrossContent() {
       }
 
       if (nextTile.isWin) {
-        // Successful jump
+        // Successful jump: move to the next tile and update multiplier
         setCurrentPosition((pos) => pos + 1);
         setCurrentMultiplier(nextTile.multiplier);
       } else {
-        // Failed jump
+        // Failed jump: trigger loss
         setHasLost(true);
         setIsFalling(true);
         setGameResult("Game Over");
@@ -507,7 +509,6 @@ function KaspianCrossContent() {
 
   // Cash out
   const handleCashOut = async () => {
-    // Disable cashout if already clicked or if the player has lost
     if (cashoutClicked || hasLost) return;
     setCashoutClicked(true);
 
@@ -536,7 +537,7 @@ function KaspianCrossContent() {
     setPregame(true);
   };
 
-  // Simple cooldown for "Start Game" button
+  // Simple cooldown for the "Start Game" button
   useEffect(() => {
     if (cooldown > 0) {
       const interval = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -544,7 +545,7 @@ function KaspianCrossContent() {
     }
   }, [cooldown]);
 
-  // Pregame background animation
+  // Pregame background animation elements
   const roadElements = useMemo(() => {
     return Array.from({ length: 15 }).map((_, i) => ({
       id: i,
