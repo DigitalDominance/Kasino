@@ -29,14 +29,11 @@ const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
 
 // Road/tile sizing
-const ROAD_WIDTH = 160; // width of each road lane container
+const ROAD_WIDTH = 160;  // width of each road lane container
 const ROAD_HEIGHT = 280; // height of each road lane container
 const TILE_SIZE = 80;    // tile size (centered inside the lane)
-let CHARACTER_SIZE = 100; // Kaspian is now 25% bigger (was 80)
-const ROAD_GAP = 0;      // no gap between lanes
-
-// Car on loss is now 33% bigger (was w-24/h-24 => 96px). We'll use 128px
-const CAR_SIZE = 128;
+const CHARACTER_SIZE = 100; // Kaspian is 25% bigger (was 80)
+const CAR_SIZE = 128;    // Car on loss is 33% bigger (was 96px)
 
 // Image assets
 const KASPIAN_NORMAL = "/kaspian.webp";
@@ -44,11 +41,7 @@ const KASPIAN_JUMPING = "/kaspian.webp"; // Same image for normal/jump
 const ROAD_LANE = "/kaspianroadlane.webp";
 const ROAD_TILE = "/kaspiantile.webp";
 const KASPIAN_CAR = "/kaspiancar.webp";
-
-// Additional asset from public folder
 const KASPA_LOGO_PUBLIC = "/kaspa-kas-logo.webp"; // Big Kaspa logo
-
-// Kaspa logo for pregame animation
 const KASPA_LOGO_FALLING =
   "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp";
 
@@ -130,21 +123,67 @@ function KaspianCrossGame({
     setVisibleTiles(tiles);
   }, [currentPosition, tiles, addNewTile]);
 
-  // Kaspian's horizontal offset: center of lane
+  // We'll position our main row at top: 160px in a 600px container.
+  // That leaves 160px above it (part of which will show the top row),
+  // and 160px below for the bottom row. This ensures no scroll bar is needed.
+  const mainRowTop = 160;
+
+  // Horizontal offset for Kaspian (center of the tile)
   const characterLeft =
-    (currentPosition - 1) * (ROAD_WIDTH + ROAD_GAP) + ROAD_WIDTH / 2 - CHARACTER_SIZE / 2;
+    (currentPosition - 1) * ROAD_WIDTH + ROAD_WIDTH / 2 - CHARACTER_SIZE / 2;
 
-  // Lowered character so it appears on the tile more properly
-  const characterTop =
-    ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2 + 20; // Adjust this offset as needed
+  // We'll place Kaspian lower on the tile by adding +50
+  const characterTop = mainRowTop + ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2 + 50;
 
-  // Car's offset on loss
+  // Car on loss uses the same left offset
   const lossCarLeft = characterLeft;
 
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
-      {/* Horizontal row of lane containers (no gap) */}
-      <div className="flex h-full items-center overflow-x-auto" style={{ gap: ROAD_GAP }}>
+      {/* 
+        Top row of road lanes (partially visible at the top).
+        We'll position it at top: -120 so that only ~160px is shown inside the 0..160 range.
+      */}
+      <div
+        className="absolute left-0 flex"
+        style={{
+          top: -120,
+          height: ROAD_HEIGHT,
+          gap: 0,
+        }}
+      >
+        {visibleTiles.map((tile) => (
+          <div
+            key={"top" + tile.position}
+            className="relative flex-shrink-0"
+            style={{
+              width: ROAD_WIDTH,
+              height: ROAD_HEIGHT,
+            }}
+          >
+            <Image
+              src={ROAD_LANE}
+              alt="Road lane top"
+              fill
+              className="object-cover"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* 
+        Main row (fully visible).
+        This is where the tiles + Kaspian are placed.
+      */}
+      <div
+        className="absolute left-0 flex"
+        style={{
+          top: mainRowTop,
+          height: ROAD_HEIGHT,
+          gap: 0,
+          overflow: "hidden",
+        }}
+      >
         {visibleTiles.map((tile) => {
           const isPast = tile.position < currentPosition;
           const isCurrent = tile.position === currentPosition;
@@ -163,42 +202,13 @@ function KaspianCrossGame({
               animate={{ scale: 1, opacity: isPast ? 0.5 : 1 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Repeat the road lane 3 times vertically so it looks continuous */}
-              <div className="absolute inset-0 overflow-hidden">
-                {/* Middle lane */}
-                <div className="relative w-full h-full">
-                  <Image
-                    src={ROAD_LANE}
-                    alt="Road lane"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                {/* Lane above */}
-                <div
-                  className="absolute w-full h-full"
-                  style={{ top: -ROAD_HEIGHT }}
-                >
-                  <Image
-                    src={ROAD_LANE}
-                    alt="Road lane above"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                {/* Lane below */}
-                <div
-                  className="absolute w-full h-full"
-                  style={{ top: ROAD_HEIGHT }}
-                >
-                  <Image
-                    src={ROAD_LANE}
-                    alt="Road lane below"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
+              {/* Single lane background for the middle row */}
+              <Image
+                src={ROAD_LANE}
+                alt="Road lane"
+                fill
+                className="object-cover"
+              />
 
               {/* Centered tile */}
               <div
@@ -249,7 +259,7 @@ function KaspianCrossGame({
             width: CHARACTER_SIZE,
             height: CHARACTER_SIZE,
             left: characterLeft,
-            top: characterTop,
+            top: 0, // We'll handle vertical placement via `characterTop`
           }}
           animate={{
             y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
@@ -267,10 +277,16 @@ function KaspianCrossGame({
             alt="Kaspian"
             fill
             className="object-contain"
+            style={{
+              // Move Kaspian down within this absolutely positioned container
+              position: "absolute",
+              top: characterTop - mainRowTop,
+              left: 0,
+            }}
           />
         </motion.div>
 
-        {/* Car on loss, 33% bigger => 128px */}
+        {/* Car on loss */}
         {hasLost && (
           <motion.div
             className="absolute z-20"
@@ -278,6 +294,7 @@ function KaspianCrossGame({
               width: CAR_SIZE,
               height: CAR_SIZE,
               left: lossCarLeft,
+              top: 0,
             }}
             initial={{ y: -150 }}
             animate={{ y: "50%" }}
@@ -291,6 +308,37 @@ function KaspianCrossGame({
             />
           </motion.div>
         )}
+      </div>
+
+      {/* 
+        Bottom row (partially visible at the bottom).
+        Placed at top: 440 so only 160px is visible in the 440..600 range.
+      */}
+      <div
+        className="absolute left-0 flex"
+        style={{
+          top: 440,
+          height: ROAD_HEIGHT,
+          gap: 0,
+        }}
+      >
+        {visibleTiles.map((tile) => (
+          <div
+            key={"bot" + tile.position}
+            className="relative flex-shrink-0"
+            style={{
+              width: ROAD_WIDTH,
+              height: ROAD_HEIGHT,
+            }}
+          >
+            <Image
+              src={ROAD_LANE}
+              alt="Road lane bottom"
+              fill
+              className="object-cover"
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -369,6 +417,7 @@ function KaspianCrossContent() {
         return;
       }
 
+      // Randomly choose between two treasury addresses
       const chosenTreasury = Math.random() < 0.5 ? treasuryAddressT1 : treasuryAddressT2;
       if (!chosenTreasury) {
         alert("Treasury address not configured");
@@ -418,7 +467,7 @@ function KaspianCrossContent() {
       const nextTile = tiles.find((t) => t.position === currentPosition + 1);
 
       if (!nextTile) {
-        // Reached the end – win
+        // Reached the end – you win
         setHasWon(true);
         handleCashOut();
         return;
@@ -480,6 +529,7 @@ function KaspianCrossContent() {
     setPregame(true);
   };
 
+  // Simple cooldown for "Start Game" button
   useEffect(() => {
     if (cooldown > 0) {
       const interval = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -629,7 +679,7 @@ function KaspianCrossContent() {
                   </div>
                 </div>
               ) : (
-                // Game Board
+                // Actual Game Board
                 <div className="w-full">
                   <KaspianCrossGame
                     tiles={tiles}
@@ -753,10 +803,9 @@ function KaspianCrossContent() {
   );
 }
 
-// Promo / Info Card with new requirements
+// Promo / Info Card
 function PromoCard() {
   // Random “pop up” animation for each of the 3 images
-  // Generate random delays so they pop at different times
   const randomDelay1 = useMemo(() => Math.random() * 3 + 0.5, []);
   const randomDelay2 = useMemo(() => Math.random() * 3 + 0.5, []);
   const randomDelay3 = useMemo(() => Math.random() * 3 + 0.5, []);
@@ -775,7 +824,7 @@ function PromoCard() {
         Kaspian Cross
       </motion.h2>
 
-      {/* Row with the 3 images: Kaspa Logo (left), Kaspian (middle), Car (right) */}
+      {/* Row with the 3 images: Logo (left), Kaspian (middle), Car (right) */}
       <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
         <div className="relative w-full h-full grid grid-cols-3 items-center">
           {/* Kaspa Logo - pinned left */}
