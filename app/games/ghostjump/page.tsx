@@ -223,7 +223,7 @@ function SpaceJumpGame({
       <motion.div
         className="absolute left-1/2 w-24 h-24 z-10"
         style={{
-          bottom: "6rem",
+          bottom: "7.5rem",
           x: "-50%",
         }}
         animate={{
