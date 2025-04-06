@@ -149,8 +149,8 @@ function KaspianCrossGame({
   const lossCarLeft = characterLeft - CAR_SIZE * 0.1;
 
   return (
-    // Outer container allows vertical overflow so the car isn’t clipped
-    <div className="relative h-[600px] w-full mx-auto overflow-x-hidden overflow-y-visible bg-gradient-to-b from-green-900 to-purple-900">
+    // Outer container: changed to overflow-hidden so no scroll bar appears
+    <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
       {/* Camera container that scrolls horizontally */}
       <motion.div
         className="absolute inset-0"
@@ -306,7 +306,7 @@ function KaspianCrossGame({
               }}
               initial={{ y: -600 }}
               animate={{ y: 600 }}
-              transition={{ duration: 2, ease: "linear" }}
+              transition={{ duration: 1, ease: "linear" }}
             >
               <Image
                 src={KASPIAN_CAR}
@@ -895,7 +895,6 @@ function PromoCard() {
         </div>
       </div>
 
-      {/* Updated bigger text */}
       <p className="text-lg text-white mb-4 px-4 leading-7">
         Cross the road one tile at a time and increase your payout. But beware, avoid the Solana
         cars that are waiting to hit you if you lose!
