@@ -29,14 +29,15 @@ const MAX_BET = 1000;
 const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
 
-// Approx. sizes
-const TILE_WIDTH = 100; // scaled width for each tile
-const TILE_HEIGHT = 100;
-const TILE_GAP = 16; // horizontal gap between tiles
+// Road/tile sizing
+const ROAD_WIDTH = 140;    // width of the road lane container
+const ROAD_HEIGHT = 300;   // height of the road lane container (makes it visibly tall)
+const ROAD_GAP = 10;       // horizontal gap between road-lane containers
+const TILE_SIZE = 80;      // size of the tile itself (centered within the road-lane)
 
 // Image assets
 const KASPIAN_NORMAL = "/kaspian.webp";
-const KASPIAN_JUMPING = "/kaspian.webp"; // Using the same image for normal/jump
+const KASPIAN_JUMPING = "/kaspian.webp"; // Using same image for normal/jump
 const ROAD_LANE = "/kaspianroadlane.webp";
 const ROAD_TILE = "/kaspiantile.webp";
 const KASPIAN_CAR = "/kaspiancar.webp";
@@ -120,26 +121,22 @@ function KaspianCrossGame({
     if (currentPosition > visibleTiles.length - 3) {
       addNewTile();
     }
-    // Keep slicing from 0 -> we just want the total array
     setVisibleTiles(tiles);
   }, [currentPosition, tiles, addNewTile]);
 
-  // The character’s X offset: (currentPosition - 1) * (tileWidth + gap)
-  const characterX = (currentPosition - 1) * (TILE_WIDTH + TILE_GAP);
+  // Kaspian's horizontal offset
+  const characterX = (currentPosition - 1) * (ROAD_WIDTH + ROAD_GAP);
 
-  // For the “loss” car, we position it at the same X
+  // Car's offset on loss
   const lossCarX = characterX;
 
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
-      {/* 
-        Tiles in a simple horizontal flex with gap.
-        Each tile includes:
-        - Road-lane background
-        - Tile image on top
-        - Multiplier text
-      */}
-      <div className="flex h-full items-center gap-4 px-4 overflow-x-auto">
+      {/* Horizontal row of road-lane containers */}
+      <div
+        className="flex h-full items-center overflow-x-auto"
+        style={{ gap: ROAD_GAP, padding: "0 16px" }}
+      >
         {visibleTiles.map((tile) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -148,10 +145,10 @@ function KaspianCrossGame({
           return (
             <motion.div
               key={tile.position}
-              className="relative"
+              className="relative flex-shrink-0"
               style={{
-                width: TILE_WIDTH,
-                height: TILE_HEIGHT,
+                width: ROAD_WIDTH,
+                height: ROAD_HEIGHT,
                 opacity: isPast ? 0.5 : 1,
               }}
               initial={{ scale: 0, opacity: 0 }}
@@ -161,7 +158,7 @@ function KaspianCrossGame({
               }}
               transition={{ duration: 0.5 }}
             >
-              {/* Road lane background */}
+              {/* Tall vertical road lane */}
               <Image
                 src={ROAD_LANE}
                 alt="Road lane background"
@@ -169,8 +166,17 @@ function KaspianCrossGame({
                 className="object-cover"
               />
 
-              {/* Tile texture */}
-              <div className="relative w-full h-full">
+              {/* Centered tile container */}
+              <div
+                className="absolute"
+                style={{
+                  top: "50%",
+                  left: "50%",
+                  width: TILE_SIZE,
+                  height: TILE_SIZE,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
                 <Image
                   src={ROAD_TILE}
                   alt="Road tile"
@@ -196,17 +202,17 @@ function KaspianCrossGame({
 
               {/* Glow effect for current tile */}
               {isCurrent && (
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-2 bg-blue-500 rounded-full blur-sm" />
+                <div className="absolute left-1/2 -bottom-3 transform -translate-x-1/2 w-12 h-2 bg-blue-500 rounded-full blur-sm" />
               )}
             </motion.div>
           );
         })}
 
-        {/* Kaspian character (absolutely positioned over the tile row) */}
+        {/* Kaspian character (absolute) */}
         <motion.div
           className="absolute w-24 h-24 z-10"
           style={{
-            bottom: "50%",
+            bottom: "30%", // so Kaspian stands around the tile center
             left: characterX,
           }}
           animate={{
