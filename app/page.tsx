@@ -175,9 +175,15 @@ function MainPageContent() {
     <div className={`${montserrat.className} min-h-screen bg-black`}>
       <style jsx global>{`
         @keyframes gradientAnimation {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
         }
         .animate-gradient {
           background: linear-gradient(270deg, #49eacb, #006d5b, #003f2f, #006d5b, #49eacb);
@@ -234,7 +240,11 @@ function MainPageContent() {
                   className="text-[#49eacb] hover:bg-[#49eacb]/10"
                   onClick={() => setIsSidebarOpen((prev) => !prev)}
                 >
-                  {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  {isSidebarOpen ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <Menu className="w-5 h-5" />
+                  )}
                 </MotionButton>
                 <motion.div
                   className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
@@ -304,7 +314,10 @@ function MainPageContent() {
                         <span className="group-hover:text-[#8b0000]">Support</span>
                       </Link>
                     </div>
-                    <div className="absolute telegram-icon left-0 w-full px-4" style={{ bottom: "1rem" }}>
+                    <div
+                      className="absolute telegram-icon left-0 w-full px-4"
+                      style={{ bottom: "1rem" }}
+                    >
                       <Link
                         href="https://t.me/KasCasinoXYZ"
                         target="_blank"
@@ -387,7 +400,8 @@ function MainPageContent() {
                           (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
                       const rawScore = highScores[dataKey] || 0;
-                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      const highScoreVal =
+                        rawScore > 0 ? rawScore.toFixed(2) : "N/A";
                       return (
                         <motion.div
                           key={i}
@@ -482,7 +496,8 @@ function MainPageContent() {
                           (counter) => counter._id.toLowerCase() === dataKey
                         )?.totalWins || 0;
                       const rawScore = highScores[dataKey] || 0;
-                      const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+                      const highScoreVal =
+                        rawScore > 0 ? rawScore.toFixed(2) : "N/A";
                       return (
                         <motion.div
                           key={i}
@@ -578,17 +593,26 @@ function MainPageContent() {
                         const lwGame = win.game.toLowerCase();
                         if (lwGame === "crash") cardImage = "/crashcard.webp";
                         else if (lwGame === "mines") cardImage = "/minescard.webp";
-                        else if (lwGame === "kaspian cross") cardImage = "/kaspiancrosscard.webp";
-                        else if (lwGame === "ghost jump") cardImage = "/ghostjumpcard.webp";
-                        else if (lwGame === "upgrade") cardImage = "/upgradecard.webp";
-                        else if (lwGame === "kaspa tower climb") cardImage = "/kaspatowerclimbcard.webp";
+                        else if (lwGame === "kaspian cross")
+                          cardImage = "/kaspiancrosscard.webp";
+                        else if (lwGame === "ghost jump")
+                          cardImage = "/ghostjumpcard.webp";
+                        else if (lwGame === "upgrade")
+                          cardImage = "/upgradecard.webp";
+                        else if (lwGame === "kaspa tower climb")
+                          cardImage = "/kaspatowerclimbcard.webp";
                         else if (lwGame === "plinko") cardImage = "/plinkocard.webp";
-                        else if (lwGame === "roulette") cardImage = "/roulettecard.webp";
+                        else if (lwGame === "roulette")
+                          cardImage = "/roulettecard.webp";
                         else if (lwGame === "dice") cardImage = "/dicecard.webp";
-                        else if (lwGame === "coinflip") cardImage = "/coinflipcard.webp";
-                        else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp";
-                        else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp";
-                        else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp";
+                        else if (lwGame === "coinflip")
+                          cardImage = "/coinflipcard.webp";
+                        else if (lwGame === "guess the cup")
+                          cardImage = "/guessthecupcard.webp";
+                        else if (lwGame === "kasper loot box")
+                          cardImage = "/kasperlootboxcard.webp";
+                        else if (lwGame === "kasen mania")
+                          cardImage = "/kasenmaniacard.webp";
                         return (
                           <MotionCard
                             key={i}
@@ -635,7 +659,10 @@ function MainPageContent() {
                         );
                       })}
                     </motion.div>
-                    <ScrollBar orientation="horizontal" className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20" />
+                    <ScrollBar
+                      orientation="horizontal"
+                      className="bg-[#49EACB]/10 hover:bg-[#49EACB]/20"
+                    />
                   </ScrollArea>
                 </motion.div>
               </main>
@@ -688,8 +715,10 @@ export function XPDisplay() {
   useEffect(() => {
     const loadCooldowns = () => {
       const storedCooldowns: Record<string, number> = {};
-      dailyLootBoxes.forEach(box => {
-        const storedTimestamp = sessionStorage.getItem(`dailyLootBoxTimestamp_${box.slug}`);
+      dailyLootBoxes.forEach((box) => {
+        const storedTimestamp = sessionStorage.getItem(
+          `dailyLootBoxTimestamp_${box.slug}`
+        );
         if (storedTimestamp) {
           const elapsed = Date.now() - parseInt(storedTimestamp);
           const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in ms
@@ -711,10 +740,10 @@ export function XPDisplay() {
     if (Object.keys(cooldowns).length === 0) return;
 
     const interval = setInterval(() => {
-      setCooldowns(prev => {
-        const updated = {...prev};
+      setCooldowns((prev) => {
+        const updated = { ...prev };
         let changed = false;
-        
+
         for (const key in updated) {
           if (updated[key] > 0) {
             updated[key] -= 1;
@@ -759,8 +788,8 @@ export function XPDisplay() {
   useEffect(() => {
     const fetchXP = async () => {
       try {
-        if (isConnected && window.kasware && window.kasware.getAccounts) {
-          const accounts: string[] = await window.kasware.getAccounts();
+        if (isConnected && (window as any).kasware && (window as any).kasware.getAccounts) {
+          const accounts: string[] = await (window as any).kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
           const requestUrl = `${apiUrl}/api/user?walletAddress=${encodeURIComponent(
@@ -824,7 +853,8 @@ export function XPDisplay() {
   };
 
   const currentThreshold = getThreshold(displayLevel);
-  const nextThreshold = displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
+  const nextThreshold =
+    displayLevel < 100 ? getThreshold(displayLevel + 1) : currentThreshold;
   const xpProgress = userData.totalXp - currentThreshold;
   const xpNeeded = nextThreshold - currentThreshold;
   const progressPercent = xpNeeded > 0 ? (xpProgress / xpNeeded) * 100 : 100;
@@ -841,11 +871,14 @@ export function XPDisplay() {
   }
 
   const levelStr = displayLevel.toString();
-  const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
+  const fontSize =
+    levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
   // Popup styling classes.
-  const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
-  const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
+  const hoverPopupClass =
+    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
+  const smallPopupClass =
+    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -1000,41 +1033,80 @@ export function XPDisplay() {
                     X
                   </motion.button>
                   <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
+                    <h2 className="text-3xl font-bold text-[#49EACB]">
+                      Daily Free Loot Boxes
+                    </h2>
+
+                    {/* Large display of current level */}
+                    <div className="flex flex-col items-center my-4">
+                      <p className="text-white text-lg mb-2">Your Current Level</p>
+                      <motion.div
+                        className={`relative rounded-full border-2 ${borderColorClass}`}
+                        style={{ width: "80px", height: "80px", overflow: "hidden" }}
+                      >
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            backgroundImage: "url('/xpimage.webp')",
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
+                            zIndex: 0,
+                          }}
+                        />
+                        <span
+                          style={{ fontSize: "1.5rem" }}
+                          className="relative flex items-center justify-center h-full w-full z-10"
+                        >
+                          {displayLevel}
+                        </span>
+                      </motion.div>
+                    </div>
+
                     <p className="text-gray-300 mt-2">Available once every 24 hours</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
                     {dailyLootBoxes.map((box) => {
                       const isLocked = userData.level < box.requiredLevel;
                       const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0;
                       const cooldownTime = cooldowns[box.slug] || 0;
-                      
+
                       return (
-                        <Link
-                          href={`/games/${box.slug}`}
-                          key={box.slug}
-                          passHref
-                        >
+                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
                           <motion.div
-                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${isLocked ? 'border-red-500' : isOnCooldown ? 'border-yellow-500' : 'border-[#49EACB]'} hover:shadow-lg transition-all duration-200`}
-                            whileHover={{ scale: isLocked || isOnCooldown ? 1 : 1.05 }}
+                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
+                              isLocked
+                                ? "border-red-500"
+                                : isOnCooldown
+                                ? "border-yellow-500"
+                                : "border-[#49EACB]"
+                            } hover:shadow-lg transition-all duration-200 w-64 h-80 flex flex-col`}
+                            whileHover={{
+                              scale: isLocked || isOnCooldown ? 1 : 1.05,
+                            }}
                           >
                             {/* Overlay for locked or cooldown state */}
                             {(isLocked || isOnCooldown) && (
                               <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
                                 <div className="text-center p-2">
                                   {isLocked ? (
-                                    <p className="text-red-400 font-bold">Requires Level {box.requiredLevel}</p>
+                                    <p className="text-red-400 font-bold">
+                                      Requires Level {box.requiredLevel}
+                                    </p>
                                   ) : (
                                     <>
-                                      <p className="text-yellow-400 font-bold">On Cooldown</p>
-                                      <p className="text-white text-sm">{formatTime(cooldownTime)}</p>
+                                      <p className="text-yellow-400 font-bold">
+                                        On Cooldown
+                                      </p>
+                                      <p className="text-white text-sm">
+                                        {formatTime(cooldownTime)}
+                                      </p>
                                     </>
                                   )}
                                 </div>
                               </div>
                             )}
-                            
+
                             <div className="relative w-full h-40">
                               <Image
                                 src={box.image}
@@ -1046,7 +1118,9 @@ export function XPDisplay() {
                             </div>
                             <div className="mt-2 text-center">
                               <h3 className="font-bold text-white">{box.name}</h3>
-                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                              <p className="text-sm text-gray-300">
+                                Level {box.requiredLevel}+
+                              </p>
                             </div>
                           </motion.div>
                         </Link>
@@ -1083,7 +1157,9 @@ export function XPDisplay() {
                   </motion.button>
                   <div className="text-center mb-4">
                     <div className="flex justify-center items-center gap-2">
-                      <span className="text-xl font-bold text-white">{userData.gems}</span>
+                      <span className="text-xl font-bold text-white">
+                        {userData.gems}
+                      </span>
                       <Image src="/gem.webp" alt="Gem" width={40} height={40} />
                     </div>
                   </div>
@@ -1114,8 +1190,12 @@ export function XPDisplay() {
                               />
                             </div>
                             <div className="text-center mt-2">
-                              <span className="font-bold text-white">Gems Required:</span>{" "}
-                              <span className="font-bold text-[#49EACB]">{requiredGems}</span>
+                              <span className="font-bold text-white">
+                                Gems Required:
+                              </span>{" "}
+                              <span className="font-bold text-[#49EACB]">
+                                {requiredGems}
+                              </span>
                             </div>
                           </motion.div>
                         </Link>
