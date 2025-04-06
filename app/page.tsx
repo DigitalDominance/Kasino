@@ -23,21 +23,6 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-// Move dailyLootBoxes to global scope so it's available in all components.
-const dailyLootBoxes = [
-  { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp" },
-  { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp" },
-  { name: "Level 20 Daily Loot Box", slug: "Level20DailyLootBox", image: "/Level20Card.webp" },
-  { name: "Level 30 Daily Loot Box", slug: "Level30DailyLootBox", image: "/Level30Card.webp" },
-  { name: "Level 40 Daily Loot Box", slug: "Level40DailyLootBox", image: "/Level40Card.webp" },
-  { name: "Level 50 Daily Loot Box", slug: "Level50DailyLootBox", image: "/Level50Card.webp" },
-  { name: "Level 60 Daily Loot Box", slug: "Level60DailyLootBox", image: "/Level60Card.webp" },
-  { name: "Level 70 Daily Loot Box", slug: "Level70DailyLootBox", image: "/Level70Card.webp" },
-  { name: "Level 80 Daily Loot Box", slug: "Level80DailyLootBox", image: "/Level80Card.webp" },
-  { name: "Level 90 Daily Loot Box", slug: "Level90DailyLootBox", image: "/Level90Card.webp" },
-  { name: "Level 100 Daily Loot Box", slug: "Level100DailyLootBox", image: "/Level100Card.webp" },
-];
-
 // For framer-motion
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);
@@ -76,7 +61,8 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
@@ -568,7 +554,7 @@ function MainPageContent() {
                   </div>
                 </motion.div>
 
-                {/* LIVE WINS */}
+                {/* Live Wins */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -663,13 +649,7 @@ function MainPageContent() {
   );
 }
 
-/* XPDisplay Component
-   – Uses xpimage.webp as background with a border outline and displays gem count.
-   – When the XP circle is clicked, a popup opens (via a portal) showing the Daily Loot Boxes.
-   – Each Daily Loot Box card checks sessionStorage (using a key based on its slug) for a stored timestamp.
-     If the box is still on cooldown (24 hours), a grey overlay with the remaining time is displayed.
-   – Also includes the Gem Popup (unchanged).
-*/
+/* XPDisplay Component with Daily Loot Boxes Popup */
 export function XPDisplay() {
   const { isConnected } = useWallet();
   const [userData, setUserData] = useState({ totalXp: 0, level: 0, gems: 0 });
@@ -680,11 +660,74 @@ export function XPDisplay() {
   const [showLevelUpPopup, setShowLevelUpPopup] = useState(false);
   const [showGemPopup, setShowGemPopup] = useState(false);
   const [showDailyLootPopup, setShowDailyLootPopup] = useState(false);
-  const [mounted, setMounted] = useState(false); // Track client-side mount
+  const [mounted, setMounted] = useState(false);
+  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+  const [isLoadingCooldowns, setIsLoadingCooldowns] = useState(true);
 
+  // Daily Loot Boxes data
+  const dailyLootBoxes = [
+    { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp", requiredLevel: 1 },
+    { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp", requiredLevel: 10 },
+    { name: "Level 20 Daily Loot Box", slug: "Level20DailyLootBox", image: "/Level20Card.webp", requiredLevel: 20 },
+    { name: "Level 30 Daily Loot Box", slug: "Level30DailyLootBox", image: "/Level30Card.webp", requiredLevel: 30 },
+    { name: "Level 40 Daily Loot Box", slug: "Level40DailyLootBox", image: "/Level40Card.webp", requiredLevel: 40 },
+    { name: "Level 50 Daily Loot Box", slug: "Level50DailyLootBox", image: "/Level50Card.webp", requiredLevel: 50 },
+    { name: "Level 60 Daily Loot Box", slug: "Level60DailyLootBox", image: "/Level60Card.webp", requiredLevel: 60 },
+    { name: "Level 70 Daily Loot Box", slug: "Level70DailyLootBox", image: "/Level70Card.webp", requiredLevel: 70 },
+    { name: "Level 80 Daily Loot Box", slug: "Level80DailyLootBox", image: "/Level80Card.webp", requiredLevel: 80 },
+    { name: "Level 90 Daily Loot Box", slug: "Level90DailyLootBox", image: "/Level90Card.webp", requiredLevel: 90 },
+    { name: "Level 100 Daily Loot Box", slug: "Level100DailyLootBox", image: "/Level100Card.webp", requiredLevel: 100 },
+  ];
+
+  // Set mounted after component mounts (client only)
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Load cooldowns from sessionStorage on mount
+  useEffect(() => {
+    const loadCooldowns = () => {
+      const storedCooldowns: Record<string, number> = {};
+      dailyLootBoxes.forEach(box => {
+        const storedTimestamp = sessionStorage.getItem(`dailyLootBoxTimestamp_${box.slug}`);
+        if (storedTimestamp) {
+          const elapsed = Date.now() - parseInt(storedTimestamp);
+          const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in ms
+          if (elapsed < cooldownPeriod) {
+            const remainingSeconds = Math.ceil((cooldownPeriod - elapsed) / 1000);
+            storedCooldowns[box.slug] = remainingSeconds;
+          }
+        }
+      });
+      setCooldowns(storedCooldowns);
+      setIsLoadingCooldowns(false);
+    };
+
+    loadCooldowns();
+  }, []);
+
+  // Update cooldowns every second
+  useEffect(() => {
+    if (Object.keys(cooldowns).length === 0) return;
+
+    const interval = setInterval(() => {
+      setCooldowns(prev => {
+        const updated = {...prev};
+        let changed = false;
+        
+        for (const key in updated) {
+          if (updated[key] > 0) {
+            updated[key] -= 1;
+            changed = true;
+          }
+        }
+
+        return changed ? updated : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldowns]);
 
   // Persist last xp/level/gem via sessionStorage.
   const lastXpRef = useRef<number | null>(null);
@@ -804,13 +847,12 @@ export function XPDisplay() {
   const hoverPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
   const smallPopupClass = "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs";
 
-  // Helper: format seconds as "Xh Ym Zs"
-  function formatTime(seconds: number): string {
+  const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours}h ${minutes}m ${secs}s`;
-  }
+  };
 
   return (
     <div
@@ -819,13 +861,13 @@ export function XPDisplay() {
       onMouseLeave={() => setIsHovered(false)}
       style={{ minWidth: "max-content" }}
     >
-      {/* XP Circle – now clickable to open the Daily Loot Popup */}
+      {/* XP Circle - Clickable to show daily loot boxes */}
       <motion.div
-        onClick={() => setShowDailyLootPopup(true)}
         className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
         style={{ width: "48px", height: "48px", overflow: "hidden" }}
         animate={isFlipping ? { rotateY: 360 } : { rotateY: 0 }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
+        onClick={() => setShowDailyLootPopup(true)}
       >
         <div
           className="absolute inset-0"
@@ -936,6 +978,88 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
+      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {showDailyLootPopup && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 flex items-center justify-center z-50"
+              >
+                <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <motion.button
+                    onClick={() => setShowDailyLootPopup(false)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute top-2 right-2 text-[#49EACB] font-bold"
+                  >
+                    X
+                  </motion.button>
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
+                    <p className="text-gray-300 mt-2">Available once every 24 hours</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {dailyLootBoxes.map((box) => {
+                      const isLocked = userData.level < box.requiredLevel;
+                      const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0;
+                      const cooldownTime = cooldowns[box.slug] || 0;
+                      
+                      return (
+                        <Link
+                          href={`/games/${box.slug}`}
+                          key={box.slug}
+                          passHref
+                        >
+                          <motion.div
+                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${isLocked ? 'border-red-500' : isOnCooldown ? 'border-yellow-500' : 'border-[#49EACB]'} hover:shadow-lg transition-all duration-200`}
+                            whileHover={{ scale: isLocked || isOnCooldown ? 1 : 1.05 }}
+                          >
+                            {/* Overlay for locked or cooldown state */}
+                            {(isLocked || isOnCooldown) && (
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                                <div className="text-center p-2">
+                                  {isLocked ? (
+                                    <p className="text-red-400 font-bold">Requires Level {box.requiredLevel}</p>
+                                  ) : (
+                                    <>
+                                      <p className="text-yellow-400 font-bold">On Cooldown</p>
+                                      <p className="text-white text-sm">{formatTime(cooldownTime)}</p>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="relative w-full h-40">
+                              <Image
+                                src={box.image}
+                                alt={box.name}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="mt-2 text-center">
+                              <h3 className="font-bold text-white">{box.name}</h3>
+                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                            </div>
+                          </motion.div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+
       {/* Gem Popup Modal rendered via a Portal (only on client) */}
       {mounted &&
         createPortal(
@@ -994,75 +1118,6 @@ export function XPDisplay() {
                               <span className="font-bold text-[#49EACB]">{requiredGems}</span>
                             </div>
                           </motion.div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
-
-      {/* Daily Loot Boxes Popup Modal rendered via a Portal */}
-      {mounted &&
-        createPortal(
-          <AnimatePresence>
-            {showDailyLootPopup && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 flex items-center justify-center z-50"
-              >
-                <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg">
-                  <motion.button
-                    onClick={() => setShowDailyLootPopup(false)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold"
-                  >
-                    X
-                  </motion.button>
-                  <h2 className="text-center mb-4 text-xl font-bold">Daily Loot Boxes</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {dailyLootBoxes.map((box, index) => {
-                      // Assumes the box name is like "Level 1 Daily Loot Box" so extract the level from position 1
-                      const requiredLevel = box.name.split(" ")[1];
-                      // Check sessionStorage for a timestamp keyed by the box slug
-                      const timestampStr = sessionStorage.getItem(`dailyLootBoxTimestamp_${box.slug}`);
-                      let remainingSeconds = 0;
-                      if (timestampStr) {
-                        const timestamp = parseInt(timestampStr);
-                        const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in ms
-                        const elapsed = Date.now() - timestamp;
-                        if (elapsed < cooldownPeriod) {
-                          remainingSeconds = Math.ceil((cooldownPeriod - elapsed) / 1000);
-                        }
-                      }
-                      return (
-                        <Link href={`/games/${box.slug}`} key={index}>
-                          <div className="relative cursor-pointer">
-                            <div className="overflow-hidden rounded-lg border border-[#49EACB]">
-                              <Image
-                                src={box.image}
-                                alt={`${box.name} thumbnail`}
-                                width={200}
-                                height={150}
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="mt-2 text-center text-white font-semibold">{box.name}</div>
-                            {remainingSeconds > 0 && (
-                              <div className="absolute inset-0 bg-gray-700 bg-opacity-75 flex items-center justify-center">
-                                <span className="text-white text-lg font-bold">
-                                  {formatTime(remainingSeconds)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
                         </Link>
                       );
                     })}
