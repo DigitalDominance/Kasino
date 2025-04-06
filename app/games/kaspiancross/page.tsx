@@ -135,7 +135,7 @@ function KaspianCrossGame({
   const characterTop = tileCenterY - CHARACTER_SIZE * 0.6;
 
   // Shift the car left by ~30% of its width
-  const lossCarLeft = characterLeft - CAR_SIZE * 0.3;
+  const lossCarLeft = characterLeft - CAR_SIZE * 0.1;
 
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
@@ -287,9 +287,9 @@ function KaspianCrossGame({
               left: lossCarLeft,
               top: 0,
             }}
-            initial={{ y: -600 }} // Start from well above
-            animate={{ y: 600 }}  // End below the screen
-            transition={{ duration: 2, ease: "linear" }}
+            initial={{ y: -1200 }} // Start from well above
+            animate={{ y: 1200 }}  // End below the screen
+            transition={{ duration: 3, ease: "linear" }}
           >
             <Image
               src={KASPIAN_CAR}
