@@ -229,7 +229,7 @@ function SpaceJumpGame({
             x: "-50%",
           }}
           animate={{
-            y: isJumping ? [-30, -80, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
+            y: isJumping ? [-30, -60, 0] : isFalling ? [0, 200, 600] : [0, -15, 0],
             rotate: isFalling ? [0, 15, 45, 90] : 0,
             filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
