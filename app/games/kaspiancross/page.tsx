@@ -107,38 +107,46 @@ function KaspianCrossGame({
     Math.min(tiles.length, currentPosition + 3)
   );
 
+  // Calculate lane width based on image dimensions (795px width)
+  const laneWidth = 795 / 3; // Dividing by 3 to fit multiple lanes
+
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden">
       {/* Road background with lanes */}
       <div className="absolute inset-0 bg-gray-800 rounded-lg overflow-hidden">
-        {/* Road lanes */}
-        <div className="absolute inset-0 flex flex-col justify-between">
-          {Array.from({ length: 5 }).map((_, i) => (
+        {/* Road lanes - vertical layout */}
+        <div className="absolute inset-0 flex">
+          {Array.from({ length: 3 }).map((_, i) => (
             <motion.div 
               key={i}
-              className="w-full h-24"
-              initial={{ y: -1536 }}
-              animate={{ y: 1536 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
+              className="h-full flex-shrink-0"
+              style={{ width: `${laneWidth}px` }}
             >
-              <Image
-                src={ROAD_LANE}
-                alt="Road lane"
-                width={795}
-                height={1536}
-                className="object-cover w-full h-full"
-              />
+              <motion.div
+                className="h-full w-full"
+                initial={{ y: -1536 }}
+                animate={{ y: 1536 }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                <Image
+                  src={ROAD_LANE}
+                  alt="Road lane"
+                  width={795}
+                  height={1536}
+                  className="object-cover h-full w-full"
+                />
+              </motion.div>
             </motion.div>
           ))}
         </div>
       </div>
 
       {/* Tiles container - horizontal layout */}
-      <div className="relative h-full flex items-center">
+      <div className="relative h-full flex items-center justify-center">
         <div className="flex h-32">
           {visibleTiles.map((tile) => {
             const isActive = tile.position === currentPosition + 1;
@@ -185,24 +193,23 @@ function KaspianCrossGame({
           })}
         </div>
 
-        {/* Kaspian character */}
+        {/* Kaspian character - bigger and centered in lane */}
         <motion.div
-          className="absolute w-24 h-24 z-10"
+          className="absolute w-32 h-32 z-10"
           style={{
-            left: `calc(${(currentPosition - 1) * 144}px)`,
+            left: `calc(${(currentPosition - 1) * 144}px + 48px)`, // Center in lane
             top: "50%",
             y: "-50%",
           }}
           animate={{
-            x: isWalking ? [0, 144, 0] : isHit ? [0, 0, 200] : [0, -15, 0],
+            x: isWalking ? [0, 144, 0] : 0,
             y: isHit ? [0, -30, 100] : 0,
             rotate: isHit ? [0, 15, 45, 90] : 0,
             filter: isWalking ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
           }}
           transition={{
-            duration: isWalking ? 0.8 : isHit ? 1.5 : 2,
-            repeat: isWalking || isHit ? 0 : Infinity,
-            ease: isWalking ? "easeOut" : isHit ? "easeIn" : "easeInOut",
+            duration: isWalking ? 0.8 : isHit ? 1.5 : 0,
+            ease: isWalking ? "easeOut" : isHit ? "easeIn" : "linear",
           }}
         >
           <Image
@@ -213,18 +220,19 @@ function KaspianCrossGame({
           />
         </motion.div>
 
-        {/* Car that hits when losing */}
+        {/* Car that hits when losing - comes from top */}
         {hasLost && !isHit && (
           <motion.div
             className="absolute w-48 h-48 z-20"
+            style={{
+              left: `calc(${(currentPosition) * 144}px + 48px)`, // Center in lane
+            }}
             initial={{ 
               y: -200,
-              x: `calc(${(currentPosition) * 144}px)`,
               rotate: 180
             }}
             animate={{ 
-              y: 300,
-              x: `calc(${(currentPosition) * 144}px)`,
+              y: 600,
             }}
             transition={{ duration: 0.5, ease: "easeIn" }}
             onAnimationComplete={() => {}}
