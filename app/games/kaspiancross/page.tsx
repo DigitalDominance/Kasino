@@ -29,7 +29,7 @@ const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
 
 // Road/tile sizing
-const ROAD_WIDTH = 160;  // width of each road lane container
+const ROAD_WIDTH = 160; // width of each road lane container
 const ROAD_HEIGHT = 280; // height of each road lane container
 const TILE_SIZE = 80;    // tile size (centered inside the lane)
 const CHARACTER_SIZE = 100; // Kaspian is 25% bigger (was 80)
@@ -123,27 +123,23 @@ function KaspianCrossGame({
     setVisibleTiles(tiles);
   }, [currentPosition, tiles, addNewTile]);
 
-  // We'll position our main row at top: 160px in a 600px container.
-  // That leaves 160px above it (part of which will show the top row),
-  // and 160px below for the bottom row. This ensures no scroll bar is needed.
-  const mainRowTop = 160;
+  // Position rows in a 600px container
+  const mainRowTop = 160; // main row is fully visible at y=160
+  const tileCenterY = mainRowTop + ROAD_HEIGHT / 2;
 
-  // Horizontal offset for Kaspian (center of the tile)
+  // Character's horizontal offset
   const characterLeft =
     (currentPosition - 1) * ROAD_WIDTH + ROAD_WIDTH / 2 - CHARACTER_SIZE / 2;
 
-  // We'll place Kaspian lower on the tile by adding +50
-  const characterTop = mainRowTop + ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2 + 50;
+  // Move Kaspian up so that about 60% of his body is above the tile center
+  const characterTop = tileCenterY - CHARACTER_SIZE * 0.6;
 
-  // Car on loss uses the same left offset
-  const lossCarLeft = characterLeft;
+  // Shift the car left by ~30% of its width
+  const lossCarLeft = characterLeft - CAR_SIZE * 0.3;
 
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
-      {/* 
-        Top row of road lanes (partially visible at the top).
-        We'll position it at top: -120 so that only ~160px is shown inside the 0..160 range.
-      */}
+      {/* Top row (partially visible) */}
       <div
         className="absolute left-0 flex"
         style={{
@@ -171,10 +167,7 @@ function KaspianCrossGame({
         ))}
       </div>
 
-      {/* 
-        Main row (fully visible).
-        This is where the tiles + Kaspian are placed.
-      */}
+      {/* Main row (fully visible) */}
       <div
         className="absolute left-0 flex"
         style={{
@@ -202,7 +195,7 @@ function KaspianCrossGame({
               animate={{ scale: 1, opacity: isPast ? 0.5 : 1 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Single lane background for the middle row */}
+              {/* Middle lane background */}
               <Image
                 src={ROAD_LANE}
                 alt="Road lane"
@@ -229,13 +222,12 @@ function KaspianCrossGame({
                     isCurrent ? "scale-110" : ""
                   }`}
                 />
-                {/* Multiplier */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
                   {tile.multiplier}x
                 </div>
               </div>
 
-              {/* Clickable overlay for next tile */}
+              {/* Clickable overlay for the next tile */}
               {isActive && !hasLost && !hasWon && (
                 <motion.div
                   className="absolute top-0 left-0 w-full h-full cursor-pointer z-20"
@@ -244,7 +236,7 @@ function KaspianCrossGame({
                 />
               )}
 
-              {/* Glow effect for current tile */}
+              {/* Glow for current tile */}
               {isCurrent && (
                 <div className="absolute left-1/2 -bottom-3 transform -translate-x-1/2 w-12 h-2 bg-blue-500 rounded-full blur-sm" />
               )}
@@ -259,7 +251,7 @@ function KaspianCrossGame({
             width: CHARACTER_SIZE,
             height: CHARACTER_SIZE,
             left: characterLeft,
-            top: 0, // We'll handle vertical placement via `characterTop`
+            top: 0, // We'll offset the image itself via "top: characterTop - mainRowTop"
           }}
           animate={{
             y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
@@ -278,15 +270,15 @@ function KaspianCrossGame({
             fill
             className="object-contain"
             style={{
-              // Move Kaspian down within this absolutely positioned container
               position: "absolute",
+              // Position Kaspian up/down within this container
               top: characterTop - mainRowTop,
               left: 0,
             }}
           />
         </motion.div>
 
-        {/* Car on loss */}
+        {/* Car on loss - come from the very top to the bottom */}
         {hasLost && (
           <motion.div
             className="absolute z-20"
@@ -296,9 +288,9 @@ function KaspianCrossGame({
               left: lossCarLeft,
               top: 0,
             }}
-            initial={{ y: -150 }}
-            animate={{ y: "50%" }}
-            transition={{ duration: 0.5 }}
+            initial={{ y: -600 }}    // Start well above the top
+            animate={{ y: 600 }}     // Go well below the bottom
+            transition={{ duration: 2, ease: "linear" }}
           >
             <Image
               src={KASPIAN_CAR}
@@ -310,10 +302,7 @@ function KaspianCrossGame({
         )}
       </div>
 
-      {/* 
-        Bottom row (partially visible at the bottom).
-        Placed at top: 440 so only 160px is visible in the 440..600 range.
-      */}
+      {/* Bottom row (partially visible) */}
       <div
         className="absolute left-0 flex"
         style={{
@@ -827,9 +816,9 @@ function PromoCard() {
       {/* Row with the 3 images: Logo (left), Kaspian (middle), Car (right) */}
       <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
         <div className="relative w-full h-full grid grid-cols-3 items-center">
-          {/* Kaspa Logo - pinned left */}
+          {/* Kaspa Logo - pinned left, shift right by 15px */}
           <motion.div
-            className="justify-self-start"
+            className="justify-self-start ml-[15px]"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               repeat: Infinity,
@@ -866,9 +855,9 @@ function PromoCard() {
             />
           </motion.div>
 
-          {/* Car - pinned right */}
+          {/* Car - pinned right, shift left by 5px */}
           <motion.div
-            className="justify-self-end z-10"
+            className="justify-self-end mr-[5px] z-10"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{
               repeat: Infinity,
