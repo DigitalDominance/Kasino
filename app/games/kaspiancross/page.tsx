@@ -29,7 +29,7 @@ const MAX_BET = 1000;
 const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
 const TILE_WIDTH = 120; // Width of each tile in pixels
-const LANE_WIDTH = 100; // Width of each road lane in pixels
+const LANE_WIDTH = 100; // Road lane width in pixels
 
 // Image assets
 const KASPIAN_NORMAL = "/kaspian.webp";
@@ -107,9 +107,9 @@ function KaspianCrossGame({
   addNewTile: () => void;
 }) {
   const [visibleTiles, setVisibleTiles] = useState(tiles.slice(0, 10));
-  const [roadLanes, setRoadLanes] = useState<{id: number, lane: number}[]>([]);
+  const [roadLanes, setRoadLanes] = useState<{ id: number; lane: number }[]>([]);
 
-  // Initialize road lanes (3 lanes - left, center, right)
+  // Initialize road lanes (pre-generate 30 lanes)
   useEffect(() => {
     const lanes = [];
     for (let i = 0; i < 30; i++) {
@@ -123,65 +123,81 @@ function KaspianCrossGame({
     if (currentPosition > visibleTiles.length - 3) {
       addNewTile();
     }
-    setVisibleTiles(tiles.slice(
-      Math.max(0, currentPosition - 1),
-      Math.min(tiles.length, currentPosition + 8)
-    ));
+    setVisibleTiles(
+      tiles.slice(
+        Math.max(0, currentPosition - 1),
+        Math.min(tiles.length, currentPosition + 8)
+      )
+    );
   }, [currentPosition, tiles]);
+
+  // Compute current character left position based on the current tile's lane (using 1-indexing)
+  const currentLane = roadLanes[currentPosition - 1]?.lane || 0;
+  const characterLeft =
+    currentLane * LANE_WIDTH + (LANE_WIDTH - TILE_WIDTH) / 2;
 
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
-      {/* Road lanes background */}
+      {/* Global road lanes background */}
       <div className="absolute inset-0 flex">
         {[0, 1, 2].map((lane) => (
-          <div 
-            key={lane} 
+          <div
+            key={lane}
             className="h-full relative"
             style={{ width: `${LANE_WIDTH}px` }}
           >
-            <Image
-              src={ROAD_LANE}
-              alt="Road lane"
-              fill
-              className="object-cover"
-            />
+            <Image src={ROAD_LANE} alt="Road lane" fill className="object-cover" />
           </div>
         ))}
       </div>
 
-      {/* Tiles container - horizontal layout */}
+      {/* Tiles container */}
       <div className="relative h-full flex items-center overflow-x-hidden">
         <div className="flex h-32 items-center">
           {visibleTiles.map((tile, idx) => {
             const isActive = tile.position === currentPosition + 1;
             const isCurrent = tile.position === currentPosition;
             const isPast = tile.position < currentPosition;
-            const lane = roadLanes[tile.position]?.lane || 1;
+            // Get lane based on tile position (adjust for 1-index)
+            const lane = roadLanes[tile.position - 1]?.lane || 1;
 
             return (
               <motion.div
                 key={tile.position}
-                className={`w-${TILE_WIDTH} h-24 mx-2 relative transition-all duration-300 ${
+                className={`relative transition-all duration-300 ${
                   isPast ? "opacity-50" : "opacity-100"
                 }`}
                 style={{
+                  width: `${TILE_WIDTH}px`,
+                  height: "96px",
+                  margin: "0 8px",
+                  position: "relative",
                   left: `${lane * LANE_WIDTH + (LANE_WIDTH - TILE_WIDTH) / 2}px`,
-                  marginLeft: idx === 0 ? `${lane * LANE_WIDTH + (LANE_WIDTH - TILE_WIDTH) / 2}px` : '0',
                 }}
                 initial={{ x: 100, opacity: 0 }}
-                animate={{ 
+                animate={{
                   x: 0,
                   opacity: isPast ? 0.5 : 1,
-                  scale: isCurrent ? 1.15 : 1
+                  scale: isCurrent ? 1.15 : 1,
                 }}
                 transition={{ duration: 0.5 }}
               >
-                {/* Current tile glow */}
+                {/* Glow effect for current tile */}
                 {isCurrent && (
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-2 bg-blue-500 rounded-full blur-sm" />
                 )}
 
-                {/* Tile image */}
+                {/* Road lane background overlay for this tile */}
+                <div className="absolute inset-0">
+                  <Image
+                    src={ROAD_LANE}
+                    alt="Road lane background"
+                    fill
+                    className="object-cover opacity-30"
+                  />
+                </div>
+
+                {/* Tile texture */}
                 <div className="relative w-full h-full">
                   <Image
                     src={ROAD_TILE}
@@ -191,14 +207,13 @@ function KaspianCrossGame({
                       isCurrent ? "scale-110" : ""
                     }`}
                   />
-                  
                   {/* Multiplier display */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-sm">
                     {tile.multiplier}x
                   </div>
                 </div>
 
-                {/* Clickable next tile */}
+                {/* Clickable overlay for next tile */}
                 {isActive && !hasLost && !hasWon && (
                   <motion.div
                     className="absolute top-0 left-0 w-full h-full cursor-pointer z-20"
@@ -220,22 +235,16 @@ function KaspianCrossGame({
         {/* Kaspian character */}
         <motion.div
           className="absolute w-24 h-24 z-10"
-          style={{
-            left: `calc(${visibleTiles[0]?.position === 1 ? 
-              (roadLanes[1]?.lane * LANE_WIDTH + (LANE_WIDTH - TILE_WIDTH) / 2) : 
-              (roadLanes[currentPosition]?.lane * LANE_WIDTH + (LANE_WIDTH - TILE_WIDTH) / 2)}px)`,
-            bottom: "50%",
-          }}
           animate={{
-            x: isJumping ? [0, LANE_WIDTH, 0] : [0, 0, 0],
-            y: isFalling ? [0, 100, 200] : [0, -15, 0],
-            filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none"
+            left: `${characterLeft}px`,
+            y: isJumping ? [0, -20, 0] : isFalling ? [0, 100, 200] : 0,
+            filter: isJumping ? "drop-shadow(0 0 12px rgba(73,234,203,0.8))" : "none",
           }}
           transition={{
-            duration: isJumping ? 0.8 : isFalling ? 1.5 : 2,
-            repeat: isJumping || isFalling ? 0 : Infinity,
+            duration: isJumping ? 0.8 : isFalling ? 1.5 : 0.5,
             ease: isJumping ? "easeOut" : isFalling ? "easeIn" : "easeInOut",
           }}
+          style={{ bottom: "50%" }}
         >
           <Image
             src={isJumping ? KASPIAN_JUMPING : KASPIAN_NORMAL}
@@ -245,11 +254,14 @@ function KaspianCrossGame({
           />
         </motion.div>
 
-        {/* Car that hits when losing */}
+        {/* Car animation on loss */}
         {hasLost && (
           <motion.div
-            className="absolute w-48 h-48 z-20"
-            initial={{ y: -200, x: `${roadLanes[currentPosition]?.lane * LANE_WIDTH + (LANE_WIDTH - 192) / 2}px` }}
+            className="absolute w-24 h-24 z-20"
+            initial={{
+              y: -150,
+              left: `${roadLanes[currentPosition - 1]?.lane * LANE_WIDTH + (LANE_WIDTH - 96) / 2}px`,
+            }}
             animate={{ y: "50%" }}
             transition={{ duration: 0.5 }}
           >
@@ -310,9 +322,9 @@ function KaspianCrossContent() {
 
   // Add new tile when needed
   const addNewTile = () => {
-    if (tiles.length < 30) { // Limit to 30 tiles to prevent infinite growth
+    if (tiles.length < 30) {
       const newTile = generateTiles(1)[0];
-      setTiles(prev => [...prev, newTile]);
+      setTiles((prev) => [...prev, newTile]);
     }
   };
 
@@ -383,21 +395,21 @@ function KaspianCrossContent() {
     
     setTimeout(() => {
       setIsJumping(false);
-      const nextTile = tiles.find(t => t.position === currentPosition + 1);
+      const nextTile = tiles.find((t) => t.position === currentPosition + 1);
       
       if (!nextTile) {
-        // Reached the end
+        // Reached the end – win
         setHasWon(true);
         handleCashOut();
         return;
       }
       
       if (nextTile.isWin) {
-        // Successful jump
+        // Successful jump: update position and multiplier
         setCurrentPosition(currentPosition + 1);
         setCurrentMultiplier(nextTile.multiplier);
       } else {
-        // Failed jump
+        // Failed jump: trigger loss and car hit animation
         setHasLost(true);
         setIsFalling(true);
         setGameResult("Game Over");
@@ -450,7 +462,7 @@ function KaspianCrossContent() {
 
   useEffect(() => {
     if (cooldown > 0) {
-      const interval = setInterval(() => setCooldown(c => c - 1), 1000);
+      const interval = setInterval(() => setCooldown((c) => c - 1), 1000);
       return () => clearInterval(interval);
     }
   }, [cooldown]);
@@ -459,10 +471,10 @@ function KaspianCrossContent() {
   const roadElements = useMemo(() => {
     return Array.from({ length: 15 }).map((_, i) => ({
       id: i,
-      left: Math.random() * 80 + 10 + '%',
+      left: Math.random() * 80 + 10 + "%",
       size: Math.random() * 40 + 20,
       delay: Math.random() * 2,
-      speed: Math.random() * 3 + 1
+      speed: Math.random() * 3 + 1,
     }));
   }, []);
 
@@ -507,7 +519,7 @@ function KaspianCrossContent() {
           </p>
         )}
 
-        {/* Main Game & Right Column Controls */}
+        {/* Main Game & Controls */}
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           {/* Left Column: Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
@@ -534,15 +546,15 @@ function KaspianCrossContent() {
                         height: `${element.size}px`,
                       }}
                       initial={{ opacity: 0 }}
-                      animate={{ 
+                      animate={{
                         opacity: [0, 0.8, 0],
-                        y: ["-50%", "150%"]
+                        y: ["-50%", "150%"],
                       }}
                       transition={{
                         delay: element.delay,
                         duration: element.speed,
                         repeat: Infinity,
-                        ease: "linear"
+                        ease: "linear",
                       }}
                     >
                       <Image
@@ -574,18 +586,22 @@ function KaspianCrossContent() {
                     <div className="mt-20">
                       <Image src={KASPIAN_NORMAL} alt="Kaspian Icon" width={96} height={96} />
                     </div>
-                    <motion.div 
-                      className="mt-6" 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
+                    <motion.div
+                      className="mt-6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       transition={{ duration: 1 }}
                     >
-                      <Button 
+                      <Button
                         className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
                         onClick={handleStartGame}
                         disabled={!isConnected || cooldown > 0}
                       >
-                        {!isConnected ? "Connect Wallet to Play" : cooldown > 0 ? `Start Game (${cooldown}s)` : "Start Kaspian Cross"}
+                        {!isConnected
+                          ? "Connect Wallet to Play"
+                          : cooldown > 0
+                          ? `Start Game (${cooldown}s)`
+                          : "Start Kaspian Cross"}
                       </Button>
                     </motion.div>
                   </div>
@@ -659,8 +675,8 @@ function KaspianCrossContent() {
           <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
             <div className="absolute inset-0 flex">
               {[0, 1, 2].map((lane) => (
-                <div 
-                  key={lane} 
+                <div
+                  key={lane}
                   className="h-full relative"
                   style={{ width: `${LANE_WIDTH}px` }}
                 >
@@ -675,18 +691,17 @@ function KaspianCrossContent() {
             </div>
             <div className="relative w-full h-full flex items-center justify-center">
               <Image src={KASPIAN_NORMAL} alt="Kaspian" width={96} height={96} className="z-10" />
-              <Image 
-                src={KASPIAN_CAR} 
-                alt="Car" 
-                width={128} 
-                height={128} 
-                className="absolute right-20 rotate-180 z-10" 
+              <Image
+                src={KASPIAN_CAR}
+                alt="Car"
+                width={128}
+                height={128}
+                className="absolute right-20 rotate-180 z-10"
               />
             </div>
           </div>
           <p className="text-sm text-white mb-4">
-            Cross the road one tile at a time. Each successful cross increases your payout,
-            but watch out for cars that will hit you if you lose!
+            Cross the road one tile at a time and increase your payout. But beware – avoid the Solana cars that are waiting to hit you if you lose!
           </p>
           <div className="flex justify-center space-x-4 text-xl">
             <motion.a
