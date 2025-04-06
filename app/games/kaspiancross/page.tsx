@@ -13,7 +13,6 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
-import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
@@ -30,11 +29,14 @@ const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
 
 // Road/tile sizing
-const ROAD_WIDTH = 160; // The width of each road lane container
-const ROAD_HEIGHT = 280; // The height of each road lane container
-const TILE_SIZE = 80;   // The tile’s width/height (centered inside the lane)
-const CHARACTER_SIZE = 80; // Kaspian's size
-const ROAD_GAP = 0;    // No gap between lanes
+const ROAD_WIDTH = 160; // width of each road lane container
+const ROAD_HEIGHT = 280; // height of each road lane container
+const TILE_SIZE = 80;    // tile size (centered inside the lane)
+let CHARACTER_SIZE = 100; // Kaspian is now 25% bigger (was 80)
+const ROAD_GAP = 0;      // no gap between lanes
+
+// Car on loss is now 33% bigger (was w-24/h-24 => 96px). We'll use 128px
+const CAR_SIZE = 128;
 
 // Image assets
 const KASPIAN_NORMAL = "/kaspian.webp";
@@ -43,8 +45,11 @@ const ROAD_LANE = "/kaspianroadlane.webp";
 const ROAD_TILE = "/kaspiantile.webp";
 const KASPIAN_CAR = "/kaspiancar.webp";
 
+// Additional asset from public folder
+const KASPA_LOGO_PUBLIC = "/kaspa-kas-logo.webp"; // Big Kaspa logo
+
 // Kaspa logo for pregame animation
-const KASPA_LOGO =
+const KASPA_LOGO_FALLING =
   "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp";
 
 // Calculate win probability with house edge
@@ -125,15 +130,12 @@ function KaspianCrossGame({
     setVisibleTiles(tiles);
   }, [currentPosition, tiles, addNewTile]);
 
-  // Horizontal offset for Kaspian
-  // He should appear in the center of whichever tile he's on.
-  // That center is: laneStart + (ROAD_WIDTH/2) - (CHARACTER_SIZE/2).
+  // Kaspian's horizontal offset: center of lane
   const characterLeft =
-    (currentPosition - 1) * (ROAD_WIDTH + ROAD_GAP) +
-    ROAD_WIDTH / 2 -
-    CHARACTER_SIZE / 2;
+    (currentPosition - 1) * (ROAD_WIDTH + ROAD_GAP) + ROAD_WIDTH / 2 - CHARACTER_SIZE / 2;
 
-  // Vertical offset for Kaspian so he’s exactly centered in the lane container
+  // Kaspian's vertical offset so he's exactly on the tile center
+  // The tile is centered at (ROAD_HEIGHT/2). We want Kaspian's center there too:
   const characterTop = ROAD_HEIGHT / 2 - CHARACTER_SIZE / 2;
 
   // Car's offset on loss
@@ -142,10 +144,7 @@ function KaspianCrossGame({
   return (
     <div className="relative h-[600px] w-full mx-auto overflow-hidden bg-gradient-to-b from-green-900 to-purple-900">
       {/* Horizontal row of lane containers (no gap) */}
-      <div
-        className="flex h-full items-center overflow-x-auto"
-        style={{ gap: ROAD_GAP }}
-      >
+      <div className="flex h-full items-center overflow-x-auto" style={{ gap: ROAD_GAP }}>
         {visibleTiles.map((tile) => {
           const isActive = tile.position === currentPosition + 1;
           const isCurrent = tile.position === currentPosition;
@@ -271,14 +270,16 @@ function KaspianCrossGame({
           />
         </motion.div>
 
-        {/* Car on loss */}
+        {/* Car on loss, 33% bigger => 128px */}
         {hasLost && (
           <motion.div
-            className="absolute w-24 h-24 z-20"
-            initial={{
-              x: lossCarLeft,
-              y: -150,
+            className="absolute z-20"
+            style={{
+              width: CAR_SIZE,
+              height: CAR_SIZE,
+              left: lossCarLeft,
             }}
+            initial={{ y: -150 }}
             animate={{ y: "50%" }}
             transition={{ duration: 0.5 }}
           >
@@ -578,7 +579,7 @@ function KaspianCrossContent() {
                         }}
                       >
                         <Image
-                          src={isCar ? KASPIAN_CAR : KASPA_LOGO}
+                          src={isCar ? KASPIAN_CAR : KASPA_LOGO_FALLING}
                           alt="Falling object"
                           fill
                           className={`object-contain ${isCar ? "rotate-180" : ""}`}
@@ -681,64 +682,7 @@ function KaspianCrossContent() {
         </div>
 
         {/* Promo / Info Card */}
-        <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
-          <motion.h2
-            className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
-            animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage: "linear-gradient(270deg, #49EACB, #B19CD9, #49EACB)",
-              backgroundSize: "200% 200%",
-            }}
-          >
-            Kaspian Cross
-          </motion.h2>
-          <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
-            <div className="relative w-full h-full flex items-center justify-center">
-              <Image src={KASPIAN_NORMAL} alt="Kaspian" width={96} height={96} className="z-10" />
-              <Image
-                src={KASPIAN_CAR}
-                alt="Car"
-                width={128}
-                height={128}
-                className="absolute right-20 rotate-180 z-10"
-              />
-            </div>
-          </div>
-          <p className="text-sm text-white mb-4">
-            Cross the road one tile at a time and increase your payout. But beware – avoid the
-            Solana cars that are waiting to hit you if you lose!
-          </p>
-          <div className="flex justify-center space-x-4 text-xl">
-            <motion.a
-              href="https://x.com/KasenOnKaspa"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTwitter />
-            </motion.a>
-            <motion.a
-              href="https://t.co/W4YDM1cUpY"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaTelegramPlane />
-            </motion.a>
-            <motion.a
-              href="https://kasenonkas.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.2 }}
-              className="text-[#49EACB] hover:text-[#49EACB]/80"
-            >
-              <FaGlobe />
-            </motion.a>
-          </div>
-        </Card>
+        <PromoCard />
       </div>
       <SiteFooter />
 
@@ -806,6 +750,101 @@ function KaspianCrossContent() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Promo / Info Card with new requirements
+function PromoCard() {
+  // Random “pop up” animation for each of the 3 images
+  // Generate random delays so they pop at different times
+  const randomDelay1 = useMemo(() => Math.random() * 3 + 0.5, []);
+  const randomDelay2 = useMemo(() => Math.random() * 3 + 0.5, []);
+  const randomDelay3 = useMemo(() => Math.random() * 3 + 0.5, []);
+
+  return (
+    <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+      <motion.h2
+        className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
+        animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+        style={{
+          backgroundImage: "linear-gradient(270deg, #49EACB, #B19CD9, #49EACB)",
+          backgroundSize: "200% 200%",
+        }}
+      >
+        Kaspian Cross
+      </motion.h2>
+
+      {/* Row with the 3 images: Kaspa Logo, Kaspian, Car */}
+      <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center gap-6">
+          {/* Kaspa Logo */}
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: randomDelay1,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image
+              src={KASPA_LOGO_PUBLIC}
+              alt="Kaspa Logo"
+              width={96}
+              height={96}
+              className="z-10"
+            />
+          </motion.div>
+
+          {/* Kaspian */}
+          <motion.div
+            className="z-10"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: randomDelay2,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image
+              src={KASPIAN_NORMAL}
+              alt="Kaspian"
+              width={96}
+              height={96}
+              className=""
+            />
+          </motion.div>
+
+          {/* Car */}
+          <motion.div
+            className="z-10"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: randomDelay3,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image
+              src={KASPIAN_CAR}
+              alt="Car"
+              width={128}
+              height={128}
+              className="rotate-180"
+            />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Updated bigger text */}
+      <p className="text-lg text-white mb-4 px-4 leading-7">
+        Cross the road one tile at a time and increase your payout. But beware, avoid the Solana
+        cars that are waiting to hit you if you lose!
+      </p>
+    </Card>
   );
 }
 
@@ -883,7 +922,7 @@ function KaspianCrossControls({
               />
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
                 <Image
-                  src={KASPA_LOGO}
+                  src={KASPA_LOGO_FALLING}
                   alt="KAS"
                   width={16}
                   height={16}
