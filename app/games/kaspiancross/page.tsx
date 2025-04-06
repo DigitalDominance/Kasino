@@ -304,9 +304,9 @@ function KaspianCrossGame({
                 left: lossCarLeft,
                 top: 0,
               }}
-              initial={{ y: -1200 }}
-              animate={{ y: 1200 }}
-              transition={{ duration: 3, ease: "linear" }}
+              initial={{ y: -600 }}
+              animate={{ y: 600 }}
+              transition={{ duration: 2, ease: "linear" }}
             >
               <Image
                 src={KASPIAN_CAR}
