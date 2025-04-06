@@ -280,7 +280,7 @@ function KaspianCrossGame({
         {/* Car on loss - animated from top to bottom */}
         {hasLost && (
           <motion.div
-            className="absolute z-20"
+            className="absolute z-90"
             style={{
               width: CAR_SIZE,
               height: CAR_SIZE,
