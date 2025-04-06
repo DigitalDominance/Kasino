@@ -12,7 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
-import { GiCheerful, GiStarFormation } from "react-icons/gi";
+import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
 import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
@@ -61,7 +61,8 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
@@ -172,7 +173,6 @@ function MainPageContent() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
-      {/* Custom Scrollbar Styles */}
       <style jsx global>{`
         @keyframes gradientAnimation {
           0% {
@@ -205,22 +205,25 @@ function MainPageContent() {
           color: #49eacb;
           fill: #49eacb;
         }
+        /* Custom scrollbar styles */
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #1a1a1a;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #49eacb;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #3bc9b6;
+        }
         @media (max-width: 768px) {
           .telegram-icon {
             bottom: 15vh !important;
           }
-        }
-        /* Custom Scrollbar for the popup */
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1f2937;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: #49eacb;
-          border-radius: 4px;
-          border: 2px solid #1f2937;
         }
       `}</style>
 
@@ -367,6 +370,7 @@ function MainPageContent() {
                           src={banner}
                           alt="Main Banner"
                           fill
+                          objectFit="contain"
                           className="object-contain"
                         />
                       </motion.div>
@@ -399,7 +403,7 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Original Games</span>
                   </h2>
-                  <div className="flex flex-wrap items-start gap-3">
+                  <div className="flex flex-wrap items-start gap-4">
                     {games.map((game, i) => {
                       let dataKey = game.slug.toLowerCase();
                       if (dataKey === "kaspatowerclimb") dataKey = "kaspa tower climb";
@@ -416,7 +420,7 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          className="w-[90vw] md:w-[25vw] max-w-[400px]"
+                          className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -430,12 +434,13 @@ function MainPageContent() {
                               }}
                               transition={{ duration: 0.3 }}
                             >
-                              <div className="relative aspect-[4/3] mt-1">
+                              <div className="relative aspect-[4/2.5] mt-1">
                                 <Image
                                   src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
-                                  className="scale-100 transition-transform duration-300 group-hover:scale-110 object-cover"
+                                  objectFit="cover"
+                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                   <MotionButton
@@ -495,7 +500,7 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Character Games</span>
                   </h2>
-                  <div className="flex flex-wrap items-start gap-3">
+                  <div className="flex flex-wrap items-start gap-4">
                     {characterGames.map((game, i) => {
                       let dataKey = game.slug.toLowerCase();
                       if (dataKey === "lootbox") dataKey = "kasper loot box";
@@ -510,7 +515,7 @@ function MainPageContent() {
                       return (
                         <motion.div
                           key={i}
-                          className="w-[90vw] md:w-[25vw] max-w-[400px]"
+                          className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] max-w-[400px]"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
@@ -524,12 +529,13 @@ function MainPageContent() {
                               }}
                               transition={{ duration: 0.3 }}
                             >
-                              <div className="relative aspect-[4/3] mt-1">
+                              <div className="relative aspect-[4/2.5] mt-1">
                                 <Image
                                   src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
-                                  className="scale-100 transition-transform duration-300 group-hover:scale-110 object-cover"
+                                  objectFit="cover"
+                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
                                   <MotionButton
@@ -588,7 +594,7 @@ function MainPageContent() {
                     </span>
                     <span className="animate-gradient">Live Wins</span>
                   </h2>
-                  <ScrollArea>
+                  <ScrollArea className="custom-scrollbar">
                     <motion.div
                       className="flex gap-4 pb-4"
                       initial={{ x: -20 }}
@@ -634,6 +640,7 @@ function MainPageContent() {
                                 src={cardImage}
                                 alt={`${win.game} card`}
                                 fill
+                                objectFit="cover"
                                 className="rounded-none scale-100 object-cover"
                               />
                               <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
@@ -793,11 +800,7 @@ export function XPDisplay() {
   useEffect(() => {
     const fetchXP = async () => {
       try {
-        if (
-          isConnected &&
-          (window as any).kasware &&
-          (window as any).kasware.getAccounts
-        ) {
+        if (isConnected && (window as any).kasware && (window as any).kasware.getAccounts) {
           const accounts: string[] = await (window as any).kasware.getAccounts();
           if (!accounts || accounts.length === 0) return;
           const walletAddress = accounts[0];
@@ -814,7 +817,7 @@ export function XPDisplay() {
           }
         }
       } catch (err) {
-        // Error handling omitted for brevity
+        // Error handling omitted.
       }
     };
 
@@ -852,7 +855,6 @@ export function XPDisplay() {
 
   const displayLevel = userData.level;
   const getThreshold = (level: number) => {
-    // XP threshold logic
     const r = 1.08;
     const a = (10000000 * (r - 1)) / (Math.pow(r, 100) - 1);
     let threshold = 0;
@@ -955,7 +957,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Hover Popup (XP Progress) */}
+      {/* Hover Popup */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -968,7 +970,7 @@ export function XPDisplay() {
             {displayLevel < 100 ? (
               <>
                 <div className="text-teal-300 mb-1">
-                  XP: {userData.totalXp.toFixed(0)} / {nextThreshold.toFixed(0)}
+                  XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
                 <div className="flex justify-between mb-1">
                   <span>{xpProgress.toFixed(0)} XP</span>
@@ -1021,7 +1023,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal (client side) */}
+      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1043,7 +1045,7 @@ export function XPDisplay() {
                     X
                   </motion.button>
                   <div className="text-center mb-6">
-                    <h2 className="text-4xl font-bold text-[#49EACB]">
+                    <h2 className="text-3xl font-bold text-[#49EACB]">
                       Daily Free Loot Boxes
                     </h2>
 
@@ -1073,79 +1075,70 @@ export function XPDisplay() {
                       </motion.div>
                     </div>
 
-                    <p className="text-gray-300 mt-2 text-base">
-                      Available once every 24 hours
-                    </p>
+                    <p className="text-gray-300 mt-2">Available once every 24 hours</p>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
+                    {dailyLootBoxes.map((box) => {
+                      const isLocked = userData.level < box.requiredLevel;
+                      const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0;
+                      const cooldownTime = cooldowns[box.slug] || 0;
 
-                  {/* Scrollable Grid of Loot Boxes */}
-                  <ScrollArea className="max-h-[600px] custom-scrollbar">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
-                      {dailyLootBoxes.map((box) => {
-                        const isLocked = userData.level < box.requiredLevel;
-                        const isOnCooldown =
-                          cooldowns[box.slug] && cooldowns[box.slug] > 0;
-                        const cooldownTime = cooldowns[box.slug] || 0;
-
-                        return (
-                          <Link href={`/games/${box.slug}`} key={box.slug} passHref>
-                            <motion.div
-                              className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
-                                isLocked
-                                  ? "border-red-500"
-                                  : isOnCooldown
-                                  ? "border-yellow-500"
-                                  : "border-[#49EACB]"
-                              } hover:shadow-lg transition-all duration-200 w-72 h-48 flex flex-col`}
-                              whileHover={{
-                                scale: isLocked || isOnCooldown ? 1 : 1.05,
-                              }}
-                            >
-                              {/* Overlay for locked or cooldown state */}
-                              {(isLocked || isOnCooldown) && (
-                                <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
-                                  <div className="text-center p-2">
-                                    {isLocked ? (
-                                      <p className="text-red-400 font-bold">
-                                        Requires Level {box.requiredLevel}
+                      return (
+                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
+                          <motion.div
+                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
+                              isLocked
+                                ? "border-red-500"
+                                : isOnCooldown
+                                ? "border-yellow-500"
+                                : "border-[#49EACB]"
+                            } hover:shadow-lg transition-all duration-200 w-64 h-80 flex flex-col`}
+                            whileHover={{
+                              scale: isLocked || isOnCooldown ? 1 : 1.05,
+                            }}
+                          >
+                            {/* Overlay for locked or cooldown state */}
+                            {(isLocked || isOnCooldown) && (
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                                <div className="text-center p-2">
+                                  {isLocked ? (
+                                    <p className="text-red-400 font-bold">
+                                      Requires Level {box.requiredLevel}
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <p className="text-yellow-400 font-bold">
+                                        On Cooldown
                                       </p>
-                                    ) : (
-                                      <>
-                                        <p className="text-yellow-400 font-bold">
-                                          On Cooldown
-                                        </p>
-                                        <p className="text-white text-sm">
-                                          {formatTime(cooldownTime)}
-                                        </p>
-                                      </>
-                                    )}
-                                  </div>
+                                      <p className="text-white text-sm">
+                                        {formatTime(cooldownTime)}
+                                      </p>
+                                    </>
+                                  )}
                                 </div>
-                              )}
+                              </div>
+                            )}
 
-                              <div className="relative w-full h-24">
-                                <Image
-                                  src={box.image}
-                                  alt={box.name}
-                                  fill
-                                  className="rounded-md object-cover"
-                                />
-                              </div>
-                              <div className="mt-2 text-center flex-1 flex flex-col items-center justify-center">
-                                <h3 className="font-bold text-white text-sm">
-                                  {box.name}
-                                </h3>
-                                <p className="text-xs text-gray-300">
-                                  Level {box.requiredLevel}+
-                                </p>
-                              </div>
-                            </motion.div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                    <ScrollBar orientation="vertical" />
-                  </ScrollArea>
+                            <div className="relative w-full h-40">
+                              <Image
+                                src={box.image}
+                                alt={box.name}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="mt-2 text-center">
+                              <h3 className="font-bold text-white">{box.name}</h3>
+                              <p className="text-sm text-gray-300">
+                                Level {box.requiredLevel}+
+                              </p>
+                            </div>
+                          </motion.div>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1153,7 +1146,7 @@ export function XPDisplay() {
           document.body
         )}
 
-      {/* Gem Popup Modal (client side) */}
+      {/* Gem Popup Modal rendered via a Portal (only on client) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1203,8 +1196,9 @@ export function XPDisplay() {
                               <Image
                                 src={`/gemtier${tier}.webp`}
                                 alt={`Gem Crate Tier ${tier}`}
-                                fill
-                                className="rounded-md object-cover"
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md"
                               />
                             </div>
                             <div className="text-center mt-2">
