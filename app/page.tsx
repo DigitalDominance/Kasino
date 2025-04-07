@@ -61,8 +61,7 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games - New order:
-  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
+  // Original Games
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
@@ -418,6 +417,7 @@ function MainPageContent() {
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal =
                         rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+
                       return (
                         <motion.div
                           key={i}
@@ -426,61 +426,63 @@ function MainPageContent() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                         >
-                          <Link href={`/games/${game.slug}`}>
-                            <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent"
-                              whileHover={{
-                                scale: 1.05,
-                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                              }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <div className="relative aspect-[4/2.5] mt-1">
-                                <Image
-                                  src={game.image}
-                                  alt={`${game.name} thumbnail`}
-                                  fill
-                                  objectFit="cover"
-                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                  <MotionButton
-                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                    whileHover={{ scale: 1.02 }}
-                                  >
-                                    Play Now
-                                  </MotionButton>
-                                </div>
-                              </div>
-                              <div className="p-4">
-                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                  {game.name}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
-                                </p>
-                                <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                      alt="KAS"
-                                      width={16}
-                                      height={16}
-                                      className="rounded-full"
-                                    />
-                                    <span className="text-sm text-[#49EACB] font-bold">
-                                      {highScoreVal}
-                                    </span>
+                          <Link href={`/games/${game.slug}`} legacyBehavior>
+                            <a>
+                              <MotionCard
+                                className="group relative overflow-hidden border-none bg-transparent"
+                                whileHover={{
+                                  scale: 1.05,
+                                  boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                                }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <div className="relative aspect-[4/2.5] mt-1">
+                                  <Image
+                                    src={game.image}
+                                    alt={`${game.name} thumbnail`}
+                                    fill
+                                    objectFit="cover"
+                                    className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                  />
+                                  <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                    <MotionButton
+                                      className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                      whileHover={{ scale: 1.02 }}
+                                    >
+                                      Play Now
+                                    </MotionButton>
                                   </div>
                                 </div>
-                              </div>
-                            </MotionCard>
+                                <div className="p-4">
+                                  <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                    {game.name}
+                                  </h3>
+                                  <p className="text-sm text-gray-400">
+                                    Wins:{" "}
+                                    <span className="text-[#49EACB] font-bold">
+                                      {totalWins}
+                                    </span>
+                                  </p>
+                                  <div className="mt-1 flex items-center gap-1">
+                                    <span className="text-sm text-gray-400">
+                                      High Score:
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <Image
+                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                        alt="KAS"
+                                        width={16}
+                                        height={16}
+                                        className="rounded-full"
+                                      />
+                                      <span className="text-sm text-[#49EACB] font-bold">
+                                        {highScoreVal}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </MotionCard>
+                            </a>
                           </Link>
                         </motion.div>
                       );
@@ -513,6 +515,7 @@ function MainPageContent() {
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal =
                         rawScore > 0 ? rawScore.toFixed(2) : "N/A";
+
                       return (
                         <motion.div
                           key={i}
@@ -521,61 +524,63 @@ function MainPageContent() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                         >
-                          <Link href={`/games/${game.slug}`}>
-                            <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent"
-                              whileHover={{
-                                scale: 1.05,
-                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                              }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <div className="relative aspect-[4/2.5] mt-1">
-                                <Image
-                                  src={game.image}
-                                  alt={`${game.name} thumbnail`}
-                                  fill
-                                  objectFit="cover"
-                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                  <MotionButton
-                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                    whileHover={{ scale: 1.02 }}
-                                  >
-                                    Play Now
-                                  </MotionButton>
-                                </div>
-                              </div>
-                              <div className="p-4">
-                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                  {game.name}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  Wins:{" "}
-                                  <span className="text-[#49EACB] font-bold">
-                                    {totalWins}
-                                  </span>
-                                </p>
-                                <div className="mt-1 flex items-center gap-1">
-                                  <span className="text-sm text-gray-400">
-                                    High Score:
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    <Image
-                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                      alt="KAS"
-                                      width={16}
-                                      height={16}
-                                      className="rounded-full"
-                                    />
-                                    <span className="text-sm text-[#49EACB] font-bold">
-                                      {highScoreVal}
-                                    </span>
+                          <Link href={`/games/${game.slug}`} legacyBehavior>
+                            <a>
+                              <MotionCard
+                                className="group relative overflow-hidden border-none bg-transparent"
+                                whileHover={{
+                                  scale: 1.05,
+                                  boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                                }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <div className="relative aspect-[4/2.5] mt-1">
+                                  <Image
+                                    src={game.image}
+                                    alt={`${game.name} thumbnail`}
+                                    fill
+                                    objectFit="cover"
+                                    className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                  />
+                                  <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                    <MotionButton
+                                      className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                      whileHover={{ scale: 1.02 }}
+                                    >
+                                      Play Now
+                                    </MotionButton>
                                   </div>
                                 </div>
-                              </div>
-                            </MotionCard>
+                                <div className="p-4">
+                                  <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                    {game.name}
+                                  </h3>
+                                  <p className="text-sm text-gray-400">
+                                    Wins:{" "}
+                                    <span className="text-[#49EACB] font-bold">
+                                      {totalWins}
+                                    </span>
+                                  </p>
+                                  <div className="mt-1 flex items-center gap-1">
+                                    <span className="text-sm text-gray-400">
+                                      High Score:
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <Image
+                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                        alt="KAS"
+                                        width={16}
+                                        height={16}
+                                        className="rounded-full"
+                                      />
+                                      <span className="text-sm text-[#49EACB] font-bold">
+                                        {highScoreVal}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </MotionCard>
+                            </a>
                           </Link>
                         </motion.div>
                       );
@@ -627,6 +632,7 @@ function MainPageContent() {
                           cardImage = "/kasperlootboxcard.webp";
                         else if (lwGame === "kasen mania")
                           cardImage = "/kasenmaniacard.webp";
+
                         return (
                           <MotionCard
                             key={i}
@@ -887,7 +893,7 @@ export function XPDisplay() {
   const fontSize =
     levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Popup styling classes.
+  // Popup styling classes
   const hoverPopupClass =
     "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
   const smallPopupClass =
@@ -974,8 +980,8 @@ export function XPDisplay() {
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
                 <div className="flex justify-between mb-1">
-                  <span>{xpProgress.toFixed(0)} XP</span>
-                  <span>{xpNeeded.toFixed(0)} XP</span>
+                  <span>{(xpProgress).toFixed(0)} XP</span>
+                  <span>{(xpNeeded).toFixed(0)} XP</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded h-1">
                   <div
@@ -1024,7 +1030,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal (Portal) */}
+      {/* Daily Loot Box Popup Modal */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1036,7 +1042,6 @@ export function XPDisplay() {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50"
               >
-                {/* Added custom-scrollbar class for the popup container */}
                 <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
@@ -1087,58 +1092,63 @@ export function XPDisplay() {
                       const cooldownTime = cooldowns[box.slug] || 0;
 
                       return (
-                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
-                          <motion.div
-                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
-                              isLocked
-                                ? "border-red-500"
-                                : isOnCooldown
-                                ? "border-yellow-500"
-                                : "border-[#49EACB]"
-                            } hover:shadow-lg transition-all duration-200 w-64 flex flex-col`}
-                            whileHover={{
-                              scale: isLocked || isOnCooldown ? 1 : 1.05,
-                            }}
-                          >
-                            {/* Overlay for locked or cooldown state */}
-                            {(isLocked || isOnCooldown) && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
-                                <div className="text-center p-2">
-                                  {isLocked ? (
-                                    <p className="text-red-400 font-bold">
-                                      Requires Level {box.requiredLevel}
-                                    </p>
-                                  ) : (
-                                    <>
-                                      <p className="text-yellow-400 font-bold">
-                                        On Cooldown
+                        <Link
+                          href={`/games/${box.slug}`}
+                          key={box.slug}
+                          legacyBehavior
+                        >
+                          <a>
+                            <motion.div
+                              className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
+                                isLocked
+                                  ? "border-red-500"
+                                  : isOnCooldown
+                                  ? "border-yellow-500"
+                                  : "border-[#49EACB]"
+                              } hover:shadow-lg transition-all duration-200 w-64 flex flex-col`}
+                              whileHover={{
+                                scale: isLocked || isOnCooldown ? 1 : 1.05,
+                              }}
+                            >
+                              {/* Overlay for locked or cooldown state */}
+                              {(isLocked || isOnCooldown) && (
+                                <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                                  <div className="text-center p-2">
+                                    {isLocked ? (
+                                      <p className="text-red-400 font-bold">
+                                        Requires Level {box.requiredLevel}
                                       </p>
-                                      <p className="text-white text-sm">
-                                        {formatTime(cooldownTime)}
-                                      </p>
-                                    </>
-                                  )}
+                                    ) : (
+                                      <>
+                                        <p className="text-yellow-400 font-bold">
+                                          On Cooldown
+                                        </p>
+                                        <p className="text-white text-sm">
+                                          {formatTime(cooldownTime)}
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
 
-                            {/* Removed fixed height here; just let content size it */}
-                            <div className="relative w-full aspect-[4/3]">
-                              <Image
-                                src={box.image}
-                                alt={box.name}
-                                fill
-                                objectFit="cover"
-                                className="rounded-md"
-                              />
-                            </div>
-                            <div className="mt-2 text-center">
-                              <h3 className="font-bold text-white">{box.name}</h3>
-                              <p className="text-sm text-gray-300">
-                                Level {box.requiredLevel}+
-                              </p>
-                            </div>
-                          </motion.div>
+                              <div className="relative w-full aspect-[4/3]">
+                                <Image
+                                  src={box.image}
+                                  alt={box.name}
+                                  fill
+                                  objectFit="cover"
+                                  className="rounded-md"
+                                />
+                              </div>
+                              <div className="mt-2 text-center">
+                                <h3 className="font-bold text-white">{box.name}</h3>
+                                <p className="text-sm text-gray-300">
+                                  Level {box.requiredLevel}+
+                                </p>
+                              </div>
+                            </motion.div>
+                          </a>
                         </Link>
                       );
                     })}
@@ -1150,7 +1160,7 @@ export function XPDisplay() {
           document.body
         )}
 
-      {/* Gem Popup Modal (Portal) */}
+      {/* Gem Popup Modal */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1183,37 +1193,40 @@ export function XPDisplay() {
                     {[1, 2, 3, 4].map((tier) => {
                       const requiredGems =
                         tier === 1 ? 10 : tier === 2 ? 100 : tier === 3 ? 1000 : 10000;
+
                       return (
                         <Link
                           href={`https://www.kascasino.xyz/games/gemtier${tier}`}
                           key={tier}
-                          passHref
+                          legacyBehavior
                         >
-                          <motion.div
-                            className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
-                            whileHover={{ scale: 1.05 }}
-                          >
-                            <div className="text-center mb-2 font-bold text-white">
-                              Gem Crate Tier {tier}
-                            </div>
-                            <div className="relative w-full h-32">
-                              <Image
-                                src={`/gemtier${tier}.webp`}
-                                alt={`Gem Crate Tier ${tier}`}
-                                layout="fill"
-                                objectFit="cover"
-                                className="rounded-md"
-                              />
-                            </div>
-                            <div className="text-center mt-2">
-                              <span className="font-bold text-white">
-                                Gems Required:
-                              </span>{" "}
-                              <span className="font-bold text-[#49EACB]">
-                                {requiredGems}
-                              </span>
-                            </div>
-                          </motion.div>
+                          <a>
+                            <motion.div
+                              className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                              whileHover={{ scale: 1.05 }}
+                            >
+                              <div className="text-center mb-2 font-bold text-white">
+                                Gem Crate Tier {tier}
+                              </div>
+                              <div className="relative w-full h-32">
+                                <Image
+                                  src={`/gemtier${tier}.webp`}
+                                  alt={`Gem Crate Tier ${tier}`}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  className="rounded-md"
+                                />
+                              </div>
+                              <div className="text-center mt-2">
+                                <span className="font-bold text-white">
+                                  Gems Required:
+                                </span>{" "}
+                                <span className="font-bold text-[#49EACB]">
+                                  {requiredGems}
+                                </span>
+                              </div>
+                            </motion.div>
+                          </a>
                         </Link>
                       );
                     })}
