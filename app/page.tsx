@@ -61,7 +61,8 @@ function MainPageContent() {
     "/dicecoinflipcombobanner.webp",
   ];
 
-  // Original Games
+  // Original Games - New order:
+  // Crash, Mines, Kaspa Tower Climb, Upgrade, Plinko, Guess The Cup, Roulette, Dice, Coin Flip
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
@@ -207,7 +208,7 @@ function MainPageContent() {
         /* Custom scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar {
           height: 8px;
-          width: 8px;
+          width: 8px; /* for vertical scrollbars */
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #1a1a1a;
@@ -303,34 +304,44 @@ function MainPageContent() {
                       />
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Link href="#">
-                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group cursor-pointer">
-                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
-                          <span className="group-hover:text-[#49eacb]">Casino</span>
-                        </div>
+                      <Link
+                        href="#"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
+                        <span className="group-hover:text-[#49eacb]">Casino</span>
                       </Link>
-                      <Link href="https://raffles.kaspercoin.net/" target="_blank" rel="noopener noreferrer">
-                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group cursor-pointer">
-                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
-                          <span className="group-hover:text-[#8a2be2]">Raffles</span>
-                        </div>
+                      <Link
+                        href="https://raffles.kaspercoin.net/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
+                        <span className="group-hover:text-[#8a2be2]">Raffles</span>
                       </Link>
-                      <Link href="https://t.me/KasCasinoXYZ/2" target="_blank" rel="noopener noreferrer">
-                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group cursor-pointer">
-                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
-                          <span className="group-hover:text-[#8b0000]">Support</span>
-                        </div>
+                      <Link
+                        href="https://t.me/KasCasinoXYZ/2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
+                        <span className="group-hover:text-[#8b0000]">Support</span>
                       </Link>
                     </div>
                     <div
                       className="absolute telegram-icon left-0 w-full px-4"
                       style={{ bottom: "1rem" }}
                     >
-                      <Link href="https://t.me/KasCasinoXYZ" target="_blank" rel="noopener noreferrer">
-                        <div className="flex items-center justify-center cursor-pointer">
-                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
-                            <FaTelegramPlane size={20} color="black" />
-                          </div>
+                      <Link
+                        href="https://t.me/KasCasinoXYZ"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center"
+                      >
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
+                          <FaTelegramPlane size={20} color="black" />
                         </div>
                       </Link>
                     </div>
@@ -407,7 +418,6 @@ function MainPageContent() {
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal =
                         rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
                       return (
                         <motion.div
                           key={i}
@@ -418,7 +428,7 @@ function MainPageContent() {
                         >
                           <Link href={`/games/${game.slug}`}>
                             <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent cursor-pointer"
+                              className="group relative overflow-hidden border-none bg-transparent"
                               whileHover={{
                                 scale: 1.05,
                                 boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
@@ -503,7 +513,6 @@ function MainPageContent() {
                       const rawScore = highScores[dataKey] || 0;
                       const highScoreVal =
                         rawScore > 0 ? rawScore.toFixed(2) : "N/A";
-
                       return (
                         <motion.div
                           key={i}
@@ -514,7 +523,7 @@ function MainPageContent() {
                         >
                           <Link href={`/games/${game.slug}`}>
                             <MotionCard
-                              className="group relative overflow-hidden border-none bg-transparent cursor-pointer"
+                              className="group relative overflow-hidden border-none bg-transparent"
                               whileHover={{
                                 scale: 1.05,
                                 boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
@@ -618,7 +627,6 @@ function MainPageContent() {
                           cardImage = "/kasperlootboxcard.webp";
                         else if (lwGame === "kasen mania")
                           cardImage = "/kasenmaniacard.webp";
-
                         return (
                           <MotionCard
                             key={i}
@@ -726,7 +734,7 @@ export function XPDisplay() {
         );
         if (storedTimestamp) {
           const elapsed = Date.now() - parseInt(storedTimestamp);
-          const cooldownPeriod = 24 * 60 * 60 * 1000;
+          const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in ms
           if (elapsed < cooldownPeriod) {
             const remainingSeconds = Math.ceil((cooldownPeriod - elapsed) / 1000);
             storedCooldowns[box.slug] = remainingSeconds;
@@ -879,7 +887,7 @@ export function XPDisplay() {
   const fontSize =
     levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem";
 
-  // Popup styling classes
+  // Popup styling classes.
   const hoverPopupClass =
     "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm";
   const smallPopupClass =
@@ -1016,7 +1024,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal */}
+      {/* Daily Loot Box Popup Modal (Portal) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1028,6 +1036,7 @@ export function XPDisplay() {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50"
               >
+                {/* Added custom-scrollbar class for the popup container */}
                 <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
@@ -1041,6 +1050,7 @@ export function XPDisplay() {
                     <h2 className="text-3xl font-bold text-[#49EACB]">
                       Daily Free Loot Boxes
                     </h2>
+
                     {/* Large display of current level */}
                     <div className="flex flex-col items-center my-4">
                       <p className="text-white text-lg mb-2">Your Current Level</p>
@@ -1066,6 +1076,7 @@ export function XPDisplay() {
                         </span>
                       </motion.div>
                     </div>
+
                     <p className="text-gray-300 mt-2">Available once every 24 hours</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
@@ -1074,8 +1085,9 @@ export function XPDisplay() {
                       const isOnCooldown =
                         cooldowns[box.slug] && cooldowns[box.slug] > 0;
                       const cooldownTime = cooldowns[box.slug] || 0;
+
                       return (
-                        <Link href={`/games/${box.slug}`} key={box.slug}>
+                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
                           <motion.div
                             className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
                               isLocked
@@ -1088,6 +1100,7 @@ export function XPDisplay() {
                               scale: isLocked || isOnCooldown ? 1 : 1.05,
                             }}
                           >
+                            {/* Overlay for locked or cooldown state */}
                             {(isLocked || isOnCooldown) && (
                               <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
                                 <div className="text-center p-2">
@@ -1108,6 +1121,8 @@ export function XPDisplay() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Removed fixed height here; just let content size it */}
                             <div className="relative w-full aspect-[4/3]">
                               <Image
                                 src={box.image}
@@ -1135,7 +1150,7 @@ export function XPDisplay() {
           document.body
         )}
 
-      {/* Gem Popup Modal */}
+      {/* Gem Popup Modal (Portal) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1172,6 +1187,7 @@ export function XPDisplay() {
                         <Link
                           href={`https://www.kascasino.xyz/games/gemtier${tier}`}
                           key={tier}
+                          passHref
                         >
                           <motion.div
                             className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
