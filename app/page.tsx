@@ -207,7 +207,7 @@ function MainPageContent() {
         /* Custom scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar {
           height: 8px;
-          width: 8px; /* for vertical scrollbars */
+          width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #1a1a1a;
@@ -303,44 +303,34 @@ function MainPageContent() {
                       />
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Link
-                        href="#"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
-                        <span className="group-hover:text-[#49eacb]">Casino</span>
+                      <Link href="#">
+                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group cursor-pointer">
+                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
+                          <span className="group-hover:text-[#49eacb]">Casino</span>
+                        </div>
                       </Link>
-                      <Link
-                        href="https://raffles.kaspercoin.net/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
-                        <span className="group-hover:text-[#8a2be2]">Raffles</span>
+                      <Link href="https://raffles.kaspercoin.net/" target="_blank" rel="noopener noreferrer">
+                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group cursor-pointer">
+                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
+                          <span className="group-hover:text-[#8a2be2]">Raffles</span>
+                        </div>
                       </Link>
-                      <Link
-                        href="https://t.me/KasCasinoXYZ/2"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group"
-                      >
-                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
-                        <span className="group-hover:text-[#8b0000]">Support</span>
+                      <Link href="https://t.me/KasCasinoXYZ/2" target="_blank" rel="noopener noreferrer">
+                        <div className="flex items-center gap-3 p-2 rounded hover:bg-[#8b0000]/5 transition-all duration-300 group cursor-pointer">
+                          <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8b0000] to-black group-hover:shadow-[0_0_10px_rgba(139,0,0,0.3)]" />
+                          <span className="group-hover:text-[#8b0000]">Support</span>
+                        </div>
                       </Link>
                     </div>
                     <div
                       className="absolute telegram-icon left-0 w-full px-4"
                       style={{ bottom: "1rem" }}
                     >
-                      <Link
-                        href="https://t.me/KasCasinoXYZ"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center"
-                      >
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
-                          <FaTelegramPlane size={20} color="black" />
+                      <Link href="https://t.me/KasCasinoXYZ" target="_blank" rel="noopener noreferrer">
+                        <div className="flex items-center justify-center cursor-pointer">
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49EACB] hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]">
+                            <FaTelegramPlane size={20} color="black" />
+                          </div>
                         </div>
                       </Link>
                     </div>
@@ -426,63 +416,61 @@ function MainPageContent() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                         >
-                          <Link href={`/games/${game.slug}`} legacyBehavior>
-                            <a>
-                              <MotionCard
-                                className="group relative overflow-hidden border-none bg-transparent"
-                                whileHover={{
-                                  scale: 1.05,
-                                  boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                                }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                <div className="relative aspect-[4/2.5] mt-1">
-                                  <Image
-                                    src={game.image}
-                                    alt={`${game.name} thumbnail`}
-                                    fill
-                                    objectFit="cover"
-                                    className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                                  />
-                                  <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                    <MotionButton
-                                      className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                      whileHover={{ scale: 1.02 }}
-                                    >
-                                      Play Now
-                                    </MotionButton>
+                          <Link href={`/games/${game.slug}`}>
+                            <MotionCard
+                              className="group relative overflow-hidden border-none bg-transparent cursor-pointer"
+                              whileHover={{
+                                scale: 1.05,
+                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                              }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="relative aspect-[4/2.5] mt-1">
+                                <Image
+                                  src={game.image}
+                                  alt={`${game.name} thumbnail`}
+                                  fill
+                                  objectFit="cover"
+                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                  <MotionButton
+                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    Play Now
+                                  </MotionButton>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                  {game.name}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  Wins:{" "}
+                                  <span className="text-[#49EACB] font-bold">
+                                    {totalWins}
+                                  </span>
+                                </p>
+                                <div className="mt-1 flex items-center gap-1">
+                                  <span className="text-sm text-gray-400">
+                                    High Score:
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <Image
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      alt="KAS"
+                                      width={16}
+                                      height={16}
+                                      className="rounded-full"
+                                    />
+                                    <span className="text-sm text-[#49EACB] font-bold">
+                                      {highScoreVal}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="p-4">
-                                  <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                    {game.name}
-                                  </h3>
-                                  <p className="text-sm text-gray-400">
-                                    Wins:{" "}
-                                    <span className="text-[#49EACB] font-bold">
-                                      {totalWins}
-                                    </span>
-                                  </p>
-                                  <div className="mt-1 flex items-center gap-1">
-                                    <span className="text-sm text-gray-400">
-                                      High Score:
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <Image
-                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                        alt="KAS"
-                                        width={16}
-                                        height={16}
-                                        className="rounded-full"
-                                      />
-                                      <span className="text-sm text-[#49EACB] font-bold">
-                                        {highScoreVal}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </MotionCard>
-                            </a>
+                              </div>
+                            </MotionCard>
                           </Link>
                         </motion.div>
                       );
@@ -524,63 +512,61 @@ function MainPageContent() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 + 0.3, duration: 0.5 }}
                         >
-                          <Link href={`/games/${game.slug}`} legacyBehavior>
-                            <a>
-                              <MotionCard
-                                className="group relative overflow-hidden border-none bg-transparent"
-                                whileHover={{
-                                  scale: 1.05,
-                                  boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
-                                }}
-                                transition={{ duration: 0.3 }}
-                              >
-                                <div className="relative aspect-[4/2.5] mt-1">
-                                  <Image
-                                    src={game.image}
-                                    alt={`${game.name} thumbnail`}
-                                    fill
-                                    objectFit="cover"
-                                    className="scale-100 transition-transform duration-300 group-hover:scale-110"
-                                  />
-                                  <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
-                                    <MotionButton
-                                      className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                      whileHover={{ scale: 1.02 }}
-                                    >
-                                      Play Now
-                                    </MotionButton>
+                          <Link href={`/games/${game.slug}`}>
+                            <MotionCard
+                              className="group relative overflow-hidden border-none bg-transparent cursor-pointer"
+                              whileHover={{
+                                scale: 1.05,
+                                boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                              }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="relative aspect-[4/2.5] mt-1">
+                                <Image
+                                  src={game.image}
+                                  alt={`${game.name} thumbnail`}
+                                  fill
+                                  objectFit="cover"
+                                  className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                                  <MotionButton
+                                    className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                    whileHover={{ scale: 1.02 }}
+                                  >
+                                    Play Now
+                                  </MotionButton>
+                                </div>
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                                  {game.name}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  Wins:{" "}
+                                  <span className="text-[#49EACB] font-bold">
+                                    {totalWins}
+                                  </span>
+                                </p>
+                                <div className="mt-1 flex items-center gap-1">
+                                  <span className="text-sm text-gray-400">
+                                    High Score:
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <Image
+                                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                                      alt="KAS"
+                                      width={16}
+                                      height={16}
+                                      className="rounded-full"
+                                    />
+                                    <span className="text-sm text-[#49EACB] font-bold">
+                                      {highScoreVal}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="p-4">
-                                  <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
-                                    {game.name}
-                                  </h3>
-                                  <p className="text-sm text-gray-400">
-                                    Wins:{" "}
-                                    <span className="text-[#49EACB] font-bold">
-                                      {totalWins}
-                                    </span>
-                                  </p>
-                                  <div className="mt-1 flex items-center gap-1">
-                                    <span className="text-sm text-gray-400">
-                                      High Score:
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <Image
-                                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                                        alt="KAS"
-                                        width={16}
-                                        height={16}
-                                        className="rounded-full"
-                                      />
-                                      <span className="text-sm text-[#49EACB] font-bold">
-                                        {highScoreVal}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </MotionCard>
-                            </a>
+                              </div>
+                            </MotionCard>
                           </Link>
                         </motion.div>
                       );
@@ -740,7 +726,7 @@ export function XPDisplay() {
         );
         if (storedTimestamp) {
           const elapsed = Date.now() - parseInt(storedTimestamp);
-          const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in ms
+          const cooldownPeriod = 24 * 60 * 60 * 1000;
           if (elapsed < cooldownPeriod) {
             const remainingSeconds = Math.ceil((cooldownPeriod - elapsed) / 1000);
             storedCooldowns[box.slug] = remainingSeconds;
@@ -980,8 +966,8 @@ export function XPDisplay() {
                   XP: {userData.totalXp} / {nextThreshold.toFixed(0)}
                 </div>
                 <div className="flex justify-between mb-1">
-                  <span>{(xpProgress).toFixed(0)} XP</span>
-                  <span>{(xpNeeded).toFixed(0)} XP</span>
+                  <span>{xpProgress.toFixed(0)} XP</span>
+                  <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded h-1">
                   <div
@@ -1055,7 +1041,6 @@ export function XPDisplay() {
                     <h2 className="text-3xl font-bold text-[#49EACB]">
                       Daily Free Loot Boxes
                     </h2>
-
                     {/* Large display of current level */}
                     <div className="flex flex-col items-center my-4">
                       <p className="text-white text-lg mb-2">Your Current Level</p>
@@ -1081,7 +1066,6 @@ export function XPDisplay() {
                         </span>
                       </motion.div>
                     </div>
-
                     <p className="text-gray-300 mt-2">Available once every 24 hours</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
@@ -1090,65 +1074,56 @@ export function XPDisplay() {
                       const isOnCooldown =
                         cooldowns[box.slug] && cooldowns[box.slug] > 0;
                       const cooldownTime = cooldowns[box.slug] || 0;
-
                       return (
-                        <Link
-                          href={`/games/${box.slug}`}
-                          key={box.slug}
-                          legacyBehavior
-                        >
-                          <a>
-                            <motion.div
-                              className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
-                                isLocked
-                                  ? "border-red-500"
-                                  : isOnCooldown
-                                  ? "border-yellow-500"
-                                  : "border-[#49EACB]"
-                              } hover:shadow-lg transition-all duration-200 w-64 flex flex-col`}
-                              whileHover={{
-                                scale: isLocked || isOnCooldown ? 1 : 1.05,
-                              }}
-                            >
-                              {/* Overlay for locked or cooldown state */}
-                              {(isLocked || isOnCooldown) && (
-                                <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
-                                  <div className="text-center p-2">
-                                    {isLocked ? (
-                                      <p className="text-red-400 font-bold">
-                                        Requires Level {box.requiredLevel}
+                        <Link href={`/games/${box.slug}`} key={box.slug}>
+                          <motion.div
+                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border ${
+                              isLocked
+                                ? "border-red-500"
+                                : isOnCooldown
+                                ? "border-yellow-500"
+                                : "border-[#49EACB]"
+                            } hover:shadow-lg transition-all duration-200 w-64 flex flex-col`}
+                            whileHover={{
+                              scale: isLocked || isOnCooldown ? 1 : 1.05,
+                            }}
+                          >
+                            {(isLocked || isOnCooldown) && (
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                                <div className="text-center p-2">
+                                  {isLocked ? (
+                                    <p className="text-red-400 font-bold">
+                                      Requires Level {box.requiredLevel}
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <p className="text-yellow-400 font-bold">
+                                        On Cooldown
                                       </p>
-                                    ) : (
-                                      <>
-                                        <p className="text-yellow-400 font-bold">
-                                          On Cooldown
-                                        </p>
-                                        <p className="text-white text-sm">
-                                          {formatTime(cooldownTime)}
-                                        </p>
-                                      </>
-                                    )}
-                                  </div>
+                                      <p className="text-white text-sm">
+                                        {formatTime(cooldownTime)}
+                                      </p>
+                                    </>
+                                  )}
                                 </div>
-                              )}
-
-                              <div className="relative w-full aspect-[4/3]">
-                                <Image
-                                  src={box.image}
-                                  alt={box.name}
-                                  fill
-                                  objectFit="cover"
-                                  className="rounded-md"
-                                />
                               </div>
-                              <div className="mt-2 text-center">
-                                <h3 className="font-bold text-white">{box.name}</h3>
-                                <p className="text-sm text-gray-300">
-                                  Level {box.requiredLevel}+
-                                </p>
-                              </div>
-                            </motion.div>
-                          </a>
+                            )}
+                            <div className="relative w-full aspect-[4/3]">
+                              <Image
+                                src={box.image}
+                                alt={box.name}
+                                fill
+                                objectFit="cover"
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="mt-2 text-center">
+                              <h3 className="font-bold text-white">{box.name}</h3>
+                              <p className="text-sm text-gray-300">
+                                Level {box.requiredLevel}+
+                              </p>
+                            </div>
+                          </motion.div>
                         </Link>
                       );
                     })}
@@ -1193,40 +1168,36 @@ export function XPDisplay() {
                     {[1, 2, 3, 4].map((tier) => {
                       const requiredGems =
                         tier === 1 ? 10 : tier === 2 ? 100 : tier === 3 ? 1000 : 10000;
-
                       return (
                         <Link
                           href={`https://www.kascasino.xyz/games/gemtier${tier}`}
                           key={tier}
-                          legacyBehavior
                         >
-                          <a>
-                            <motion.div
-                              className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
-                              whileHover={{ scale: 1.05 }}
-                            >
-                              <div className="text-center mb-2 font-bold text-white">
-                                Gem Crate Tier {tier}
-                              </div>
-                              <div className="relative w-full h-32">
-                                <Image
-                                  src={`/gemtier${tier}.webp`}
-                                  alt={`Gem Crate Tier ${tier}`}
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="rounded-md"
-                                />
-                              </div>
-                              <div className="text-center mt-2">
-                                <span className="font-bold text-white">
-                                  Gems Required:
-                                </span>{" "}
-                                <span className="font-bold text-[#49EACB]">
-                                  {requiredGems}
-                                </span>
-                              </div>
-                            </motion.div>
-                          </a>
+                          <motion.div
+                            className="bg-gray-900 rounded-lg p-2 cursor-pointer border border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            <div className="text-center mb-2 font-bold text-white">
+                              Gem Crate Tier {tier}
+                            </div>
+                            <div className="relative w-full h-32">
+                              <Image
+                                src={`/gemtier${tier}.webp`}
+                                alt={`Gem Crate Tier ${tier}`}
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="text-center mt-2">
+                              <span className="font-bold text-white">
+                                Gems Required:
+                              </span>{" "}
+                              <span className="font-bold text-[#49EACB]">
+                                {requiredGems}
+                              </span>
+                            </div>
+                          </motion.div>
                         </Link>
                       );
                     })}
