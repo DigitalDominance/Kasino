@@ -207,8 +207,8 @@ function MainPageContent() {
         }
         /* Custom scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
           height: 8px;
-          width: 8px; /* for vertical scrollbars */
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #1a1a1a;
@@ -371,8 +371,7 @@ function MainPageContent() {
                           src={banner}
                           alt="Main Banner"
                           fill
-                          objectFit="contain"
-                          className="object-contain"
+                          style={{ objectFit: "contain" }}
                         />
                       </motion.div>
                     ))}
@@ -440,7 +439,7 @@ function MainPageContent() {
                                   src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
-                                  objectFit="cover"
+                                  style={{ objectFit: "cover" }}
                                   className="scale-100 transition-transform duration-300 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
@@ -535,7 +534,7 @@ function MainPageContent() {
                                   src={game.image}
                                   alt={`${game.name} thumbnail`}
                                   fill
-                                  objectFit="cover"
+                                  style={{ objectFit: "cover" }}
                                   className="scale-100 transition-transform duration-300 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
@@ -641,8 +640,8 @@ function MainPageContent() {
                                 src={cardImage}
                                 alt={`${win.game} card`}
                                 fill
-                                objectFit="cover"
-                                className="rounded-none scale-100 object-cover"
+                                style={{ objectFit: "cover" }}
+                                className="rounded-none scale-100"
                               />
                               <div className="absolute top-2 right-2 px-2 py-1 rounded bg-[#49EACB] text-black text-sm font-semibold">
                                 LIVE
@@ -746,7 +745,7 @@ export function XPDisplay() {
     };
 
     loadCooldowns();
-  }, [dailyLootBoxes]);
+  }, []);
 
   // Update cooldowns every second
   useEffect(() => {
@@ -953,7 +952,7 @@ export function XPDisplay() {
             transition={{ duration: 0.5 }}
             className={`${smallPopupClass} left-[-60px] top-full mt-1`}
           >
-            {`+${gemGain} ${gemGain === 1 ? "GEM" : "GEMS"}`}
+            +{gemGain} {gemGain === 1 ? "GEM" : "GEMS"}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1024,7 +1023,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal (Portal) */}
+      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1036,7 +1035,10 @@ export function XPDisplay() {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50"
               >
-                {/* Added custom-scrollbar class for the popup container */}
+                {/* 
+                  ADDED custom-scrollbar + overflow-y-auto for a custom-colored scrollbar 
+                  REMOVED h-80 from each lootbox card so they auto-size with no extra space
+                */}
                 <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
@@ -1082,8 +1084,7 @@ export function XPDisplay() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
                     {dailyLootBoxes.map((box) => {
                       const isLocked = userData.level < box.requiredLevel;
-                      const isOnCooldown =
-                        cooldowns[box.slug] && cooldowns[box.slug] > 0;
+                      const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0;
                       const cooldownTime = cooldowns[box.slug] || 0;
 
                       return (
@@ -1122,13 +1123,12 @@ export function XPDisplay() {
                               </div>
                             )}
 
-                            {/* Removed fixed height here; just let content size it */}
-                            <div className="relative w-full aspect-[4/3]">
+                            <div className="relative w-full h-40">
                               <Image
                                 src={box.image}
                                 alt={box.name}
                                 fill
-                                objectFit="cover"
+                                style={{ objectFit: "cover" }}
                                 className="rounded-md"
                               />
                             </div>
@@ -1150,7 +1150,7 @@ export function XPDisplay() {
           document.body
         )}
 
-      {/* Gem Popup Modal (Portal) */}
+      {/* Gem Popup Modal rendered via a Portal (only on client) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1200,8 +1200,8 @@ export function XPDisplay() {
                               <Image
                                 src={`/gemtier${tier}.webp`}
                                 alt={`Gem Crate Tier ${tier}`}
-                                layout="fill"
-                                objectFit="cover"
+                                fill
+                                style={{ objectFit: "cover" }}
                                 className="rounded-md"
                               />
                             </div>
