@@ -208,6 +208,7 @@ function MainPageContent() {
         /* Custom scrollbar styles */
         .custom-scrollbar::-webkit-scrollbar {
           height: 8px;
+          width: 8px; /* for vertical scrollbars */
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #1a1a1a;
@@ -745,7 +746,7 @@ export function XPDisplay() {
     };
 
     loadCooldowns();
-  }, []);
+  }, [dailyLootBoxes]);
 
   // Update cooldowns every second
   useEffect(() => {
@@ -1023,7 +1024,7 @@ export function XPDisplay() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
+      {/* Daily Loot Box Popup Modal (Portal) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -1035,7 +1036,8 @@ export function XPDisplay() {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50"
               >
-                <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
+                {/* Added custom-scrollbar class for the popup container */}
+                <div className="relative bg-gray-800 p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
                     whileHover={{ scale: 1.2 }}
@@ -1080,7 +1082,8 @@ export function XPDisplay() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
                     {dailyLootBoxes.map((box) => {
                       const isLocked = userData.level < box.requiredLevel;
-                      const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0;
+                      const isOnCooldown =
+                        cooldowns[box.slug] && cooldowns[box.slug] > 0;
                       const cooldownTime = cooldowns[box.slug] || 0;
 
                       return (
@@ -1092,7 +1095,7 @@ export function XPDisplay() {
                                 : isOnCooldown
                                 ? "border-yellow-500"
                                 : "border-[#49EACB]"
-                            } hover:shadow-lg transition-all duration-200 w-64 h-80 flex flex-col`}
+                            } hover:shadow-lg transition-all duration-200 w-64 flex flex-col`}
                             whileHover={{
                               scale: isLocked || isOnCooldown ? 1 : 1.05,
                             }}
@@ -1119,11 +1122,12 @@ export function XPDisplay() {
                               </div>
                             )}
 
-                            <div className="relative w-full h-40">
+                            {/* Removed fixed height here; just let content size it */}
+                            <div className="relative w-full aspect-[4/3]">
                               <Image
                                 src={box.image}
                                 alt={box.name}
-                                layout="fill"
+                                fill
                                 objectFit="cover"
                                 className="rounded-md"
                               />
@@ -1146,7 +1150,7 @@ export function XPDisplay() {
           document.body
         )}
 
-      {/* Gem Popup Modal rendered via a Portal (only on client) */}
+      {/* Gem Popup Modal (Portal) */}
       {mounted &&
         createPortal(
           <AnimatePresence>
