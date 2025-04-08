@@ -15,7 +15,12 @@ interface WalletContextType {
   connectWallet: () => Promise<string | null>;
   disconnectWallet: () => Promise<void>;
   showNotification: (message: string, type: "success" | "error") => void;
-  createAccount: (email: string, username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  createAccount: (
+    email: string,
+    username: string,
+    password: string,
+    referredBy?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   login: (password: string) => Promise<boolean>;
 }
 
@@ -130,12 +135,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const createAccount = async (email: string, username: string, password: string) => {
+  const createAccount = async (email: string, username: string, password: string, referredBy?: string) => {
     try {
       const response = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password, walletAddress }),
+        body: JSON.stringify({ email, username, password, walletAddress, referredBy: referredBy || null }),
       });
       const data = await response.json();
       if (response.ok) {
