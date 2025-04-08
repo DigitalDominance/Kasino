@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import CountUp from "react-countup";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,11 +28,10 @@ export default function AggregatedStatsPage() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("24hours");
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [accessGranted, setAccessGranted] = useState(false);
-  const [password, setPassword] = useState("");
 
   const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com";
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   // Fetch aggregated stats using the new API endpoint
   const fetchAggregatedStats = async () => {
@@ -55,51 +54,8 @@ export default function AggregatedStatsPage() {
   };
 
   useEffect(() => {
-    if (accessGranted) {
-      fetchAggregatedStats();
-    }
-  }, [selectedTimeframe, accessGranted]);
-
-  // Handle password submission
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    if (password === process.env.STATS_PASS) {
-      setAccessGranted(true);
-    } else {
-      alert("Incorrect Password");
-    }
-  };
-
-  if (!accessGranted) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="absolute inset-0 bg-black opacity-75 backdrop-blur-sm"></div>
-        <motion.div
-          className="relative z-50 p-8 bg-gray-900 rounded-xl border border-[#49EACB] shadow-2xl"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-2xl font-bold mb-4 text-center">Enter Password</h2>
-          <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
-            <input
-              type="password"
-              className="p-2 rounded border border-[#49EACB] bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[#49EACB]"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-            <button
-              type="submit"
-              className="p-2 rounded bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 transition-colors"
-            >
-              Enter
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    );
-  }
+    fetchAggregatedStats();
+  }, [selectedTimeframe]);
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white`}>
@@ -175,7 +131,6 @@ export default function AggregatedStatsPage() {
                     <span className="font-semibold">Total Win Amount:</span>{" "}
                     <CountUp end={statsData.platform.totalWinAmount} duration={1.5} separator="," decimals={2} />
                   </p>
-                  {/* Removed Total Loss Amount */}
                 </div>
               </div>
               <div className="mt-6">
@@ -216,7 +171,6 @@ export default function AggregatedStatsPage() {
                       <span className="font-semibold">Total Win Amount:</span>{" "}
                       <CountUp end={game.totalWinAmount} duration={1.5} separator="," decimals={2} />
                     </p>
-                    {/* Removed Total Loss Amount */}
                   </div>
                   <div className="mt-4">
                     <p className="text-xl font-bold">
