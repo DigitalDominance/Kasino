@@ -31,10 +31,19 @@ const SignupPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Email validation function.
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    return emailRegex.test(email);
+  };
+
+  // Handle form submit: validate then send account info (including walletAddress, referralCode as referredBy) to API.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Ensure wallet is connected first.
+
+    // Ensure wallet is connected.
     if (!walletAddress) {
       const wallet = await connectWallet();
       if (!wallet) {
@@ -42,11 +51,21 @@ const SignupPage: React.FC = () => {
         return;
       }
     }
-    const result = await createAccount(email, username, password);
+
+    if (!isValidEmail(email)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showNotification("Passwords do not match", "error");
+      return;
+    }
+
+    // Pass referralCode (if any) as the 'referredBy' field.
+    const result = await createAccount(email, username, password, referralCode);
     if (result.success) {
       showNotification("Account created!", "success");
-      // Redirect user to homepage.
-      window.location.href = "/";
+      router.push("/");
     } else {
       showNotification(result.error || "Account creation failed", "error");
     }
@@ -57,7 +76,7 @@ const SignupPage: React.FC = () => {
       {/* Header */}
       <Header />
 
-      {/* Signup Popup */}
+      {/* Signup Form */}
       <div className="flex-grow flex items-center justify-center px-4">
         <AnimatePresence>
           <motion.div
@@ -67,25 +86,17 @@ const SignupPage: React.FC = () => {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className="text-3xl font-bold text-center mb-1">
-              Create Your Account
-            </h2>
-            <p className="text-center text-sm text-gray-300 mb-4">
-              Earn 5% On Each Bet
-            </p>
+            <h2 className="text-3xl font-bold text-center mb-1">Create Your Account</h2>
+            <p className="text-center text-sm text-gray-300 mb-4">Earn 5% On Each Bet</p>
             {referralCode && (
               <p className="text-center text-sm text-gray-300 mb-4">
                 You're signing up with referral code:{" "}
-                <span className="font-semibold text-[#49EACB]">
-                  {referralCode}
-                </span>
+                <span className="font-semibold text-[#49EACB]">{referralCode}</span>
               </p>
             )}
-            {/* If wallet not connected, display red alert */}
+            {/* If wallet not connected, display alert */}
             {!walletAddress && (
-              <p className="text-center text-red-500 mb-4 font-bold">
-                Connect Wallet To Signup
-              </p>
+              <p className="text-center text-red-500 mb-4 font-bold">Connect Wallet To Signup</p>
             )}
             {/* If wallet is connected, show wallet address */}
             {walletAddress && (
@@ -134,9 +145,18 @@ const SignupPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-white mb-1">
-                  Referral Code (Optional)
-                </label>
+                <label className="block text-white mb-1">Confirm Password</label>
+                <input
+                  type="password"
+                  className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={!walletAddress}
+                />
+              </div>
+              <div>
+                <label className="block text-white mb-1">Referral Code (Optional)</label>
                 <input
                   type="text"
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
@@ -165,17 +185,25 @@ const SignupPage: React.FC = () => {
 };
 
 const Header: React.FC = () => {
-  const { connectWallet, disconnectWallet, walletAddress, showNotification, checkNetwork } =
-    useWallet();
+  const { connectWallet, disconnectWallet, walletAddress, showNotification, checkNetwork } = useWallet();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
 
   const handleWalletButton = async () => {
     if (walletAddress) {
-      // When connected, verify network before disconnecting
       const onMainnet = await checkNetwork();
       if (!onMainnet) return;
-      await disconnectWallet();
+      try {
+        const origin = window.location.origin;
+        await (window as any).kasware.disconnect(origin);
+        showNotification("Wallet disconnected", "success");
+        if (disconnectWallet) {
+          await disconnectWallet();
+        }
+      } catch (e) {
+        console.log(e);
+        showNotification("Wallet disconnection failed", "error");
+      }
     } else {
       const wallet = await connectWallet();
       if (!wallet) {
