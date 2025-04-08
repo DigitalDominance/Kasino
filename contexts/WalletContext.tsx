@@ -357,7 +357,7 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         transition={{ duration: 0.5 }}
         className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
           ${notifType === "success"
-            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black"
+            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-white"
             : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"}`}
         style={{
           backgroundSize: "400% 400%",
@@ -413,6 +413,12 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   };
 
   const handleClaimReferral = async () => {
+    if (!referralData) return;
+    // Prevent self-claim: user's own referral code should not be claimable.
+    if (inputReferralCode.trim() === referralData.referralCode) {
+      showNotification("You cannot claim your own referral code.", "error");
+      return;
+    }
     if (claimStatus === "idle" && inputReferralCode.trim() !== "") {
       setClaimStatus("processing");
       try {
@@ -476,7 +482,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               <button
                 onClick={handleWithdraw}
                 disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold ${
+                className={`w-full py-2 rounded bg-[#49EACB] text-white font-semibold ${
                   referralData.referralBonus < 5 ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"
                 }`}
                 title={referralData.referralBonus < 5 ? "5 KAS Minimum Required To Withdraw" : ""}
@@ -513,7 +519,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                         claimStatus === "claimed" ||
                         inputReferralCode.trim() === ""
                       }
-                      className="px-3 py-2 rounded bg-[#49EACB] text-black font-semibold disabled:opacity-50"
+                      className="px-3 py-2 rounded bg-[#49EACB] text-white font-semibold disabled:opacity-50"
                     >
                       {claimStatus === "processing" ? "Processing..." : "Claim"}
                     </button>
