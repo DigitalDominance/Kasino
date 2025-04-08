@@ -162,80 +162,91 @@ export default function AggregatedStatsPage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-6">
-                <p className="text-2xl font-bold text-gray-300">
-                  Profit / Loss:{" "}
-                  <span
-                    className={
-                      statsData.platform.profitLoss < 0 ? "text-green-500" : "text-red-500"
-                    }
-                  >
-                    <CountUp
-                      end={Math.abs(statsData.platform.profitLoss)}
-                      duration={1.5}
-                      decimals={2}
-                      separator=","
-                    />
-                  </span>
-                </p>
-              </div>
+
+              {/* Manually calculated profitLoss */}
+              {(() => {
+                const platformProfitLoss =
+                  statsData.platform.totalWinAmount - statsData.platform.totalKasBet;
+                const isHouseLosing = platformProfitLoss >= 0; // If >= 0, house is losing money
+                return (
+                  <div className="mt-6">
+                    <p className="text-2xl font-bold text-gray-300">
+                      Profit / Loss:{" "}
+                      <span className={isHouseLosing ? "text-red-500" : "text-green-500"}>
+                        <CountUp
+                          end={Math.abs(platformProfitLoss)}
+                          duration={1.5}
+                          decimals={2}
+                          separator=","
+                        />
+                      </span>
+                    </p>
+                  </div>
+                );
+              })()}
             </motion.div>
 
             {/* Per-Game Stats Cards */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {statsData.games.map((game, index) => (
-                <motion.div
-                  key={index}
-                  className="p-6 border border-[#49EACB] rounded-xl shadow-lg bg-gray-800 hover:shadow-[0_0_15px_rgba(73,234,203,0.4)] transition-all duration-300"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <h3 className="text-2xl font-semibold mb-4 text-[#49EACB]">
-                    {game.gameName}
-                  </h3>
-                  <div className="space-y-4">
-                    <p className="text-lg text-gray-300">
-                      <span className="font-semibold">Total KAS Bet: </span>
-                      <span className="text-[#49EACB]">
-                        <CountUp end={game.totalKasBet} duration={1.5} separator="," />
-                      </span>
-                    </p>
-                    <p className="text-lg text-gray-300">
-                      <span className="font-semibold">Total Plays: </span>
-                      <span className="text-[#49EACB]">
-                        <CountUp end={game.totalPlays} duration={1.5} separator="," />
-                      </span>
-                    </p>
-                    <p className="text-lg text-gray-300">
-                      <span className="font-semibold">Total Win Amount: </span>
-                      <span className="text-[#49EACB]">
-                        <CountUp
-                          end={game.totalWinAmount}
-                          duration={1.5}
-                          separator=","
-                          decimals={2}
-                        />
-                      </span>
-                    </p>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-xl font-bold text-gray-300">
-                      Profit / Loss:{" "}
-                      <span
-                        className={game.profitLoss < 0 ? "text-green-500" : "text-red-500"}
-                      >
-                        <CountUp
-                          end={Math.abs(game.profitLoss)}
-                          duration={1.5}
-                          decimals={2}
-                          separator=","
-                        />
-                      </span>
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+              {statsData.games.map((game, index) => {
+                // Manually calculate each game's profit/loss
+                const gameProfitLoss = game.totalWinAmount - game.totalKasBet;
+                const isHouseLosingGame = gameProfitLoss >= 0; // If >= 0, house is losing money
+
+                return (
+                  <motion.div
+                    key={index}
+                    className="p-6 border border-[#49EACB] rounded-xl shadow-lg bg-gray-800 hover:shadow-[0_0_15px_rgba(73,234,203,0.4)] transition-all duration-300"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <h3 className="text-2xl font-semibold mb-4 text-[#49EACB]">
+                      {game.gameName}
+                    </h3>
+                    <div className="space-y-4">
+                      <p className="text-lg text-gray-300">
+                        <span className="font-semibold">Total KAS Bet: </span>
+                        <span className="text-[#49EACB]">
+                          <CountUp end={game.totalKasBet} duration={1.5} separator="," />
+                        </span>
+                      </p>
+                      <p className="text-lg text-gray-300">
+                        <span className="font-semibold">Total Plays: </span>
+                        <span className="text-[#49EACB]">
+                          <CountUp end={game.totalPlays} duration={1.5} separator="," />
+                        </span>
+                      </p>
+                      <p className="text-lg text-gray-300">
+                        <span className="font-semibold">Total Win Amount: </span>
+                        <span className="text-[#49EACB]">
+                          <CountUp
+                            end={game.totalWinAmount}
+                            duration={1.5}
+                            separator=","
+                            decimals={2}
+                          />
+                        </span>
+                      </p>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-xl font-bold text-gray-300">
+                        Profit / Loss:{" "}
+                        <span
+                          className={isHouseLosingGame ? "text-red-500" : "text-green-500"}
+                        >
+                          <CountUp
+                            end={Math.abs(gameProfitLoss)}
+                            duration={1.5}
+                            decimals={2}
+                            separator=","
+                          />
+                        </span>
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         ) : (
