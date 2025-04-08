@@ -130,21 +130,13 @@ export default function AggregatedStatsPage() {
                   <p className="text-xl text-gray-300">
                     <span className="font-semibold">Total KAS Bet: </span>
                     <span className="text-[#49EACB]">
-                      <CountUp
-                        end={statsData.platform.totalKasBet}
-                        duration={1.5}
-                        separator=","
-                      />
+                      <CountUp end={statsData.platform.totalKasBet} duration={1.5} separator="," />
                     </span>
                   </p>
                   <p className="text-xl text-gray-300">
                     <span className="font-semibold">Total Plays: </span>
                     <span className="text-[#49EACB]">
-                      <CountUp
-                        end={statsData.platform.totalPlays}
-                        duration={1.5}
-                        separator=","
-                      />
+                      <CountUp end={statsData.platform.totalPlays} duration={1.5} separator="," />
                     </span>
                   </p>
                 </div>
@@ -162,6 +154,33 @@ export default function AggregatedStatsPage() {
                   </p>
                 </div>
               </div>
+              {/* New Stats Added Here */}
+              <div className="grid grid-cols-3 gap-6 mt-6">
+                <p className="text-xl text-gray-300">
+                  <span className="font-semibold">Total Loss Amount: </span>
+                  <span className="text-[#49EACB]">
+                    <CountUp
+                      end={statsData.platform.totalLossAmount}
+                      duration={1.5}
+                      separator=","
+                      decimals={2}
+                    />
+                  </span>
+                </p>
+                <p className="text-xl text-gray-300">
+                  <span className="font-semibold">Wins Count: </span>
+                  <span className="text-[#49EACB]">
+                    <CountUp end={statsData.platform.winsCount} duration={1.5} separator="," />
+                  </span>
+                </p>
+                <p className="text-xl text-gray-300">
+                  <span className="font-semibold">Loss Count: </span>
+                  <span className="text-[#49EACB]">
+                    <CountUp end={statsData.platform.lossesCount} duration={1.5} separator="," />
+                  </span>
+                </p>
+              </div>
+
               <div className="mt-6">
                 <p className="text-2xl font-bold text-gray-300">
                   Profit / Loss:{" "}
@@ -216,6 +235,30 @@ export default function AggregatedStatsPage() {
                           separator=","
                           decimals={2}
                         />
+                      </span>
+                    </p>
+                    {/* New Game Stats Added Here */}
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Total Loss Amount: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp
+                          end={game.totalLossAmount}
+                          duration={1.5}
+                          separator=","
+                          decimals={2}
+                        />
+                      </span>
+                    </p>
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Wins Count: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp end={game.winsCount} duration={1.5} separator="," />
+                      </span>
+                    </p>
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Loss Count: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp end={game.lossesCount} duration={1.5} separator="," />
                       </span>
                     </p>
                   </div>
