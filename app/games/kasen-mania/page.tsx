@@ -267,9 +267,6 @@ function SlotsContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet amount and click "Spin Kasen Mania" to play.</li>
               <li>The reels (5 columns by 5 rows) will spin as each column scrolls vertically.</li>
-                <ul className="list-disc list-inside ml-4">
-                </ul>
-              </li>
               <li>
                 <strong>Winning Patterns (Examples):</strong>
                 <div className="mt-2">
@@ -289,13 +286,7 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image
-                          key={i}
-                          src="/kasen4.webp"
-                          alt="Symbol"
-                          width={40}
-                          height={40}
-                        />
+                        <Image key={i} src="/kasen4.webp" alt="Symbol" width={40} height={40} />
                       ))}
                     <span className="ml-2 text-sm">2× win</span>
                   </div>
@@ -306,13 +297,7 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image
-                          key={i}
-                          src="/kasen5.webp"
-                          alt="Symbol"
-                          width={40}
-                          height={40}
-                        />
+                        <Image key={i} src="/kasen5.webp" alt="Symbol" width={40} height={40} />
                       ))}
                     <span className="ml-2 text-sm">3× win</span>
                   </div>
@@ -354,7 +339,6 @@ const symbolImages = [
   "/kasen8.webp",
 ];
 
-// Adjust as needed for your layout
 const reelWidth = 720;
 const reelHeight = 390;
 
@@ -384,7 +368,6 @@ function generateLosingGrid(symbolCount: number): number[][] {
       Array.from({ length: 5 }, () => Math.floor(Math.random() * symbolCount))
     );
   } while (
-    // Avoid random generation accidentally matching a win condition
     grid[2].every((val) => val === grid[2][0]) ||
     grid[0].every((val) => val === grid[0][0]) ||
     [0, 1, 2, 3, 4].every((i) => grid[i][i] === grid[0][0])
@@ -396,7 +379,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   const [finalGrid, setFinalGrid] = useState<number[][] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [outcomeMultiplier, setOutcomeMultiplier] = useState<number | null>(null);
-  // State to track each reel’s stop status
   const [stoppedReels, setStoppedReels] = useState<boolean[]>([false, false, false, false, false]);
 
   useEffect(() => {
@@ -407,7 +389,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       setOutcomeMultiplier(null);
       setStoppedReels([false, false, false, false, false]);
 
-      // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
+      // Adjusted probability: 60% lose, 15% for 1.1×, 20% for 2×, 10% for 3× win
       const r = Math.random();
       let multiplier = 0;
       if (r < 0.6) {
@@ -426,12 +408,9 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           ? generateLosingGrid(symbolImages.length)
           : generateFinalGrid(multiplier, symbolImages.length);
 
-      // Set the final grid immediately so that when each reel stops,
-      // it shows the final symbols.
       setFinalGrid(grid);
 
-      // Sequentially stop each reel in order (from left to right)
-      const delayBetween = 500; // 500ms between reels stopping
+      const delayBetween = 500;
       for (let i = 0; i < 5; i++) {
         timers.push(
           setTimeout(() => {
@@ -441,7 +420,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
               return newStopped;
             });
             if (i === 4) {
-              // When the last reel stops, end spinning and call onGameEnd.
               setSpinning(false);
               const result = multiplier > 0 ? "You Win" : "House Wins";
               const winAmt = multiplier > 0 ? betAmount * multiplier : 0;
@@ -457,7 +435,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   let overlayElement = null;
   if (!spinning && finalGrid && outcomeMultiplier && outcomeMultiplier > 0) {
     if (outcomeMultiplier === 1.1) {
-      // Middle row: same Y, but shorten right side
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -470,7 +447,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 3) {
-      // Top row: shift down slightly
       overlayElement = (
         <div
           className="absolute bg-green-500"
@@ -483,7 +459,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         />
       );
     } else if (outcomeMultiplier === 2) {
-      // Diagonal
       const startX = 0;
       const startY = 0;
       const endX = reelWidth - 150;
@@ -513,9 +488,7 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      {/* A responsive container for slot machine + characters */}
       <div className="relative w-full max-w-[800px] mx-auto">
-        {/* The slot machine image (responsive) */}
         <Image
           src="/slotmachine.webp"
           alt="Slot Machine Background"
@@ -523,8 +496,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
           height={400}
           className="w-full h-auto"
         />
-
-        {/* The three characters. */}
         <div
           className="absolute flex items-end justify-center gap-14"
           style={{
@@ -559,7 +530,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       </div>
 
-      {/* Frosted preview overlay if not spinning */}
       {showPreviewOverlay && (
         <div className="absolute inset-0 z-10">
           <div
@@ -588,7 +558,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
         </div>
       )}
 
-      {/* Actual reels */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div
           style={{ width: reelWidth, height: reelHeight, marginLeft: "150px" }}
@@ -610,10 +579,6 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*                       Reel Subcomponent                            */
-/* ------------------------------------------------------------------ */
-
 function Reel({
   isSpinning,
   finalSymbols,
@@ -623,15 +588,12 @@ function Reel({
 }) {
   const cellHeight = 75;
   const imageSize = 65;
-  // Generate a set of random symbols once when the reel mounts.
   const [randomSymbols] = useState(() =>
     Array.from({ length: 40 }, () => Math.floor(Math.random() * symbolImages.length))
   );
-  // Build the reel's full list: the random symbols plus the final result.
   const symbols = finalSymbols
     ? [...randomSymbols, ...finalSymbols]
     : [...randomSymbols, ...randomSymbols];
-  // Land exactly after the random portion to show final symbols.
   const finalOffset = -randomSymbols.length * cellHeight;
 
   return (
@@ -848,10 +810,7 @@ export function SlotsControls({
           >
             <div className="flex items-center justify-between">
               <span>{errorMessage}</span>
-              <button
-                onClick={() => setErrorMessage(null)}
-                className="ml-4 font-bold text-white"
-              >
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold text-white">
                 X
               </button>
             </div>
