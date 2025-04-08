@@ -166,6 +166,39 @@ export default function KasenManiaStatsPage() {
                   />
                 </span>
               </p>
+              {/* New Stats Added Here */}
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Total Loss Amount: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp
+                    end={kasenManiaGame.totalLossAmount}
+                    duration={1.5}
+                    separator=","
+                    decimals={2}
+                  />
+                </span>
+              </p>
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Wins Count: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp
+                    end={kasenManiaGame.winsCount}
+                    duration={1.5}
+                    separator=","
+                  />
+                </span>
+              </p>
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Loss Count: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp
+                    end={kasenManiaGame.lossesCount}
+                    duration={1.5}
+                    separator=","
+                  />
+                </span>
+              </p>
+
               <p className="text-2xl font-bold text-gray-300">
                 Profit / Loss:{" "}
                 <span
