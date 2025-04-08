@@ -115,17 +115,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const checkUserAccount = async (address: string) => {
     try {
-      const response = await fetch(`/api/user?walletAddress=${address}`);
-      if (response.ok) {
-        const userData = await response.json();
-        if (userData && userData.username) {
-          setUsername(userData.username);
-          setIsConnected(true);
-        } else {
-          showNotification("Please create an account to start playing!", "success");
-        }
+      // Fetch referral data from your external backend API
+      const response = await axios.get(
+        `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(address)}`
+      );
+      if (response.data && response.data.user) {
+        setUsername(response.data.user.username);
+        setIsConnected(true);
       } else {
-        throw new Error("Failed to check user account");
+        showNotification("Please create an account to start playing!", "success");
       }
     } catch (error) {
       console.error("Error checking user account:", error);
@@ -279,12 +277,14 @@ export const WalletStatus: React.FC = () => {
   } | null>(null);
   const [hoverTooltipVisible, setHoverTooltipVisible] = useState(false);
 
-  // Fetch full user data including referral fields
+  // Fetch full user data including referral fields from the proper backend API
   useEffect(() => {
     const fetchReferralData = async () => {
       if (walletAddress) {
         try {
-          const res = await axios.get(`/api/user?walletAddress=${encodeURIComponent(walletAddress)}`);
+          const res = await axios.get(
+            `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+          );
           if (res.data && res.data.user) {
             setReferralData({
               referralCount: res.data.user.referralCount || 0,
@@ -452,18 +452,33 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
         >
           X
         </button>
-        <h2 className="text-2xl font-bold text-center mb-4">Your Referrals</h2>
+        <h2 className="text-2xl font-bold text-center mb-1">Your Referrals</h2>
+        <p className="text-center text-sm text-gray-400 mb-4">Earn 5% On Each Bet</p>
         {referralData ? (
           <>
             <div className="mb-4">
-              <p className="text-gray-300">Referred: <span className="text-[#49EACB] font-semibold">{referralData.referralCount}</span> People</p>
-              <p className="text-gray-300">Referral Bonus: <span className="text-[#49EACB] font-semibold">{referralData.referralBonus.toFixed(2)}</span> KAS</p>
+              <p className="text-gray-300">
+                Referred:{" "}
+                <span className="text-[#49EACB] font-semibold">
+                  {referralData.referralCount}
+                </span>{" "}
+                People
+              </p>
+              <p className="text-gray-300">
+                Referral Bonus:{" "}
+                <span className="text-[#49EACB] font-semibold">
+                  {referralData.referralBonus.toFixed(2)}
+                </span>{" "}
+                KAS
+              </p>
             </div>
             <div className="mb-4">
               <button
                 onClick={handleWithdraw}
                 disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold ${referralData.referralBonus < 5 ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"}`}
+                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold ${
+                  referralData.referralBonus < 5 ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"
+                }`}
                 title={referralData.referralBonus < 5 ? "5 KAS Minimum Required To Withdraw" : ""}
               >
                 {payoutStatus === "processing"
@@ -476,31 +491,35 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               </button>
             </div>
             <div className="mb-4">
-              {referralData.referredBy
-                ? (
-                  <p className="text-gray-300">You have already claimed a referral code.</p>
-                ) : (
-                  <div>
-                    <p className="text-gray-300 mb-1">Enter a Referral Code (if you haven't already claimed one):</p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={inputReferralCode}
-                        onChange={(e) => setInputReferralCode(e.target.value)}
-                        className="flex-1 p-2 rounded bg-gray-700 text-white border border-[#49EACB]"
-                        disabled={claimStatus === "claimed"}
-                      />
-                      <button
-                        onClick={handleClaimReferral}
-                        disabled={claimStatus === "processing" || claimStatus === "claimed" || inputReferralCode.trim() === ""}
-                        className="px-3 py-2 rounded bg-[#49EACB] text-black font-semibold disabled:opacity-50"
-                      >
-                        {claimStatus === "processing" ? "Processing..." : "Claim"}
-                      </button>
-                    </div>
+              {referralData.referredBy ? (
+                <p className="text-gray-300">You have already claimed a referral code.</p>
+              ) : (
+                <div>
+                  <p className="text-gray-300 mb-1">
+                    Enter a Referral Code (if you haven't already claimed one):
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inputReferralCode}
+                      onChange={(e) => setInputReferralCode(e.target.value)}
+                      className="flex-1 p-2 rounded bg-gray-700 text-white border border-[#49EACB]"
+                      disabled={claimStatus === "claimed"}
+                    />
+                    <button
+                      onClick={handleClaimReferral}
+                      disabled={
+                        claimStatus === "processing" ||
+                        claimStatus === "claimed" ||
+                        inputReferralCode.trim() === ""
+                      }
+                      className="px-3 py-2 rounded bg-[#49EACB] text-black font-semibold disabled:opacity-50"
+                    >
+                      {claimStatus === "processing" ? "Processing..." : "Claim"}
+                    </button>
                   </div>
-                )
-              }
+                </div>
+              )}
             </div>
             <div className="mb-4">
               <h3 className="text-lg font-bold mb-1">Your Referral Link</h3>
