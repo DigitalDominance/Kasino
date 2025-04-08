@@ -1,65 +1,67 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useWallet } from "@/contexts/WalletContext"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { motion } from "framer-motion"
-import { X, Eye, EyeOff } from "lucide-react"
+import { useState } from "react";
+import { useWallet } from "@/contexts/WalletContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { X, Eye, EyeOff } from "lucide-react";
 
 export function AccountCreation({ onClose, walletAddress }: { onClose: () => void; walletAddress: string }) {
-  const { createAccount } = useWallet()
-  const [email, setEmail] = useState("")
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { createAccount } = useWallet();
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState(""); // New referral code state
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrorMessage("")
-    setIsLoading(true)
+    e.preventDefault();
+    setErrorMessage("");
+    setIsLoading(true);
 
     if (!isValidEmail(email)) {
-      setErrorMessage("Please enter a valid email address")
-      setIsLoading(false)
-      return
+      setErrorMessage("Please enter a valid email address");
+      setIsLoading(false);
+      return;
     }
     if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match")
-      setIsLoading(false)
-      return
+      setErrorMessage("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
 
     try {
-      const result = await createAccount(email, username, password)
+      // Pass referralCode as the fourth parameter to createAccount
+      const result = await createAccount(email, username, password, referralCode);
       if (result.success) {
-        onClose()
+        onClose();
       } else {
-        setErrorMessage(result.error || "Failed to create account. Please try again.")
+        setErrorMessage(result.error || "Failed to create account. Please try again.");
       }
     } catch (error) {
       if (error instanceof Error) {
-        setErrorMessage(error.message)
+        setErrorMessage(error.message);
       } else {
-        setErrorMessage("An unexpected error occurred. Please try again.")
+        setErrorMessage("An unexpected error occurred. Please try again.");
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const isValidEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-    return emailRegex.test(email)
-  }
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    return emailRegex.test(email);
+  };
 
-  const displayAddress = `${walletAddress.slice(0, 10)}...${walletAddress.slice(-4)}`
+  const displayAddress = `${walletAddress.slice(0, 10)}...${walletAddress.slice(-4)}`;
 
   return (
     <motion.div
@@ -97,6 +99,14 @@ export function AccountCreation({ onClose, walletAddress }: { onClose: () => voi
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
+          />
+          {/* Referral Code Input Field */}
+          <Input
+            type="text"
+            placeholder="Referral Code (Optional)"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
           />
           <div className="relative">
@@ -148,6 +158,5 @@ export function AccountCreation({ onClose, walletAddress }: { onClose: () => voi
         </form>
       </div>
     </motion.div>
-  )
+  );
 }
-
