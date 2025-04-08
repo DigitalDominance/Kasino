@@ -106,11 +106,7 @@ export default function KaspianCrossStatsPage() {
               className="bg-transparent appearance-none pr-8 text-white font-bold focus:outline-none"
             >
               {timeframeOptions.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                  className="bg-gray-800"
-                >
+                <option key={option.value} value={option.value} className="bg-gray-800">
                   {option.label}
                 </option>
               ))}
@@ -131,28 +127,18 @@ export default function KaspianCrossStatsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl font-bold mb-6 text-[#49EACB]">
-              Kaspian Cross
-            </h2>
+            <h2 className="text-3xl font-bold mb-6 text-[#49EACB]">Kaspian Cross</h2>
             <div className="space-y-6">
               <p className="text-xl text-gray-300">
                 <span className="font-semibold">Total KAS Bet: </span>
                 <span className="text-[#49EACB]">
-                  <CountUp
-                    end={kaspianCrossGame.totalKasBet}
-                    duration={1.5}
-                    separator=","
-                  />
+                  <CountUp end={kaspianCrossGame.totalKasBet} duration={1.5} separator="," />
                 </span>
               </p>
               <p className="text-xl text-gray-300">
                 <span className="font-semibold">Total Plays: </span>
                 <span className="text-[#49EACB]">
-                  <CountUp
-                    end={kaspianCrossGame.totalPlays}
-                    duration={1.5}
-                    separator=","
-                  />
+                  <CountUp end={kaspianCrossGame.totalPlays} duration={1.5} separator="," />
                 </span>
               </p>
               <p className="text-xl text-gray-300">
@@ -166,6 +152,31 @@ export default function KaspianCrossStatsPage() {
                   />
                 </span>
               </p>
+              {/* New Stats Added Here */}
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Total Loss Amount: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp
+                    end={kaspianCrossGame.totalLossAmount}
+                    duration={1.5}
+                    separator=","
+                    decimals={2}
+                  />
+                </span>
+              </p>
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Wins Count: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp end={kaspianCrossGame.winsCount} duration={1.5} separator="," />
+                </span>
+              </p>
+              <p className="text-xl text-gray-300">
+                <span className="font-semibold">Loss Count: </span>
+                <span className="text-[#49EACB]">
+                  <CountUp end={kaspianCrossGame.lossesCount} duration={1.5} separator="," />
+                </span>
+              </p>
+
               <p className="text-2xl font-bold text-gray-300">
                 Profit / Loss:{" "}
                 <span
