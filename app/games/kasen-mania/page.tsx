@@ -267,13 +267,7 @@ function SlotsContent() {
             <ol className="list-decimal list-inside space-y-2 text-white">
               <li>Enter your bet amount and click "Spin Kasen Mania" to play.</li>
               <li>The reels (5 columns by 5 rows) will spin as each column scrolls vertically.</li>
-              <li>
-                Outcomes are determined fairly:
                 <ul className="list-disc list-inside ml-4">
-                  <li>40% chance for a modest win (1.1× payout)</li>
-                  <li>20% chance for a 2× win</li>
-                  <li>10% chance for a 3× win</li>
-                  <li>30% chance to lose</li>
                 </ul>
               </li>
               <li>
@@ -284,7 +278,7 @@ function SlotsContent() {
                     {Array(5)
                       .fill(0)
                       .map((_, i) => (
-                        <Image key={i} src="/placeholder.svg" alt="Symbol" width={40} height={40} />
+                        <Image key={i} src="/kasen3.webp" alt="Symbol" width={40} height={40} />
                       ))}
                     <span className="ml-2 text-sm">1.1× win</span>
                   </div>
@@ -297,7 +291,7 @@ function SlotsContent() {
                       .map((_, i) => (
                         <Image
                           key={i}
-                          src="/placeholder2.svg"
+                          src="/kasen4.webp"
                           alt="Symbol"
                           width={40}
                           height={40}
@@ -314,7 +308,7 @@ function SlotsContent() {
                       .map((_, i) => (
                         <Image
                           key={i}
-                          src="/placeholder3.svg"
+                          src="/kasen5.webp"
                           alt="Symbol"
                           width={40}
                           height={40}
