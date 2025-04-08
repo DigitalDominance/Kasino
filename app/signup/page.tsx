@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +32,7 @@ const SignupPage: React.FC = () => {
     const result = await createAccount(email, username, password);
     if (result.success) {
       showNotification("Account created!", "success");
-      // Redirect the user to the homepage using our URL
+      // Redirect to homepage using our URL
       window.location.href = "/";
     } else {
       showNotification(result.error || "Account creation failed", "error");
