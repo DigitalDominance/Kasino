@@ -58,7 +58,9 @@ export default function AggregatedStatsPage() {
   }, [selectedTimeframe]);
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black text-white`}>
+    <div
+      className={`${montserrat.className} min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white`}
+    >
       {/* Navigation Header */}
       <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
         <Link href="/" className="flex items-center text-[#49EACB] hover:underline">
@@ -76,9 +78,15 @@ export default function AggregatedStatsPage() {
       </header>
 
       <main className="p-6">
-        <h1 className="text-4xl font-bold mb-6 text-center animate-gradient">
-          Aggregated Daily Stats
-        </h1>
+        {/* Main Heading */}
+        <motion.h1
+          className="text-4xl font-bold mb-6 text-center animate-gradient"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          Kasino Statistics
+        </motion.h1>
 
         {/* Timeframe Dropdown (Styled as a card-like element) */}
         <div className="flex justify-center mb-8">
@@ -87,9 +95,10 @@ export default function AggregatedStatsPage() {
             whileHover={{ scale: 1.05 }}
           >
             <select
+              style={{ WebkitAppearance: "none", MozAppearance: "none" }}
               value={selectedTimeframe}
               onChange={(e) => setSelectedTimeframe(e.target.value)}
-              className="bg-transparent appearance-none text-white font-bold focus:outline-none"
+              className="bg-transparent appearance-none pr-8 text-white font-bold focus:outline-none"
             >
               {timeframeOptions.map((option) => (
                 <option key={option.value} value={option.value} className="bg-gray-800">
@@ -97,7 +106,8 @@ export default function AggregatedStatsPage() {
                 </option>
               ))}
             </select>
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#49EACB]">
+            {/* Single arrow icon */}
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#49EACB] pointer-events-none">
               ▼
             </span>
           </motion.div>
@@ -109,39 +119,63 @@ export default function AggregatedStatsPage() {
           <div className="space-y-8">
             {/* Platform Totals Card */}
             <motion.div
-              className="p-8 border border-[#49EACB] rounded-xl shadow-2xl bg-gray-900 hover:shadow-3xl transition-all duration-300"
+              className="mb-12 p-8 border border-[#49EACB] rounded-xl shadow-2xl bg-gray-900 hover:shadow-[0_0_15px_rgba(73,234,203,0.4)] transition-all duration-300"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-3xl font-bold mb-6">Platform Totals</h2>
+              <h2 className="text-3xl font-bold mb-6 text-[#49EACB]">Platform Totals</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xl text-green-500">
-                    <span className="font-semibold">Total KAS Bet:</span>{" "}
-                    <CountUp end={statsData.platform.totalKasBet} duration={1.5} separator="," />
+                  <p className="text-xl text-gray-300">
+                    <span className="font-semibold">Total KAS Bet: </span>
+                    <span className="text-[#49EACB]">
+                      <CountUp
+                        end={statsData.platform.totalKasBet}
+                        duration={1.5}
+                        separator=","
+                      />
+                    </span>
                   </p>
-                  <p className="text-xl text-green-500">
-                    <span className="font-semibold">Total Plays:</span>{" "}
-                    <CountUp end={statsData.platform.totalPlays} duration={1.5} separator="," />
+                  <p className="text-xl text-gray-300">
+                    <span className="font-semibold">Total Plays: </span>
+                    <span className="text-[#49EACB]">
+                      <CountUp
+                        end={statsData.platform.totalPlays}
+                        duration={1.5}
+                        separator=","
+                      />
+                    </span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-xl text-green-500">
-                    <span className="font-semibold">Total Win Amount:</span>{" "}
-                    <CountUp end={statsData.platform.totalWinAmount} duration={1.5} separator="," decimals={2} />
+                  <p className="text-xl text-gray-300">
+                    <span className="font-semibold">Total Win Amount: </span>
+                    <span className="text-[#49EACB]">
+                      <CountUp
+                        end={statsData.platform.totalWinAmount}
+                        duration={1.5}
+                        separator=","
+                        decimals={2}
+                      />
+                    </span>
                   </p>
                 </div>
               </div>
               <div className="mt-6">
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-bold text-gray-300">
                   Profit / Loss:{" "}
                   <span
-                    className={`${
+                    className={
                       statsData.platform.profitLoss < 0 ? "text-green-500" : "text-red-500"
-                    }`}
+                    }
                   >
-                    {Math.abs(statsData.platform.profitLoss).toFixed(2)}
+                    <CountUp
+                      end={Math.abs(statsData.platform.profitLoss)}
+                      duration={1.5}
+                      decimals={2}
+                      separator=","
+                    />
                   </span>
                 </p>
               </div>
@@ -152,35 +186,51 @@ export default function AggregatedStatsPage() {
               {statsData.games.map((game, index) => (
                 <motion.div
                   key={index}
-                  className="p-6 border border-[#49EACB] rounded-xl shadow-lg bg-gray-800 hover:shadow-2xl transition-all duration-300"
+                  className="p-6 border border-[#49EACB] rounded-xl shadow-lg bg-gray-800 hover:shadow-[0_0_15px_rgba(73,234,203,0.4)] transition-all duration-300"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <h3 className="text-2xl font-semibold mb-4">{game.gameName}</h3>
+                  <h3 className="text-2xl font-semibold mb-4 text-[#49EACB]">
+                    {game.gameName}
+                  </h3>
                   <div className="space-y-4">
-                    <p className="text-lg text-green-500">
-                      <span className="font-semibold">Total KAS Bet:</span>{" "}
-                      <CountUp end={game.totalKasBet} duration={1.5} separator="," />
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Total KAS Bet: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp end={game.totalKasBet} duration={1.5} separator="," />
+                      </span>
                     </p>
-                    <p className="text-lg text-green-500">
-                      <span className="font-semibold">Total Plays:</span>{" "}
-                      <CountUp end={game.totalPlays} duration={1.5} separator="," />
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Total Plays: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp end={game.totalPlays} duration={1.5} separator="," />
+                      </span>
                     </p>
-                    <p className="text-lg text-green-500">
-                      <span className="font-semibold">Total Win Amount:</span>{" "}
-                      <CountUp end={game.totalWinAmount} duration={1.5} separator="," decimals={2} />
+                    <p className="text-lg text-gray-300">
+                      <span className="font-semibold">Total Win Amount: </span>
+                      <span className="text-[#49EACB]">
+                        <CountUp
+                          end={game.totalWinAmount}
+                          duration={1.5}
+                          separator=","
+                          decimals={2}
+                        />
+                      </span>
                     </p>
                   </div>
                   <div className="mt-4">
-                    <p className="text-xl font-bold">
+                    <p className="text-xl font-bold text-gray-300">
                       Profit / Loss:{" "}
                       <span
-                        className={`${
-                          game.profitLoss < 0 ? "text-green-500" : "text-red-500"
-                        }`}
+                        className={game.profitLoss < 0 ? "text-green-500" : "text-red-500"}
                       >
-                        {Math.abs(game.profitLoss).toFixed(2)}
+                        <CountUp
+                          end={Math.abs(game.profitLoss)}
+                          duration={1.5}
+                          decimals={2}
+                          separator=","
+                        />
                       </span>
                     </p>
                   </div>
