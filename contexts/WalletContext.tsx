@@ -1,15 +1,17 @@
 "use client";
 
-import type React from "react";
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import axios from "axios";
 
 interface WalletContextType {
   isConnected: boolean;
   username: string | null;
   balance: number;
+  walletAddress: string | null;
   connectWallet: () => Promise<string | null>;
   disconnectWallet: () => Promise<void>;
   showNotification: (message: string, type: "success" | "error") => void;
@@ -116,7 +118,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const response = await fetch(`/api/user?walletAddress=${address}`);
       if (response.ok) {
         const userData = await response.json();
-        if (userData) {
+        if (userData && userData.username) {
           setUsername(userData.username);
           setIsConnected(true);
         } else {
@@ -252,6 +254,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isConnected,
         username,
         balance,
+        walletAddress,
         connectWallet,
         disconnectWallet,
         showNotification,
@@ -266,30 +269,85 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 };
 
 export const WalletStatus: React.FC = () => {
-  const { isConnected, username, balance } = useWallet();
-  if (!isConnected) return null;
-  return (
-    <div className="flex items-center space-x-2">
-      <span className="text-[#49EACB] font-bold mr-2">{username}</span>
-      <span className="text-[#49EACB]">{balance.toFixed(2)}</span>
-      <Image
-        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-        alt="KAS"
-        width={16}
-        height={16}
-        className="rounded-full"
-      />
-    </div>
-  );
+  const { isConnected, username, balance, walletAddress, showNotification } = useWallet();
+  const [referralPopupVisible, setReferralPopupVisible] = useState(false);
+  const [referralData, setReferralData] = useState<{
+    referralCount: number;
+    referralBonus: number;
+    referralCode: string;
+    referredBy?: string | null;
+  } | null>(null);
+  const [hoverTooltipVisible, setHoverTooltipVisible] = useState(false);
+
+  // Fetch full user data including referral fields
+  useEffect(() => {
+    const fetchReferralData = async () => {
+      if (walletAddress) {
+        try {
+          const res = await axios.get(`/api/user?walletAddress=${encodeURIComponent(walletAddress)}`);
+          if (res.data && res.data.user) {
+            setReferralData({
+              referralCount: res.data.user.referralCount || 0,
+              referralBonus: res.data.user.referralBonus || 0,
+              referralCode: res.data.user.referralCode || "",
+              referredBy: res.data.user.referredBy || null,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching referral data", error);
+        }
+      }
+    };
+    if (isConnected) {
+      fetchReferralData();
+    }
+  }, [isConnected, walletAddress]);
+
+  return isConnected ? (
+    <>
+      <div
+        className="flex items-center space-x-2 cursor-pointer relative"
+        onMouseEnter={() => setHoverTooltipVisible(true)}
+        onMouseLeave={() => setHoverTooltipVisible(false)}
+        onClick={() => setReferralPopupVisible(true)}
+      >
+        <span className="text-[#49EACB] font-bold mr-2">{username}</span>
+        <span className="text-[#49EACB]">{balance.toFixed(2)}</span>
+        <Image
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+          alt="KAS"
+          width={16}
+          height={16}
+          className="rounded-full"
+        />
+        {hoverTooltipVisible && !referralPopupVisible && (
+          <motion.div
+            className="absolute bottom-full mb-2 px-2 py-1 rounded bg-gray-900 text-xs text-white"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+          >
+            Click Me!
+          </motion.div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {referralPopupVisible && (
+          <ReferralPopup
+            referralData={referralData}
+            onClose={() => setReferralPopupVisible(false)}
+            showNotification={showNotification}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  ) : null;
 };
 
 export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({ message, type }) => {
-  // Determine the notification type: if the type is "error" OR the message includes "error", then use error styling.
-  const notifType =
-    type === "error" || message.toLowerCase().includes("error")
-      ? "error"
-      : "success";
-
+  const notifType = type === "error" || message.toLowerCase().includes("error") ? "error" : "success";
   return (
     <AnimatePresence>
       <motion.div
@@ -299,8 +357,8 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         transition={{ duration: 0.5 }}
         className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
           ${notifType === "success"
-            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black bg-success-notif"
-            : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white bg-error-notif"}`}
+            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-black"
+            : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"}`}
         style={{
           backgroundSize: "400% 400%",
         }}
@@ -310,3 +368,163 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
     </AnimatePresence>
   );
 };
+
+interface ReferralPopupProps {
+  referralData: {
+    referralCount: number;
+    referralBonus: number;
+    referralCode: string;
+    referredBy?: string | null;
+  } | null;
+  onClose: () => void;
+  showNotification: (message: string, type: "success" | "error") => void;
+}
+
+const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, showNotification }) => {
+  const [payoutStatus, setPayoutStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
+  const [inputReferralCode, setInputReferralCode] = useState("");
+  const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle");
+
+  const copyReferralLink = () => {
+    if (referralData) {
+      const referralLink = `https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`;
+      navigator.clipboard.writeText(referralLink);
+      showNotification("Referral link copied!", "success");
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (referralData && referralData.referralBonus >= 5) {
+      setPayoutStatus("processing");
+      try {
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", { walletAddress: (window as any).kasware?.account });
+        if (res.data.success) {
+          setPayoutStatus("completed");
+          showNotification("Payout completed!", "success");
+        } else {
+          setPayoutStatus("failed");
+          showNotification("Payout failed. Please try again.", "error");
+        }
+      } catch (error) {
+        setPayoutStatus("failed");
+        showNotification("Payout failed. Please try again.", "error");
+      }
+    }
+  };
+
+  const handleClaimReferral = async () => {
+    if (claimStatus === "idle" && inputReferralCode.trim() !== "") {
+      setClaimStatus("processing");
+      try {
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim", { walletAddress: (window as any).kasware?.account, referralCode: inputReferralCode.trim() });
+        if (res.data.success) {
+          setClaimStatus("claimed");
+          showNotification("Referral code claimed!", "success");
+        } else {
+          setClaimStatus("idle");
+          showNotification(res.data.error, "error");
+        }
+      } catch (error) {
+        setClaimStatus("idle");
+        showNotification("Failed to claim referral code.", "error");
+      }
+    }
+  };
+
+  return createPortal(
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="bg-gray-800 rounded-lg p-6 w-11/12 max-w-lg relative"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-[#49EACB] font-bold"
+        >
+          X
+        </button>
+        <h2 className="text-2xl font-bold text-center mb-4">Your Referrals</h2>
+        {referralData ? (
+          <>
+            <div className="mb-4">
+              <p className="text-gray-300">Referred: <span className="text-[#49EACB] font-semibold">{referralData.referralCount}</span> People</p>
+              <p className="text-gray-300">Referral Bonus: <span className="text-[#49EACB] font-semibold">{referralData.referralBonus.toFixed(2)}</span> KAS</p>
+            </div>
+            <div className="mb-4">
+              <button
+                onClick={handleWithdraw}
+                disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
+                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold ${referralData.referralBonus < 5 ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"}`}
+                title={referralData.referralBonus < 5 ? "5 KAS Minimum Required To Withdraw" : ""}
+              >
+                {payoutStatus === "processing"
+                  ? "Processing..."
+                  : payoutStatus === "completed"
+                  ? "Payout Completed"
+                  : payoutStatus === "failed"
+                  ? "Payout Failed – Retry"
+                  : "Withdraw Bonus"}
+              </button>
+            </div>
+            <div className="mb-4">
+              {referralData.referredBy
+                ? (
+                  <p className="text-gray-300">You have already claimed a referral code.</p>
+                ) : (
+                  <div>
+                    <p className="text-gray-300 mb-1">Enter a Referral Code (if you haven't already claimed one):</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inputReferralCode}
+                        onChange={(e) => setInputReferralCode(e.target.value)}
+                        className="flex-1 p-2 rounded bg-gray-700 text-white border border-[#49EACB]"
+                        disabled={claimStatus === "claimed"}
+                      />
+                      <button
+                        onClick={handleClaimReferral}
+                        disabled={claimStatus === "processing" || claimStatus === "claimed" || inputReferralCode.trim() === ""}
+                        className="px-3 py-2 rounded bg-[#49EACB] text-black font-semibold disabled:opacity-50"
+                      >
+                        {claimStatus === "processing" ? "Processing..." : "Claim"}
+                      </button>
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+            <div className="mb-4">
+              <h3 className="text-lg font-bold mb-1">Your Referral Link</h3>
+              <div
+                onClick={copyReferralLink}
+                className="p-3 border border-[#49EACB] rounded cursor-pointer hover:shadow-lg transition-all duration-200 text-center"
+              >
+                {`https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold mb-1">Your Referral Code</h3>
+              <div className="p-3 border border-[#49EACB] rounded text-center">
+                {referralData.referralCode}
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-gray-300">Loading referral data...</p>
+        )}
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
+};
+
+export default WalletProvider;
