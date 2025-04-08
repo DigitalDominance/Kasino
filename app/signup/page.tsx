@@ -9,16 +9,15 @@ import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/wallet-connection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWallet } from "@/contexts/WalletContext";
 
 const SignupPage: React.FC = () => {
-  const { createAccount, showNotification, connectWallet, walletAddress } = useWallet();
+  const { createAccount, showNotification, walletAddress, connectWallet } = useWallet();
   const router = useRouter();
 
-  // Instead of useSearchParams, we use window.location.search to retrieve referral code.
+  // Retrieve referral code from URL using window.location.search.
   const [referralCode, setReferralCode] = useState("");
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -28,14 +27,14 @@ const SignupPage: React.FC = () => {
     }
   }, []);
 
+  // Form state.
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Ensure wallet is connected before creating account
+    // Ensure wallet is connected
     if (!walletAddress) {
       const wallet = await connectWallet();
       if (!wallet) {
@@ -43,12 +42,10 @@ const SignupPage: React.FC = () => {
         return;
       }
     }
-
-    // Call account creation function from context; walletAddress is already included in context.
     const result = await createAccount(email, username, password);
     if (result.success) {
       showNotification("Account created!", "success");
-      // Redirect user to homepage.
+      // Redirect to homepage
       window.location.href = "/";
     } else {
       showNotification(result.error || "Account creation failed", "error");
@@ -57,7 +54,7 @@ const SignupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
-      {/* Header with custom logo, sidebar toggle, and connect wallet button */}
+      {/* Header with custom logo, sidebar toggle, and wallet connect/disconnect */}
       <Header />
 
       {/* Signup Popup */}
@@ -78,6 +75,24 @@ const SignupPage: React.FC = () => {
                 <span className="font-semibold text-[#49EACB]">{referralCode}</span>
               </p>
             )}
+            {/* If wallet not connected, show alert message */}
+            {!walletAddress && (
+              <p className="text-center text-red-500 mb-4 font-bold">
+                Connect Wallet To Signup
+              </p>
+            )}
+            {/* If wallet is connected, show the wallet address in a read-only field */}
+            {walletAddress && (
+              <div className="mb-4">
+                <label className="block text-white mb-1">Wallet Address</label>
+                <input
+                  type="text"
+                  value={walletAddress}
+                  disabled
+                  className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 cursor-default"
+                />
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-white mb-1">Email</label>
@@ -87,6 +102,7 @@ const SignupPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={!walletAddress}
                 />
               </div>
               <div>
@@ -97,6 +113,7 @@ const SignupPage: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  disabled={!walletAddress}
                 />
               </div>
               <div>
@@ -107,6 +124,7 @@ const SignupPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={!walletAddress}
                 />
               </div>
               <div>
@@ -117,9 +135,14 @@ const SignupPage: React.FC = () => {
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
                   placeholder="Enter referral code"
+                  disabled={!walletAddress}
                 />
               </div>
-              <Button type="submit" className="w-full bg-[#49EACB] text-white hover:bg-[#49EACB]/80">
+              <Button
+                type="submit"
+                className="w-full bg-[#49EACB] text-white hover:bg-[#49EACB]/80"
+                disabled={!walletAddress}
+              >
                 Sign Up
               </Button>
             </form>
@@ -134,12 +157,21 @@ const SignupPage: React.FC = () => {
 };
 
 const Header: React.FC = () => {
-  const { connectWallet, walletAddress } = useWallet();
+  const { connectWallet, disconnectWallet, walletAddress, showNotification, checkNetwork } = useWallet();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const router = useRouter();
 
-  const handleConnect = async () => {
-    if (!walletAddress) {
-      await connectWallet();
+  const handleWalletButton = async () => {
+    if (walletAddress) {
+      // Check network before disconnecting (or you can always disconnect)
+      const onMainnet = await checkNetwork();
+      if (!onMainnet) return;
+      await disconnectWallet();
+    } else {
+      const wallet = await connectWallet();
+      if (!wallet) {
+        showNotification("Wallet connection failed", "error");
+      }
     }
   };
 
@@ -152,11 +184,7 @@ const Header: React.FC = () => {
           onClick={() => setIsSidebarOpen((prev) => !prev)}
           className="text-[#49EACB] hover:bg-[#49EACB]/10 p-2 rounded"
         >
-          {isSidebarOpen ? (
-            <span>X</span>
-          ) : (
-            <span>≡</span>
-          )}
+          {isSidebarOpen ? <span>X</span> : <span>≡</span>}
         </motion.button>
         <Link href="/" className="flex items-center">
           <Image
@@ -169,8 +197,8 @@ const Header: React.FC = () => {
         </Link>
       </div>
       <div>
-        <Button onClick={handleConnect} className="bg-[#49EACB] text-white">
-          {walletAddress ? walletAddress.slice(0, 6) + "..." : "Connect Wallet"}
+        <Button onClick={handleWalletButton} className="bg-[#49EACB] text-black">
+          {walletAddress ? "Disconnect" : "Connect Wallet"}
         </Button>
       </div>
     </header>
