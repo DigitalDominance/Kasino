@@ -34,7 +34,7 @@ const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Ensure wallet is connected
+    // Ensure wallet is connected first.
     if (!walletAddress) {
       const wallet = await connectWallet();
       if (!wallet) {
@@ -45,7 +45,7 @@ const SignupPage: React.FC = () => {
     const result = await createAccount(email, username, password);
     if (result.success) {
       showNotification("Account created!", "success");
-      // Redirect to homepage
+      // Redirect user to homepage.
       window.location.href = "/";
     } else {
       showNotification(result.error || "Account creation failed", "error");
@@ -54,7 +54,7 @@ const SignupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
-      {/* Header with custom logo, sidebar toggle, and wallet connect/disconnect */}
+      {/* Header */}
       <Header />
 
       {/* Signup Popup */}
@@ -67,21 +67,27 @@ const SignupPage: React.FC = () => {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className="text-3xl font-bold text-center mb-1">Create Your Account</h2>
-            <p className="text-center text-sm text-gray-300 mb-4">Earn 5% On Each Bet</p>
+            <h2 className="text-3xl font-bold text-center mb-1">
+              Create Your Account
+            </h2>
+            <p className="text-center text-sm text-gray-300 mb-4">
+              Earn 5% On Each Bet
+            </p>
             {referralCode && (
               <p className="text-center text-sm text-gray-300 mb-4">
                 You're signing up with referral code:{" "}
-                <span className="font-semibold text-[#49EACB]">{referralCode}</span>
+                <span className="font-semibold text-[#49EACB]">
+                  {referralCode}
+                </span>
               </p>
             )}
-            {/* If wallet not connected, show alert message */}
+            {/* If wallet not connected, display red alert */}
             {!walletAddress && (
               <p className="text-center text-red-500 mb-4 font-bold">
                 Connect Wallet To Signup
               </p>
             )}
-            {/* If wallet is connected, show the wallet address in a read-only field */}
+            {/* If wallet is connected, show wallet address */}
             {walletAddress && (
               <div className="mb-4">
                 <label className="block text-white mb-1">Wallet Address</label>
@@ -128,7 +134,9 @@ const SignupPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-white mb-1">Referral Code (Optional)</label>
+                <label className="block text-white mb-1">
+                  Referral Code (Optional)
+                </label>
                 <input
                   type="text"
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
@@ -157,13 +165,14 @@ const SignupPage: React.FC = () => {
 };
 
 const Header: React.FC = () => {
-  const { connectWallet, disconnectWallet, walletAddress, showNotification, checkNetwork } = useWallet();
+  const { connectWallet, disconnectWallet, walletAddress, showNotification, checkNetwork } =
+    useWallet();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const router = useRouter();
 
   const handleWalletButton = async () => {
     if (walletAddress) {
-      // Check network before disconnecting (or you can always disconnect)
+      // When connected, verify network before disconnecting
       const onMainnet = await checkNetwork();
       if (!onMainnet) return;
       await disconnectWallet();
@@ -197,7 +206,7 @@ const Header: React.FC = () => {
         </Link>
       </div>
       <div>
-        <Button onClick={handleWalletButton} className="bg-[#49EACB] text-black">
+        <Button onClick={handleWalletButton} className="bg-[#49EACB] text-black font-bold">
           {walletAddress ? "Disconnect" : "Connect Wallet"}
         </Button>
       </div>
