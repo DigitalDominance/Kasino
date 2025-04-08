@@ -62,6 +62,14 @@ export default function KaspianCrossStatsPage() {
     (game) => game.gameName === "Kaspian Cross"
   );
 
+  // Manually calculate profit/loss:
+  // Profit/Loss = totalWinAmount - totalKasBet
+  // Positive computedProfitLoss indicates a loss (displayed in red)
+  // Negative computedProfitLoss indicates a gain (displayed in green)
+  const computedProfitLoss =
+    kaspianCrossGame &&
+    kaspianCrossGame.totalWinAmount - kaspianCrossGame.totalKasBet;
+
   return (
     <div
       className={`${montserrat.className} min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white`}
@@ -170,11 +178,11 @@ export default function KaspianCrossStatsPage() {
                 Profit / Loss:{" "}
                 <span
                   className={
-                    kaspianCrossGame.profitLoss < 0 ? "text-green-500" : "text-red-500"
+                    computedProfitLoss < 0 ? "text-green-500" : "text-red-500"
                   }
                 >
                   <CountUp
-                    end={Math.abs(kaspianCrossGame.profitLoss)}
+                    end={Math.abs(computedProfitLoss)}
                     duration={1.5}
                     decimals={2}
                     separator=","
@@ -184,7 +192,9 @@ export default function KaspianCrossStatsPage() {
             </div>
           </motion.div>
         ) : (
-          <div className="text-center">No stats data available for Kaspian Cross.</div>
+          <div className="text-center">
+            No stats data available for Kaspian Cross.
+          </div>
         )}
       </main>
 
