@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,11 +28,13 @@ export default function AggregatedStatsPage() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("24hours");
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [accessGranted, setAccessGranted] = useState(false);
+  const [password, setPassword] = useState("");
 
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com";
 
-  // Fetch aggregated stats using the new API endpoint and timeframe from dropdown.
+  // Fetch aggregated stats using the new API endpoint
   const fetchAggregatedStats = async () => {
     setLoading(true);
     try {
@@ -53,8 +55,51 @@ export default function AggregatedStatsPage() {
   };
 
   useEffect(() => {
-    fetchAggregatedStats();
-  }, [selectedTimeframe]);
+    if (accessGranted) {
+      fetchAggregatedStats();
+    }
+  }, [selectedTimeframe, accessGranted]);
+
+  // Handle password submission
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === process.env.STATS_PASS) {
+      setAccessGranted(true);
+    } else {
+      alert("Incorrect Password");
+    }
+  };
+
+  if (!accessGranted) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="absolute inset-0 bg-black opacity-75 backdrop-blur-sm"></div>
+        <motion.div
+          className="relative z-50 p-8 bg-gray-900 rounded-xl border border-[#49EACB] shadow-2xl"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-2xl font-bold mb-4 text-center">Enter Password</h2>
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
+            <input
+              type="password"
+              className="p-2 rounded border border-[#49EACB] bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-[#49EACB]"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <button
+              type="submit"
+              className="p-2 rounded bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 transition-colors"
+            >
+              Enter
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white`}>
@@ -79,57 +124,62 @@ export default function AggregatedStatsPage() {
           Aggregated Daily Stats
         </h1>
 
-        {/* Timeframe Dropdown */}
+        {/* Timeframe Dropdown (Styled as a card-like element) */}
         <div className="flex justify-center mb-8">
-          <select
-            value={selectedTimeframe}
-            onChange={(e) => setSelectedTimeframe(e.target.value)}
-            className="bg-gray-800 text-white border border-[#49EACB] rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#49EACB] transition-colors duration-300"
+          <motion.div
+            className="relative inline-block bg-gray-800 border border-[#49EACB] rounded-full px-4 py-2"
+            whileHover={{ scale: 1.05 }}
           >
-            {timeframeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            <select
+              value={selectedTimeframe}
+              onChange={(e) => setSelectedTimeframe(e.target.value)}
+              className="bg-transparent appearance-none text-white font-bold focus:outline-none"
+            >
+              {timeframeOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-gray-800">
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#49EACB]">
+              ▼
+            </span>
+          </motion.div>
         </div>
 
         {loading ? (
           <div className="text-center">Loading stats…</div>
         ) : statsData ? (
           <div className="space-y-8">
-            {/* Platform Totals */}
+            {/* Platform Totals Card */}
             <motion.div
-              className="p-6 border border-[#49EACB] rounded-lg shadow-lg bg-gray-900"
+              className="p-8 border border-[#49EACB] rounded-xl shadow-2xl bg-gray-900 hover:shadow-3xl transition-all duration-300"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-2xl font-bold mb-4">Platform Totals</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <h2 className="text-3xl font-bold mb-6">Platform Totals</h2>
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-lg">
+                  <p className="text-xl text-green-500">
                     <span className="font-semibold">Total KAS Bet:</span>{" "}
                     <CountUp end={statsData.platform.totalKasBet} duration={1.5} separator="," />
                   </p>
-                  <p className="text-lg">
+                  <p className="text-xl text-green-500">
                     <span className="font-semibold">Total Plays:</span>{" "}
                     <CountUp end={statsData.platform.totalPlays} duration={1.5} separator="," />
                   </p>
                 </div>
                 <div>
-                  <p className="text-lg">
+                  <p className="text-xl text-green-500">
                     <span className="font-semibold">Total Win Amount:</span>{" "}
                     <CountUp end={statsData.platform.totalWinAmount} duration={1.5} separator="," decimals={2} />
                   </p>
-                  <p className="text-lg">
-                    <span className="font-semibold">Total Loss Amount:</span>{" "}
-                    <CountUp end={statsData.platform.totalLossAmount} duration={1.5} separator="," decimals={2} />
-                  </p>
+                  {/* Removed Total Loss Amount */}
                 </div>
               </div>
-              <div className="mt-4">
-                <p className="text-xl font-bold">
+              <div className="mt-6">
+                <p className="text-2xl font-bold">
                   Profit / Loss:{" "}
                   <span
                     className={`${
@@ -142,47 +192,34 @@ export default function AggregatedStatsPage() {
               </div>
             </motion.div>
 
-            {/* Per-Game Stats */}
-            <motion.div
-              className="p-6 border border-[#49EACB] rounded-lg shadow-lg bg-gray-900"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <h2 className="text-2xl font-bold mb-4">Per-Game Stats</h2>
+            {/* Per-Game Stats Cards */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {statsData.games.map((game, index) => (
                 <motion.div
                   key={index}
-                  className="p-4 mb-4 border rounded bg-gray-800"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="p-6 border border-[#49EACB] rounded-xl shadow-lg bg-gray-800 hover:shadow-2xl transition-all duration-300"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <h3 className="text-xl font-semibold mb-2">{game.gameName}</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p>
-                        <span className="font-semibold">Total KAS Bet:</span>{" "}
-                        <CountUp end={game.totalKasBet} duration={1.5} separator="," />
-                      </p>
-                      <p>
-                        <span className="font-semibold">Total Plays:</span>{" "}
-                        <CountUp end={game.totalPlays} duration={1.5} separator="," />
-                      </p>
-                    </div>
-                    <div>
-                      <p>
-                        <span className="font-semibold">Total Win Amount:</span>{" "}
-                        <CountUp end={game.totalWinAmount} duration={1.5} separator="," decimals={2} />
-                      </p>
-                      <p>
-                        <span className="font-semibold">Total Loss Amount:</span>{" "}
-                        <CountUp end={game.totalLossAmount} duration={1.5} separator="," decimals={2} />
-                      </p>
-                    </div>
+                  <h3 className="text-2xl font-semibold mb-4">{game.gameName}</h3>
+                  <div className="space-y-4">
+                    <p className="text-lg text-green-500">
+                      <span className="font-semibold">Total KAS Bet:</span>{" "}
+                      <CountUp end={game.totalKasBet} duration={1.5} separator="," />
+                    </p>
+                    <p className="text-lg text-green-500">
+                      <span className="font-semibold">Total Plays:</span>{" "}
+                      <CountUp end={game.totalPlays} duration={1.5} separator="," />
+                    </p>
+                    <p className="text-lg text-green-500">
+                      <span className="font-semibold">Total Win Amount:</span>{" "}
+                      <CountUp end={game.totalWinAmount} duration={1.5} separator="," decimals={2} />
+                    </p>
+                    {/* Removed Total Loss Amount */}
                   </div>
-                  <div className="mt-2">
-                    <p className="text-lg font-bold">
+                  <div className="mt-4">
+                    <p className="text-xl font-bold">
                       Profit / Loss:{" "}
                       <span
                         className={`${
@@ -195,7 +232,7 @@ export default function AggregatedStatsPage() {
                   </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
           </div>
         ) : (
           <div className="text-center">No stats data available.</div>
