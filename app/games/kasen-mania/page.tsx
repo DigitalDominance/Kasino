@@ -416,11 +416,11 @@ export function SlotsGame({ isPlaying, onGameEnd, betAmount }: SlotsGameProps) {
       // Probability: 30% lose, 40% for 1.1×, 20% for 2×, 10% for 3×
       const r = Math.random();
       let multiplier = 0;
-      if (r < 0.55) {
+      if (r < 0.6) {
         multiplier = 0;
-      } else if (r < 0.7) {
+      } else if (r < 0.75) {
         multiplier = 1.1;
-      } else if (r < 0.9) {
+      } else if (r < 0.95) {
         multiplier = 2;
       } else {
         multiplier = 3;
