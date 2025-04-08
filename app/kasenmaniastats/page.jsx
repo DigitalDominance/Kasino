@@ -62,6 +62,12 @@ export default function KasenManiaStatsPage() {
     (game) => game.gameName === "Kasen Mania"
   );
 
+  // Manually calculate profit/loss:
+  // Profit/Loss = totalWinAmount - totalKasBet
+  // Positive profitLoss: red (loss), negative profitLoss: green (gain)
+  const computedProfitLoss =
+    kasenManiaGame && kasenManiaGame.totalWinAmount - kasenManiaGame.totalKasBet;
+
   return (
     <div
       className={`${montserrat.className} min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white`}
@@ -170,11 +176,11 @@ export default function KasenManiaStatsPage() {
                 Profit / Loss:{" "}
                 <span
                   className={
-                    kasenManiaGame.profitLoss < 0 ? "text-green-500" : "text-red-500"
+                    computedProfitLoss < 0 ? "text-green-500" : "text-red-500"
                   }
                 >
                   <CountUp
-                    end={Math.abs(kasenManiaGame.profitLoss)}
+                    end={Math.abs(computedProfitLoss)}
                     duration={1.5}
                     decimals={2}
                     separator=","
