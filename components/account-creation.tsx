@@ -104,7 +104,7 @@ export function AccountCreation({ onClose, walletAddress }: { onClose: () => voi
           {/* Referral Code Input Field */}
           <Input
             type="text"
-            placeholder="Referral Code (100 XP Reward)"
+            placeholder="Optional: Referral Code (100 XP Reward)"
             value={referralCode}
             onChange={(e) => setReferralCode(e.target.value)}
             className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white"
