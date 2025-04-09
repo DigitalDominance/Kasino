@@ -155,7 +155,7 @@ const SignupPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-white mb-1">Referral Code (100 XP Reward)</label>
+                <label className="block text-white mb-1">Optional: Referral Code (100 XP Reward)</label>
                 <input
                   type="text"
                   className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
