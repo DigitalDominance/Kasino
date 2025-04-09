@@ -544,7 +544,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               ) : (
                 <div>
                   <p className="text-gray-300 mb-1">
-                    Enter a Referral Code (if you haven't already claimed one):
+                    Enter a Referral Code (100 XP Reward):
                   </p>
                   <div className="flex gap-2">
                     <input
