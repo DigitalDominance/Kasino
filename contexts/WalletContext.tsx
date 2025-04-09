@@ -390,6 +390,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   const [payoutStatus, setPayoutStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
   const [inputReferralCode, setInputReferralCode] = useState("");
   const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle");
+  const [showWithdrawTooltip, setShowWithdrawTooltip] = useState(false);
 
   const copyReferralLink = () => {
     if (referralData) {
@@ -495,24 +496,40 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               </p>
             </div>
             <div className="mb-4">
-              <button
-                onClick={handleWithdraw}
-                disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                title={referralData.referralBonus < 5 ? "Minimum 5 KAS Earned Required" : ""}
-                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
-                  referralData.referralBonus < 5
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:shadow-lg hover:scale-105"
-                }`}
+              <div className="relative inline-block"
+                onMouseEnter={() => {
+                  if (referralData.referralBonus < 5) setShowWithdrawTooltip(true);
+                }}
+                onMouseLeave={() => setShowWithdrawTooltip(false)}
               >
-                {payoutStatus === "processing"
-                  ? "Processing..."
-                  : payoutStatus === "completed"
-                  ? "Payout Completed"
-                  : payoutStatus === "failed"
-                  ? "Payout Failed – Retry"
-                  : "Withdraw Bonus"}
-              </button>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
+                  className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
+                    referralData.referralBonus < 5
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:shadow-lg hover:scale-105"
+                  }`}
+                >
+                  {payoutStatus === "processing"
+                    ? "Processing..."
+                    : payoutStatus === "completed"
+                    ? "Payout Completed"
+                    : payoutStatus === "failed"
+                    ? "Payout Failed – Retry"
+                    : "Withdraw Bonus"}
+                </button>
+                {showWithdrawTooltip && referralData.referralBonus < 5 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-800 border border-[#49EACB] rounded shadow text-white text-sm"
+                  >
+                    Minimum 5 KAS Earned Required
+                  </motion.div>
+                )}
+              </div>
             </div>
             <div className="mb-4">
               {referralData.referredBy ? (
