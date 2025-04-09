@@ -475,8 +475,12 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
         >
           X
         </button>
+        {/* CHANGED TEXT BELOW */}
         <h2 className="text-2xl font-extrabold text-white text-center mb-1">Your Referrals</h2>
-        <p className="text-center text-sm text-gray-400 mb-4">Earn 5% On Each Bet</p>
+        <p className="text-center text-sm text-gray-400 mb-4">
+          {/* from: 'Earn 5% On Each Bet' to: */}
+          Earn 2% On Your Friends Bets
+        </p>
         {referralData ? (
           <>
             <div className="mb-4">
@@ -496,7 +500,8 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               </p>
             </div>
             <div className="mb-4">
-              <div className="relative inline-block"
+              <div
+                className="relative inline-block"
                 onMouseEnter={() => {
                   if (referralData.referralBonus < 5) setShowWithdrawTooltip(true);
                 }}
@@ -505,7 +510,8 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                 <button
                   onClick={handleWithdraw}
                   disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                  className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
+                  // ADDED EXTRA HORIZONTAL PADDING HERE (px-6):
+                  className={`w-full py-2 px-6 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
                     referralData.referralBonus < 5
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:shadow-lg hover:scale-105"
@@ -524,7 +530,8 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-800 border border-[#49EACB] rounded shadow text-white text-sm"
+                    // ADDED WHITESPACE-NOWRAP TO KEEP TEXT IN ONE LINE:
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-800 border border-[#49EACB] rounded shadow text-white text-sm whitespace-nowrap"
                   >
                     Minimum 5 KAS Earned Required
                   </motion.div>
