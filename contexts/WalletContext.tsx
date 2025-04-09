@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -386,6 +386,7 @@ interface ReferralPopupProps {
 }
 
 const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, showNotification }) => {
+  const { walletAddress } = useWallet();
   const [payoutStatus, setPayoutStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
   const [inputReferralCode, setInputReferralCode] = useState("");
   const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle");
@@ -399,10 +400,10 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   };
 
   const handleWithdraw = async () => {
-    if (referralData && referralData.referralBonus >= 5) {
+    if (referralData && referralData.referralBonus >= 5 && walletAddress) {
       setPayoutStatus("processing");
       try {
-        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", { walletAddress: (window as any).kasware?.account });
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", { walletAddress });
         if (res.data.success) {
           setPayoutStatus("completed");
           showNotification("Payout completed!", "success");
@@ -418,7 +419,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   };
 
   const handleClaimReferral = async () => {
-    if (!referralData) return;
+    if (!referralData || !walletAddress) return;
     // Prevent self-claim: user's own referral code should not be claimable.
     if (inputReferralCode.trim() === referralData.referralCode) {
       showNotification("You cannot claim your own referral code.", "error");
@@ -427,13 +428,16 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     if (claimStatus === "idle" && inputReferralCode.trim() !== "") {
       setClaimStatus("processing");
       try {
-        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim", { walletAddress: (window as any).kasware?.account, referralCode: inputReferralCode.trim() });
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim", {
+          walletAddress,
+          referralCode: inputReferralCode.trim(),
+        });
         if (res.data.success) {
           setClaimStatus("claimed");
           showNotification("Referral code claimed!", "success");
         } else {
           setClaimStatus("idle");
-          showNotification(res.data.error, "error");
+          showNotification(res.data.message || res.data.error, "error");
         }
       } catch (error) {
         setClaimStatus("idle");
