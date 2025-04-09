@@ -399,6 +399,13 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     }
   };
 
+  const copyReferralCode = () => {
+    if (referralData) {
+      navigator.clipboard.writeText(referralData.referralCode);
+      showNotification("Referral code copied!", "success");
+    }
+  };
+
   const handleWithdraw = async () => {
     if (referralData && referralData.referralBonus >= 5 && walletAddress) {
       setPayoutStatus("processing");
@@ -467,7 +474,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
         >
           X
         </button>
-        <h2 className="text-2xl font-bold text-center mb-1">Your Referrals</h2>
+        <h2 className="text-2xl font-extrabold text-white text-center mb-1">Your Referrals</h2>
         <p className="text-center text-sm text-gray-400 mb-4">Earn 5% On Each Bet</p>
         {referralData ? (
           <>
@@ -491,10 +498,12 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               <button
                 onClick={handleWithdraw}
                 disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                className={`w-full py-2 rounded bg-[#49EACB] text-white font-semibold ${
-                  referralData.referralBonus < 5 ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"
+                title={referralData.referralBonus < 5 ? "Minimum 5 KAS Earned Required" : ""}
+                className={`w-full py-2 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
+                  referralData.referralBonus < 5
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:shadow-lg hover:scale-105"
                 }`}
-                title={referralData.referralBonus < 5 ? "5 KAS Minimum Required To Withdraw" : ""}
               >
                 {payoutStatus === "processing"
                   ? "Processing..."
@@ -528,7 +537,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                         claimStatus === "claimed" ||
                         inputReferralCode.trim() === ""
                       }
-                      className="px-3 py-2 rounded bg-[#49EACB] text-white font-semibold disabled:opacity-50"
+                      className="px-3 py-2 rounded bg-[#49EACB] text-white font-semibold disabled:opacity-50 transition-transform duration-200 hover:scale-105"
                     >
                       {claimStatus === "processing" ? "Processing..." : "Claim"}
                     </button>
@@ -537,17 +546,20 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               )}
             </div>
             <div className="mb-4">
-              <h3 className="text-lg font-bold mb-1">Your Referral Link</h3>
+              <h3 className="text-lg font-bold mb-1 text-white">Your Referral Link</h3>
               <div
                 onClick={copyReferralLink}
-                className="p-3 border border-[#49EACB] rounded cursor-pointer hover:shadow-lg transition-all duration-200 text-center"
+                className="p-3 border border-[#49EACB] rounded cursor-pointer transition-all duration-200 text-center text-white font-bold transform hover:scale-105 hover:shadow-lg"
               >
                 {`https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`}
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-bold mb-1">Your Referral Code</h3>
-              <div className="p-3 border border-[#49EACB] rounded text-center">
+              <h3 className="text-lg font-bold mb-1 text-white">Your Referral Code</h3>
+              <div
+                onClick={copyReferralCode}
+                className="p-3 border border-[#49EACB] rounded cursor-pointer transition-all duration-200 text-center text-white font-bold transform hover:scale-105 hover:shadow-lg"
+              >
                 {referralData.referralCode}
               </div>
             </div>
