@@ -94,12 +94,13 @@ export async function POST(request) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const referralCode = generateReferralCode(); // Generate unique referral code for the new user
 
+    // Award 100 XP if a referral code was provided at signup
     const newUser = {
       username,
       email,
       walletAddress,
       password: hashedPassword,
-      totalXp: 0,
+      totalXp: referredBy ? 100 : 0, // Updated here: assign 100 XP when using a referral code
       level: 0,
       referralCode,
       referredBy: referredBy || null,
@@ -124,8 +125,8 @@ export async function POST(request) {
     return NextResponse.json({
       username,
       walletAddress,
-      totalXp: 0,
-      level: 0,
+      totalXp: newUser.totalXp,
+      level: newUser.level,
       referralCode,
     });
   } catch (error) {
