@@ -87,7 +87,6 @@ const SignupPage: React.FC = () => {
             transition={{ duration: 0.4 }}
           >
             <h2 className="text-3xl font-bold text-center mb-1">Create Your Account</h2>
-            <p className="text-center text-sm text-gray-300 mb-4">Earn 5% On Each Bet</p>
             {referralCode && (
               <p className="text-center text-sm text-gray-300 mb-4">
                 You're signing up with referral code:{" "}
