@@ -274,7 +274,7 @@ export default function GuidePage() {
         {/* Sidebar Navigation */}
         {/* The sidebar is fixed at top-0 and its inner content is padded to start under the nav */}
         <motion.div
-          className={`fixed left-0 mt-24 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 px-4 sidebar ${
+          className={`fixed left-0 mt-20 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 px-4 sidebar ${
             sidebarOpen ? "sidebar-open" : "sidebar-closed"
           }`}
           initial={{ x: -300 }}
