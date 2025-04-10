@@ -431,8 +431,7 @@ export default function GuidePage() {
                   {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes...")}
                 </p>
                 
-                {/* Just adjusted lg:grid-cols from 6 to 4 below */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
                     <motion.div
                       key={level}
@@ -445,7 +444,7 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      <div className="relative h-64 w-64 mx-auto">
+                      <div className="relative h-50 w-85 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
