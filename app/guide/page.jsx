@@ -145,8 +145,8 @@ export default function GuidePage() {
   ];
 
   return (
-    <div className={`${montserrat.className} min-h-screen bg-black`}>
-      <style jsx global>{`
+    <div className={${montserrat.className} min-h-screen bg-black}>
+      <style jsx global>{
         @keyframes gradientAnimation {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -212,7 +212,7 @@ export default function GuidePage() {
           margin-top: 40px;
           margin-bottom: 30px;
         }
-      `}</style>
+      }</style>
 
       <div className="min-h-screen bg-black text-white flex flex-col">
         {/* Header */}
@@ -255,32 +255,27 @@ export default function GuidePage() {
 
         {/* Sidebar Toggle */}
         <motion.div 
-          className="fixed left-0 top-[90px] z-40 cursor-pointer"
+          className="fixed left-0 top-[85px] z-40 cursor-pointer"
           whileHover={{ x: 5 }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           <Card className="p-3 bg-gray-900 border border-[#49EACB]/20 rounded-r-lg">
-            <motion.div
-              animate={{ rotate: sidebarOpen ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <FaChevronRight className="text-[#49EACB]" />
-            </motion.div>
+            <FaChevronRight className="text-[#49EACB]" />
           </Card>
         </motion.div>
 
         {/* Sidebar Navigation */}
         <motion.div
-          className={`fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 pt-28 px-4 border-r border-[#49EACB]/20 sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          className={fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 pt-20 px-4 border-r border-[#49EACB]/20 sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}}
           initial={{ x: -300 }}
           animate={{ x: sidebarOpen ? 0 : -300 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-4 mt-6">
             {sectionHeadings.map((section) => (
               <motion.a
                 key={section.id}
-                href={`#${section.id}`}
+                href={#${section.id}}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors"
                 onClick={() => setSidebarOpen(false)}
                 whileHover={{ x: 5 }}
@@ -439,8 +434,8 @@ export default function GuidePage() {
                       </div>
                       <div className="relative h-64 w-64 mx-auto">
                         <Image
-                          src={`/Level${level}Card.webp`}
-                          alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
+                          src={/Level${level}Card.webp}
+                          alt={${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}}
                           fill
                           className="object-contain"
                         />
@@ -530,7 +525,7 @@ export default function GuidePage() {
                       <div className="relative h-32 w-full mb-4">
                         <Image
                           src={crate.image}
-                          alt={`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}`}
+                          alt={${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}}
                           fill
                           className="object-contain"
                         />
