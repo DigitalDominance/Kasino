@@ -228,12 +228,20 @@ export default function GuidePage() {
             className="mb-16"
           >
             <div className="flex flex-col items-center justify-center gap-4 mb-6">
-              {/* Language Selector & Title Row */}
-              <div className="flex items-center justify-between w-full max-w-2xl mx-auto">
+              {/* 
+                Responsive Title & Language Selector:
+                - On mobile (default): flex-col layout with the title first and language select centered below it.
+                - On desktop (md and up): flex-row with the language select to the left, the title centered, 
+                  and an empty spacer div on the right.
+              */}
+              <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-2xl mx-auto">
+                <h1 className="order-1 md:order-2 text-4xl md:text-6xl font-bold animate-gradient text-center w-full md:w-auto">
+                  {t("guideTitle", "Kasino Guide")}
+                </h1>
                 <select
                   value={i18n.language}
                   onChange={handleLanguageChange}
-                  className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2"
+                  className="order-2 md:order-1 mt-4 md:mt-0 bg-gray-800 text-white border border-[#49EACB] rounded-md p-2"
                 >
                   <option value="en">English</option>
                   <option value="es">Español</option>
@@ -242,11 +250,7 @@ export default function GuidePage() {
                   <option value="zh">中文</option>
                   <option value="ja">日本語</option>
                 </select>
-                <h1 className="text-4xl md:text-6xl font-bold animate-gradient text-center flex-1">
-                  {t("guideTitle", "Kasino Guide")}
-                </h1>
-                {/* Empty div for spacing on the right */}
-                <div className="w-8 md:w-24" />
+                <div className="hidden md:block md:w-24" />
               </div>
 
               {/* Centered Subheading */}
@@ -271,9 +275,9 @@ export default function GuidePage() {
             </h2>
 
             {/* 
-              Updated Responsive Layout:
-              - On mobile, each card is full width (approximately 85vw) and centered.
-              - On desktop, the card stays at 30vw.
+              Updated Responsive Layout for Game Cards:
+              - On mobile, each card is 85vw wide and centered.
+              - On desktop, each card remains 30vw wide.
             */}
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
               {gameSections.map((game, index) => (
@@ -356,10 +360,10 @@ export default function GuidePage() {
                   {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes...")}
                 </p>
                 
-                {/*
+                {/* 
                   Updated Daily Loot Box Grid:
-                  - On mobile, shows one card per row.
-                  - On larger screens, it reverts to the current grid (4 columns on md, 6 on lg).
+                  - On mobile, displays one card per row.
+                  - On larger screens, reverts to the current grid (4 columns on md, 6 on lg).
                 */}
                 <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
