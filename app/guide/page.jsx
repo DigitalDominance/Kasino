@@ -271,8 +271,8 @@ export default function GuidePage() {
               <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
 
-            {/* Multi-column layout; each card ~30vw wide */}
-            <div className="flex flex-wrap justify-center gap-8">
+            {/* Multi-column layout; each card ~30vw wide; added gap-y for vertical spacing */}
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
@@ -545,7 +545,8 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
-            className="text-center mb-16"
+            // Added extra margin to separate from the section above and the footer
+            className="text-center mt-16 mb-24"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#49EACB]">
               {t("finalCTA.title", "Ready to Play?")}
