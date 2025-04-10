@@ -34,7 +34,7 @@ export default function GuidePage() {
       title: t("games.ghostJump.title", "Ghost Jump"),
       description: t(
         "games.ghostJump.description",
-        "Experience the thrill of defying gravity in Ghost Jump! Place your bet and click the enchanted floating tile to soar higher—bigger heights mean bigger rewards and heart‐racing excitement. But remember, every leap carries a daring risk!"
+        "Experience the thrill of defying gravity in Ghost Jump! ..."
       ),
       image: "/ghostjumpcard.webp"
     },
@@ -42,7 +42,7 @@ export default function GuidePage() {
       title: t("games.kaspianCross.title", "Kaspian Cross"),
       description: t(
         "games.kaspianCross.description",
-        "Challenge fate in Kaspian Cross! Bet and step onto the next tile—each move brings a chance at huge rewards while the risk of a swift Solana car increases. Are you bold enough to cross?"
+        "Challenge fate in Kaspian Cross! ..."
       ),
       image: "/kaspiancrosscard.webp"
     },
@@ -50,7 +50,7 @@ export default function GuidePage() {
       title: t("games.crash.title", "Crash"),
       description: t(
         "games.crash.description",
-        "Feel the adrenaline surge in Crash! Place your bet and watch as your multiplier climbs with a burst of speed—cash out quickly before the inevitable crash or risk it all for an even bigger win!"
+        "Feel the adrenaline surge in Crash! ..."
       ),
       image: "/crashcard.webp"
     },
@@ -58,7 +58,7 @@ export default function GuidePage() {
       title: t("games.mines.title", "Mines"),
       description: t(
         "games.mines.description",
-        "Uncover hidden treasures in Mines! Click to reveal safe tiles and multipliers in this modern twist on a classic—one misstep and your bet is lost. Trust your instincts and play smart!"
+        "Uncover hidden treasures in Mines! ..."
       ),
       image: "/minescard.webp"
     },
@@ -66,7 +66,7 @@ export default function GuidePage() {
       title: t("games.upgrade.title", "Upgrade"),
       description: t(
         "games.upgrade.description",
-        "Ready for a power-up? Select your desired multiplier, place your bet, and watch the countdown tick—an epic upgrade or a daring loss awaits. It’s all about the thrill of the gamble!"
+        "Ready for a power-up? ..."
       ),
       image: "/upgradecard.webp"
     },
@@ -74,7 +74,7 @@ export default function GuidePage() {
       title: t("games.kaspaTowerClimb.title", "Kaspa Tower Climb"),
       description: t(
         "games.kaspaTowerClimb.description",
-        "Ascend the heights in Kaspa Tower Climb! Bet and choose a tile—if it’s safe, the iconic Kaspa logo appears; a misstep shows an X. Cash out any time after your first step for secure wins!"
+        "Ascend the heights in Kaspa Tower Climb! ..."
       ),
       image: "/kaspatowerclimbcard.webp"
     },
@@ -82,7 +82,7 @@ export default function GuidePage() {
       title: t("games.guessTheCup.title", "Guess The Cup"),
       description: t(
         "games.guessTheCup.description",
-        "Test your luck in Guess The Cup! Bet and decide which cup hides the secret prize—one wrong guess ends the game, but a correct call rewards you with a spectacular win!"
+        "Test your luck in Guess The Cup! ..."
       ),
       image: "/guessthecupcard.webp"
     },
@@ -90,7 +90,7 @@ export default function GuidePage() {
       title: t("games.plinko.title", "Plinko"),
       description: t(
         "games.plinko.description",
-        "Embrace the unpredictability of Plinko! Drop your bet and watch the ball bounce its way to a random multiplier—simple, exciting, and full of surprises with every drop!"
+        "Embrace the unpredictability of Plinko! ..."
       ),
       image: "/plinkocard.webp"
     },
@@ -98,7 +98,7 @@ export default function GuidePage() {
       title: t("games.roulette.title", "Roulette"),
       description: t(
         "games.roulette.description",
-        "Bet on your lucky charm in Roulette! Pick a color or number sequence, place your wager, and let the spinning wheel decide your fortune. Suspense and excitement collide in this classic game!"
+        "Bet on your lucky charm in Roulette! ..."
       ),
       image: "/roulettecard.webp"
     },
@@ -106,7 +106,7 @@ export default function GuidePage() {
       title: t("games.dice.title", "Dice"),
       description: t(
         "games.dice.description",
-        "Roll the dice of destiny in Dice! Choose your multiplier, place your bet, and let your luck roll—can you beat the house as the stakes get higher with every throw?"
+        "Roll the dice of destiny in Dice! ..."
       ),
       image: "/dicecard.webp"
     },
@@ -114,7 +114,7 @@ export default function GuidePage() {
       title: t("games.coinFlip.title", "Coin Flip"),
       description: t(
         "games.coinFlip.description",
-        "Flip the coin of fortune! Set your wager, pick your symbol, and trust the toss—higher multipliers boost both the excitement and the risk, putting fate in your hands!"
+        "Flip the coin of fortune! ..."
       ),
       image: "/coinflipcard.webp"
     },
@@ -122,7 +122,7 @@ export default function GuidePage() {
       title: t("games.kasperLootBox.title", "Kasper Loot Box"),
       description: t(
         "games.kasperLootBox.description",
-        "Unbox surprises in Kasper Loot Box! Bet 25 KAS and spin the wheel to reveal your fortune—will you strike it rich, or enjoy a small win? Every spin is a delightful mystery!"
+        "Unbox surprises in Kasper Loot Box! ..."
       ),
       image: "/kasperlootboxcard.webp"
     },
@@ -130,7 +130,7 @@ export default function GuidePage() {
       title: t("games.kasenMania.title", "Kasen Mania"),
       description: t(
         "games.kasenMania.description",
-        "Dive into Kasen Mania, our electrifying slots adventure! Place your bet and let the reels spin in anticipation—align the symbols for epic bonuses, from subtle wins to massive multipliers!"
+        "Dive into Kasen Mania, our electrifying slots adventure! ..."
       ),
       image: "/kasenmaniacard.webp"
     }
@@ -183,8 +183,16 @@ export default function GuidePage() {
       <div className="min-h-screen bg-black text-white flex flex-col">
         {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-0">
-            <motion.div className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover" style={{ transition: "box-shadow 0.3s ease-in-out" }}>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-0"
+          >
+            <motion.div
+              className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
+              style={{ transition: "box-shadow 0.3s ease-in-out" }}
+            >
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
                 alt="Kasino Logo"
@@ -193,7 +201,12 @@ export default function GuidePage() {
               />
             </motion.div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-4"
+          >
             <Link href="/">
               <motion.button
                 className="bg-[#49EACB] text-black px-4 py-2 rounded-md font-bold"
@@ -215,8 +228,9 @@ export default function GuidePage() {
             transition={{ duration: 0.8 }}
             className="mb-16"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
+            <div className="flex flex-col items-center justify-center gap-4 mb-6">
+              {/* Language Selector & Title Row */}
+              <div className="flex items-center justify-between w-full max-w-2xl mx-auto">
                 <select
                   value={i18n.language}
                   onChange={handleLanguageChange}
@@ -229,16 +243,18 @@ export default function GuidePage() {
                   <option value="zh">中文</option>
                   <option value="ja">日本語</option>
                 </select>
+                <h1 className="text-4xl md:text-6xl font-bold animate-gradient text-center flex-1">
+                  {t("guideTitle", "Kasino Guide")}
+                </h1>
+                {/* Empty div for spacing on the right */}
+                <div className="w-8 md:w-24" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold animate-gradient">
-                {t("guideTitle", "Kasino Guide")}
-              </h1>
-              {/* Spacer to center the title */}
-              <div className="w-24" />
+
+              {/* Centered Subheading */}
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto text-center">
+                {t("guideSubtitle", "Everything you need to know about playing, earning, and winning at Kasino!")}
+              </p>
             </div>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              {t("guideSubtitle", "Everything you need to know about playing, earning, and winning at Kasino!")}
-            </p>
           </motion.section>
 
           {/* Games Section */}
@@ -248,24 +264,24 @@ export default function GuidePage() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
-              <span className="icon-primary mr-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+              <span className="icon-primary">
                 <GiCheerful className="text-4xl" />
               </span>
               <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+
+            {/* Single-column layout, max 500px for each card */}
+            <div className="flex flex-col items-center gap-10">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
-                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden"
+                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden max-w-[500px] w-full"
                   whileHover={{ scale: 1.02 }}
                 >
-                  {/* Make image container taller and more landscape */}
                   <div className="relative h-64 w-full">
                     <Image
                       src={game.image}
@@ -290,8 +306,8 @@ export default function GuidePage() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
-              <span className="icon-primary mr-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+              <span className="icon-primary">
                 <GiStarFormation className="text-4xl" />
               </span>
               <span className="animate-gradient">{t("xpSection.title", "XP & Leveling System")}</span>
@@ -309,7 +325,7 @@ export default function GuidePage() {
                     {t("xpSection.earnXP.title", "Earn XP with Every Bet")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    {t("xpSection.earnXP.description", "Every KAS you bet earns you 1 XP. As you accumulate XP, you'll level up and unlock amazing rewards!")}
+                    {t("xpSection.earnXP.description", "Every KAS you bet earns you 1 XP...")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
@@ -348,7 +364,7 @@ export default function GuidePage() {
                   {t("xpSection.dailyLoot.title", "Daily Loot Boxes")}
                 </h3>
                 <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
-                  {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes that can be opened once every 24 hours.")}
+                  {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes...")}
                 </p>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -364,7 +380,8 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      <div className="relative h-24 w-24 mx-auto">
+                      {/* Increased size to 2x (h-48 w-48) */}
+                      <div className="relative h-48 w-48 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
@@ -392,8 +409,8 @@ export default function GuidePage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
-              <span className="icon-primary mr-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+              <span className="icon-primary">
                 <GiPresent className="text-4xl" />
               </span>
               <span className="animate-gradient">{t("gemSection.title", "Gem System")}</span>
@@ -411,7 +428,7 @@ export default function GuidePage() {
                     {t("gemSection.earnGems.title", "Earn Gems as You Play")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    {t("gemSection.earnGems.description", "Every bet gives you a chance to earn Gems, which can be used to open Gem Crates packed with amazing KAS rewards.")}
+                    {t("gemSection.earnGems.description", "Every bet gives you a chance to earn Gems...")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
@@ -450,7 +467,7 @@ export default function GuidePage() {
                   {t("gemSection.crates.title", "Gem Crates")}
                 </h3>
                 <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
-                  {t("gemSection.crates.description", "There are 4 tiers of Gem Crates, each requiring different amounts of gems to open.")}
+                  {t("gemSection.crates.description", "There are 4 tiers of Gem Crates...")}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -499,8 +516,8 @@ export default function GuidePage() {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="mb-20 mt-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
-              <span className="icon-primary mr-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+              <span className="icon-primary">
                 <FaUserAlt className="text-3xl" />
               </span>
               <span className="animate-gradient">{t("referralSection.title", "Referral System")}</span>
@@ -518,24 +535,24 @@ export default function GuidePage() {
                     {t("referralSection.earn.title", "Earn with Friends")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    {t("referralSection.earn.description", "Our referral system rewards you for bringing friends to Kasino. Both you and your friends get bonuses!")}
+                    {t("referralSection.earn.description", "Our referral system rewards you for bringing friends to Kasino...")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>{t("referralSection.earn.rule1", "New players get 100 XP when signing up with your referral")}</span>
+                      <span>{t("referralSection.earn.rule1", "New players get 100 XP ...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>{t("referralSection.earn.rule2", "You earn 2% of every bet your referrals make")}</span>
+                      <span>{t("referralSection.earn.rule2", "You earn 2% of every bet...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>{t("referralSection.earn.rule3", "Payouts are instant – as fast as a KAS transaction")}</span>
+                      <span>{t("referralSection.earn.rule3", "Payouts are instant ...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>{t("referralSection.earn.rule4", "Custom referral links available for KOLs")}</span>
+                      <span>{t("referralSection.earn.rule4", "Custom referral links...")}</span>
                     </li>
                   </ul>
                 </motion.div>
@@ -558,7 +575,7 @@ export default function GuidePage() {
               
               <div className="mt-6 text-center">
                 <p className="text-gray-300">
-                  {t("referralSection.hint", "To access your referral page, click on your name or KAS balance in the navigation bar after logging in.")}
+                  {t("referralSection.hint", "To access your referral page, click on your name ...")}
                 </p>
               </div>
             </div>
@@ -575,7 +592,7 @@ export default function GuidePage() {
               {t("finalCTA.title", "Ready to Play?")}
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              {t("finalCTA.description", "Join fellow Kaspian's enjoying Kasino's exciting games and rewarding systems!")}
+              {t("finalCTA.description", "Join fellow Kaspian's enjoying Kasino's exciting games...")}
             </p>
             <Link href="/">
               <motion.button
