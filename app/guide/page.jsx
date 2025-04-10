@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,105 +16,132 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-// For framer-motion
+// For framer-motion animated cards
 const MotionCard = motion(Card);
 
 export default function GuidePage() {
-  // Updated game sections data with more enticing descriptions.
+  const { t, i18n } = useTranslation();
+  
+  // Handle language change
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
+  };
+
+  // Game sections data with more enticing descriptions
   const gameSections = [
     {
-      title: "Ghost Jump",
-      description:
-        "Leap to new heights in Ghost Jump! Place your bet and tap the floating tile to defy gravity. The higher you soar, the richer the prizes – but every jump is a daring risk!",
-      image: "/ghostjumpcard.webp",
+      title: t("games.ghostJump.title", "Ghost Jump"),
+      description: t(
+        "games.ghostJump.description",
+        "Experience the thrill of defying gravity in Ghost Jump! Place your bet and click the enchanted floating tile to soar higher—bigger heights mean bigger rewards and heart‐racing excitement. But remember, every leap carries a daring risk!"
+      ),
+      image: "/ghostjumpcard.webp"
     },
     {
-      title: "Kaspian Cross",
-      description:
-        "Embark on an epic adventure in Kaspian Cross! Bet, tap the next tile, and race across dynamic tracks where fortune and peril await at every step.",
-      image: "/kaspiancrosscard.webp",
+      title: t("games.kaspianCross.title", "Kaspian Cross"),
+      description: t(
+        "games.kaspianCross.description",
+        "Challenge fate in Kaspian Cross! Bet and step onto the next tile—each move brings a chance at huge rewards while the risk of a swift Solana car increases. Are you bold enough to cross?"
+      ),
+      image: "/kaspiancrosscard.webp"
     },
     {
-      title: "Crash",
-      description:
-        "Experience heart-pounding action in Crash! Set your bet, watch your multiplier soar with each rising moment, and cash out before the inevitable crash – the thrill builds every second!",
-      image: "/crashcard.webp",
+      title: t("games.crash.title", "Crash"),
+      description: t(
+        "games.crash.description",
+        "Feel the adrenaline surge in Crash! Place your bet and watch as your multiplier climbs with a burst of speed—cash out quickly before the inevitable crash or risk it all for an even bigger win!"
+      ),
+      image: "/crashcard.webp"
     },
     {
-      title: "Mines",
-      description:
-        "Channel your inner strategist in Mines! Uncover hidden multipliers without triggering the explosive mines – every safe pick brings you closer to a treasure trove of rewards.",
-      image: "/minescard.webp",
+      title: t("games.mines.title", "Mines"),
+      description: t(
+        "games.mines.description",
+        "Uncover hidden treasures in Mines! Click to reveal safe tiles and multipliers in this modern twist on a classic—one misstep and your bet is lost. Trust your instincts and play smart!"
+      ),
+      image: "/minescard.webp"
     },
     {
-      title: "Upgrade",
-      description:
-        "Power up your play in Upgrade! Choose your multiplier, place your bet, and as the countdown ticks, brace for a dramatic leap in winnings or the thrill of a daring loss.",
-      image: "/upgradecard.webp",
+      title: t("games.upgrade.title", "Upgrade"),
+      description: t(
+        "games.upgrade.description",
+        "Ready for a power-up? Select your desired multiplier, place your bet, and watch the countdown tick—an epic upgrade or a daring loss awaits. It’s all about the thrill of the gamble!"
+      ),
+      image: "/upgradecard.webp"
     },
     {
-      title: "Kaspa Tower Climb",
-      description:
-        "Ascend the tower in Kaspa Tower Climb! Bet, choose a safe tile and scale new heights with every correct guess. Each successful step unlocks even greater rewards and electrifying challenges.",
-      image: "/kaspatowerclimbcard.webp",
+      title: t("games.kaspaTowerClimb.title", "Kaspa Tower Climb"),
+      description: t(
+        "games.kaspaTowerClimb.description",
+        "Ascend the heights in Kaspa Tower Climb! Bet and choose a tile—if it’s safe, the iconic Kaspa logo appears; a misstep shows an X. Cash out any time after your first step for secure wins!"
+      ),
+      image: "/kaspatowerclimbcard.webp"
     },
     {
-      title: "Guess The Cup",
-      description:
-        "Test your intuition in Guess The Cup! Bet, select your multiplier, and pick the cup concealing the secret ball. Nail the guess for a spectacular win – a misstep means total bust!",
-      image: "/guessthecupcard.webp",
+      title: t("games.guessTheCup.title", "Guess The Cup"),
+      description: t(
+        "games.guessTheCup.description",
+        "Test your luck in Guess The Cup! Bet and decide which cup hides the secret prize—one wrong guess ends the game, but a correct call rewards you with a spectacular win!"
+      ),
+      image: "/guessthecupcard.webp"
     },
     {
-      title: "Plinko",
-      description:
-        "Dive into the unpredictable fun of Plinko! Place your bet and watch the ball bounce amid a cascade of multipliers. Every drop is packed with anticipation and rewards!",
-      image: "/plinkocard.webp",
+      title: t("games.plinko.title", "Plinko"),
+      description: t(
+        "games.plinko.description",
+        "Embrace the unpredictability of Plinko! Drop your bet and watch the ball bounce its way to a random multiplier—simple, exciting, and full of surprises with every drop!"
+      ),
+      image: "/plinkocard.webp"
     },
     {
-      title: "Roulette",
-      description:
-        "Embrace the classic allure of Roulette! Choose your color or number sequence, place your bet, and let the spinning wheel decide your fate. Fortune favors the bold!",
-      image: "/roulettecard.webp",
+      title: t("games.roulette.title", "Roulette"),
+      description: t(
+        "games.roulette.description",
+        "Bet on your lucky charm in Roulette! Pick a color or number sequence, place your wager, and let the spinning wheel decide your fortune. Suspense and excitement collide in this classic game!"
+      ),
+      image: "/roulettecard.webp"
     },
     {
-      title: "Dice",
-      description:
-        "Roll with destiny in Dice! Pick your multiplier, bet smartly, and let the dice decide your victory. Outroll the house to claim your hard-earned triumph!",
-      image: "/dicecard.webp",
+      title: t("games.dice.title", "Dice"),
+      description: t(
+        "games.dice.description",
+        "Roll the dice of destiny in Dice! Choose your multiplier, place your bet, and let your luck roll—can you beat the house as the stakes get higher with every throw?"
+      ),
+      image: "/dicecard.webp"
     },
     {
-      title: "Coin Flip",
-      description:
-        "Double down on excitement with Coin Flip! Set your bet, pick your multiplier and winning symbol – let chance decide your fortune in this high-stakes thrill ride!",
-      image: "/coinflipcard.webp",
+      title: t("games.coinFlip.title", "Coin Flip"),
+      description: t(
+        "games.coinFlip.description",
+        "Flip the coin of fortune! Set your wager, pick your symbol, and trust the toss—higher multipliers boost both the excitement and the risk, putting fate in your hands!"
+      ),
+      image: "/coinflipcard.webp"
     },
     {
-      title: "Kasper Loot Box",
-      description:
-        "Unbox your luck in Kasper Loot Box! Wager a modest 25 KAS, watch the mesmerizing spin, and reveal mysterious rewards – will fortune smile upon you with a major win or a modest payout?",
-      image: "/kasperlootboxcard.webp",
+      title: t("games.kasperLootBox.title", "Kasper Loot Box"),
+      description: t(
+        "games.kasperLootBox.description",
+        "Unbox surprises in Kasper Loot Box! Bet 25 KAS and spin the wheel to reveal your fortune—will you strike it rich, or enjoy a small win? Every spin is a delightful mystery!"
+      ),
+      image: "/kasperlootboxcard.webp"
     },
     {
-      title: "Kasen Mania",
-      description:
-        "Step into the dazzling world of Kasen Mania – our thrilling slots game! Spin the reels and chase winning combinations: five in a row, diagonally, or on the top row triggers a surge of rewards!",
-      image: "/kasenmaniacard.webp",
-    },
+      title: t("games.kasenMania.title", "Kasen Mania"),
+      description: t(
+        "games.kasenMania.description",
+        "Dive into Kasen Mania, our electrifying slots adventure! Place your bet and let the reels spin in anticipation—align the symbols for epic bonuses, from subtle wins to massive multipliers!"
+      ),
+      image: "/kasenmaniacard.webp"
+    }
   ];
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
       <style jsx global>{`
         @keyframes gradientAnimation {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
         .animate-gradient {
           background: linear-gradient(270deg, #49eacb, #006d5b, #003f2f, #006d5b, #49eacb);
@@ -136,11 +165,11 @@ export default function GuidePage() {
         }
         .guide-card {
           transition: all 0.3s ease;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .guide-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 10px 20px rgba(73, 234, 203, 0.2);
+          box-shadow: 0 10px 20px rgba(73,234,203,0.2);
         }
         .feature-icon {
           transition: all 0.3s ease;
@@ -153,16 +182,8 @@ export default function GuidePage() {
       <div className="min-h-screen bg-black text-white flex flex-col">
         {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-0"
-          >
-            <motion.div
-              className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
-              style={{ transition: "box-shadow 0.3s ease-in-out" }}
-            >
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-0">
+            <motion.div className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover" style={{ transition: "box-shadow 0.3s ease-in-out" }}>
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
                 alt="Kasino Logo"
@@ -171,19 +192,14 @@ export default function GuidePage() {
               />
             </motion.div>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center gap-4"
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-4">
             <Link href="/">
               <motion.button
                 className="bg-[#49EACB] text-black px-4 py-2 rounded-md font-bold"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Back to Casino
+                {t("backToCasino", "Back to Casino")}
               </motion.button>
             </Link>
           </motion.div>
@@ -191,27 +207,36 @@ export default function GuidePage() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-hidden">
-          {/* Hero Section with Language Dropdown */}
+          {/* Hero Section with Language Selector */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="mb-16"
           >
-            <div className="flex items-center justify-between w-full mb-6">
-              <select className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="zh">中文</option>
-              </select>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <select
+                  value={i18n.language}
+                  onChange={handleLanguageChange}
+                  className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="zh">中文</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </div>
               <h1 className="text-4xl md:text-6xl font-bold animate-gradient">
-                Kasino Guide
+                {t("guideTitle", "Kasino Guide")}
               </h1>
+              {/* Spacer to center the title */}
+              <div className="w-24" />
             </div>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Everything you need to know about playing, earning, and winning at Kasino!
+              {t("guideSubtitle", "Everything you need to know about playing, earning, and winning at Kasino!")}
             </p>
           </motion.section>
 
@@ -220,15 +245,15 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="mb-16"
+            className="mb-20"  {/* increased bottom margin for breathing room */}
           >
-            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
-              <span className="icon-primary mr-3">
+            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
+              <span className="icon-primary mr-4">
                 <GiCheerful className="text-4xl" />
               </span>
-              <span className="animate-gradient">Games</span>
+              <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {gameSections.map((game, index) => (
                 <MotionCard
@@ -239,7 +264,7 @@ export default function GuidePage() {
                   className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden"
                   whileHover={{ scale: 1.02 }}
                 >
-                  {/* Increased image container height for a more landscape view */}
+                  {/* Make image container taller and more landscape */}
                   <div className="relative h-64 w-full">
                     <Image
                       src={game.image}
@@ -249,9 +274,7 @@ export default function GuidePage() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">
-                      {game.title}
-                    </h3>
+                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">{game.title}</h3>
                     <p className="text-gray-300">{game.description}</p>
                   </div>
                 </MotionCard>
@@ -264,45 +287,45 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="mb-16"
+            className="mb-20"  /* extra spacing below games */
           >
-            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
-              <span className="icon-primary mr-3">
+            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
+              <span className="icon-primary mr-4">
                 <GiStarFormation className="text-4xl" />
               </span>
-              <span className="animate-gradient">XP & Leveling System</span>
+              <span className="animate-gradient">{t("xpSection.title", "XP & Leveling System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
                   <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
-                    Earn XP with Every Bet
+                    {t("xpSection.earnXP.title", "Earn XP with Every Bet")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    Every KAS you bet earns you 1 XP. Level up as you accumulate XP and unlock amazing rewards!
+                    {t("xpSection.earnXP.description", "Every KAS you bet earns you 1 XP. As you accumulate XP, you'll level up and unlock amazing rewards!")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>1 KAS bet = 1 XP earned</span>
+                      <span>{t("xpSection.earnXP.rule1", "1 KAS bet = 1 XP earned")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Higher levels unlock better rewards</span>
+                      <span>{t("xpSection.earnXP.rule2", "Higher levels unlock better rewards")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Check your level in the navigation bar</span>
+                      <span>{t("xpSection.earnXP.rule3", "Check your level in the navigation bar")}</span>
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -318,16 +341,16 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-
-              {/* Reduced margin-top for the Daily Loot Boxes */}
+              
+              {/* Reduce gap between XP and Daily Loot Boxes */}
               <div className="mt-6">
-                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">
-                  Daily Loot Boxes
+                <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
+                  {t("xpSection.dailyLoot.title", "Daily Loot Boxes")}
                 </h3>
-                <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                  As you level up, unlock daily free loot boxes that can be opened once every 24 hours.
+                <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
+                  {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes that can be opened once every 24 hours.")}
                 </p>
-
+                
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
                     <motion.div
@@ -339,13 +362,13 @@ export default function GuidePage() {
                       className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20"
                     >
                       <div className="text-[#49EACB] font-bold mb-2">
-                        Level {level}
+                        {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      {/* Increased image container dimensions for a bigger loot box image */}
+                      {/* Increase loot box image container size */}
                       <div className="relative h-24 w-24 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
-                          alt={`Level ${level} Loot Box`}
+                          alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
                           fill
                           className="object-contain"
                         />
@@ -353,10 +376,10 @@ export default function GuidePage() {
                     </motion.div>
                   ))}
                 </div>
-
+                
                 <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    Click the level icon in the navigation bar to open your Daily Loot Box menu.
+                    {t("xpSection.dailyLoot.hint", "Click on the level icon in the navigation bar to open the Daily Loot Box menu.")}
                   </p>
                 </div>
               </div>
@@ -368,45 +391,45 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="mb-16"
+            className="mb-20"
           >
-            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
-              <span className="icon-primary mr-3">
+            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
+              <span className="icon-primary mr-4">
                 <GiPresent className="text-4xl" />
               </span>
-              <span className="animate-gradient">Gem System</span>
+              <span className="animate-gradient">{t("gemSection.title", "Gem System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8">
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
                   <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
-                    Earn Gems as You Play
+                    {t("gemSection.earnGems.title", "Earn Gems as You Play")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    Every bet gives you a chance to earn Gems – use them to open Gem Crates packed with awesome KAS rewards.
+                    {t("gemSection.earnGems.description", "Every bet gives you a chance to earn Gems, which can be used to open Gem Crates packed with amazing KAS rewards.")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Random chance to earn gems with each bet</span>
+                      <span>{t("gemSection.earnGems.rule1", "Random chance to earn gems with each bet")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>More bets = more opportunities</span>
+                      <span>{t("gemSection.earnGems.rule2", "More bets = more chances to earn gems")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Higher gem tiers unlock even better rewards</span>
+                      <span>{t("gemSection.earnGems.rule3", "Higher gem tiers offer better rewards")}</span>
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -422,22 +445,22 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-
-              {/* Reduced gap between "Earn Gems..." and the Gem Crates section */}
+              
+              {/* Reduce gap between Earn Gems and Gem Crates */}
               <div className="mt-6">
-                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">
-                  Gem Crates
+                <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
+                  {t("gemSection.crates.title", "Gem Crates")}
                 </h3>
-                <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                  There are 4 tiers of Gem Crates – each requires a different amount of gems to open.
+                <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
+                  {t("gemSection.crates.description", "There are 4 tiers of Gem Crates, each requiring different amounts of gems to open.")}
                 </p>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     { tier: 1, gems: 10, image: "/gemtier1.webp" },
                     { tier: 2, gems: 100, image: "/gemtier2.webp" },
                     { tier: 3, gems: 1000, image: "/gemtier3.webp" },
-                    { tier: 4, gems: 10000, image: "/gemtier4.webp" },
+                    { tier: 4, gems: 10000, image: "/gemtier4.webp" }
                   ].map((crate) => (
                     <MotionCard
                       key={crate.tier}
@@ -445,26 +468,26 @@ export default function GuidePage() {
                       className="bg-gray-800 rounded-lg p-6 text-center border border-[#49EACB]/20"
                     >
                       <div className="text-2xl font-bold text-[#49EACB] mb-4">
-                        Tier {crate.tier}
+                        {t("gemSection.crates.tier", "Tier")} {crate.tier}
                       </div>
                       <div className="relative h-32 w-full mb-4">
                         <Image
                           src={crate.image}
-                          alt={`Gem Crate Tier ${crate.tier}`}
+                          alt={`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}`}
                           fill
                           className="object-contain"
                         />
                       </div>
                       <div className="text-lg font-semibold text-[#49EACB]">
-                        {crate.gems} Gems Required
+                        {crate.gems} {t("gemSection.crates.required", "Gems Required")}
                       </div>
                     </MotionCard>
                   ))}
                 </div>
-
+                
                 <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    Click on the Gem Display in the navigation bar to open your Gem Crate menu.
+                    {t("gemSection.crates.hint", "Click on the Gem Display in the navigation bar to open the Gem Crate menu.")}
                   </p>
                 </div>
               </div>
@@ -476,49 +499,49 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-12 mb-16"
+            className="mb-20 mt-16"  {/* extra top margin added */}
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
-              <span className="icon-primary mr-3">
+            <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
+              <span className="icon-primary mr-4">
                 <FaUserAlt className="text-3xl" />
               </span>
-              <span className="animate-gradient">Referral System</span>
+              <span className="animate-gradient">{t("referralSection.title", "Referral System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8">
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
                   <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
-                    Earn with Friends
+                    {t("referralSection.earn.title", "Earn with Friends")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    Our referral system rewards you for bringing friends to Kasino – both you and your friends receive bonuses!
+                    {t("referralSection.earn.description", "Our referral system rewards you for bringing friends to Kasino. Both you and your friends get bonuses!")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>New players get 100 XP when signing up with your referral</span>
+                      <span>{t("referralSection.earn.rule1", "New players get 100 XP when signing up with your referral")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>You earn 2% of every bet your referrals make</span>
+                      <span>{t("referralSection.earn.rule2", "You earn 2% of every bet your referrals make")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Payouts are instant – as fast as a KAS transaction</span>
+                      <span>{t("referralSection.earn.rule3", "Payouts are instant – as fast as a KAS transaction")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Custom referral links available for KOLs</span>
+                      <span>{t("referralSection.earn.rule4", "Custom referral links available for KOLs")}</span>
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div
+                <motion.div 
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -534,16 +557,17 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-
-              <div className="mt-4 text-center">
+              
+              {/* Removed referral button and adjusted spacing */}
+              <div className="mt-6 text-center">
                 <p className="text-gray-300">
-                  To access your referral page, click on your name or KAS balance in the navigation bar after logging in.
+                  {t("referralSection.hint", "To access your referral page, click on your name or KAS balance in the navigation bar after logging in.")}
                 </p>
               </div>
             </div>
           </motion.section>
 
-          {/* Final Call-to-Action */}
+          {/* Final CTA */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -551,10 +575,10 @@ export default function GuidePage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#49EACB]">
-              Ready to Play?
+              {t("finalCTA.title", "Ready to Play?")}
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              Join fellow Kaspian's enjoying Kasino's exciting games and rewarding systems!
+              {t("finalCTA.description", "Join fellow Kaspian's enjoying Kasino's exciting games and rewarding systems!")}
             </p>
             <Link href="/">
               <motion.button
@@ -562,7 +586,7 @@ export default function GuidePage() {
                 whileTap={{ scale: 0.95 }}
                 className="bg-[#49EACB] text-black px-8 py-4 rounded-lg font-bold text-lg"
               >
-                Enter Kasino Now
+                {t("finalCTA.button", "Enter Kasino Now")}
               </motion.button>
             </Link>
           </motion.section>
