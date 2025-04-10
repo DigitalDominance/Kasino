@@ -241,7 +241,6 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Games Section */}
-          {/* Increased bottom margin for breathing room */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -284,7 +283,6 @@ export default function GuidePage() {
           </motion.section>
 
           {/* XP & Leveling System */}
-          {/* Extra spacing below games */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -344,7 +342,6 @@ export default function GuidePage() {
                 </motion.div>
               </div>
               
-              {/* Reduce gap between XP and Daily Loot Boxes */}
               <div className="mt-6">
                 <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
                   {t("xpSection.dailyLoot.title", "Daily Loot Boxes")}
@@ -366,11 +363,10 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      {/* Increase loot box image container size */}
                       <div className="relative h-24 w-24 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
-                          alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
+                          alt={\`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}\`}
                           fill
                           className="object-contain"
                         />
@@ -448,7 +444,6 @@ export default function GuidePage() {
                 </motion.div>
               </div>
               
-              {/* Reduce gap between Earn Gems and Gem Crates */}
               <div className="mt-6">
                 <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
                   {t("gemSection.crates.title", "Gem Crates")}
@@ -475,7 +470,7 @@ export default function GuidePage() {
                       <div className="relative h-32 w-full mb-4">
                         <Image
                           src={crate.image}
-                          alt={`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}`}
+                          alt={\`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}\`}
                           fill
                           className="object-contain"
                         />
@@ -497,7 +492,6 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Referral System */}
-          {/* Extra top margin added */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
