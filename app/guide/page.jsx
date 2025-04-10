@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -18,73 +18,86 @@ const montserrat = Montserrat({
 const MotionCard = motion(Card);
 
 export default function GuidePage() {
-  // Game sections data
+  // Updated game sections data with more enticing descriptions.
   const gameSections = [
     {
       title: "Ghost Jump",
-      description: "Place a bet and click on the floating tile to move higher. The higher you go, the higher the reward but also the higher the chance of losing on your next move.",
-      image: "/ghostjumpcard.webp"
+      description:
+        "Leap to new heights in Ghost Jump! Place your bet and tap the floating tile to defy gravity. The higher you soar, the richer the prizes – but every jump is a daring risk!",
+      image: "/ghostjumpcard.webp",
     },
     {
       title: "Kaspian Cross",
-      description: "Place a bet and click on the next tile to move. The further you move along, the higher the reward but also the higher the risk of getting run over by a Solana car and losing it all.",
-      image: "/kaspiancrosscard.webp"
+      description:
+        "Embark on an epic adventure in Kaspian Cross! Bet, tap the next tile, and race across dynamic tracks where fortune and peril await at every step.",
+      image: "/kaspiancrosscard.webp",
     },
     {
       title: "Crash",
-      description: "A fast-paced game with high payout potential. Place your bet and watch the crash animation climb along with your multiplier. Don't wait too long before cashing out or you'll lose it all!",
-      image: "/crashcard.webp"
+      description:
+        "Experience heart-pounding action in Crash! Set your bet, watch your multiplier soar with each rising moment, and cash out before the inevitable crash – the thrill builds every second!",
+      image: "/crashcard.webp",
     },
     {
       title: "Mines",
-      description: "A classic minesweeper-style game where you uncover tiles to reveal multipliers. Hit a mine and you lose your bet. Cash out at any time to secure your winnings.",
-      image: "/minescard.webp"
+      description:
+        "Channel your inner strategist in Mines! Uncover hidden multipliers without triggering the explosive mines – every safe pick brings you closer to a treasure trove of rewards.",
+      image: "/minescard.webp",
     },
     {
       title: "Upgrade",
-      description: "Select the multiplier you wish, then place your bet. Once the countdown finishes, you will either win the upgrade or lose.",
-      image: "/upgradecard.webp"
+      description:
+        "Power up your play in Upgrade! Choose your multiplier, place your bet, and as the countdown ticks, brace for a dramatic leap in winnings or the thrill of a daring loss.",
+      image: "/upgradecard.webp",
     },
     {
       title: "Kaspa Tower Climb",
-      description: "Place your bet and choose a tile on the row - if it's safe it shows the Kaspa logo, if it's a loss it's an X. Guess correctly to advance to the next row. Cash out at any time after the first tile.",
-      image: "/kaspatowerclimbcard.webp"
+      description:
+        "Ascend the tower in Kaspa Tower Climb! Bet, choose a safe tile and scale new heights with every correct guess. Each successful step unlocks even greater rewards and electrifying challenges.",
+      image: "/kaspatowerclimbcard.webp",
     },
     {
       title: "Guess The Cup",
-      description: "Place your bet and select the multiplier/number of cups. Watch the cups move, then guess which one has the ball under it. Guess wrong and you lose it all, guess right and win big!",
-      image: "/guessthecupcard.webp"
+      description:
+        "Test your intuition in Guess The Cup! Bet, select your multiplier, and pick the cup concealing the secret ball. Nail the guess for a spectacular win – a misstep means total bust!",
+      image: "/guessthecupcard.webp",
     },
     {
       title: "Plinko",
-      description: "Simply place your bet and watch the ball fall down. The ball will randomly land on a multiplier - either win big or win small with Plinko!",
-      image: "/plinkocard.webp"
+      description:
+        "Dive into the unpredictable fun of Plinko! Place your bet and watch the ball bounce amid a cascade of multipliers. Every drop is packed with anticipation and rewards!",
+      image: "/plinkocard.webp",
     },
     {
       title: "Roulette",
-      description: "Pick your color or number sequence, then place your bet. Watch the roulette wheel spin and stop - wherever the marker lands is the winning number or color.",
-      image: "/roulettecard.webp"
+      description:
+        "Embrace the classic allure of Roulette! Choose your color or number sequence, place your bet, and let the spinning wheel decide your fate. Fortune favors the bold!",
+      image: "/roulettecard.webp",
     },
     {
       title: "Dice",
-      description: "Pick your multiplier, place your bet, and watch your dice roll. If your dice values are higher than the house's, you win!",
-      image: "/dicecard.webp"
+      description:
+        "Roll with destiny in Dice! Pick your multiplier, bet smartly, and let the dice decide your victory. Outroll the house to claim your hard-earned triumph!",
+      image: "/dicecard.webp",
     },
     {
       title: "Coin Flip",
-      description: "Set your bet amount, pick the multiplier, and choose the winning symbol. Start the game - whoever gets the winning symbol wins. Higher multipliers mean higher chance for the house to win.",
-      image: "/coinflipcard.webp"
+      description:
+        "Double down on excitement with Coin Flip! Set your bet, pick your multiplier and winning symbol – let chance decide your fortune in this high-stakes thrill ride!",
+      image: "/coinflipcard.webp",
     },
     {
       title: "Kasper Loot Box",
-      description: "Place your bet (25 KAS) and watch the spinning animation. Your loot will be revealed - you can either win big or win 1 KAS.",
-      image: "/kasperlootboxcard.webp"
+      description:
+        "Unbox your luck in Kasper Loot Box! Wager a modest 25 KAS, watch the mesmerizing spin, and reveal mysterious rewards – will fortune smile upon you with a major win or a modest payout?",
+      image: "/kasperlootboxcard.webp",
     },
     {
       title: "Kasen Mania",
-      description: "Our first slots game! Place your bet and watch the slots spin. Win conditions: 5 in a row on the middle (1.1x), 5 diagonally (2x), or 5 on the top row (3x).",
-      image: "/kasenmaniacard.webp"
-    }
+      description:
+        "Step into the dazzling world of Kasen Mania – our thrilling slots game! Spin the reels and chase winning combinations: five in a row, diagonally, or on the top row triggers a surge of rewards!",
+      image: "/kasenmaniacard.webp",
+    },
   ];
 
   return (
@@ -138,7 +151,7 @@ export default function GuidePage() {
       `}</style>
 
       <div className="min-h-screen bg-black text-white flex flex-col">
-        {/* Header - Same as main page but without sidebar button */}
+        {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -165,7 +178,7 @@ export default function GuidePage() {
             className="flex items-center gap-4"
           >
             <Link href="/">
-              <motion.button 
+              <motion.button
                 className="bg-[#49EACB] text-black px-4 py-2 rounded-md font-bold"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -178,16 +191,25 @@ export default function GuidePage() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-hidden">
-          {/* Hero Section */}
+          {/* Hero Section with Language Dropdown */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="mb-16"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-gradient">
-              Kasino Guide
-            </h1>
+            <div className="flex items-center justify-between w-full mb-6">
+              <select className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="zh">中文</option>
+              </select>
+              <h1 className="text-4xl md:text-6xl font-bold animate-gradient">
+                Kasino Guide
+              </h1>
+            </div>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Everything you need to know about playing, earning, and winning at Kasino!
             </p>
@@ -200,14 +222,14 @@ export default function GuidePage() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
+            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
               <span className="icon-primary mr-3">
                 <GiCheerful className="text-4xl" />
               </span>
               <span className="animate-gradient">Games</span>
             </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
@@ -217,7 +239,8 @@ export default function GuidePage() {
                   className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden"
                   whileHover={{ scale: 1.02 }}
                 >
-                  <div className="relative h-48 w-full">
+                  {/* Increased image container height for a more landscape view */}
+                  <div className="relative h-64 w-full">
                     <Image
                       src={game.image}
                       alt={game.title}
@@ -241,24 +264,26 @@ export default function GuidePage() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
+            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
               <span className="icon-primary mr-3">
                 <GiStarFormation className="text-4xl" />
               </span>
               <span className="animate-gradient">XP & Leveling System</span>
             </h2>
-            
+
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">Earn XP with Every Bet</h3>
+                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
+                    Earn XP with Every Bet
+                  </h3>
                   <p className="text-gray-300 mb-4">
-                    Every KAS you bet earns you 1 XP. As you accumulate XP, you'll level up and unlock amazing rewards!
+                    Every KAS you bet earns you 1 XP. Level up as you accumulate XP and unlock amazing rewards!
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
@@ -275,7 +300,7 @@ export default function GuidePage() {
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -291,13 +316,16 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-              
-              <div className="mt-12">
-                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">Daily Loot Boxes</h3>
+
+              {/* Reduced margin-top for the Daily Loot Boxes */}
+              <div className="mt-6">
+                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">
+                  Daily Loot Boxes
+                </h3>
                 <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                  As you level up, you unlock daily free loot boxes that can be opened once every 24 hours.
+                  As you level up, unlock daily free loot boxes that can be opened once every 24 hours.
                 </p>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
                     <motion.div
@@ -309,7 +337,8 @@ export default function GuidePage() {
                       className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20"
                     >
                       <div className="text-[#49EACB] font-bold mb-2">Level {level}</div>
-                      <div className="relative h-16 w-16 mx-auto">
+                      {/* Increased image container dimensions for a bigger loot box image */}
+                      <div className="relative h-24 w-24 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`Level ${level} Loot Box`}
@@ -320,10 +349,10 @@ export default function GuidePage() {
                     </motion.div>
                   ))}
                 </div>
-                
-                <div className="mt-8 text-center">
+
+                <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    Click on the level icon in the navigation bar to open the Daily Loot Box menu.
+                    Click the level icon in the navigation bar to open your Daily Loot Box menu.
                   </p>
                 </div>
               </div>
@@ -337,24 +366,26 @@ export default function GuidePage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
+            <h2 className="mt-12 text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
               <span className="icon-primary mr-3">
                 <GiPresent className="text-4xl" />
               </span>
               <span className="animate-gradient">Gem System</span>
             </h2>
-            
+
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8">
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">Earn Gems as You Play</h3>
+                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
+                    Earn Gems as You Play
+                  </h3>
                   <p className="text-gray-300 mb-4">
-                    Every bet gives you a chance to earn Gems, which can be used to open Gem Crates packed with amazing KAS rewards.
+                    Every bet gives you a chance to earn Gems – use them to open Gem Crates packed with awesome KAS rewards.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
@@ -363,15 +394,15 @@ export default function GuidePage() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>More bets = more chances to earn gems</span>
+                      <span>More bets = more opportunities</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Higher gem tiers offer better rewards</span>
+                      <span>Higher gem tiers unlock even better rewards</span>
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -387,26 +418,31 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-              
-              <div className="mt-12">
-                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">Gem Crates</h3>
+
+              {/* Reduced gap between "Earn Gems..." and the Gem Crates section */}
+              <div className="mt-6">
+                <h3 className="text-2xl font-bold mb-6 text-center text-[#49EACB]">
+                  Gem Crates
+                </h3>
                 <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                  There are 4 tiers of Gem Crates, each requiring different amounts of gems to open.
+                  There are 4 tiers of Gem Crates – each requires a different amount of gems to open.
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     { tier: 1, gems: 10, image: "/gemtier1.webp" },
                     { tier: 2, gems: 100, image: "/gemtier2.webp" },
                     { tier: 3, gems: 1000, image: "/gemtier3.webp" },
-                    { tier: 4, gems: 10000, image: "/gemtier4.webp" }
+                    { tier: 4, gems: 10000, image: "/gemtier4.webp" },
                   ].map((crate) => (
                     <MotionCard
                       key={crate.tier}
                       whileHover={{ scale: 1.05 }}
                       className="bg-gray-800 rounded-lg p-6 text-center border border-[#49EACB]/20"
                     >
-                      <div className="text-2xl font-bold text-[#49EACB] mb-4">Tier {crate.tier}</div>
+                      <div className="text-2xl font-bold text-[#49EACB] mb-4">
+                        Tier {crate.tier}
+                      </div>
                       <div className="relative h-32 w-full mb-4">
                         <Image
                           src={crate.image}
@@ -415,14 +451,17 @@ export default function GuidePage() {
                           className="object-contain"
                         />
                       </div>
-                      <div className="text-lg font-semibold">{crate.gems} Gems Required</div>
+                      {/* Updated themed font color for gem requirement text */}
+                      <div className="text-lg font-semibold text-[#49EACB]">
+                        {crate.gems} Gems Required
+                      </div>
                     </MotionCard>
                   ))}
                 </div>
-                
-                <div className="mt-8 text-center">
+
+                <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    Click on the Gem Display in the navigation bar to open the Gem Crate menu.
+                    Click on the Gem Display in the navigation bar to open your Gem Crate menu.
                   </p>
                 </div>
               </div>
@@ -434,7 +473,7 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="mb-16"
+            className="mt-12 mb-16"  {/* Added extra top margin */}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
               <span className="icon-primary mr-3">
@@ -442,18 +481,20 @@ export default function GuidePage() {
               </span>
               <span className="animate-gradient">Referral System</span>
             </h2>
-            
+
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
               <div className="flex flex-col md:flex-row items-center gap-8">
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">Earn with Friends</h3>
+                  <h3 className="text-2xl font-bold mb-4 text-[#49EACB]">
+                    Earn with Friends
+                  </h3>
                   <p className="text-gray-300 mb-4">
-                    Our referral system rewards you for bringing friends to Kasino. Both you and your friends get bonuses!
+                    Our referral system rewards you for bringing friends to Kasino – both you and your friends receive bonuses!
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
@@ -466,7 +507,7 @@ export default function GuidePage() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>Payouts are instant - as fast as a KAS transaction</span>
+                      <span>Payouts are instant – as fast as a KAS transaction</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
@@ -474,7 +515,7 @@ export default function GuidePage() {
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   className="flex-1"
                   initial={{ x: 20 }}
                   animate={{ x: 0 }}
@@ -490,23 +531,17 @@ export default function GuidePage() {
                   </div>
                 </motion.div>
               </div>
-              
-              <div className="mt-8 text-center">
+
+              {/* Removed the Referral button and reduced the gap between text lines */}
+              <div className="mt-4 text-center">
                 <p className="text-gray-300">
                   To access your referral page, click on your name or KAS balance in the navigation bar after logging in.
                 </p>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mt-6 bg-[#49EACB] text-black px-6 py-3 rounded-lg font-bold"
-                >
-                  Get Your Referral Link
-                </motion.button>
               </div>
             </div>
           </motion.section>
 
-          {/* Final CTA */}
+          {/* Final Call-to-Action */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -517,7 +552,7 @@ export default function GuidePage() {
               Ready to Play?
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              Join thousands of players enjoying Kasino's exciting games and rewarding systems!
+              Join fellow Kaspian's enjoying Kasino's exciting games and rewarding systems!
             </p>
             <Link href="/">
               <motion.button
