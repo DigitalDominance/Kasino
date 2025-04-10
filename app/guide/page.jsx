@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import "../../lib/i18n"; // Import the i18n instance from the lib folder
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -254,22 +254,30 @@ export default function GuidePage() {
         </header>
 
         {/* Sidebar Toggle */}
+        {/* (1) Moved down to avoid overlapping with nav & rotate arrow on open */}
         <motion.div 
-          className="fixed left-0 top-[80px] z-40 cursor-pointer"
+          className="fixed left-0 top-[120px] z-40 cursor-pointer"
           whileHover={{ x: 5 }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           <Card className="p-3 bg-gray-900 border border-[#49EACB]/20 rounded-r-lg">
-            <FaChevronRight className="text-[#49EACB]" />
+            <FaChevronRight
+              className={`text-[#49EACB] transform transition-transform duration-300 ${
+                sidebarOpen ? "rotate-180" : ""
+              }`}
+            />
           </Card>
         </motion.div>
 
         {/* Sidebar Navigation */}
+        {/* (2) Start under nav so the first clickable text isn't blocked */}
         <motion.div
-          className={`fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 pt-20 px-4 border-r border-[#49EACB]/20 sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          className={`fixed left-0 top-[80px] h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 pt-20 px-4 border-r border-[#49EACB]/20 sidebar ${
+            sidebarOpen ? "sidebar-open" : "sidebar-closed"
+          }`}
           initial={{ x: -300 }}
           animate={{ x: sidebarOpen ? 0 : -300 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
           <div className="flex flex-col space-y-4 mt-6">
             {sectionHeadings.map((section) => (
