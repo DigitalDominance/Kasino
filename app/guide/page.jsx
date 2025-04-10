@@ -1,11 +1,11 @@
 "use client";
 
+import "../../lib/i18n"; // Import the i18n instance from the lib folder
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import "../lib/i18n";
 import { Card } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { Montserrat } from "next/font/google";
@@ -367,7 +367,7 @@ export default function GuidePage() {
                       <div className="relative h-24 w-24 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
-                          alt={\`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}\`}
+                          alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
                           fill
                           className="object-contain"
                         />
@@ -471,7 +471,7 @@ export default function GuidePage() {
                       <div className="relative h-32 w-full mb-4">
                         <Image
                           src={crate.image}
-                          alt={\`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}\`}
+                          alt={`${t("gemSection.crates.alt", "Gem Crate Tier")} ${crate.tier}`}
                           fill
                           className="object-contain"
                         />
