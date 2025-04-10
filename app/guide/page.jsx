@@ -241,11 +241,12 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Games Section */}
+          {/* Increased bottom margin for breathing room */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="mb-20"  {/* increased bottom margin for breathing room */}
+            className="mb-20"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
               <span className="icon-primary mr-4">
@@ -283,11 +284,12 @@ export default function GuidePage() {
           </motion.section>
 
           {/* XP & Leveling System */}
+          {/* Extra spacing below games */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="mb-20"  /* extra spacing below games */
+            className="mb-20"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
               <span className="icon-primary mr-4">
@@ -495,11 +497,12 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Referral System */}
+          {/* Extra top margin added */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="mb-20 mt-16"  {/* extra top margin added */}
+            className="mb-20 mt-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-10 flex items-center justify-center">
               <span className="icon-primary mr-4">
@@ -558,7 +561,6 @@ export default function GuidePage() {
                 </motion.div>
               </div>
               
-              {/* Removed referral button and adjusted spacing */}
               <div className="mt-6 text-center">
                 <p className="text-gray-300">
                   {t("referralSection.hint", "To access your referral page, click on your name or KAS balance in the navigation bar after logging in.")}
