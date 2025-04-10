@@ -260,7 +260,7 @@ export default function GuidePage() {
           whileHover={{ x: 5 }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
-          <div className="mt-20">
+          <div className="mt-24">
             <Card className="p-3 bg-gray-900 border border-[#49EACB]/20 rounded-r-lg">
               <FaChevronRight
                 className={`text-[#49EACB] transform transition-transform duration-300 ${
@@ -274,7 +274,7 @@ export default function GuidePage() {
         {/* Sidebar Navigation */}
         {/* The sidebar is fixed at top-0 and its inner content is padded to start under the nav */}
         <motion.div
-          className={`fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 px-4 sidebar ${
+          className={`fixed left-0 mt-24 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 px-4 sidebar ${
             sidebarOpen ? "sidebar-open" : "sidebar-closed"
           }`}
           initial={{ x: -300 }}
