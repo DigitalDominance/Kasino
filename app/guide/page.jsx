@@ -444,7 +444,7 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      <div className="relative h-50 w-85 mx-auto">
+                      <div className="relative h-64 w-85 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
