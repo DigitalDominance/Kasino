@@ -270,19 +270,19 @@ export default function GuidePage() {
               <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
 
-            {/*
-              1) Added `gap-y-12` to give more vertical spacing between rows.
-                 You can adjust the `12` to whatever spacing you prefer (e.g., 10, 16, etc.)
+            {/* 
+              Updated Responsive Layout:
+              - On mobile, each card is full width (approximately 85vw) and centered.
+              - On desktop, the card stays at 30vw.
             */}
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-30">
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
-                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden"
-                  style={{ width: "30vw" }}
+                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden w-[85vw] md:w-[30vw]"
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="relative h-64 w-full">
@@ -356,7 +356,12 @@ export default function GuidePage() {
                   {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes...")}
                 </p>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {/*
+                  Updated Daily Loot Box Grid:
+                  - On mobile, shows one card per row.
+                  - On larger screens, it reverts to the current grid (4 columns on md, 6 on lg).
+                */}
+                <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
                     <motion.div
                       key={level}
@@ -542,10 +547,6 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Final CTA */}
-          {/*
-            2) Added `mt-20` (you can adjust further) to push the "Ready to Play?" heading away from the section above.
-            3) Increased `mb-24` to add space below the button before the footer.
-          */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -562,7 +563,6 @@ export default function GuidePage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                // Added 'mb-8' to give more space before the footer
                 className="bg-[#49EACB] text-black px-8 py-4 rounded-lg font-bold text-lg mb-8"
               >
                 {t("finalCTA.button", "Enter Kasino Now")}
