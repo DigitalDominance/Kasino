@@ -249,7 +249,9 @@ export default function GuidePage() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">{game.title}</h3>
+                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">
+                      {game.title}
+                    </h3>
                     <p className="text-gray-300">{game.description}</p>
                   </div>
                 </MotionCard>
@@ -336,7 +338,9 @@ export default function GuidePage() {
                       whileHover={{ scale: 1.05 }}
                       className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20"
                     >
-                      <div className="text-[#49EACB] font-bold mb-2">Level {level}</div>
+                      <div className="text-[#49EACB] font-bold mb-2">
+                        Level {level}
+                      </div>
                       {/* Increased image container dimensions for a bigger loot box image */}
                       <div className="relative h-24 w-24 mx-auto">
                         <Image
@@ -451,7 +455,6 @@ export default function GuidePage() {
                           className="object-contain"
                         />
                       </div>
-                      {/* Updated themed font color for gem requirement text */}
                       <div className="text-lg font-semibold text-[#49EACB]">
                         {crate.gems} Gems Required
                       </div>
@@ -473,7 +476,7 @@ export default function GuidePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-12 mb-16"  {/* Added extra top margin */}
+            className="mt-12 mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-8 flex items-center justify-center">
               <span className="icon-primary mr-3">
@@ -532,7 +535,6 @@ export default function GuidePage() {
                 </motion.div>
               </div>
 
-              {/* Removed the Referral button and reduced the gap between text lines */}
               <div className="mt-4 text-center">
                 <p className="text-gray-300">
                   To access your referral page, click on your name or KAS balance in the navigation bar after logging in.
