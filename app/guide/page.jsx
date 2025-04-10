@@ -439,12 +439,12 @@ export default function GuidePage() {
                       animate={{ scale: 1 }}
                       transition={{ duration: 0.3 }}
                       whileHover={{ scale: 1.05 }}
-                      className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20 w-[85vw] mx-auto sm:w-full mb-6"
+                      className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20 w-[95vw] mx-auto sm:w-full mb-6"
                     >
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      <div className="relative h-64 w-85 mx-auto">
+                      <div className="relative h-64 w-64 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
