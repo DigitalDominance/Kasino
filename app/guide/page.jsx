@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import "../lib/i18n";
 import { Card } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { Montserrat } from "next/font/google";
