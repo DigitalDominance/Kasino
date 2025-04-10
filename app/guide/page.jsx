@@ -228,11 +228,10 @@ export default function GuidePage() {
             className="mb-16"
           >
             <div className="flex flex-col items-center justify-center gap-4 mb-6">
-              {/* 
-                Responsive Title & Language Selector:
-                - On mobile (default): flex-col layout with the title first and language select centered below it.
-                - On desktop (md and up): flex-row with the language select to the left, the title centered, 
-                  and an empty spacer div on the right.
+              {/* Responsive Title & Language Selector:
+                  - On mobile (default): flex-col layout with the title first and language select centered below.
+                  - On desktop (md and up): flex-row with the language select to the left, title centered,
+                    and a hidden spacer on the right.
               */}
               <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-2xl mx-auto">
                 <h1 className="order-1 md:order-2 text-4xl md:text-6xl font-bold animate-gradient text-center w-full md:w-auto">
@@ -275,9 +274,9 @@ export default function GuidePage() {
             </h2>
 
             {/* 
-              Updated Responsive Layout for Game Cards:
-              - On mobile, each card is 85vw wide and centered.
-              - On desktop, each card remains 30vw wide.
+              Game Cards Responsive Layout:
+              - On mobile (default): each card is 85vw wide.
+              - On desktop (md and up): each card is 30vw wide.
             */}
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
               {gameSections.map((game, index) => (
@@ -361,9 +360,9 @@ export default function GuidePage() {
                 </p>
                 
                 {/* 
-                  Updated Daily Loot Box Grid:
-                  - On mobile, displays one card per row.
-                  - On larger screens, reverts to the current grid (4 columns on md, 6 on lg).
+                  Daily Loot Box Grid:
+                  - On mobile: one column.
+                  - On desktop: 4 columns at md and 6 at lg.
                 */}
                 <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
