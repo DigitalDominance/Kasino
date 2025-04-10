@@ -271,15 +271,16 @@ export default function GuidePage() {
               <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
 
-            {/* Single-column layout, max 500px for each card */}
-            <div className="flex flex-col items-center gap-10">
+            {/* Multi-column layout; each card ~30vw wide */}
+            <div className="flex flex-wrap justify-center gap-8">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
-                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden max-w-[500px] w-full"
+                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden"
+                  style={{ width: "30vw" }}
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="relative h-64 w-full">
@@ -314,9 +315,10 @@ export default function GuidePage() {
             </h2>
             
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
+              {/* Single-column layout (image removed) */}
+              <div className="flex flex-col items-center gap-8 mb-8">
                 <motion.div 
-                  className="flex-1"
+                  className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
@@ -342,21 +344,6 @@ export default function GuidePage() {
                     </li>
                   </ul>
                 </motion.div>
-                <motion.div 
-                  className="flex-1"
-                  initial={{ x: 20 }}
-                  animate={{ x: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src="/xpsystem.webp"
-                      alt="XP System"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </motion.div>
               </div>
               
               <div className="mt-6">
@@ -380,8 +367,8 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      {/* Increased size to 2x (h-48 w-48) */}
-                      <div className="relative h-48 w-48 mx-auto">
+                      {/* Increased to h-64 w-64 for bigger images */}
+                      <div className="relative h-64 w-64 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
                           alt={`${t("xpSection.dailyLoot.alt", "Level")} ${level} ${t("xpSection.dailyLoot.box", "Loot Box")}`}
@@ -417,9 +404,10 @@ export default function GuidePage() {
             </h2>
             
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* Single-column layout (image removed) */}
+              <div className="flex flex-col items-center gap-8">
                 <motion.div 
-                  className="flex-1"
+                  className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
@@ -444,21 +432,6 @@ export default function GuidePage() {
                       <span>{t("gemSection.earnGems.rule3", "Higher gem tiers offer better rewards")}</span>
                     </li>
                   </ul>
-                </motion.div>
-                <motion.div 
-                  className="flex-1"
-                  initial={{ x: 20 }}
-                  animate={{ x: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src="/gemsystem.webp"
-                      alt="Gem System"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
                 </motion.div>
               </div>
               
@@ -524,9 +497,10 @@ export default function GuidePage() {
             </h2>
             
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* Single-column layout (image removed) */}
+              <div className="flex flex-col items-center gap-8">
                 <motion.div 
-                  className="flex-1"
+                  className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
@@ -555,21 +529,6 @@ export default function GuidePage() {
                       <span>{t("referralSection.earn.rule4", "Custom referral links...")}</span>
                     </li>
                   </ul>
-                </motion.div>
-                <motion.div 
-                  className="flex-1"
-                  initial={{ x: 20 }}
-                  animate={{ x: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="relative h-64 w-full">
-                    <Image
-                      src="/referralsystem.webp"
-                      alt="Referral System"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
                 </motion.div>
               </div>
               
