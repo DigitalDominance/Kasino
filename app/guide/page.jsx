@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 import "../../lib/i18n"; // Import the i18n instance from the lib folder
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,12 +8,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { Montserrat } from "next/font/google";
-import {
-  GiCheerful,
-  GiStarFormation,
-  GiPresent
-} from "react-icons/gi";
-import { FaUserAlt, FaChevronRight, FaChevronLeft } from "react-icons/fa";
+import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
+import { FaUserAlt, FaChevronRight } from "react-icons/fa";
 
 const montserrat = Montserrat({
   weight: "700",
@@ -25,20 +21,14 @@ const MotionCard = motion(Card);
 
 export default function GuidePage() {
   const { t, i18n } = useTranslation();
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
   // Handle language change
   const handleLanguageChange = (e) => {
     i18n.changeLanguage(e.target.value);
   };
 
-  // State for the left sidebar menu
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Game sections data
+  // Game sections data with more enticing descriptions
   const gameSections = [
     {
       title: t("games.ghostJump.title", "Ghost Jump"),
@@ -146,29 +136,24 @@ export default function GuidePage() {
     }
   ];
 
+  // Section headings for sidebar
+  const sectionHeadings = [
+    { id: "games", title: t("gamesSection.title", "Games"), icon: <GiCheerful /> },
+    { id: "xp", title: t("xpSection.title", "XP & Leveling"), icon: <GiStarFormation /> },
+    { id: "gems", title: t("gemSection.title", "Gem System"), icon: <GiPresent /> },
+    { id: "referrals", title: t("referralSection.title", "Referrals"), icon: <FaUserAlt /> }
+  ];
+
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
       <style jsx global>{`
         @keyframes gradientAnimation {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
         .animate-gradient {
-          background: linear-gradient(
-            270deg,
-            #49eacb,
-            #006d5b,
-            #003f2f,
-            #006d5b,
-            #49eacb
-          );
+          background: linear-gradient(270deg, #49eacb, #006d5b, #003f2f, #006d5b, #49eacb);
           background-size: 400% 400%;
           animation: gradientAnimation 8s ease infinite;
           -webkit-background-clip: text;
@@ -189,11 +174,11 @@ export default function GuidePage() {
         }
         .guide-card {
           transition: all 0.3s ease;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .guide-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 10px 20px rgba(73, 234, 203, 0.2);
+          box-shadow: 0 10px 20px rgba(73,234,203,0.2);
         }
         .feature-icon {
           transition: all 0.3s ease;
@@ -201,9 +186,27 @@ export default function GuidePage() {
         .feature-icon:hover {
           transform: scale(1.2);
         }
+        @media (min-width: 768px) {
+          .game-card {
+            max-width: 30vw;
+          }
+        }
+        @media (max-width: 767px) {
+          .game-card {
+            max-width: 80vw;
+          }
+        }
+        .sidebar {
+          transition: transform 0.3s ease;
+        }
+        .sidebar-closed {
+          transform: translateX(-100%);
+        }
+        .sidebar-open {
+          transform: translateX(0);
+        }
       `}</style>
 
-      {/* Main container with text in white */}
       <div className="min-h-screen bg-black text-white flex flex-col">
         {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
@@ -243,38 +246,39 @@ export default function GuidePage() {
           </motion.div>
         </header>
 
-        {/* Sidebar toggle button */}
-        <button
-          onClick={toggleSidebar}
-          className="fixed top-[72px] left-0 z-50 bg-gray-900 text-white p-3 rounded-r-md border border-[#49EACB]
-                     flex items-center justify-center"
-          style={{ width: "2.5rem", height: "2.5rem" }}
+        {/* Sidebar Toggle */}
+        <motion.div 
+          className="fixed left-4 top-24 z-40 cursor-pointer"
+          whileHover={{ x: 5 }}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
         >
-          {sidebarOpen ? <FaChevronLeft /> : <FaChevronRight />}
-        </button>
+          <Card className="p-3 bg-gray-900 border border-[#49EACB]/20">
+            <FaChevronRight className="text-[#49EACB]" />
+          </Card>
+        </motion.div>
 
-        {/* Sidebar menu (closed by default) */}
-        <div
-          className={`fixed top-[72px] left-0 z-40 h-[calc(100vh-72px)] w-64 bg-gray-900 border-r border-[#49EACB] 
-                      transition-transform duration-300 transform
-                      ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        {/* Sidebar Navigation */}
+        <motion.div
+          className={`fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-lg z-30 pt-20 px-4 border-r border-[#49EACB]/20 sidebar ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+          initial={{ x: -300 }}
+          animate={{ x: sidebarOpen ? 0 : -300 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <nav className="flex flex-col p-4 text-white gap-4">
-            <h2 className="mb-1 font-bold text-lg">Guide Sections</h2>
-            <a href="#games" className="hover:text-[#49EACB]">
-              {t("gamesSection.title", "Games")}
-            </a>
-            <a href="#xp" className="hover:text-[#49EACB]">
-              {t("xpSection.title", "XP & Leveling System")}
-            </a>
-            <a href="#gem" className="hover:text-[#49EACB]">
-              {t("gemSection.title", "Gem System")}
-            </a>
-            <a href="#referrals" className="hover:text-[#49EACB]">
-              {t("referralSection.title", "Referral System")}
-            </a>
-          </nav>
-        </div>
+          <div className="flex flex-col space-y-4 mt-6">
+            {sectionHeadings.map((section) => (
+              <motion.a
+                key={section.id}
+                href={`#${section.id}`}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors"
+                onClick={() => setSidebarOpen(false)}
+                whileHover={{ x: 5 }}
+              >
+                <span className="text-[#49EACB] text-xl">{section.icon}</span>
+                <span className="font-medium">{section.title}</span>
+              </motion.a>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-hidden">
@@ -283,33 +287,32 @@ export default function GuidePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="mb-16 flex flex-col items-center gap-4"
+            className="mb-16"
           >
-            {/* Title */}
-            <h1 className="text-4xl md:text-6xl font-bold animate-gradient text-center">
-              {t("guideTitle", "Kasino Guide")}
-            </h1>
-            {/* Subheading */}
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto text-center">
-              {t(
-                "guideSubtitle",
-                "Everything you need to know about playing, earning, and winning at Kasino!"
-              )}
-            </p>
-            {/* Language Selector */}
-            <div className="mt-6">
-              <select
-                value={i18n.language}
-                onChange={handleLanguageChange}
-                className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2"
-              >
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="zh">中文</option>
-                <option value="ja">日本語</option>
-              </select>
+            <div className="flex flex-col items-center justify-center gap-4 mb-12">
+              <h1 className="text-4xl md:text-6xl font-bold animate-gradient text-center">
+                {t("guideTitle", "Kasino Guide")}
+              </h1>
+              
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto text-center">
+                {t("guideSubtitle", "Everything you need to know about playing, earning, and winning at Kasino!")}
+              </p>
+
+              {/* Centered Language Selector */}
+              <div className="mt-4 mb-8">
+                <select
+                  value={i18n.language}
+                  onChange={handleLanguageChange}
+                  className="bg-gray-800 text-white border border-[#49EACB] rounded-md p-2"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="zh">中文</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </div>
             </div>
           </motion.section>
 
@@ -321,13 +324,11 @@ export default function GuidePage() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-12 flex items-center justify-center gap-4">
               <span className="icon-primary">
                 <GiCheerful className="text-4xl" />
               </span>
-              <span className="animate-gradient">
-                {t("gamesSection.title", "Games")}
-              </span>
+              <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
 
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
@@ -337,9 +338,8 @@ export default function GuidePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
+                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden game-card mx-auto"
                   whileHover={{ scale: 1.02 }}
-                  className="guide-card bg-gray-900 border border-[#49EACB]/20 rounded-xl overflow-hidden
-                             w-[80vw] md:w-[30vw]"
                 >
                   <div className="relative h-64 w-full">
                     <Image
@@ -350,9 +350,7 @@ export default function GuidePage() {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">
-                      {game.title}
-                    </h3>
+                    <h3 className="text-xl font-bold mb-3 text-[#49EACB]">{game.title}</h3>
                     <p className="text-gray-300">{game.description}</p>
                   </div>
                 </MotionCard>
@@ -368,19 +366,16 @@ export default function GuidePage() {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-12 flex items-center justify-center gap-4">
               <span className="icon-primary">
                 <GiStarFormation className="text-4xl" />
               </span>
-              <span className="animate-gradient">
-                {t("xpSection.title", "XP & Leveling System")}
-              </span>
+              <span className="animate-gradient">{t("xpSection.title", "XP & Leveling System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              {/* Single-column layout */}
               <div className="flex flex-col items-center gap-8 mb-8">
-                <motion.div
+                <motion.div 
                   className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
@@ -395,26 +390,20 @@ export default function GuidePage() {
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("xpSection.earnXP.rule1", "1 KAS bet = 1 XP earned")}
-                      </span>
+                      <span>{t("xpSection.earnXP.rule1", "1 KAS bet = 1 XP earned")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("xpSection.earnXP.rule2", "Higher levels unlock better rewards")}
-                      </span>
+                      <span>{t("xpSection.earnXP.rule2", "Higher levels unlock better rewards")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("xpSection.earnXP.rule3", "Check your level in the navigation bar")}
-                      </span>
+                      <span>{t("xpSection.earnXP.rule3", "Check your level in the navigation bar")}</span>
                     </li>
                   </ul>
                 </motion.div>
               </div>
-
+              
               <div className="mt-6">
                 <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
                   {t("xpSection.dailyLoot.title", "Daily Loot Boxes")}
@@ -422,7 +411,7 @@ export default function GuidePage() {
                 <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
                   {t("xpSection.dailyLoot.description", "As you level up, you unlock daily free loot boxes...")}
                 </p>
-
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((level) => (
                     <motion.div
@@ -431,8 +420,7 @@ export default function GuidePage() {
                       animate={{ scale: 1 }}
                       transition={{ duration: 0.3 }}
                       whileHover={{ scale: 1.05 }}
-                      className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20
-                                 w-[85vw] mx-auto sm:w-full"
+                      className="bg-gray-800 rounded-lg p-4 text-center border border-[#49EACB]/20 w-[85vw] mx-auto sm:w-full"
                     >
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
@@ -448,13 +436,10 @@ export default function GuidePage() {
                     </motion.div>
                   ))}
                 </div>
-
+                
                 <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    {t(
-                      "xpSection.dailyLoot.hint",
-                      "Click on the level icon in the navigation bar to open the Daily Loot Box menu."
-                    )}
+                    {t("xpSection.dailyLoot.hint", "Click on the level icon in the navigation bar to open the Daily Loot Box menu.")}
                   </p>
                 </div>
               </div>
@@ -463,25 +448,22 @@ export default function GuidePage() {
 
           {/* Gem System */}
           <motion.section
-            id="gem"
+            id="gems"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
             className="mb-20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-12 flex items-center justify-center gap-4">
               <span className="icon-primary">
                 <GiPresent className="text-4xl" />
               </span>
-              <span className="animate-gradient">
-                {t("gemSection.title", "Gem System")}
-              </span>
+              <span className="animate-gradient">{t("gemSection.title", "Gem System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              {/* Single-column layout */}
               <div className="flex flex-col items-center gap-8">
-                <motion.div
+                <motion.div 
                   className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
@@ -496,26 +478,20 @@ export default function GuidePage() {
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("gemSection.earnGems.rule1", "Random chance to earn gems with each bet")}
-                      </span>
+                      <span>{t("gemSection.earnGems.rule1", "Random chance to earn gems with each bet")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("gemSection.earnGems.rule2", "More bets = more chances to earn gems")}
-                      </span>
+                      <span>{t("gemSection.earnGems.rule2", "More bets = more chances to earn gems")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("gemSection.earnGems.rule3", "Higher gem tiers offer better rewards")}
-                      </span>
+                      <span>{t("gemSection.earnGems.rule3", "Higher gem tiers offer better rewards")}</span>
                     </li>
                   </ul>
                 </motion.div>
               </div>
-
+              
               <div className="mt-6">
                 <h3 className="text-2xl font-bold mb-4 text-center text-[#49EACB]">
                   {t("gemSection.crates.title", "Gem Crates")}
@@ -523,7 +499,7 @@ export default function GuidePage() {
                 <p className="text-gray-300 text-center mb-6 max-w-2xl mx-auto">
                   {t("gemSection.crates.description", "There are 4 tiers of Gem Crates...")}
                 </p>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     { tier: 1, gems: 10, image: "/gemtier1.webp" },
@@ -548,19 +524,15 @@ export default function GuidePage() {
                         />
                       </div>
                       <div className="text-lg font-semibold text-[#49EACB]">
-                        {crate.gems}{" "}
-                        {t("gemSection.crates.required", "Gems Required")}
+                        {crate.gems} {t("gemSection.crates.required", "Gems Required")}
                       </div>
                     </MotionCard>
                   ))}
                 </div>
-
+                
                 <div className="mt-4 text-center">
                   <p className="text-gray-300">
-                    {t(
-                      "gemSection.crates.hint",
-                      "Click on the Gem Display in the navigation bar to open the Gem Crate menu."
-                    )}
+                    {t("gemSection.crates.hint", "Click on the Gem Display in the navigation bar to open the Gem Crate menu.")}
                   </p>
                 </div>
               </div>
@@ -575,19 +547,16 @@ export default function GuidePage() {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="mb-20 mt-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-8 flex items-center justify-center gap-4">
+            <h2 className="text-3xl md:text-4xl font-bold mt-10 mb-12 flex items-center justify-center gap-4">
               <span className="icon-primary">
                 <FaUserAlt className="text-3xl" />
               </span>
-              <span className="animate-gradient">
-                {t("referralSection.title", "Referral System")}
-              </span>
+              <span className="animate-gradient">{t("referralSection.title", "Referral System")}</span>
             </h2>
-
+            
             <div className="max-w-4xl mx-auto bg-gray-900/50 border border-[#49EACB]/20 rounded-xl p-8">
-              {/* Single-column layout */}
               <div className="flex flex-col items-center gap-8">
-                <motion.div
+                <motion.div 
                   className="w-full"
                   initial={{ x: -20 }}
                   animate={{ x: 0 }}
@@ -597,49 +566,32 @@ export default function GuidePage() {
                     {t("referralSection.earn.title", "Earn with Friends")}
                   </h3>
                   <p className="text-gray-300 mb-4">
-                    {t(
-                      "referralSection.earn.description",
-                      "Our referral system rewards you for bringing friends to Kasino..."
-                    )}
+                    {t("referralSection.earn.description", "Our referral system rewards you for bringing friends to Kasino...")}
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t(
-                          "referralSection.earn.rule1",
-                          "New players get 100 XP ..."
-                        )}
-                      </span>
+                      <span>{t("referralSection.earn.rule1", "New players get 100 XP ...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("referralSection.earn.rule2", "You earn 2% of every bet...")}
-                      </span>
+                      <span>{t("referralSection.earn.rule2", "You earn 2% of every bet...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("referralSection.earn.rule3", "Payouts are instant ...")}
-                      </span>
+                      <span>{t("referralSection.earn.rule3", "Payouts are instant ...")}</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-[#49EACB] mr-2">•</span>
-                      <span>
-                        {t("referralSection.earn.rule4", "Custom referral links...")}
-                      </span>
+                      <span>{t("referralSection.earn.rule4", "Custom referral links...")}</span>
                     </li>
                   </ul>
                 </motion.div>
               </div>
-
+              
               <div className="mt-6 text-center">
                 <p className="text-gray-300">
-                  {t(
-                    "referralSection.hint",
-                    "To access your referral page, click on your name ..."
-                  )}
+                  {t("referralSection.hint", "To access your referral page, click on your name ...")}
                 </p>
               </div>
             </div>
@@ -656,10 +608,7 @@ export default function GuidePage() {
               {t("finalCTA.title", "Ready to Play?")}
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              {t(
-                "finalCTA.description",
-                "Join fellow Kaspian's enjoying Kasino's exciting games..."
-              )}
+              {t("finalCTA.description", "Join fellow Kaspian's enjoying Kasino's exciting games...")}
             </p>
             <Link href="/">
               <motion.button
