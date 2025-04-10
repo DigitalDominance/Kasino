@@ -1,5 +1,4 @@
 "use client";
-
 import "../../lib/i18n"; // Import the i18n instance from the lib folder
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -271,8 +270,11 @@ export default function GuidePage() {
               <span className="animate-gradient">{t("gamesSection.title", "Games")}</span>
             </h2>
 
-            {/* Multi-column layout; each card ~30vw wide; added gap-y for vertical spacing */}
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-12">
+            {/*
+              1) Added `gap-y-12` to give more vertical spacing between rows.
+                 You can adjust the `12` to whatever spacing you prefer (e.g., 10, 16, etc.)
+            */}
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-30">
               {gameSections.map((game, index) => (
                 <MotionCard
                   key={index}
@@ -367,7 +369,6 @@ export default function GuidePage() {
                       <div className="text-[#49EACB] font-bold mb-2">
                         {t("xpSection.dailyLoot.level", "Level")} {level}
                       </div>
-                      {/* Increased to h-64 w-64 for bigger images */}
                       <div className="relative h-64 w-64 mx-auto">
                         <Image
                           src={`/Level${level}Card.webp`}
@@ -541,12 +542,15 @@ export default function GuidePage() {
           </motion.section>
 
           {/* Final CTA */}
+          {/*
+            2) Added `mt-20` (you can adjust further) to push the "Ready to Play?" heading away from the section above.
+            3) Increased `mb-24` to add space below the button before the footer.
+          */}
           <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.8 }}
-            // Added extra margin to separate from the section above and the footer
-            className="text-center mt-16 mb-24"
+            className="text-center mt-20 mb-24"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-[#49EACB]">
               {t("finalCTA.title", "Ready to Play?")}
@@ -558,7 +562,8 @@ export default function GuidePage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-[#49EACB] text-black px-8 py-4 rounded-lg font-bold text-lg"
+                // Added 'mb-8' to give more space before the footer
+                className="bg-[#49EACB] text-black px-8 py-4 rounded-lg font-bold text-lg mb-8"
               >
                 {t("finalCTA.button", "Enter Kasino Now")}
               </motion.button>
