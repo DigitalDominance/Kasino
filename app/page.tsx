@@ -304,6 +304,14 @@ function MainPageContent() {
                       />
                     </div>
                     <div className="mt-4 space-y-2">
+                      {/* New Guide Link */}
+                      <Link
+                        href="https://www.kascasino.xyz/guide"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#00aaff]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#00aaff] to-[#00aaff]/50 group-hover:shadow-[0_0_10px_rgba(0,170,255,0.3)]" />
+                        <span className="group-hover:text-[#00aaff]">Guide</span>
+                      </Link>
                       <Link
                         href="#"
                         className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
