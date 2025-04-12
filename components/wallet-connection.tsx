@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { debounce } from "underscore";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import Web3 from "web3";
 
 export function WalletConnection() {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet();
@@ -47,7 +45,7 @@ export function WalletConnection() {
     setShowEvmModal(false);
   };
 
-  // Kasware connection logic (using your current connectWallet logic)
+  // Kasware connection logic (using your existing connectWallet logic)
   const handleKaswareConnect = async () => {
     setIsLoading(true);
     closeWalletOptions();
@@ -67,6 +65,7 @@ export function WalletConnection() {
   };
 
   // Helper: Construct deep link URL based on wallet type and connection URI
+  // (For WalletKit you might not need this if WalletKit handles deep linking internally.)
   const getDeepLinkUrl = (walletType, uri) => {
     const encodedUri = encodeURIComponent(uri);
     switch (walletType) {
@@ -81,54 +80,50 @@ export function WalletConnection() {
     }
   };
 
-  // Custom EVM wallet connection via WalletConnect using a deep link
+  // Custom EVM wallet connection via WalletKit
   const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      const provider = new WalletConnectProvider({
-        rpc: { 12211: "https://rpc.kasplextest.xyz" },
-        chainId: 12211,
-        qrcode: false, // disable automatic QR modal
-      });
-      
-      // Create a new session to generate the connection URI
-      await provider.connector.createSession();
-      const uri = provider.connector.uri;
-      if (!uri) {
-        showNotification("Failed to initialize connection.", "error");
-        setIsLoading(false);
-        return;
+      // Dynamically import WalletKit from @reown/walletkit and initialize if needed.
+      if (!window.walletKit) {
+        const { WalletKit } = await import("@reown/walletkit");
+        // Initialize WalletKit with your project configuration.
+        window.walletKit = new WalletKit({
+          projectId: process.env.NEXT_PUBLIC_PROJECT_ID, // Make sure this env variable exists
+          metadata: {
+            name: "KasCasino Wallet",
+            description: "Wallet for KasCasino",
+            url: "https://www.kascasino.xyz",
+            icons: ["https://your_wallet_icon.png"],
+            // If needed, set your native and universal redirect URIs here.
+            redirect: {
+              native: "", 
+              universal: ""
+            },
+          },
+          // Optional: You can specify which wallets are supported.
+          wallets: ["metamask", "trust", "uniswap"],
+        });
       }
+
+      const walletKit = window.walletKit;
+
+      // Initiate connection for the given wallet type.
+      // The connect method abstracts both the deep linking and pairing logic.
+      const session = await walletKit.connect({ wallet: walletType });
       
-      // Build deep link URL for the selected wallet
-      const deepLinkUrl = getDeepLinkUrl(walletType, uri);
-      if (!deepLinkUrl) {
-        showNotification("Unsupported wallet type.", "error");
-        setIsLoading(false);
-        return;
+      if (session && session.accounts && session.accounts.length > 0) {
+        // Assuming session.accounts is an array of addresses
+        const address = session.accounts[0];
+        await checkUserAccount(address);
+      } else {
+        showNotification("Failed to establish a session with the wallet.", "error");
       }
-      
-      // Redirect the browser to the deep link URL.
-      // Note: This will only work if the wallet app is installed and the scheme is registered.
-      window.location.href = deepLinkUrl;
-      
-      // Listen for connection events. When connected, retrieve accounts.
-      provider.on("connect", async (error, payload) => {
-        if (error) {
-          showNotification("Connection error.", "error");
-          setIsLoading(false);
-          return;
-        }
-        const { accounts } = payload.params[0];
-        if (accounts && accounts.length > 0) {
-          const address = accounts[0];
-          await checkUserAccount(address);
-        }
-        setIsLoading(false);
-      });
     } catch (error) {
+      console.error("Error using WalletKit:", error);
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
+    } finally {
       setIsLoading(false);
     }
   };
