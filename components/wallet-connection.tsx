@@ -15,6 +15,7 @@ export function WalletConnection() {
   const { showModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showEvmModal, setShowEvmModal] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close the dropdown if user clicks outside it
@@ -30,13 +31,22 @@ export function WalletConnection() {
     };
   }, []);
 
-  // Toggle the dropdown open/closed
+  // Toggle the main dropdown
   const openWalletOptions = () => {
     setShowOptions((prev) => !prev);
   };
 
   const closeWalletOptions = () => {
     setShowOptions(false);
+  };
+
+  // Toggle the EVM wallet selection modal
+  const openEvmWalletModal = () => {
+    setShowEvmModal(true);
+  };
+
+  const closeEvmWalletModal = () => {
+    setShowEvmModal(false);
   };
 
   // Kasware connection logic (using your current connectWallet logic)
@@ -58,26 +68,71 @@ export function WalletConnection() {
     }
   };
 
-  // EVM connection logic via WalletConnect (configured for Kaspa with chain id 12211)
-  const handleEvmConnect = async () => {
+  // Helper: Construct deep link URL based on wallet type and connection URI
+  const getDeepLinkUrl = (walletType, uri) => {
+    const encodedUri = encodeURIComponent(uri);
+    switch (walletType) {
+      case "metamask":
+        return `metamask://wc?uri=${encodedUri}`;
+      case "trust":
+        return `trust://wc?uri=${encodedUri}`;
+      case "uniswap":
+        return `uniswap://wc?uri=${encodedUri}`;
+      default:
+        return "";
+    }
+  };
+
+  // Custom EVM wallet connection via WalletConnect using a deep link
+  const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
-    closeWalletOptions();
+    closeEvmWalletModal();
     try {
+      // Instantiate provider with custom RPC and disable automatic QR code modal
       const provider = new WalletConnectProvider({
         rpc: { 12211: "https://rpc.kasplextest.xyz" },
         chainId: 12211,
+        qrcode: false,
       });
-      // Prompts a QR code or deep link for EVM wallets (e.g., MetaMask, Trust Wallet, etc.)
-      await provider.enable();
-      const web3 = new Web3(provider);
-      const accounts = await web3.eth.getAccounts();
-      if (accounts.length > 0) {
-        const address = accounts[0];
-        await checkUserAccount(address);
+      
+      // Initiate a new WalletConnect session to generate the connection URI.
+      await provider.connector.createSession();
+      const uri = provider.connector.uri;
+      if (!uri) {
+        showNotification("Failed to initialize connection.", "error");
+        setIsLoading(false);
+        return;
       }
+      
+      // Build deep link URL for the selected wallet
+      const deepLinkUrl = getDeepLinkUrl(walletType, uri);
+      if (!deepLinkUrl) {
+        showNotification("Unsupported wallet type.", "error");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Open the wallet app via deep link.
+      window.location.href = deepLinkUrl;
+      
+      // Listen for connection events. When connected, retrieve accounts.
+      provider.on("connect", async (error, payload) => {
+        if (error) {
+          showNotification("Connection error.", "error");
+          setIsLoading(false);
+          return;
+        }
+        const { accounts } = payload.params[0];
+        if (accounts && accounts.length > 0) {
+          const address = accounts[0];
+          await checkUserAccount(address);
+        }
+        setIsLoading(false);
+      });
+      
+      // Optionally, you can add a timeout here in case no connection event fires.
     } catch (error) {
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -165,7 +220,7 @@ export function WalletConnection() {
         </motion.div>
       )}
 
-      {/* Dropdown Menu */}
+      {/* Main Dropdown Menu */}
       {showOptions && (
         <div
           ref={dropdownRef}
@@ -185,7 +240,7 @@ export function WalletConnection() {
           </div>
           <div
             className="flex items-center cursor-pointer hover:bg-[#3A3A3A] p-2 rounded transition-all mt-2"
-            onClick={handleEvmConnect}
+            onClick={openEvmWalletModal}
           >
             <img
               src="/walletconnectlogo.webp"
@@ -193,6 +248,44 @@ export function WalletConnection() {
               className="w-8 h-8 mr-3"
             />
             <span>EVM Wallet (WalletConnect)</span>
+          </div>
+        </div>
+      )}
+
+      {/* EVM Wallet Options Modal */}
+      {showEvmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-[#2F2F2F] text-white rounded-lg p-6 w-80 shadow-lg">
+            <h2 className="text-xl font-semibold mb-4">Select EVM Wallet</h2>
+            <div className="flex flex-col space-y-3">
+              <button
+                onClick={() => handleSelectEvmWallet("metamask")}
+                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
+              >
+                <img src="/metamask-logo.webp" alt="MetaMask" className="w-8 h-8 mr-3" />
+                <span>MetaMask</span>
+              </button>
+              <button
+                onClick={() => handleSelectEvmWallet("trust")}
+                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
+              >
+                <img src="/trustwallet-logo.webp" alt="Trust Wallet" className="w-8 h-8 mr-3" />
+                <span>Trust Wallet</span>
+              </button>
+              <button
+                onClick={() => handleSelectEvmWallet("uniswap")}
+                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
+              >
+                <img src="/uniswap-logo.webp" alt="Uniswap Wallet" className="w-8 h-8 mr-3" />
+                <span>Uniswap Wallet</span>
+              </button>
+            </div>
+            <button
+              onClick={closeEvmWalletModal}
+              className="mt-4 text-red-400 hover:underline"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
