@@ -84,7 +84,10 @@
     "underscore": "^1.13.6",
     "mongodb": "^6.3.0",
     "bcryptjs": "^2.4.3",
-    "three": "^0.150.1"
+    "three": "^0.150.1",
+    "@walletconnect/web3-provider": "^1.8.0",
+    "web3": "^1.8.0",
+    "underscore": "^1.13.6"   
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
