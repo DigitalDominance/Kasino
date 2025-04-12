@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { debounce } from "underscore";
 import { siweConfig } from "./siweConfig";
+import { EthereumProvider } from "@walletconnect/ethereum-provider";
 
 export function WalletConnection() {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet();
@@ -46,7 +47,7 @@ export function WalletConnection() {
     setShowEvmModal(false);
   };
 
-  // Kasware connection logic (using your existing connectWallet logic)
+  // Kasware connection logic (remains unchanged)
   const handleKaswareConnect = async () => {
     setIsLoading(true);
     closeWalletOptions();
@@ -65,109 +66,40 @@ export function WalletConnection() {
     }
   };
 
-  // Helper: Construct deep link URL based on wallet type and connection URI.
-  // (This function is here for completeness if a fallback is ever needed on mobile)
-  const getDeepLinkUrl = (walletType, uri) => {
-    const encodedUri = encodeURIComponent(uri);
-    switch (walletType) {
-      case "metamask":
-        return `metamask://wc?uri=${encodedUri}`;
-      case "trust":
-        return `trust://wc?uri=${encodedUri}`;
-      case "uniswap":
-        return `uniswap://wc?uri=${encodedUri}`;
-      default:
-        return "";
-    }
-  };
-
-  // Custom EVM wallet connection via AppKit (One‑click Auth with SIWE)
+  // New EVM wallet connection using WalletConnect's EthereumProvider
   const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      // Dynamically import AppKit and WalletConnect Core if not already initialized.
-      if (!window.walletKit) {
-        const [{ createAppKit }, { Core }] = await Promise.all([
-          import("@reown/appkit-siwe-react-native"),
-          import("@walletconnect/core"),
-        ]);
+      // Initialize EthereumProvider with your custom rpc and chain ID settings.
+      const provider = await EthereumProvider.init({
+        projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+        metadata: {
+          name: "KasCasino Wallet",
+          description: "Wallet for KasCasino",
+          url: "https://www.kascasino.xyz",
+          icons: ["https://your_wallet_icon.png"], // Replace with your wallet icon if needed.
+        },
+        optionalChains: [12211],
+        rpcMap: {
+          12211: "https://www.kasplextest.xyz",
+        },
+      });
 
-        const core = new Core({
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-        });
+      // Subscribe to the display_uri event for additional custom handling if desired.
+      provider.on("display_uri", (uri) => {
+        console.log("WalletConnect URI:", uri);
+        // Optionally, integrate your own QR code modal or deep link handling here.
+      });
 
-        // Initialize AppKit with your metadata, shared core instance, and SIWE configuration.
-        window.walletKit = await createAppKit({
-          core,
-          metadata: {
-            name: "KasCasino Wallet",
-            description: "Wallet for KasCasino",
-            url: "https://www.kascasino.xyz",
-            icons: ["https://your_wallet_icon.png"],
-            redirect: {
-              native: "",  // set your native scheme if necessary
-              universal: "",
-            },
-          },
-          siweConfig, // integrate SIWE configuration for one‑click auth (EIP‑4361)
-          logger: "debug",
-          wallets: ["metamask", "trust", "uniswap"],
-        });
-
-        // Subscribe to one‑click authentication requests.
-        window.walletKit.on("session_authenticate", async (payload) => {
-          // This callback is triggered when the wallet requires SIWE authentication.
-          console.log("Received authentication request:", payload);
-          try {
-            // Retrieve the current wallet address.
-            const userAddress = payload.params?.[0] || (window.ethereum && window.ethereum.selectedAddress);
-            if (!userAddress) throw new Error("Wallet address not available for SIWE message signing.");
-
-            // Retrieve parameters and create a SIWE message.
-            const messageParams = await siweConfig.getMessageParams();
-            const siweMessage = siweConfig.createMessage({ address: userAddress, ...messageParams });
-
-            // Request the wallet provider to sign the SIWE message.
-            const signature = await window.ethereum.request({
-              method: "personal_sign",
-              params: [siweMessage, userAddress],
-            });
-
-            // Approve the session authentication with the signed SIWE message.
-            await window.walletKit.approveSessionAuthenticate({
-              id: payload.id,
-              auths: [{ t: "eip191", s: signature }],
-            });
-          } catch (error) {
-            console.error("Error during SIWE session authentication:", error);
-            // Optionally, you could reject the session authentication here.
-          }
-        });
-      }
-
-      const walletKit = window.walletKit;
-
-      // On desktop with chrome extensions (e.g., MetaMask), use one‑click auth:
-      if (window.ethereum) {
-        const session = await walletKit.connect({ wallet: walletType });
-        if (session && session.accounts && session.accounts.length > 0) {
-          const address = session.accounts[0]; // Typically, session.accounts is an array of addresses
-          await checkUserAccount(address);
-        }
-      } else {
-        // Fallback (for mobile) if needed:
-        const { uri } = await walletKit.core.pairing.create();
-        if (!uri) {
-          showNotification("Failed to initialize connection.", "error");
-          setIsLoading(false);
-          return;
-        }
-        const deepLinkUrl = getDeepLinkUrl(walletType, uri);
-        window.location.href = deepLinkUrl;
+      // Connect to the wallet; this will trigger the WalletConnect modal (or deep link on mobile).
+      const accounts = await provider.request({ method: "eth_requestAccounts" });
+      if (accounts && accounts.length > 0) {
+        const address = accounts[0];
+        await checkUserAccount(address);
       }
     } catch (error) {
-      console.error("Error using AppKit for EVM wallet connection:", error);
+      console.error("Error using WalletConnect for EVM wallet connection:", error);
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
     } finally {
       setIsLoading(false);
@@ -194,7 +126,7 @@ export function WalletConnection() {
     }
   };
 
-  // Check Kasware network (keep this unchanged)
+  // Check Kasware network (kept as is)
   const checkNetwork = async () => {
     const kasware = window.kasware;
     if (kasware) {
