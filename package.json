@@ -16,6 +16,7 @@
   "dependencies": {
     "axios": "^1.4.0",
     "@reown/appkit": "^1.0.0",
+    "@reown/appkit-siwe-react-native": "^1.0.0",
     "@reown/walletkit": "^1.0.0", 
     "@walletconnect/core": "^2.8.0",
     "@walletconnect/web3wallet": "^1.8.0",
