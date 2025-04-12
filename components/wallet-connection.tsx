@@ -88,21 +88,22 @@ export function WalletConnection() {
       // Dynamically import WalletKit from @reown/walletkit and initialize if needed.
       if (!window.walletKit) {
         const { WalletKit } = await import("@reown/walletkit");
-        // Initialize WalletKit with your project configuration.
+        // Added the logger property to fix the undefined 'logger' error.
         window.walletKit = new WalletKit({
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID, // Make sure this env variable exists
+          projectId: process.env.NEXT_PUBLIC_PROJECT_ID, // Ensure this env variable exists
+          logger: "debug", // Provide a logger setting to avoid the undefined error
           metadata: {
             name: "KasCasino Wallet",
             description: "Wallet for KasCasino",
             url: "https://www.kascasino.xyz",
             icons: ["https://your_wallet_icon.png"],
-            // If needed, set your native and universal redirect URIs here.
+            // Optionally set your native and universal redirect URIs here.
             redirect: {
-              native: "", 
-              universal: ""
+              native: "",
+              universal: "",
             },
           },
-          // Optional: You can specify which wallets are supported.
+          // Optional: Specify which wallets are supported.
           wallets: ["metamask", "trust", "uniswap"],
         });
       }
@@ -110,7 +111,7 @@ export function WalletConnection() {
       const walletKit = window.walletKit;
 
       // Initiate connection for the given wallet type.
-      // The connect method abstracts both the deep linking and pairing logic.
+      // The connect method abstracts both deep linking and pairing logic.
       const session = await walletKit.connect({ wallet: walletType });
       
       if (session && session.accounts && session.accounts.length > 0) {
