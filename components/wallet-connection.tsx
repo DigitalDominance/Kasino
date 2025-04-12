@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useWallet, WalletStatus } from "@/contexts/WalletContext";
 import { useModal } from "@/contexts/ModalContext";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,31 @@ export function WalletConnection() {
   const { showModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Open the wallet selection modal
+  // Close the dropdown if user clicks outside it
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowOptions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Toggle the dropdown open/closed
   const openWalletOptions = () => {
-    setShowOptions(true);
+    setShowOptions((prev) => !prev);
   };
 
-  // Close the wallet selection modal
   const closeWalletOptions = () => {
     setShowOptions(false);
   };
 
-  // Current Kasware connection logic (with network and account checks)
+  // Kasware connection logic (using your current connectWallet logic)
   const handleKaswareConnect = async () => {
     setIsLoading(true);
     closeWalletOptions();
@@ -45,21 +58,21 @@ export function WalletConnection() {
     }
   };
 
-  // EVM connection logic using WalletConnect provider
+  // EVM connection logic via WalletConnect (configured for Kaspa with chain id 12211)
   const handleEvmConnect = async () => {
     setIsLoading(true);
     closeWalletOptions();
     try {
       const provider = new WalletConnectProvider({
-        infuraId: "YOUR_INFURA_PROJECT_ID" // Replace with your Infura project ID or RPC configuration
+        rpc: { 12211: "https://rpc.kasplextest.xyz" },
+        chainId: 12211,
       });
-      // This displays the QR Code modal or deep linking options for EVM wallets
+      // Prompts a QR code or deep link for EVM wallets (e.g., MetaMask, Trust Wallet, etc.)
       await provider.enable();
       const web3 = new Web3(provider);
       const accounts = await web3.eth.getAccounts();
       if (accounts.length > 0) {
         const address = accounts[0];
-        // You can add additional checks here if needed
         await checkUserAccount(address);
       }
     } catch (error) {
@@ -69,7 +82,7 @@ export function WalletConnection() {
     }
   };
 
-  // Existing user account check logic
+  // Check user account on your backend
   const checkUserAccount = async (address) => {
     try {
       const response = await fetch(`/api/user?walletAddress=${address}`);
@@ -89,9 +102,9 @@ export function WalletConnection() {
     }
   };
 
-  // Existing network check for Kasware
+  // Check Kasware network
   const checkNetwork = async () => {
-    const kasware = (window).kasware;
+    const kasware = window.kasware;
     if (kasware) {
       try {
         const network = await kasware.getNetwork();
@@ -110,7 +123,7 @@ export function WalletConnection() {
     return false;
   };
 
-  // Wrapped disconnect logic
+  // Disconnect logic with debounce
   const handleDisconnect = useCallback(
     debounce(async () => {
       setIsLoading(true);
@@ -126,15 +139,16 @@ export function WalletConnection() {
   );
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center space-x-4 relative">
       <WalletStatus />
+
+      {/* CONNECT or DISCONNECT button */}
       {!isConnected ? (
-        // Instead of triggering connection directly, open the wallet selection modal
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
             onClick={openWalletOptions}
             disabled={isLoading}
+            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
           >
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Connect Wallet"}
           </Button>
@@ -142,38 +156,43 @@ export function WalletConnection() {
       ) : (
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
             onClick={handleDisconnect}
             disabled={isLoading}
+            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
           >
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Disconnect"}
           </Button>
         </motion.div>
       )}
 
+      {/* Dropdown Menu */}
       {showOptions && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Choose Wallet Type</h2>
-            <div className="flex flex-col space-y-4">
-              <div
-                className="flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded transition-all"
-                onClick={handleKaswareConnect}
-              >
-                <img src="/placeholder1.svg" alt="Kasware Wallet" className="w-10 h-10 mr-4" />
-                <span>Kasware Wallet</span>
-              </div>
-              <div
-                className="flex items-center cursor-pointer hover:bg-gray-100 p-2 rounded transition-all"
-                onClick={handleEvmConnect}
-              >
-                <img src="/placeholder2.svg" alt="EVM Wallet (WalletConnect)" className="w-10 h-10 mr-4" />
-                <span>EVM Wallet (WalletConnect)</span>
-              </div>
-            </div>
-            <button onClick={closeWalletOptions} className="mt-4 text-red-500 hover:underline">
-              Cancel
-            </button>
+        <div
+          ref={dropdownRef}
+          className="absolute top-full right-0 mt-2 w-64 z-50 bg-[#2F2F2F] text-white rounded-md shadow-lg p-4"
+        >
+          <h2 className="text-lg font-semibold mb-3">Choose Wallet Type</h2>
+          <div
+            className="flex items-center cursor-pointer hover:bg-[#3A3A3A] p-2 rounded transition-all"
+            onClick={handleKaswareConnect}
+          >
+            <img
+              src="/kaswarelogo.webp"
+              alt="Kasware Wallet"
+              className="w-8 h-8 mr-3"
+            />
+            <span>Kasware Wallet</span>
+          </div>
+          <div
+            className="flex items-center cursor-pointer hover:bg-[#3A3A3A] p-2 rounded transition-all mt-2"
+            onClick={handleEvmConnect}
+          >
+            <img
+              src="/walletconnectlogo.webp"
+              alt="EVM Wallet (WalletConnect)"
+              className="w-8 h-8 mr-3"
+            />
+            <span>EVM Wallet (WalletConnect)</span>
           </div>
         </div>
       )}
