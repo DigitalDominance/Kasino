@@ -18,7 +18,7 @@ export function WalletConnection() {
   const [showEvmModal, setShowEvmModal] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close the main dropdown if clicking outside
+  // Close the main dropdown when clicking outside.
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -29,7 +29,7 @@ export function WalletConnection() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Toggle the main dropdown
+  // Toggle main dropdown.
   const openWalletOptions = () => {
     setShowOptions((prev) => !prev);
   };
@@ -38,7 +38,7 @@ export function WalletConnection() {
     setShowOptions(false);
   };
 
-  // Toggle the EVM wallet modal (sub-dropdown)
+  // Toggle EVM wallet sub-dropdown.
   const openEvmWalletModal = () => {
     setShowEvmModal(true);
   };
@@ -47,7 +47,7 @@ export function WalletConnection() {
     setShowEvmModal(false);
   };
 
-  // Kasware connection logic (remains unchanged)
+  // Kasware connection logic (remains unchanged).
   const handleKaswareConnect = async () => {
     setIsLoading(true);
     closeWalletOptions();
@@ -66,37 +66,50 @@ export function WalletConnection() {
     }
   };
 
-  // New EVM wallet connection using WalletConnect's EthereumProvider
+  // EVM wallet connection without QR modal (using injected provider in chrome extensions).
   const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      // Initialize EthereumProvider with your custom rpc and chain ID settings.
-      const provider = await EthereumProvider.init({
-        projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-        metadata: {
-          name: "KasCasino Wallet",
-          description: "Wallet for KasCasino",
-          url: "https://www.kascasino.xyz",
-          icons: ["https://your_wallet_icon.png"], // Replace with your wallet icon if needed.
-        },
-        optionalChains: [12211],
-        rpcMap: {
-          12211: "https://www.kasplextest.xyz",
-        },
-      });
+      // Use injected provider (e.g., MetaMask) if available.
+      if (window.ethereum) {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        if (accounts && accounts.length > 0) {
+          const address = accounts[0];
+          await checkUserAccount(address);
+        }
+      } else {
+        // Fallback: Initialize WalletConnect's EthereumProvider.
+        const provider = await EthereumProvider.init({
+          projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+          metadata: {
+            name: "KasCasino Wallet",
+            description: "Wallet for KasCasino",
+            url: "https://www.kascasino.xyz",
+            icons: ["https://your_wallet_icon.png"],
+          },
+          optionalChains: [12211],
+          rpcMap: {
+            12211: "https://www.kasplextest.xyz",
+          },
+        });
 
-      // Subscribe to the display_uri event for additional custom handling if desired.
-      provider.on("display_uri", (uri) => {
-        console.log("WalletConnect URI:", uri);
-        // Optionally, integrate your own QR code modal or deep link handling here.
-      });
+        // Instead of showing a QR modal, if no injected provider exists,
+        // subscribe to the display_uri event and use deep linking.
+        provider.on("display_uri", (uri) => {
+          console.log("Deep link URI:", uri);
+          // Directly navigate to the URI to trigger connection in mobile browsers.
+          window.location.href = uri;
+        });
 
-      // Connect to the wallet; this will trigger the WalletConnect modal (or deep link on mobile).
-      const accounts = await provider.request({ method: "eth_requestAccounts" });
-      if (accounts && accounts.length > 0) {
-        const address = accounts[0];
-        await checkUserAccount(address);
+        // Call connect() to establish a session.
+        const session = await provider.connect();
+        if (session && session.accounts && session.accounts.length > 0) {
+          const address = session.accounts[0];
+          await checkUserAccount(address);
+        } else {
+          throw new Error("No accounts returned from the session.");
+        }
       }
     } catch (error) {
       console.error("Error using WalletConnect for EVM wallet connection:", error);
@@ -106,7 +119,7 @@ export function WalletConnection() {
     }
   };
 
-  // Check user account on your backend
+  // Check user account on backend.
   const checkUserAccount = async (address) => {
     try {
       const response = await fetch(`/api/user?walletAddress=${address}`);
@@ -126,7 +139,7 @@ export function WalletConnection() {
     }
   };
 
-  // Check Kasware network (kept as is)
+  // Check Kasware network.
   const checkNetwork = async () => {
     const kasware = window.kasware;
     if (kasware) {
@@ -147,7 +160,7 @@ export function WalletConnection() {
     return false;
   };
 
-  // Disconnect logic with debounce
+  // Disconnect logic with debounce.
   const handleDisconnect = useCallback(
     debounce(async () => {
       setIsLoading(true);
@@ -165,8 +178,6 @@ export function WalletConnection() {
   return (
     <div className="flex items-center space-x-4 relative">
       <WalletStatus />
-
-      {/* Connect or Disconnect Button */}
       {!isConnected ? (
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
@@ -188,8 +199,6 @@ export function WalletConnection() {
           </Button>
         </motion.div>
       )}
-
-      {/* Main Dropdown Menu */}
       {showOptions && (
         <div
           ref={dropdownRef}
@@ -212,8 +221,6 @@ export function WalletConnection() {
           </div>
         </div>
       )}
-
-      {/* EVM Wallet Options Sub-Dropdown */}
       {showEvmModal && (
         <div className="absolute top-full right-0 mt-2 w-64 z-50 bg-[#2F2F2F] text-white rounded-md shadow-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Select EVM Wallet</h2>
