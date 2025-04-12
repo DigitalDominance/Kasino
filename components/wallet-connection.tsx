@@ -65,7 +65,7 @@ export function WalletConnection() {
   };
 
   // Helper: Construct deep link URL based on wallet type and connection URI.
-  // (WalletConnect’s pairing deep linking is typically handled by wallet apps.)
+  // (This function is here for completeness if a fallback is ever needed on mobile)
   const getDeepLinkUrl = (walletType, uri) => {
     const encodedUri = encodeURIComponent(uri);
     switch (walletType) {
@@ -80,20 +80,20 @@ export function WalletConnection() {
     }
   };
 
-  // Custom EVM wallet connection using Web3Wallet from WalletConnect Cloud
+  // Custom EVM wallet connection via WalletKit using One‑click Auth
   const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      // Dynamically import Core and Web3Wallet if not already initialized
-      if (!window.web3wallet) {
+      // Dynamically import Core and WalletKit if not already initialized
+      if (!window.walletKit) {
         const { Core } = await import("@walletconnect/core");
-        const { Web3Wallet } = await import("@walletconnect/web3wallet");
+        const { WalletKit } = await import("@reown/walletkit");
         const core = new Core({
           projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
         });
-        // Initialize Web3Wallet with the shared core instance and your metadata.
-        window.web3wallet = await Web3Wallet.init({
+        // Initialize WalletKit with your metadata and shared core instance
+        window.walletKit = await WalletKit.init({
           core,
           metadata: {
             name: "KasCasino Wallet",
@@ -105,79 +105,53 @@ export function WalletConnection() {
               universal: ""
             },
           },
+          logger: "debug", // Prevent undefined logger errors
+          wallets: ["metamask", "trust", "uniswap"],
+        });
+
+        // Subscribe to one-click authentication requests.
+        window.walletKit.on("session_authenticate", async (payload) => {
+          // Here you would normally process the authentication payload:
+          // 1. Populate the auth payload.
+          // 2. Format the SIWE message.
+          // 3. Sign the message using the wallet extension.
+          // 4. Approve the authentication request.
+          // For demonstration, we immediately approve with a placeholder signature.
+          console.log("Received authentication request:", payload);
+          const { getSdkError } = await import("@walletconnect/utils");
+          // Replace the auth object below with a real signed auth object.
+          const authObject = { t: "eip191", s: "signature_placeholder" };
+          await window.walletKit.approveSessionAuthenticate({
+            id: payload.id,
+            auths: [authObject],
+          });
         });
       }
-      const web3wallet = window.web3wallet;
+      const walletKit = window.walletKit;
 
-      // Create a new pairing to generate a WalletConnect URI (WC URI)
-      const { uri } = await web3wallet.core.pairing.create();
-      if (!uri) {
-        showNotification("Failed to initialize connection.", "error");
-        setIsLoading(false);
-        return;
-      }
-
-      // Build deep link URL for the selected wallet using the generated URI
-      const deepLinkUrl = getDeepLinkUrl(walletType, uri);
-      if (!deepLinkUrl) {
-        showNotification("Unsupported wallet type.", "error");
-        setIsLoading(false);
-        return;
-      }
-
-      // Determine if the device is mobile; if mobile, use deep linking immediately,
-      // otherwise (desktop) open the link in a new tab.
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        window.location.href = deepLinkUrl;
-      } else {
-        window.open(deepLinkUrl, "_blank");
-      }
-
-      // Listen for session proposals from the dapp.
-      web3wallet.on("session_proposal", async (proposal) => {
-        try {
-          const { buildApprovedNamespaces, getSdkError } = await import("@walletconnect/utils");
-          // Build approved namespaces using the proposal and your supported configuration.
-          const approvedNamespaces = buildApprovedNamespaces({
-            proposal: proposal.params,
-            supportedNamespaces: {
-              eip155: {
-                chains: ["eip155:12211"],
-                methods: ["eth_sendTransaction", "personal_sign"],
-                events: ["accountsChanged", "chainChanged"],
-                accounts: [], // the wallet will supply the connected accounts
-              },
-            },
-          });
-
-          // Approve the session proposal.
-          const session = await web3wallet.approveSession({
-            id: proposal.id,
-            namespaces: approvedNamespaces,
-          });
-
-          // Extract the connected account from the session (format: eip155:chainId:account)
-          if (session && session.namespaces && session.namespaces.eip155) {
-            const accounts = session.namespaces.eip155.accounts;
-            if (accounts && accounts.length > 0) {
-              const address = accounts[0].split(":")[2];
-              await checkUserAccount(address);
-            }
-          }
-        } catch (error) {
-          const { getSdkError } = await import("@walletconnect/utils");
-          showNotification("Connection error during session proposal.", "error");
-          await web3wallet.rejectSession({
-            id: proposal.id,
-            reason: getSdkError("USER_REJECTED"),
-          });
+      // On desktop with chrome extensions (e.g., MetaMask), use one‑click auth:
+      if (window.ethereum) {
+        // This triggers the wallet’s extension popup for one-click authorization.
+        const session = await walletKit.connect({ wallet: walletType });
+        if (session && session.accounts && session.accounts.length > 0) {
+          const address = session.accounts[0]; // for extensions, session.accounts is typically an array of addresses
+          await checkUserAccount(address);
         }
-        setIsLoading(false);
-      });
+      } else {
+        // Fallback (for mobile) if needed:
+        const { uri } = await walletKit.core.pairing.create();
+        if (!uri) {
+          showNotification("Failed to initialize connection.", "error");
+          setIsLoading(false);
+          return;
+        }
+        const deepLinkUrl = getDeepLinkUrl(walletType, uri);
+        window.location.href = deepLinkUrl;
+      }
     } catch (error) {
-      console.error("Error using Web3Wallet:", error);
+      console.error("Error using WalletKit:", error);
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
+    } finally {
       setIsLoading(false);
     }
   };
