@@ -18,7 +18,7 @@ export function WalletConnection() {
   const [showEvmModal, setShowEvmModal] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close the dropdown if user clicks outside it
+  // Close the main dropdown if clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -26,9 +26,7 @@ export function WalletConnection() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Toggle the main dropdown
@@ -40,7 +38,7 @@ export function WalletConnection() {
     setShowOptions(false);
   };
 
-  // Toggle the EVM wallet selection modal
+  // Toggle the EVM wallet modal (sub-dropdown)
   const openEvmWalletModal = () => {
     setShowEvmModal(true);
   };
@@ -88,14 +86,13 @@ export function WalletConnection() {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      // Instantiate provider with custom RPC and disable automatic QR code modal
       const provider = new WalletConnectProvider({
         rpc: { 12211: "https://rpc.kasplextest.xyz" },
         chainId: 12211,
-        qrcode: false,
+        qrcode: false, // disable automatic QR modal
       });
       
-      // Initiate a new WalletConnect session to generate the connection URI.
+      // Create a new session to generate the connection URI
       await provider.connector.createSession();
       const uri = provider.connector.uri;
       if (!uri) {
@@ -112,7 +109,8 @@ export function WalletConnection() {
         return;
       }
       
-      // Open the wallet app via deep link.
+      // Redirect the browser to the deep link URL.
+      // Note: This will only work if the wallet app is installed and the scheme is registered.
       window.location.href = deepLinkUrl;
       
       // Listen for connection events. When connected, retrieve accounts.
@@ -129,8 +127,6 @@ export function WalletConnection() {
         }
         setIsLoading(false);
       });
-      
-      // Optionally, you can add a timeout here in case no connection event fires.
     } catch (error) {
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
       setIsLoading(false);
@@ -197,7 +193,7 @@ export function WalletConnection() {
     <div className="flex items-center space-x-4 relative">
       <WalletStatus />
 
-      {/* CONNECT or DISCONNECT button */}
+      {/* Connect or Disconnect Button */}
       {!isConnected ? (
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
@@ -231,62 +227,49 @@ export function WalletConnection() {
             className="flex items-center cursor-pointer hover:bg-[#3A3A3A] p-2 rounded transition-all"
             onClick={handleKaswareConnect}
           >
-            <img
-              src="/kaswarelogo.webp"
-              alt="Kasware Wallet"
-              className="w-8 h-8 mr-3"
-            />
+            <img src="/kaswarelogo.webp" alt="Kasware Wallet" className="w-8 h-8 mr-3" />
             <span>Kasware Wallet</span>
           </div>
           <div
             className="flex items-center cursor-pointer hover:bg-[#3A3A3A] p-2 rounded transition-all mt-2"
             onClick={openEvmWalletModal}
           >
-            <img
-              src="/walletconnectlogo.webp"
-              alt="EVM Wallet (WalletConnect)"
-              className="w-8 h-8 mr-3"
-            />
+            <img src="/walletconnectlogo.webp" alt="EVM Wallet (WalletConnect)" className="w-8 h-8 mr-3" />
             <span>EVM Wallet (WalletConnect)</span>
           </div>
         </div>
       )}
 
-      {/* EVM Wallet Options Modal */}
+      {/* EVM Wallet Options Sub-Dropdown */}
       {showEvmModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-[#2F2F2F] text-white rounded-lg p-6 w-80 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Select EVM Wallet</h2>
-            <div className="flex flex-col space-y-3">
-              <button
-                onClick={() => handleSelectEvmWallet("metamask")}
-                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
-              >
-                <img src="/metamask-logo.webp" alt="MetaMask" className="w-8 h-8 mr-3" />
-                <span>MetaMask</span>
-              </button>
-              <button
-                onClick={() => handleSelectEvmWallet("trust")}
-                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
-              >
-                <img src="/trustwallet-logo.webp" alt="Trust Wallet" className="w-8 h-8 mr-3" />
-                <span>Trust Wallet</span>
-              </button>
-              <button
-                onClick={() => handleSelectEvmWallet("uniswap")}
-                className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
-              >
-                <img src="/uniswap-logo.webp" alt="Uniswap Wallet" className="w-8 h-8 mr-3" />
-                <span>Uniswap Wallet</span>
-              </button>
-            </div>
+        <div className="absolute top-full right-0 mt-2 w-64 z-50 bg-[#2F2F2F] text-white rounded-md shadow-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">Select EVM Wallet</h2>
+          <div className="flex flex-col space-y-3">
             <button
-              onClick={closeEvmWalletModal}
-              className="mt-4 text-red-400 hover:underline"
+              onClick={() => handleSelectEvmWallet("metamask")}
+              className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
             >
-              Cancel
+              <img src="/metamask-logo.webp" alt="MetaMask" className="w-8 h-8 mr-3" />
+              <span>MetaMask</span>
+            </button>
+            <button
+              onClick={() => handleSelectEvmWallet("trust")}
+              className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
+            >
+              <img src="/trustwallet-logo.webp" alt="Trust Wallet" className="w-8 h-8 mr-3" />
+              <span>Trust Wallet</span>
+            </button>
+            <button
+              onClick={() => handleSelectEvmWallet("uniswap")}
+              className="flex items-center p-2 hover:bg-[#3A3A3A] rounded"
+            >
+              <img src="/uniswap-logo.webp" alt="Uniswap Wallet" className="w-8 h-8 mr-3" />
+              <span>Uniswap Wallet</span>
             </button>
           </div>
+          <button onClick={closeEvmWalletModal} className="mt-4 text-red-400 hover:underline">
+            Cancel
+          </button>
         </div>
       )}
     </div>
