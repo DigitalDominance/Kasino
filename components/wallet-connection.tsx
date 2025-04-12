@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { debounce } from "underscore";
+import { siweConfig } from "./siweConfig";
 
 export function WalletConnection() {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet();
@@ -80,20 +81,24 @@ export function WalletConnection() {
     }
   };
 
-  // Custom EVM wallet connection via WalletKit using One‑click Auth
+  // Custom EVM wallet connection via AppKit (One‑click Auth with SIWE)
   const handleSelectEvmWallet = async (walletType) => {
     setIsLoading(true);
     closeEvmWalletModal();
     try {
-      // Dynamically import Core and WalletKit if not already initialized
+      // Dynamically import AppKit and WalletConnect Core if not already initialized.
       if (!window.walletKit) {
-        const { Core } = await import("@walletconnect/core");
-        const { WalletKit } = await import("@reown/walletkit");
+        const [{ createAppKit }, { Core }] = await Promise.all([
+          import("@reown/appkit-siwe-react-native"),
+          import("@walletconnect/core"),
+        ]);
+
         const core = new Core({
           projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
         });
-        // Initialize WalletKit with your metadata and shared core instance
-        window.walletKit = await WalletKit.init({
+
+        // Initialize AppKit with your metadata, shared core instance, and SIWE configuration.
+        window.walletKit = await createAppKit({
           core,
           metadata: {
             name: "KasCasino Wallet",
@@ -102,39 +107,52 @@ export function WalletConnection() {
             icons: ["https://your_wallet_icon.png"],
             redirect: {
               native: "",  // set your native scheme if necessary
-              universal: ""
+              universal: "",
             },
           },
-          logger: "debug", // Prevent undefined logger errors
+          siweConfig, // integrate SIWE configuration for one‑click auth (EIP‑4361)
+          logger: "debug",
           wallets: ["metamask", "trust", "uniswap"],
         });
 
-        // Subscribe to one-click authentication requests.
+        // Subscribe to one‑click authentication requests.
         window.walletKit.on("session_authenticate", async (payload) => {
-          // Here you would normally process the authentication payload:
-          // 1. Populate the auth payload.
-          // 2. Format the SIWE message.
-          // 3. Sign the message using the wallet extension.
-          // 4. Approve the authentication request.
-          // For demonstration, we immediately approve with a placeholder signature.
+          // This callback is triggered when the wallet requires SIWE authentication.
           console.log("Received authentication request:", payload);
-          const { getSdkError } = await import("@walletconnect/utils");
-          // Replace the auth object below with a real signed auth object.
-          const authObject = { t: "eip191", s: "signature_placeholder" };
-          await window.walletKit.approveSessionAuthenticate({
-            id: payload.id,
-            auths: [authObject],
-          });
+          try {
+            // Retrieve the current wallet address.
+            const userAddress = payload.params?.[0] || (window.ethereum && window.ethereum.selectedAddress);
+            if (!userAddress) throw new Error("Wallet address not available for SIWE message signing.");
+
+            // Retrieve parameters and create a SIWE message.
+            const messageParams = await siweConfig.getMessageParams();
+            const siweMessage = siweConfig.createMessage({ address: userAddress, ...messageParams });
+
+            // Request the wallet provider to sign the SIWE message.
+            const signature = await window.ethereum.request({
+              method: "personal_sign",
+              params: [siweMessage, userAddress],
+            });
+
+            // Approve the session authentication with the signed SIWE message.
+            await window.walletKit.approveSessionAuthenticate({
+              id: payload.id,
+              auths: [{ t: "eip191", s: signature }],
+            });
+          } catch (error) {
+            console.error("Error during SIWE session authentication:", error);
+            // Optionally, you could reject the session authentication here.
+          }
         });
       }
+
       const walletKit = window.walletKit;
 
       // On desktop with chrome extensions (e.g., MetaMask), use one‑click auth:
       if (window.ethereum) {
-        // This triggers the wallet’s extension popup for one-click authorization.
         const session = await walletKit.connect({ wallet: walletType });
         if (session && session.accounts && session.accounts.length > 0) {
-          const address = session.accounts[0]; // for extensions, session.accounts is typically an array of addresses
+          const address = session.accounts[0]; // Typically, session.accounts is an array of addresses
           await checkUserAccount(address);
         }
       } else {
@@ -149,7 +167,7 @@ export function WalletConnection() {
         window.location.href = deepLinkUrl;
       }
     } catch (error) {
-      console.error("Error using WalletKit:", error);
+      console.error("Error using AppKit for EVM wallet connection:", error);
       showNotification("Failed to connect EVM wallet. Please try again.", "error");
     } finally {
       setIsLoading(false);
@@ -176,7 +194,7 @@ export function WalletConnection() {
     }
   };
 
-  // Check Kasware network
+  // Check Kasware network (keep this unchanged)
   const checkNetwork = async () => {
     const kasware = window.kasware;
     if (kasware) {
