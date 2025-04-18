@@ -1,4 +1,3 @@
-// BettingPage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -145,6 +144,10 @@ export default function BettingPage() {
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
 
+  // **NEW STATE** for My Bets tab
+  const [showMyBets, setShowMyBets] = useState<boolean>(false);
+  const [betHistory, setBetHistory] = useState<any[]>([]);
+
   // Socket for bet resolution notifications
   useEffect(() => {
     const socket = io(
@@ -183,7 +186,7 @@ export default function BettingPage() {
 
   // Fetch events for the selected sport.
   useEffect(() => {
-    if (!selectedSport) return;
+    if (!selectedSport || showMyBets) return;
     axios
       .get(
         `${ODDS_API_HOST}/v4/sports/${selectedSport}/odds?regions=us&markets=h2h&oddsFormat=american&apiKey=${process.env.NEXT_PUBLIC_ODDS_API_KEY}`
@@ -196,10 +199,11 @@ export default function BettingPage() {
         setEvents(processed);
       })
       .catch((err) => console.error("Error fetching events:", err));
-  }, [selectedSport]);
+  }, [selectedSport, showMyBets]);
 
   // Fetch scores to see if events are completed.
   useEffect(() => {
+    if (showMyBets) return;
     const eventsNeedingResults = events.filter((event: any) => !eventResults[event.id]);
     if (eventsNeedingResults.length > 0) {
       const eventIds = eventsNeedingResults.map((e: any) => e.id).join(",");
@@ -217,7 +221,7 @@ export default function BettingPage() {
         })
         .catch((err) => console.error("Error fetching event results:", err));
     }
-  }, [events, selectedSport, eventResults]);
+  }, [events, selectedSport, eventResults, showMyBets]);
 
   // When the bet modal is open, load existing bets for the event.
   useEffect(() => {
@@ -241,6 +245,30 @@ export default function BettingPage() {
       setSelectedOutcome(null);
     }
   }, [betModalVisible, selectedEvent, isConnected]);
+
+  // **NEW**: load full history when My Bets tab opened
+  useEffect(() => {
+    if (showMyBets && isConnected) {
+      (async () => {
+        try {
+          const accounts = await window.kasware.getAccounts();
+          const res = await axios.get(`${apiUrl}/betting/myBetsHistory`, {
+            params: { walletAddress: accounts[0] },
+          });
+          if (res.data.success) {
+            setBetHistory(
+              res.data.bets.sort(
+                (a: any, b: any) =>
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              )
+            );
+          }
+        } catch (err) {
+          console.error("Error fetching bet history:", err);
+        }
+      })();
+    }
+  }, [showMyBets, isConnected]);
 
   // Place a bet.
   const placeBet = async () => {
@@ -362,17 +390,20 @@ export default function BettingPage() {
         />
       </div>
 
-      {/* Top category buttons */}
+      {/* Top category buttons + My Bets */}
       <div className="flex gap-2 mb-6">
         {sports.map((sport) => {
-          const isSelected = selectedSport === sport.key;
+          const isSelected = !showMyBets && selectedSport === sport.key;
           const btnClass = isSelected
             ? "bg-[#49EACB] text-black px-20 py-9 text-4xl"
             : "bg-gray-800 text-white px-20 py-9 text-4xl";
           return (
             <Button
               key={sport.key}
-              onClick={() => setSelectedSport(sport.key)}
+              onClick={() => {
+                setShowMyBets(false);
+                setSelectedSport(sport.key);
+              }}
               className={btnClass}
             >
               <span className="flex items-center">
@@ -390,115 +421,207 @@ export default function BettingPage() {
             </Button>
           );
         })}
+
+        {/* NEW "My Bets" button */}
+        <Button
+          onClick={() => setShowMyBets(true)}
+          className={`px-20 py-9 text-4xl ${
+            showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"
+          }`}
+        >
+          <span className="flex items-center">
+            My Bets
+            <Image
+              src="/mybetsicon.webp"
+              alt="My Bets"
+              width={50}
+              height={50}
+              className="ml-2"
+            />
+          </span>
+        </Button>
       </div>
 
-      {/* Sport heading with animation */}
+      {/* Sport or My Bets heading */}
       <AnimatePresence exitBeforeEnter>
         <motion.h1
-          key={selectedSport}
+          key={showMyBets ? "mybets" : selectedSport}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.5 }}
           className="text-4xl font-bold mb-4 text-[#49EACB]"
         >
-          {displayNameMap[selectedSport] ||
-            sports.find((s) => s.key === selectedSport)?.title}
+          {showMyBets
+            ? "My Bets"
+            : displayNameMap[selectedSport] ||
+              sports.find((s) => s.key === selectedSport)?.title}
         </motion.h1>
       </AnimatePresence>
 
-      {/* Display events grouped by date with loading animation */}
+      {/* Main content: either event cards or My Bets list */}
       <AnimatePresence exitBeforeEnter>
         <motion.div
-          key={selectedSport}
+          key={showMyBets ? "mybets-content" : selectedSport}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.5 }}
         >
-          {sortedDates.map((dateStr) => {
-            const relevantEvents = groupedEvents[dateStr].filter(
-              (event: any) =>
-                event.sport_key === selectedSport && isWithinOneWeek(event.commence_time)
-            );
-            if (relevantEvents.length === 0) return null;
+          {showMyBets ? (
+            // **My Bets view**
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {betHistory.map((bet) => {
+                const won = bet.gameResult === "win";
+                const lost = bet.gameResult === "lose";
+                const possibleWin =
+                  bet.odds > 0
+                    ? bet.betAmount * (1 + bet.odds / 100)
+                    : bet.betAmount * (1 + 100 / Math.abs(bet.odds));
+                return (
+                  <Card key={bet._id} className="p-4 bg-gray-800 text-white">
+                    <div className="flex items-center mb-2">
+                      <Image
+                        src={iconMap[bet.sportKey] || "/kasinogenericicon.webp"}
+                        alt=""
+                        width={32}
+                        height={32}
+                      />
+                      <span className="ml-2 font-semibold">
+                        {displayNameMap[bet.sportKey] ||
+                          bet.sportKey.toUpperCase()}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
+                    <p className="text-sm mb-1">
+                      {new Date(bet.eventCommenceTime).toLocaleString()}
+                    </p>
+                    <p className="mb-1">
+                      Chose: {bet.chosenOutcome} @ {bet.odds}
+                    </p>
+                    <p className="flex items-center mb-1">
+                      <Image
+                        src="/kaslogo.webp"
+                        alt="KAS"
+                        width={16}
+                        height={16}
+                      />
+                      <span className="ml-1">{bet.betAmount}</span>
+                    </p>
+                    {lost ? (
+                      <p className="mt-2 text-red-600 text-xl font-bold">
+                        LOSS
+                      </p>
+                    ) : won ? (
+                      <p className="mt-2 text-green-400">
+                        Won: {possibleWin.toFixed(2)} KAS
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-gray-400">Pending...</p>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            // **Original event list view**
+            sortedDates.map((dateStr) => {
+              const relevantEvents = groupedEvents[dateStr].filter(
+                (event: any) =>
+                  event.sport_key === selectedSport &&
+                  isWithinOneWeek(event.commence_time)
+              );
+              if (relevantEvents.length === 0) return null;
 
-            return (
-              <section key={dateStr} className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-white">{dateStr}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {relevantEvents.map((event: any) => {
-                    const over = isEventOver(event, eventResults);
-                    const eventTime = new Date(event.commence_time).getTime();
-                    const now = Date.now();
-                    const ongoing = eventTime <= now && !over;
-                    const borderColor = over ? "border-red-500" : "border-[#49EACB]";
-                    const cursorClass = !over && !ongoing
-                      ? "cursor-pointer hover:bg-gray-700"
-                      : "cursor-not-allowed";
+              return (
+                <section key={dateStr} className="mb-8">
+                  <h2 className="text-2xl font-bold mb-4 text-white">
+                    {dateStr}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {relevantEvents.map((event: any) => {
+                      const over = isEventOver(event, eventResults);
+                      const eventTime = new Date(event.commence_time).getTime();
+                      const now = Date.now();
+                      const ongoing = eventTime <= now && !over;
+                      const borderColor = over
+                        ? "border-red-500"
+                        : "border-[#49EACB]";
+                      const cursorClass =
+                        !over && !ongoing
+                          ? "cursor-pointer hover:bg-gray-700"
+                          : "cursor-not-allowed";
 
-                    return (
-                      <Card
-                        key={event.id}
-                        className={`p-4 bg-gray-800 ${borderColor} ${cursorClass} text-white`}
-                        onClick={() => {
-                          if (!over && !ongoing) {
-                            setSelectedEvent(event);
-                            setSelectedOutcome(null);
-                            setDepositTxid(null);
-                            setBetModalVisible(true);
-                          }
-                        }}
-                      >
-                        <h3 className="text-2xl font-bold">
-                          {formatEventTeams(event.away_team, event.home_team)}
-                        </h3>
-                        <p className="text-base">
-                          Commence Time: {new Date(event.commence_time).toLocaleString()}
-                        </p>
-                        <div className="mt-2">
-                          {ongoing ? (
-                            <p className="text-lg font-semibold text-[#49EACB]">
-                              Event In Progress
-                            </p>
-                          ) : over ? (
-                            <p className="text-lg font-semibold">
-                              Result:{" "}
-                              {eventResults[event.id] && eventResults[event.id].completed
-                                ? getEventResultDisplay(event)
-                                : "Pending"}
-                            </p>
-                          ) : (
-                            Object.keys(event.avgOdds || {}).map((team) => (
-                              <p key={team} className="text-lg">
-                                {team}:{" "}
-                                {event.avgOdds[team] > 0
-                                  ? `+${event.avgOdds[team]}`
-                                  : event.avgOdds[team]}
+                      return (
+                        <Card
+                          key={event.id}
+                          className={`p-4 bg-gray-800 ${borderColor} ${cursorClass} text-white`}
+                          onClick={() => {
+                            if (!over && !ongoing) {
+                              setSelectedEvent(event);
+                              setSelectedOutcome(null);
+                              setDepositTxid(null);
+                              setBetModalVisible(true);
+                            }
+                          }}
+                        >
+                          <h3 className="text-2xl font-bold">
+                            {formatEventTeams(
+                              event.away_team,
+                              event.home_team
+                            )}
+                          </h3>
+                          <p className="text-base">
+                            Commence Time:{" "}
+                            {new Date(event.commence_time).toLocaleString()}
+                          </p>
+                          <div className="mt-2">
+                            {ongoing ? (
+                              <p className="text-lg font-semibold text-[#49EACB]">
+                                Event In Progress
                               </p>
-                            ))
-                          )}
-                        </div>
-                        {myBets.filter((bet: any) => bet.eventId === event.id).length > 0 && (
-                          <div className="mt-2 text-sm text-gray-300">
-                            <strong>Your Bets:</strong>
-                            {myBets
-                              .filter((bet: any) => bet.eventId === event.id)
-                              .map((bet: any, idx: number) => (
-                                <div key={idx}>
-                                  {bet.betAmount} KAS at odds {bet.odds.toFixed(2)} on{" "}
-                                  {bet.chosenOutcome}
-                                </div>
-                              ))}
+                            ) : over ? (
+                              <p className="text-lg font-semibold">
+                                Result:{" "}
+                                {eventResults[event.id] &&
+                                eventResults[event.id].completed
+                                  ? getEventResultDisplay(event)
+                                  : "Pending"}
+                              </p>
+                            ) : (
+                              Object.keys(event.avgOdds || {}).map((team) => (
+                                <p key={team} className="text-lg">
+                                  {team}:{" "}
+                                  {event.avgOdds[team] > 0
+                                    ? `+${event.avgOdds[team]}`
+                                    : event.avgOdds[team]}
+                                </p>
+                              ))
+                            )}
                           </div>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+                          {myBets.filter((bet: any) => bet.eventId === event.id)
+                            .length > 0 && (
+                            <div className="mt-2 text-sm text-gray-300">
+                              <strong>Your Bets:</strong>
+                              {myBets
+                                .filter((bet: any) => bet.eventId === event.id)
+                                .map((bet: any, idx: number) => (
+                                  <div key={idx}>
+                                    {bet.betAmount} KAS at odds{" "}
+                                    {bet.odds.toFixed(2)} on{" "}
+                                    {bet.chosenOutcome}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })
+          )}
         </motion.div>
       </AnimatePresence>
 
