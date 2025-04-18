@@ -482,7 +482,7 @@ export default function BettingPage() {
                   <Card key={bet._id} className="p-4 bg-gray-800 text-white">
                     <div className="flex items-center mb-2">
                       <Image
-                        src={iconMap[bet.sportKey] || "/kasinogenericicon.webp"}
+                        src={iconMap[bet.sportKey] || "/mybetsicon.webp"}
                         alt=""
                         width={32}
                         height={32}
@@ -501,7 +501,7 @@ export default function BettingPage() {
                     </p>
                     <p className="flex items-center mb-1">
                       <Image
-                        src="/kaslogo.webp"
+                        src="/kaspa-kas-logo.webp"
                         alt="KAS"
                         width={16}
                         height={16}
