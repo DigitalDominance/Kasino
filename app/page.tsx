@@ -13,7 +13,7 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import { GiCheerful, GiStarFormation, GiPresent } from "react-icons/gi";
-import { FaTelegramPlane, FaUserAlt } from "react-icons/fa";
+import { FaTelegramPlane, FaUserAlt, FaGem } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
 import { createPortal } from "react-dom";
@@ -304,7 +304,7 @@ function MainPageContent() {
                       />
                     </div>
                     <div className="mt-4 space-y-2">
-                      {/* New Guide Link */}
+                      {/* Guide Link */}
                       <Link
                         href="https://www.kascasino.xyz/guide"
                         className="flex items-center gap-3 p-2 rounded hover:bg-[#00aaff]/5 transition-all duration-300 group"
@@ -312,6 +312,15 @@ function MainPageContent() {
                         <div className="w-5 h-5 rounded bg-gradient-to-br from-[#00aaff] to-[#00aaff]/50 group-hover:shadow-[0_0_10px_rgba(0,170,255,0.3)]" />
                         <span className="group-hover:text-[#00aaff]">Guide</span>
                       </Link>
+                      {/* Sportsbook Link */}
+                      <Link
+                        href="https://www.kascasino.xyz/bet"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#ff00ff]/5 transition-all duration-300 group"
+                      >
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-[#ff00ff] to-[#ff00ff]/50 group-hover:shadow-[0_0_10px_rgba(255,0,255,0.3)]" />
+                        <span className="group-hover:text-[#ff00ff]">Sportsbook</span>
+                      </Link>
+                      {/* Casino Link */}
                       <Link
                         href="#"
                         className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
@@ -319,15 +328,17 @@ function MainPageContent() {
                         <div className="w-5 h-5 rounded bg-gradient-to-br from-[#49eacb] to-[#49eacb]/50 group-hover:shadow-[0_0_10px_rgba(73,234,203,0.3)]" />
                         <span className="group-hover:text-[#49eacb]">Casino</span>
                       </Link>
+                      {/* Raffles Link */}
                       <Link
                         href="https://raffles.kaspercoin.net/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-2 rounded hover:bg-[#49EACB]/5 transition-all duration-300 group"
+                        className="flex items-center gap-3 p-2 rounded hover:bg-[#8a2be2]/5 transition-all duration-300 group"
                       >
                         <div className="w-5 h-5 rounded bg-gradient-to-br from-[#8a2be2] to-[#8a2be2]/50 group-hover:shadow-[0_0_10px_rgba(138,43,226,0.3)]" />
                         <span className="group-hover:text-[#8a2be2]">Raffles</span>
                       </Link>
+                      {/* Support Link */}
                       <Link
                         href="https://t.me/KasCasinoXYZ/2"
                         target="_blank"
@@ -398,11 +409,68 @@ function MainPageContent() {
                   </button>
                 </motion.div>
 
-                {/* Original Games */}
+                {/* Featured Section */}
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+                  className="mb-12"
+                >
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
+                    <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
+                      <FaGem />
+                    </span>
+                    <span className="animate-gradient">Featured:</span>
+                  </h2>
+                  <div className="flex flex-wrap items-start gap-4">
+                    <motion.div
+                      className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] max-w-[400px]"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                    >
+                      <Link href="https://www.kascasino.xyz/bet">
+                        <MotionCard
+                          className="group relative overflow-hidden border-none bg-transparent"
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0 0 30px rgba(73, 234, 203, 0.15)",
+                          }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="relative aspect-[4/2.5] mt-1">
+                            <Image
+                              src="/betcard.webp"
+                              alt="Sportsbook thumbnail"
+                              fill
+                              style={{ objectFit: "cover" }}
+                              className="scale-100 transition-transform duration-300 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-x-0 -bottom-5 top-0 bg-gradient-to-b from-transparent to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end pb-6">
+                              <MotionButton
+                                className="mx-4 mb-4 bg-[#49EACB] text-black font-semibold text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                whileHover={{ scale: 1.02 }}
+                              >
+                                Play Now
+                              </MotionButton>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold mb-1 text-white group-hover:text-[#49EACB] transition-colors duration-300">
+                              Sportsbook
+                            </h3>
+                          </div>
+                        </MotionCard>
+                      </Link>
+                    </motion.div>
+                  </div>
+                </motion.div>
+
+                {/* Original Games */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
@@ -499,7 +567,7 @@ function MainPageContent() {
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                   className="mb-12"
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
@@ -594,7 +662,7 @@ function MainPageContent() {
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
+                  transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
                     <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
@@ -695,7 +763,6 @@ function MainPageContent() {
     </div>
   );
 }
-
 /* XPDisplay Component with Daily Loot Boxes Popup */
 export function XPDisplay() {
   const { isConnected } = useWallet();
