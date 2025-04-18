@@ -392,6 +392,25 @@ export default function BettingPage() {
 
       {/* Top category buttons + My Bets */}
       <div className="flex gap-2 mb-6">
+        {/* NEW "My Bets" button first */}
+        <Button
+          onClick={() => setShowMyBets(true)}
+          className={`px-20 py-9 text-4xl ${
+            showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"
+          }`}
+        >
+          <span className="flex items-center">
+            My Bets
+            <Image
+              src="/mybetsicon.webp"
+              alt="My Bets"
+              width={50}
+              height={50}
+              className="ml-2"
+            />
+          </span>
+        </Button>
+
         {sports.map((sport) => {
           const isSelected = !showMyBets && selectedSport === sport.key;
           const btnClass = isSelected
@@ -421,25 +440,6 @@ export default function BettingPage() {
             </Button>
           );
         })}
-
-        {/* NEW "My Bets" button */}
-        <Button
-          onClick={() => setShowMyBets(true)}
-          className={`px-20 py-9 text-4xl ${
-            showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"
-          }`}
-        >
-          <span className="flex items-center">
-            My Bets
-            <Image
-              src="/mybetsicon.webp"
-              alt="My Bets"
-              width={50}
-              height={50}
-              className="ml-2"
-            />
-          </span>
-        </Button>
       </div>
 
       {/* Sport or My Bets heading */}
@@ -470,59 +470,72 @@ export default function BettingPage() {
         >
           {showMyBets ? (
             // **My Bets view**
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {betHistory.map((bet) => {
-                const won = bet.gameResult === "win";
-                const lost = bet.gameResult === "lose";
-                const possibleWin =
-                  bet.odds > 0
-                    ? bet.betAmount * (1 + bet.odds / 100)
-                    : bet.betAmount * (1 + 100 / Math.abs(bet.odds));
-                return (
-                  <Card key={bet._id} className="p-4 bg-gray-800 text-white">
-                    <div className="flex items-center mb-2">
-                      <Image
-                        src={iconMap[bet.sportKey] || "/mybetsicon.webp"}
-                        alt=""
-                        width={32}
-                        height={32}
-                      />
-                      <span className="ml-2 font-semibold">
-                        {displayNameMap[bet.sportKey] ||
-                          bet.sportKey.toUpperCase()}
-                      </span>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
-                    <p className="text-sm mb-1">
-                      {new Date(bet.eventCommenceTime).toLocaleString()}
-                    </p>
-                    <p className="mb-1">
-                      Chose: {bet.chosenOutcome} @ {bet.odds}
-                    </p>
-                    <p className="flex items-center mb-1">
-                      <Image
-                        src="/kaspa-kas-logo.webp"
-                        alt="KAS"
-                        width={16}
-                        height={16}
-                      />
-                      <span className="ml-1">{bet.betAmount}</span>
-                    </p>
-                    {lost ? (
-                      <p className="mt-2 text-red-600 text-xl font-bold">
-                        LOSS
+            betHistory.length === 0 ? (
+              <p className="text-center text-gray-400">
+                No bets found. Click on a category to place a bet!
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {betHistory.map((bet) => {
+                  const won = bet.gameResult === "win";
+                  const lost = bet.gameResult === "lose";
+                  const possibleWin =
+                    bet.odds > 0
+                      ? bet.betAmount * (1 + bet.odds / 100)
+                      : bet.betAmount * (1 + 100 / Math.abs(bet.odds));
+                  return (
+                    <Card key={bet._id} className="p-4 bg-gray-800 text-white">
+                      <div className="flex items-center mb-2">
+                        <Image
+                          src={iconMap[bet.sportKey] || "/mybetsicon.webp"}
+                          alt=""
+                          width={32}
+                          height={32}
+                        />
+                        <span className="ml-2 font-semibold">
+                          {displayNameMap[bet.sportKey] ||
+                            bet.sportKey.toUpperCase()}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
+                      <p className="text-sm mb-1">
+                        {new Date(bet.eventCommenceTime).toLocaleString()}
                       </p>
-                    ) : won ? (
-                      <p className="mt-2 text-green-400">
-                        Won: {possibleWin.toFixed(2)} KAS
+                      <p className="flex items-center mb-1">
+                        <Image
+                          src="/kaspa-kas-logo.webp"
+                          alt="KAS"
+                          width={16}
+                          height={16}
+                        />
+                        <span className="ml-1">{bet.betAmount}</span>
                       </p>
-                    ) : (
-                      <p className="mt-2 text-gray-400">Pending...</p>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+                      {lost ? (
+                        <p className="mt-2 text-red-600 text-xl font-bold">
+                          LOSS
+                        </p>
+                      ) : won ? (
+                        <p className="mt-2 text-green-400 text-xl font-bold flex items-center">
+                          WON:
+                          <Image
+                            src="/kaspa-kas-logo.webp"
+                            alt="KAS"
+                            width={16}
+                            height={16}
+                            className="ml-1"
+                          />
+                          <span className="ml-1">
+                            {possibleWin.toFixed(2)}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-gray-400">Pending...</p>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )
           ) : (
             // **Original event list view**
             sortedDates.map((dateStr) => {
@@ -694,6 +707,9 @@ export default function BettingPage() {
                       <p className="text-lg font-semibold text-[#49EACB]">Event In Progress</p>
                     </div>
                   );
+                } else if (!isConnected) {
+                  // hide bet input and button if not connected
+                  return null;
                 } else {
                   return (
                     <>
