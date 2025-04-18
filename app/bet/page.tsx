@@ -147,6 +147,21 @@ export default function BettingPage() {
   // **NEW STATE** for My Bets tab
   const [showMyBets, setShowMyBets] = useState<boolean>(false);
   const [betHistory, setBetHistory] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Reset to page 1 when switching to My Bets
+  useEffect(() => {
+    if (showMyBets) {
+      setCurrentPage(1);
+    }
+  }, [showMyBets]);
+
+  // Pagination variables
+  const betsPerPage = 9;
+  const totalPages = Math.ceil(betHistory.length / betsPerPage);
+  const indexOfLastBet = currentPage * betsPerPage;
+  const indexOfFirstBet = indexOfLastBet - betsPerPage;
+  const currentBets = betHistory.slice(indexOfFirstBet, indexOfLastBet);
 
   // Socket for bet resolution notifications
   useEffect(() => {
@@ -475,66 +490,101 @@ export default function BettingPage() {
                 No bets found. Click on a category to place a bet!
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {betHistory.map((bet) => {
-                  const won = bet.gameResult === "win";
-                  const lost = bet.gameResult === "lose";
-                  const possibleWin =
-                    bet.odds > 0
-                      ? bet.betAmount * (1 + bet.odds / 100)
-                      : bet.betAmount * (1 + 100 / Math.abs(bet.odds));
-                  return (
-                    <Card key={bet._id} className="p-4 bg-gray-800 text-white">
-                      <div className="flex items-center mb-2">
-                        <Image
-                          src={iconMap[bet.sportKey] || "/mybetsicon.webp"}
-                          alt=""
-                          width={32}
-                          height={32}
-                        />
-                        <span className="ml-2 font-semibold">
-                          {displayNameMap[bet.sportKey] ||
-                            bet.sportKey.toUpperCase()}
-                        </span>
-                      </div>
-                      <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
-                      <p className="text-sm mb-1">
-                        {new Date(bet.eventCommenceTime).toLocaleString()}
-                      </p>
-                      <p className="flex items-center mb-1">
-                        <Image
-                          src="/kaspa-kas-logo.webp"
-                          alt="KAS"
-                          width={16}
-                          height={16}
-                        />
-                        <span className="ml-1">{bet.betAmount}</span>
-                      </p>
-                      {lost ? (
-                        <p className="mt-2 text-red-600 text-xl font-bold">
-                          LOSS
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {currentBets.map((bet) => {
+                    const won = bet.gameResult === "win";
+                    const lost = bet.gameResult === "lose";
+                    const possibleWin =
+                      bet.odds > 0
+                        ? bet.betAmount * (1 + bet.odds / 100)
+                        : bet.betAmount * (1 + 100 / Math.abs(bet.odds));
+                    return (
+                      <Card key={bet._id} className="p-4 bg-gray-800 text-white">
+                        <div className="flex items-center mb-2">
+                          <Image
+                            src={iconMap[bet.sportKey] || "/mybetsicon.webp"}
+                            alt=""
+                            width={32}
+                            height={32}
+                          />
+                          <span className="ml-2 font-semibold">
+                            {displayNameMap[bet.sportKey] ||
+                              bet.sportKey.toUpperCase()}
+                          </span>
+                        </div>
+                        <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
+                        <p className="text-sm mb-1">
+                          {new Date(bet.eventCommenceTime).toLocaleString()}
                         </p>
-                      ) : won ? (
-                        <p className="mt-2 text-green-400 text-xl font-bold flex items-center">
-                          WON:
+                        <p className="flex items-center mb-1">
                           <Image
                             src="/kaspa-kas-logo.webp"
                             alt="KAS"
                             width={16}
                             height={16}
-                            className="ml-1"
                           />
-                          <span className="ml-1">
-                            {possibleWin.toFixed(2)}
-                          </span>
+                          <span className="ml-1">{bet.betAmount}</span>
                         </p>
-                      ) : (
-                        <p className="mt-2 text-gray-400">Pending...</p>
-                      )}
-                    </Card>
-                  );
-                })}
-              </div>
+                        {lost ? (
+                          <p className="mt-2 text-red-600 text-xl font-bold">
+                            LOSS
+                          </p>
+                        ) : won ? (
+                          <p className="mt-2 text-green-400 text-xl font-bold flex items-center">
+                            WON:
+                            <Image
+                              src="/kaspa-kas-logo.webp"
+                              alt="KAS"
+                              width={16}
+                              height={16}
+                              className="ml-1"
+                            />
+                            <span className="ml-1">
+                              {possibleWin.toFixed(2)}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-2 text-gray-400">Pending...</p>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-center items-center mt-6">
+                  <motion.button
+                    whileHover={currentPage === 1 ? {} : { scale: 1.05 }}
+                    whileTap={currentPage === 1 ? {} : { scale: 0.95 }}
+                    onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
+                      currentPage === 1
+                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        : "bg-[#49EACB] text-black"
+                    }`}
+                  >
+                    Prev
+                  </motion.button>
+                  <span className="mx-4 text-2xl font-semibold text-white">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <motion.button
+                    whileHover={currentPage === totalPages ? {} : { scale: 1.05 }}
+                    whileTap={currentPage === totalPages ? {} : { scale: 0.95 }}
+                    onClick={() =>
+                      currentPage < totalPages && setCurrentPage(currentPage + 1)
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
+                      currentPage === totalPages
+                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        : "bg-[#49EACB] text-black"
+                    }`}
+                  >
+                    Next
+                  </motion.button>
+                </div>
+              </>
             )
           ) : (
             // **Original event list view**
