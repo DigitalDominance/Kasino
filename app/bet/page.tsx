@@ -551,39 +551,43 @@ export default function BettingPage() {
                     );
                   })}
                 </div>
-                <div className="flex justify-center items-center mt-6">
-                  <motion.button
-                    whileHover={currentPage === 1 ? {} : { scale: 1.05 }}
-                    whileTap={currentPage === 1 ? {} : { scale: 0.95 }}
-                    onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
-                      currentPage === 1
-                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                        : "bg-[#49EACB] text-black"
-                    }`}
-                  >
-                    Prev
-                  </motion.button>
-                  <span className="mx-4 text-2xl font-semibold text-white">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <motion.button
-                    whileHover={currentPage === totalPages ? {} : { scale: 1.05 }}
-                    whileTap={currentPage === totalPages ? {} : { scale: 0.95 }}
-                    onClick={() =>
-                      currentPage < totalPages && setCurrentPage(currentPage + 1)
-                    }
-                    disabled={currentPage === totalPages}
-                    className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
-                      currentPage === totalPages
-                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                        : "bg-[#49EACB] text-black"
-                    }`}
-                  >
-                    Next
-                  </motion.button>
-                </div>
+
+                {/* Pagination controls: only show if more than one page */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-6 mb-6">
+                    <motion.button
+                      whileHover={currentPage === 1 ? {} : { scale: 1.05 }}
+                      whileTap={currentPage === 1 ? {} : { scale: 0.95 }}
+                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
+                        currentPage === 1
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-[#49EACB] text-black"
+                      }`}
+                    >
+                      Prev
+                    </motion.button>
+                    <span className="mx-4 text-2xl font-semibold text-white">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <motion.button
+                      whileHover={currentPage === totalPages ? {} : { scale: 1.05 }}
+                      whileTap={currentPage === totalPages ? {} : { scale: 0.95 }}
+                      onClick={() =>
+                        currentPage < totalPages && setCurrentPage(currentPage + 1)
+                      }
+                      disabled={currentPage === totalPages}
+                      className={`px-6 py-3 mx-2 text-2xl font-bold rounded ${
+                        currentPage === totalPages
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-[#49EACB] text-black"
+                      }`}
+                    >
+                      Next
+                    </motion.button>
+                  </div>
+                )}
               </>
             )
           ) : (
