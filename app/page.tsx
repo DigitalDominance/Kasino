@@ -43,6 +43,10 @@ function MainPageContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // NEW: Age confirmation popup state
+  const [showAgePopup, setShowAgePopup] = useState(false);
+  const [ageChecked, setAgeChecked] = useState(false);
+
   // Live wins, win counter, high scores
   const [liveWins, setLiveWins] = useState<Win[]>([]);
   const [winCounter, setWinCounter] = useState<any[]>([]);
@@ -171,6 +175,13 @@ function MainPageContent() {
     return () => clearTimeout(timer);
   }, []);
 
+  // NEW: show age popup after loading completes
+  useEffect(() => {
+    if (!isLoading) {
+      setShowAgePopup(true);
+    }
+  }, [isLoading]);
+
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
       <style jsx global>{`
@@ -240,6 +251,59 @@ function MainPageContent() {
             transition={{ duration: 1 }}
             className="min-h-screen bg-black text-white flex flex-col"
           >
+            {/* AGE CONFIRMATION POPUP */}
+            {showAgePopup &&
+              createPortal(
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                      className="bg-black border-2 border-[#49EACB] rounded-lg p-6 text-center max-w-xs w-full"
+                    >
+                      <h2 className="text-2xl font-bold text-[#49EACB] mb-4">
+                        CONFIRM AGE
+                      </h2>
+                      <Image
+                        src="/18+.webp"
+                        alt="18+"
+                        width={100}
+                        height={100}
+                        className="mx-auto mb-4"
+                      />
+                      <div className="flex items-center justify-center mb-4">
+                        <input
+                          id="age-checkbox"
+                          type="checkbox"
+                          className="mr-2"
+                          checked={ageChecked}
+                          onChange={() => setAgeChecked(!ageChecked)}
+                        />
+                        <label htmlFor="age-checkbox" className="text-white">
+                          I Am 18 Years Of Age Or Older
+                        </label>
+                      </div>
+                      <Button
+                        onClick={() => setShowAgePopup(false)}
+                        disabled={!ageChecked}
+                        className="bg-[#49EACB] text-black font-semibold"
+                      >
+                        Close
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>,
+                document.body
+              )}
+
             {/* Header */}
             <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
               <motion.div
@@ -256,11 +320,7 @@ function MainPageContent() {
                   className="text-[#49eacb] hover:bg-[#49eacb]/10"
                   onClick={() => setIsSidebarOpen((prev) => !prev)}
                 >
-                  {isSidebarOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
+                  {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </MotionButton>
                 <motion.div
                   className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover"
@@ -763,6 +823,7 @@ function MainPageContent() {
     </div>
   );
 }
+
 /* XPDisplay Component with Daily Loot Boxes Popup */
 export function XPDisplay() {
   const { isConnected } = useWallet();
