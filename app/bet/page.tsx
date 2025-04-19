@@ -31,22 +31,24 @@ const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 
 // Icon mapping for categories
 const iconMap: { [key: string]: string } = {
-  mma_mixed_martial_arts: "/kasinommaicon.webp",
-  boxing_boxing: "/kasinoboxingicon.webp",
   basketball_nba: "/kasinobasketballicon.webp",
   baseball_mlb: "/kasinobaseballicon.webp",
   soccer_usa_mls: "/kasinosoccericon.webp",
+  icehockey_nhl: "/NHLicon.webp",
+  mma_mixed_martial_arts: "/kasinommaicon.webp",
+  boxing_boxing: "/kasinoboxingicon.webp",
 };
 
 // Display names for acronym sports
 const displayNameMap: { [key: string]: string } = {
-  mma_mixed_martial_arts: "Mixed Martial Arts",
-  boxing_boxing: "Boxing",
   americanfootball_nfl: "National Football League",
   basketball_nba: "National Basketball Association",
   baseball_mlb: "Major League Baseball",
   tennis_atp_us_open: "Tennis (US Open)",
   soccer_usa_mls: "Major League Soccer",
+  icehockey_nhl: "National Hockey League",
+  mma_mixed_martial_arts: "Mixed Martial Arts",
+  boxing_boxing: "Boxing",
 };
 
 // Helper: Adjust odds and round to two decimals.
@@ -55,15 +57,16 @@ function adjustOdds(apiOdds: number): number {
   return Number(adjusted.toFixed(2));
 }
 
-// Accepted sports in desired order (removed ncaaf)
+// Accepted sports in desired order
 const acceptedSports = [
-  "mma_mixed_martial_arts",
-  "boxing_boxing",
   "americanfootball_nfl",
   "basketball_nba",
   "baseball_mlb",
   "tennis_atp_us_open",
   "soccer_usa_mls",
+  "icehockey_nhl",
+  "mma_mixed_martial_arts",
+  "boxing_boxing",
 ];
 
 // Format team names as "Team A vs Team B"
@@ -133,7 +136,7 @@ function isWithinOneWeek(commenceTime: string | Date): boolean {
 export default function BettingPage() {
   const { isConnected, balance } = useWallet();
   const [sports, setSports] = useState<any[]>([]);
-  const [selectedSport, setSelectedSport] = useState<string>("mma_mixed_martial_arts");
+  const [selectedSport, setSelectedSport] = useState<string>("americanfootball_nfl");
   const [events, setEvents] = useState<any[]>([]);
   const [eventResults, setEventResults] = useState<{ [id: string]: any }>({});
   const [resultState, setResultState] = useState<{ eventName: string; winAmount: number; win: boolean } | null>(null);
@@ -143,6 +146,7 @@ export default function BettingPage() {
   const [myBets, setMyBets] = useState<any[]>([]);
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+  const [showUnderConstruction, setShowUnderConstruction] = useState(false);
 
   // **NEW STATE** for My Bets tab
   const [showMyBets, setShowMyBets] = useState<boolean>(false);
@@ -374,6 +378,16 @@ export default function BettingPage() {
   // Close the modal.
   const closeModal = () => setBetModalVisible(false);
 
+  // Handle sport selection
+  const handleSportSelect = (sportKey: string) => {
+    if (sportKey === "mma_mixed_martial_arts" || sportKey === "boxing_boxing") {
+      setShowUnderConstruction(true);
+      return;
+    }
+    setShowMyBets(false);
+    setSelectedSport(sportKey);
+  };
+
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white p-6`}>
       {/* Header */}
@@ -406,11 +420,11 @@ export default function BettingPage() {
       </div>
 
       {/* Top category buttons + My Bets */}
-      <div className="flex gap-2 mb-6">
-        {/* NEW "My Bets" button first */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {/* "My Bets" button first */}
         <Button
           onClick={() => setShowMyBets(true)}
-          className={`px-20 py-9 text-4xl ${
+          className={`px-4 sm:px-6 md:px-20 py-4 sm:py-6 md:py-9 text-xl sm:text-2xl md:text-4xl ${
             showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"
           }`}
         >
@@ -429,15 +443,12 @@ export default function BettingPage() {
         {sports.map((sport) => {
           const isSelected = !showMyBets && selectedSport === sport.key;
           const btnClass = isSelected
-            ? "bg-[#49EACB] text-black px-20 py-9 text-4xl"
-            : "bg-gray-800 text-white px-20 py-9 text-4xl";
+            ? "bg-[#49EACB] text-black px-4 sm:px-6 md:px-20 py-4 sm:py-6 md:py-9 text-xl sm:text-2xl md:text-4xl"
+            : "bg-gray-800 text-white px-4 sm:px-6 md:px-20 py-4 sm:py-6 md:py-9 text-xl sm:text-2xl md:text-4xl";
           return (
             <Button
               key={sport.key}
-              onClick={() => {
-                setShowMyBets(false);
-                setSelectedSport(sport.key);
-              }}
+              onClick={() => handleSportSelect(sport.key)}
               className={btnClass}
             >
               <span className="flex items-center">
@@ -456,6 +467,42 @@ export default function BettingPage() {
           );
         })}
       </div>
+
+      {/* Under Construction Modal */}
+      <AnimatePresence>
+        {showUnderConstruction && (
+          <motion.div
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-[#1c1c1c] w-[28rem] max-w-full p-6 border border-[#49EACB] rounded-lg relative"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.button
+                className="absolute top-3 right-3 text-[#49EACB] text-2xl"
+                onClick={() => setShowUnderConstruction(false)}
+                whileHover={{ scale: 1.2, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                &times;
+              </motion.button>
+
+              <h2 className="text-3xl mb-4 text-white text-center">
+                Under Construction
+              </h2>
+              <p className="text-xl text-center text-white">
+                This section is currently being upgraded. Please bear with us!
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sport or My Bets heading */}
       <AnimatePresence exitBeforeEnter>
