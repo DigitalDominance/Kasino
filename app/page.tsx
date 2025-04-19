@@ -273,7 +273,7 @@ function MainPageContent() {
                         CONFIRM AGE
                       </h2>
                       <Image
-                        src="/18+.webp"
+                        src="/18.webp"
                         alt="18+"
                         width={100}
                         height={100}
