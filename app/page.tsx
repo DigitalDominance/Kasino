@@ -17,7 +17,6 @@ import { FaTelegramPlane, FaUserAlt, FaGem } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
 import { createPortal } from "react-dom";
-
 const [showAgeConfirm, setShowAgeConfirm] = useState(true);
 const [isOfAgeChecked, setIsOfAgeChecked] = useState(false);
 
