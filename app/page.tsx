@@ -17,8 +17,6 @@ import { FaTelegramPlane, FaUserAlt, FaGem } from "react-icons/fa";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
 import { createPortal } from "react-dom";
-const [showAgeConfirm, setShowAgeConfirm] = useState(true);
-const [isOfAgeChecked, setIsOfAgeChecked] = useState(false);
 
 const montserrat = Montserrat({
   weight: "700",
@@ -242,53 +240,6 @@ function MainPageContent() {
             transition={{ duration: 1 }}
             className="min-h-screen bg-black text-white flex flex-col"
           >
-            {/* Age Confirmation Popup */}
-            <AnimatePresence>
-              {showAgeConfirm && (
-                <motion.div
-                  className="fixed inset-0 flex items-center justify-center bg-black/80 z-50"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.div
-                    className="bg-gray-900 rounded-lg p-6 text-white w-80 flex flex-col items-center"
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <h2 className="text-2xl font-bold mb-4">CONFIRM AGE</h2>
-                    <Image
-                      src="/18+.webp"
-                      alt="18+"
-                      width={120}
-                      height={120}
-                    />
-                    <label className="mt-4 flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={isOfAgeChecked}
-                        onChange={(e) =>
-                          setIsOfAgeChecked(e.currentTarget.checked)
-                        }
-                        className="h-5 w-5 text-[#49EACB] rounded"
-                      />
-                      <span>I Am 18 Years Of Age Or Older</span>
-                    </label>
-                    <Button
-                      disabled={!isOfAgeChecked}
-                      onClick={() => setShowAgeConfirm(false)}
-                      className="mt-6 w-full"
-                    >
-                      Close
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
             {/* Header */}
             <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50">
               <motion.div
