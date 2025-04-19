@@ -22,6 +22,13 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
+// Constants
+const HOUSE_EDGE_PERCENT = 5;
+const ODDS_API_HOST = "https://api.the-odds-api.com";
+const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1;
+const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2;
+const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
+
 // Icon mapping for categories
 const iconMap: { [key: string]: string } = {
   mma_mixed_martial_arts: "/kasinommaicon.webp",
@@ -29,7 +36,6 @@ const iconMap: { [key: string]: string } = {
   basketball_nba: "/kasinobasketballicon.webp",
   baseball_mlb: "/kasinobaseballicon.webp",
   soccer_usa_mls: "/kasinosoccericon.webp",
-  icehockey_nhl: "/NHLicon.webp",
 };
 
 // Display names for acronym sports
@@ -41,7 +47,6 @@ const displayNameMap: { [key: string]: string } = {
   baseball_mlb: "Major League Baseball",
   tennis_atp_us_open: "Tennis (US Open)",
   soccer_usa_mls: "Major League Soccer",
-  icehockey_nhl: "National Hockey League",
 };
 
 // Helper: Adjust odds and round to two decimals.
@@ -50,16 +55,15 @@ function adjustOdds(apiOdds: number): number {
   return Number(adjusted.toFixed(2));
 }
 
-// Accepted sports in desired order (with NHL, MMA & Boxing last)
+// Accepted sports in desired order (removed ncaaf)
 const acceptedSports = [
+  "mma_mixed_martial_arts",
+  "boxing_boxing",
   "americanfootball_nfl",
   "basketball_nba",
   "baseball_mlb",
   "tennis_atp_us_open",
   "soccer_usa_mls",
-  "icehockey_nhl",
-  "mma_mixed_martial_arts",
-  "boxing_boxing",
 ];
 
 // Format team names as "Team A vs Team B"
@@ -129,7 +133,7 @@ function isWithinOneWeek(commenceTime: string | Date): boolean {
 export default function BettingPage() {
   const { isConnected, balance } = useWallet();
   const [sports, setSports] = useState<any[]>([]);
-  const [selectedSport, setSelectedSport] = useState<string>("americanfootball_nfl");
+  const [selectedSport, setSelectedSport] = useState<string>("mma_mixed_martial_arts");
   const [events, setEvents] = useState<any[]>([]);
   const [eventResults, setEventResults] = useState<{ [id: string]: any }>({});
   const [resultState, setResultState] = useState<{ eventName: string; winAmount: number; win: boolean } | null>(null);
@@ -139,10 +143,11 @@ export default function BettingPage() {
   const [myBets, setMyBets] = useState<any[]>([]);
   const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
+
+  // **NEW STATE** for My Bets tab
   const [showMyBets, setShowMyBets] = useState<boolean>(false);
   const [betHistory, setBetHistory] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [showUnderConstruction, setShowUnderConstruction] = useState<boolean>(false);
 
   // Reset to page 1 when switching to My Bets
   useEffect(() => {
@@ -233,7 +238,7 @@ export default function BettingPage() {
     }
   }, [events, selectedSport, eventResults, showMyBets]);
 
-  // Load my bets when opening bet modal.
+  // When the bet modal is open, load existing bets for the event.
   useEffect(() => {
     async function loadMyBets() {
       if (!selectedEvent || !isConnected) return;
@@ -256,7 +261,7 @@ export default function BettingPage() {
     }
   }, [betModalVisible, selectedEvent, isConnected]);
 
-  // Load full history when My Bets tab opened
+  // **NEW**: load full history when My Bets tab opened
   useEffect(() => {
     if (showMyBets && isConnected) {
       (async () => {
@@ -350,11 +355,13 @@ export default function BettingPage() {
     }
   };
 
+  // Group events by local date.
   const groupedEvents = groupEventsByDate(events);
   const sortedDates = Object.keys(groupedEvents).sort(
     (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
 
+  // Generate display for an event if it's over.
   function getEventResultDisplay(event: any) {
     const scoreData = eventResults[event.id];
     if (scoreData && scoreData.completed && scoreData.scores && scoreData.scores.length >= 2) {
@@ -364,6 +371,7 @@ export default function BettingPage() {
     return "Result Unavailable";
   }
 
+  // Close the modal.
   const closeModal = () => setBetModalVisible(false);
 
   return (
@@ -386,20 +394,35 @@ export default function BettingPage() {
         </motion.div>
       </header>
 
-      {/* Banner */}
+      {/* Banner below the nav, above category buttons */}
       <div className="mb-6">
-        <Image src={bannerSrc} alt="Banner" width={1200} height={200} className="w-full object-cover" />
+        <Image
+          src={bannerSrc}
+          alt="Banner"
+          width={1200}
+          height={200}
+          className="w-full object-cover"
+        />
       </div>
 
       {/* Top category buttons + My Bets */}
       <div className="flex gap-2 mb-6">
+        {/* NEW "My Bets" button first */}
         <Button
-          onClick={() => { setShowUnderConstruction(false); setShowMyBets(true); }}
-          className={`px-20 py-9 text-4xl ${showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"}`}
+          onClick={() => setShowMyBets(true)}
+          className={`px-20 py-9 text-4xl ${
+            showMyBets ? "bg-[#49EACB] text-black" : "bg-gray-800 text-white"
+          }`}
         >
           <span className="flex items-center">
             My Bets
-            <Image src="/mybetsicon.webp" alt="My Bets" width={50} height={50} className="ml-2" />
+            <Image
+              src="/mybetsicon.webp"
+              alt="My Bets"
+              width={50}
+              height={50}
+              className="ml-2"
+            />
           </span>
         </Button>
 
@@ -408,18 +431,12 @@ export default function BettingPage() {
           const btnClass = isSelected
             ? "bg-[#49EACB] text-black px-20 py-9 text-4xl"
             : "bg-gray-800 text-white px-20 py-9 text-4xl";
-
           return (
             <Button
               key={sport.key}
               onClick={() => {
-                if (sport.key === "mma_mixed_martial_arts" || sport.key === "boxing_boxing") {
-                  setShowUnderConstruction(true);
-                } else {
-                  setShowUnderConstruction(false);
-                  setShowMyBets(false);
-                  setSelectedSport(sport.key);
-                }
+                setShowMyBets(false);
+                setSelectedSport(sport.key);
               }}
               className={btnClass}
             >
@@ -440,7 +457,7 @@ export default function BettingPage() {
         })}
       </div>
 
-      {/* Heading */}
+      {/* Sport or My Bets heading */}
       <AnimatePresence exitBeforeEnter>
         <motion.h1
           key={showMyBets ? "mybets" : selectedSport}
@@ -452,11 +469,12 @@ export default function BettingPage() {
         >
           {showMyBets
             ? "My Bets"
-            : displayNameMap[selectedSport] || sports.find((s) => s.key === selectedSport)?.title}
+            : displayNameMap[selectedSport] ||
+              sports.find((s) => s.key === selectedSport)?.title}
         </motion.h1>
       </AnimatePresence>
 
-      {/* Main content */}
+      {/* Main content: either event cards or My Bets list */}
       <AnimatePresence exitBeforeEnter>
         <motion.div
           key={showMyBets ? "mybets-content" : selectedSport}
@@ -466,6 +484,7 @@ export default function BettingPage() {
           transition={{ duration: 0.5 }}
         >
           {showMyBets ? (
+            // **My Bets view**
             betHistory.length === 0 ? (
               <p className="text-center text-gray-400">
                 No bets found. Click on a category to place a bet!
@@ -490,7 +509,8 @@ export default function BettingPage() {
                             height={32}
                           />
                           <span className="ml-2 font-semibold">
-                            {displayNameMap[bet.sportKey] || bet.sportKey.toUpperCase()}
+                            {displayNameMap[bet.sportKey] ||
+                              bet.sportKey.toUpperCase()}
                           </span>
                         </div>
                         <h3 className="text-2xl font-bold mb-1">{bet.eventName}</h3>
@@ -498,11 +518,18 @@ export default function BettingPage() {
                           {new Date(bet.eventCommenceTime).toLocaleString()}
                         </p>
                         <p className="flex items-center mb-1">
-                          <Image src="/kaspa-kas-logo.webp" alt="KAS" width={16} height={16} />
+                          <Image
+                            src="/kaspa-kas-logo.webp"
+                            alt="KAS"
+                            width={16}
+                            height={16}
+                          />
                           <span className="ml-1">{bet.betAmount}</span>
                         </p>
                         {lost ? (
-                          <p className="mt-2 text-red-600 text-xl font-bold">LOSS</p>
+                          <p className="mt-2 text-red-600 text-xl font-bold">
+                            LOSS
+                          </p>
                         ) : won ? (
                           <p className="mt-2 text-green-400 text-xl font-bold flex items-center">
                             WON:
@@ -513,7 +540,9 @@ export default function BettingPage() {
                               height={16}
                               className="ml-1"
                             />
-                            <span className="ml-1">{possibleWin.toFixed(2)}</span>
+                            <span className="ml-1">
+                              {possibleWin.toFixed(2)}
+                            </span>
                           </p>
                         ) : (
                           <p className="mt-2 text-gray-400">Pending...</p>
@@ -522,6 +551,8 @@ export default function BettingPage() {
                     );
                   })}
                 </div>
+
+                {/* Pagination controls: only show if more than one page */}
                 {totalPages > 1 && (
                   <div className="flex justify-center items-center mt-6 mb-6">
                     <motion.button
@@ -560,25 +591,33 @@ export default function BettingPage() {
               </>
             )
           ) : (
+            // **Original event list view**
             sortedDates.map((dateStr) => {
               const relevantEvents = groupedEvents[dateStr].filter(
                 (event: any) =>
-                  event.sport_key === selectedSport && isWithinOneWeek(event.commence_time)
+                  event.sport_key === selectedSport &&
+                  isWithinOneWeek(event.commence_time)
               );
               if (relevantEvents.length === 0) return null;
 
               return (
                 <section key={dateStr} className="mb-8">
-                  <h2 className="text-2xl font-bold mb-4 text-white">{dateStr}</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-white">
+                    {dateStr}
+                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {relevantEvents.map((event: any) => {
                       const over = isEventOver(event, eventResults);
                       const eventTime = new Date(event.commence_time).getTime();
                       const now = Date.now();
                       const ongoing = eventTime <= now && !over;
-                      const borderColor = over ? "border-red-500" : "border-[#49EACB]";
+                      const borderColor = over
+                        ? "border-red-500"
+                        : "border-[#49EACB]";
                       const cursorClass =
-                        !over && !ongoing ? "cursor-pointer hover:bg-gray-700" : "cursor-not-allowed";
+                        !over && !ongoing
+                          ? "cursor-pointer hover:bg-gray-700"
+                          : "cursor-not-allowed";
 
                       return (
                         <Card
@@ -594,18 +633,25 @@ export default function BettingPage() {
                           }}
                         >
                           <h3 className="text-2xl font-bold">
-                            {formatEventTeams(event.away_team, event.home_team)}
+                            {formatEventTeams(
+                              event.away_team,
+                              event.home_team
+                            )}
                           </h3>
                           <p className="text-base">
-                            Commence Time: {new Date(event.commence_time).toLocaleString()}
+                            Commence Time:{" "}
+                            {new Date(event.commence_time).toLocaleString()}
                           </p>
                           <div className="mt-2">
                             {ongoing ? (
-                              <p className="text-lg font-semibold text-[#49EACB]">Event In Progress</p>
+                              <p className="text-lg font-semibold text-[#49EACB]">
+                                Event In Progress
+                              </p>
                             ) : over ? (
                               <p className="text-lg font-semibold">
                                 Result:{" "}
-                                {eventResults[event.id] && eventResults[event.id].completed
+                                {eventResults[event.id] &&
+                                eventResults[event.id].completed
                                   ? getEventResultDisplay(event)
                                   : "Pending"}
                               </p>
@@ -620,14 +666,16 @@ export default function BettingPage() {
                               ))
                             )}
                           </div>
-                          {myBets.filter((bet: any) => bet.eventId === event.id).length > 0 && (
+                          {myBets.filter((bet: any) => bet.eventId === event.id)
+                            .length > 0 && (
                             <div className="mt-2 text-sm text-gray-300">
                               <strong>Your Bets:</strong>
                               {myBets
                                 .filter((bet: any) => bet.eventId === event.id)
                                 .map((bet: any, idx: number) => (
                                   <div key={idx}>
-                                    {bet.betAmount} KAS at odds {bet.odds.toFixed(2)} on{" "}
+                                    {bet.betAmount} KAS at odds{" "}
+                                    {bet.odds.toFixed(2)} on{" "}
                                     {bet.chosenOutcome}
                                   </div>
                                 ))}
@@ -710,12 +758,11 @@ export default function BettingPage() {
                 } else if (selectedOngoing) {
                   return (
                     <div className="mb-6">
-                      <p className="text-lg font-semibold text-[#49EACB]">
-                        Event In Progress
-                      </p>
+                      <p className="text-lg font-semibold text-[#49EACB]">Event In Progress</p>
                     </div>
                   );
                 } else if (!isConnected) {
+                  // hide bet input and button if not connected
                   return null;
                 } else {
                   return (
@@ -760,37 +807,6 @@ export default function BettingPage() {
                   );
                 }
               })()}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Under Construction Modal */}
-      <AnimatePresence>
-        {showUnderConstruction && (
-          <motion.div
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-[#1c1c1c] w-[24rem] max-w-full p-6 border border-[#49EACB] rounded-lg text-center"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold mb-4 text-white">Under Construction</h2>
-              <p className="mb-6 text-white">
-                This section is under construction, bear with us as we upgrade.
-              </p>
-              <Button
-                onClick={() => setShowUnderConstruction(false)}
-                className="bg-[#49EACB] text-black font-bold px-6 py-2"
-              >
-                Close
-              </Button>
             </motion.div>
           </motion.div>
         )}
