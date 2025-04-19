@@ -392,6 +392,14 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle");
   const [showWithdrawTooltip, setShowWithdrawTooltip] = useState(false);
 
+  // new state to track and refresh the bonus locally
+  const [currentReferralBonus, setCurrentReferralBonus] = useState<number>(referralData?.referralBonus ?? 0);
+
+  // keep local bonus in sync if prop ever changes
+  useEffect(() => {
+    setCurrentReferralBonus(referralData?.referralBonus ?? 0);
+  }, [referralData]);
+
   const copyReferralLink = () => {
     if (referralData) {
       const referralLink = `https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`;
@@ -408,12 +416,14 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   };
 
   const handleWithdraw = async () => {
-    if (referralData && referralData.referralBonus >= 5 && walletAddress) {
+    if (referralData && currentReferralBonus >= 5 && walletAddress) {
       setPayoutStatus("processing");
       try {
         const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", { walletAddress });
         if (res.data.success) {
           setPayoutStatus("completed");
+          // reset the displayed bonus to 0
+          setCurrentReferralBonus(0);
           showNotification("Payout completed!", "success");
         } else {
           setPayoutStatus("failed");
