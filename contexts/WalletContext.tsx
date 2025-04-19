@@ -288,7 +288,9 @@ export const WalletStatus: React.FC = () => {
       if (walletAddress) {
         try {
           const res = await axios.get(
-            `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(walletAddress)}`
+            `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(
+              walletAddress
+            )}`
           );
           if (res.data && res.data.user) {
             setReferralData({
@@ -351,7 +353,10 @@ export const WalletStatus: React.FC = () => {
   ) : null;
 };
 
-export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({ message, type }) => {
+export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({
+  message,
+  type,
+}) => {
   const notifType = type === "error" || message.toLowerCase().includes("error") ? "error" : "success";
   return (
     <AnimatePresence>
@@ -361,9 +366,11 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         exit={{ opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
         className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
-          ${notifType === "success"
-            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-white"
-            : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"}`}
+          ${
+            notifType === "success"
+              ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-white"
+              : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"
+          }`}
         style={{
           backgroundSize: "400% 400%",
         }}
@@ -392,10 +399,11 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
   const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle");
   const [showWithdrawTooltip, setShowWithdrawTooltip] = useState(false);
 
-  // new state to track and refresh the bonus locally
-  const [currentReferralBonus, setCurrentReferralBonus] = useState<number>(referralData?.referralBonus ?? 0);
+  // Local state to refresh bonus display
+  const [currentReferralBonus, setCurrentReferralBonus] = useState<number>(
+    referralData?.referralBonus ?? 0
+  );
 
-  // keep local bonus in sync if prop ever changes
   useEffect(() => {
     setCurrentReferralBonus(referralData?.referralBonus ?? 0);
   }, [referralData]);
@@ -419,10 +427,13 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     if (referralData && currentReferralBonus >= 5 && walletAddress) {
       setPayoutStatus("processing");
       try {
-        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", { walletAddress });
+        const res = await axios.post(
+          "https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout",
+          { walletAddress }
+        );
         if (res.data.success) {
           setPayoutStatus("completed");
-          // reset the displayed bonus to 0
+          // reset bonus display
           setCurrentReferralBonus(0);
           showNotification("Payout completed!", "success");
         } else {
@@ -438,7 +449,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
 
   const handleClaimReferral = async () => {
     if (!referralData || !walletAddress) return;
-    // Prevent self-claim: user's own referral code should not be claimable.
+    // Prevent self-claim
     if (inputReferralCode.trim() === referralData.referralCode) {
       showNotification("You cannot claim your own referral code.", "error");
       return;
@@ -446,10 +457,13 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     if (claimStatus === "idle" && inputReferralCode.trim() !== "") {
       setClaimStatus("processing");
       try {
-        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim", {
-          walletAddress,
-          referralCode: inputReferralCode.trim(),
-        });
+        const res = await axios.post(
+          "https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim",
+          {
+            walletAddress,
+            referralCode: inputReferralCode.trim(),
+          }
+        );
         if (res.data.success) {
           setClaimStatus("claimed");
           showNotification("Referral code claimed!", "success");
@@ -479,32 +493,23 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
         exit={{ scale: 0.9, opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-[#49EACB] font-bold"
-        >
+        <button onClick={onClose} className="absolute top-2 right-2 text-[#49EACB] font-bold">
           X
         </button>
-        {/* CHANGED TEXT BELOW */}
         <h2 className="text-2xl font-extrabold text-white text-center mb-1">Your Referrals</h2>
-        <p className="text-center text-sm text-gray-400 mb-4">
-          {/* from: 'Earn 5% On Each Bet' to: */}
-          Earn 2% On Your Friends Bets
-        </p>
+        <p className="text-center text-sm text-gray-400 mb-4">Earn 2% On Your Friends Bets</p>
         {referralData ? (
           <>
             <div className="mb-4">
               <p className="text-gray-300">
                 Referred:{" "}
-                <span className="text-[#49EACB] font-semibold">
-                  {referralData.referralCount}
-                </span>{" "}
+                <span className="text-[#49EACB] font-semibold">{referralData.referralCount}</span>{" "}
                 People
               </p>
               <p className="text-gray-300">
                 Referral Bonus:{" "}
                 <span className="text-[#49EACB] font-semibold">
-                  {referralData.referralBonus.toFixed(2)}
+                  {currentReferralBonus.toFixed(2)}
                 </span>{" "}
                 KAS
               </p>
@@ -513,16 +518,15 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
               <div
                 className="relative inline-block"
                 onMouseEnter={() => {
-                  if (referralData.referralBonus < 5) setShowWithdrawTooltip(true);
+                  if (currentReferralBonus < 5) setShowWithdrawTooltip(true);
                 }}
                 onMouseLeave={() => setShowWithdrawTooltip(false)}
               >
                 <button
                   onClick={handleWithdraw}
-                  disabled={referralData.referralBonus < 5 || payoutStatus === "processing"}
-                  // ADDED EXTRA HORIZONTAL PADDING HERE (px-6):
+                  disabled={currentReferralBonus < 5 || payoutStatus === "processing"}
                   className={`w-full py-2 px-6 rounded bg-[#49EACB] text-black font-semibold transition-transform duration-200 ${
-                    referralData.referralBonus < 5
+                    currentReferralBonus < 5
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:shadow-lg hover:scale-105"
                   }`}
@@ -535,12 +539,11 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                     ? "Payout Failed – Retry"
                     : "Withdraw Bonus"}
                 </button>
-                {showWithdrawTooltip && referralData.referralBonus < 5 && (
+                {showWithdrawTooltip && currentReferralBonus < 5 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    // ADDED WHITESPACE-NOWRAP TO KEEP TEXT IN ONE LINE:
                     className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-800 border border-[#49EACB] rounded shadow text-white text-sm whitespace-nowrap"
                   >
                     Minimum 5 KAS Earned Required
