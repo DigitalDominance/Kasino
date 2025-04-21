@@ -1,4 +1,4 @@
-// app/terms/page.tsx (or wherever your TermsPage lives)
+// app/terms/page.tsx
 "use client";
 
 import "../../lib/i18n";                     // core i18n setup
@@ -9,6 +9,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { Montserrat } from "next/font/google";
 
@@ -22,6 +23,29 @@ Object.entries(termsResources).forEach(([lng, bundle]) => {
 export default function TermsPage() {
   const { t } = useTranslation("terms");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const sections = [
+    "introduction",
+    "licensing",
+    "definitions",
+    "eligibility",
+    "registration",
+    "responsible",
+    "aml",
+    "fairplay",
+    "bonuses",
+    "transactions",
+    "dormant",
+    "ip",
+    "liability",
+    "dispute",
+    "termination",
+    "amendments",
+    "governing",
+    "contact",
+    "version",
+    "reminder"
+  ];
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white`}>
@@ -47,7 +71,7 @@ export default function TermsPage() {
       `}</style>
 
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 backdrop-blur-sm sticky top-0 z-50 bg-black/75">
+      <header className="flex items-center justify-between p-4 border-b border-[#49EACB]/10 bg-black/75 backdrop-blur-sm sticky top-0 z-50">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <div className="h-14 w-56 relative -ml-3 rounded-lg overflow-hidden nav-hover">
             <Image
@@ -89,47 +113,50 @@ export default function TermsPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-6 prose prose-invert max-w-4xl mx-auto text-gray-300">
-        <h1 className="text-4xl font-bold mb-6 animate-gradient">{t("title")}</h1>
+      <main className="flex-1 overflow-auto p-6 max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8 text-[#49EACB] text-center animate-gradient">
+          {t("title")}
+        </h1>
 
-        {/* Render all 19 sections dynamically */}
-        {[
-          "introduction",
-          "licensing",
-          "definitions",
-          "eligibility",
-          "registration",
-          "responsible",
-          "aml",
-          "fairplay",
-          "bonuses",
-          "transactions",
-          "dormant",
-          "ip",
-          "liability",
-          "dispute",
-          "termination",
-          "amendments",
-          "governing",
-          "contact",
-          "version",
-          "reminder"
-        ].map((key) => {
-          const heading = t(`${key}.heading`);
-          const block = t(key, { returnObjects: true });
+        {sections.map((key) => {
+          // pull out heading and rest-of-content
+          const block = t(key, { returnObjects: true }) as Record<string, any>;
+          const heading: string = block.heading;
+          // gather everything except the heading property
+          const bodies = Object.entries(block)
+            .filter(([k]) => k !== "heading")
+            .map(([_, v]) => v)
+            .flat();
+
           return (
-            <section key={key} className="mb-8">
-              <h2>{heading}</h2>
-              {/* Definitions uses an array */}
-              {key === "definitions" && Array.isArray(block.items) ? (
-                <ul className="list-disc pl-5">
-                  {block.items.map((item: string, i: number) => <li key={i}>{item}</li>)}
-                </ul>
-              ) : (
-                /* For everything else, iterate over the string values */
-                Object.values(block as Record<string, string>).map((line, i) => <p key={i}>{line}</p>)
-              )}
-            </section>
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-8"
+            >
+              <Card className="bg-gray-900/50 border border-[#49EACB]/30 rounded-2xl p-6">
+                <h2 className="text-2xl font-bold text-[#49EACB] mb-4">
+                  {heading}
+                </h2>
+
+                {key === "definitions" && Array.isArray(block.items) ? (
+                  <ul className="list-disc pl-6 space-y-2 text-gray-300">
+                    {block.items.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="space-y-4 text-gray-300">
+                    {bodies.map((text: string, i: number) => (
+                      <p key={i}>{text}</p>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </motion.div>
           );
         })}
       </main>
