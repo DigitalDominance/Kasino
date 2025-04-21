@@ -49,7 +49,7 @@ export function SiteFooter() {
             </p>
 
             {/* New Terms & Conditions link */}
-            <Link href="/terms" className="mt-2 text-xs text-[#B6B6B6] hover:text-[#49EACB] transition-colors">
+            <Link href="/terms" className="mt-1 text-xs text-[#B6B6B6] hover:text-[#49EACB] transition-colors">
               Terms &amp; Conditions
             </Link>
           </motion.div>
