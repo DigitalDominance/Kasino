@@ -89,7 +89,7 @@ function KasperLootBoxContent() {
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [loadingMsg,   setLoadingMsg]   = useState("");
 
-  const apiUrl = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/play";
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play";
   const t1     = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!;
   const t2     = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
 
