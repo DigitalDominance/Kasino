@@ -134,7 +134,7 @@ export default function KaspaTowerClimbPage() {
   ];
   const [messageIndex, setMessageIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const apiUrl = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api";
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
   const T1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!;
   const T2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
 
