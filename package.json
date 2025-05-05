@@ -14,15 +14,17 @@
     "npm": "10.x"
   },
   "dependencies": {
+    "alea": "^1.0.1",
+    "ethers": "^6.13.5",
     "@walletconnect/ethereum-provider": "2.19.2",
+    "@reown/appkit-adapter-ethers": "^1.7.2",
     "axios": "^1.4.0",
-    "react-native-web": "^0.18.10",
-    "@reown/appkit": "^1.0.0",
+    "react-native-web": "^0.18.12",
+    "@reown/appkit": "^1.7.2",
     "@reown/appkit-siwe-react-native": "^1.0.0",
     "@react-native-async-storage/async-storage": "^1.17.11",
-    "@reown/walletkit": "^1.0.0", 
+    "@reown/walletkit": "^1.2.3",
     "@walletconnect/core": "^2.8.0",
-    "@walletconnect/web3wallet": "^1.8.0",
     "@walletconnect/utils": "^2.8.0",
     "uuid": "^9.0.0",
     "react-icons": "^4.8.0",
@@ -95,9 +97,9 @@
     "bcryptjs": "^2.4.3",
     "three": "^0.150.1",
     "@walletconnect/web3-provider": "^1.8.0",
-    "web3": "^1.8.0",
-    "underscore": "^1.13.6"   
+    "web3": "^1.8.0"
   },
+  
   "devDependencies": {
     "@types/node": "^20.11.19",
     "@types/react": "^18.2.57",
