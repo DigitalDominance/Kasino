@@ -20,7 +20,7 @@ import { Montserrat } from "next/font/google";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 const MESSAGES = ["Verifying transaction", "Rolling dice", "Finalizing result"];
-const API = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api";
+const API = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 
 export default function DicePage() {
   const { isConnected, balance } = useWallet();
