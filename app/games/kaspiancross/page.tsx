@@ -592,7 +592,7 @@ function KaspianCrossContent() {
   let data;
   try {
     ({ data } = await axios.post(
-      "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/play",
+      "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play",
       {
         gameName: "Kaspian Cross",
         clientSeed: raw,
@@ -643,7 +643,7 @@ function KaspianCrossContent() {
         setIsFalling(true);
         setTimeout(() => {
           setResult({ gameResult: "lose", winAmount: 0, clientSeed, serverSeedHash });
-          axios.post("https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/settle", { gameId, floorsReached: 0 }).catch(() => {});
+          axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle", { gameId, floorsReached: 0 }).catch(() => {});
         }, 1500);
       }
     }, 800);
