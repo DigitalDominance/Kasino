@@ -387,7 +387,7 @@ export default function CupGamePage() {
       // play API
       setLoading(true);
       const res = await axios.post(
-        `https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/play`,
+        `https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play`,
         {
           gameName: "Guess The Cup",
           clientSeed: raw,
@@ -431,7 +431,7 @@ export default function CupGamePage() {
       setIsPlaying(false);
       // settle API
       axios
-        .post(`https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/settle`, {
+        .post(`https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle`, {
           gameId,
           selectedCup: i,
         })
