@@ -27,7 +27,7 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 export default function MinesPage() {
   const { isConnected, balance } = useWallet();
   const router = useRouter();
-  const API = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game";
+  const API = "https://kasino-backend-4818b4b69870.herokuapp.com/api/game";
 
   const [game, setGame] = useState<MinesGame | null>(null);
   const [betAmount, setBetAmount] = useState("1");
