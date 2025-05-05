@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 
@@ -22,46 +22,53 @@ export function CoinFlipGame({
   const [flipping, setFlipping] = useState(false);
   const [showResult, setShowResult] = useState(false);
 
-  const started = useRef(false);
-
   useEffect(() => {
-    if (!isPlaying || started.current) return;
-    started.current = true;
+    let intervalId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
 
-    // start quick flip animation
-    setFlipping(true);
-    setShowResult(false);
-    const interval = setInterval(() => {
-      setUserCoin(Math.random() < 0.5 ? "sun" : "moon");
-      setHouseCoin(Math.random() < 0.5 ? "sun" : "moon");
-    }, 100);
+    if (isPlaying) {
+      // start quick flip animation
+      setFlipping(true);
+      setShowResult(false);
 
-    // after 2s, finalize based on result
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      if (result === "win") {
-        setUserCoin(selectedSymbol);
-        setHouseCoin(selectedSymbol === "sun" ? "moon" : "sun");
-      } else {
-        setHouseCoin(selectedSymbol);
-        setUserCoin(selectedSymbol === "sun" ? "moon" : "sun");
-      }
+      intervalId = setInterval(() => {
+        setUserCoin(Math.random() < 0.5 ? "sun" : "moon");
+        setHouseCoin(Math.random() < 0.5 ? "sun" : "moon");
+      }, 100);
+
+      // after 2s, finalize based on result
+      timeoutId = setTimeout(() => {
+        clearInterval(intervalId);
+
+        if (result === "win") {
+          setUserCoin(selectedSymbol);
+          setHouseCoin(selectedSymbol === "sun" ? "moon" : "sun");
+        } else {
+          setHouseCoin(selectedSymbol);
+          setUserCoin(selectedSymbol === "sun" ? "moon" : "sun");
+        }
+
+        setFlipping(false);
+        setShowResult(true);
+        onGameEnd();
+      }, 2000);
+    } else {
+      // reset state when not playing
       setFlipping(false);
-      setShowResult(true);
-      onGameEnd();
-    }, 3000);
+      setShowResult(false);
+    }
 
     return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
     };
-  }, [isPlaying, result, selectedSymbol, onGameEnd]);
+  }, [isPlaying]);
 
   const renderCoin = (side: "sun" | "moon", highlight: boolean) => (
     <motion.div
-      className={`w-40 h-40 rounded-full ${
+      className={`w-40 h-40 rounded-full flex items-center justify-center ${
         highlight ? "ring-4 ring-green-500" : "bg-[#49EACB]/30"
-      } flex items-center justify-center`}
+      }`}
       animate={flipping ? { rotateY: 360 } : {}}
       transition={{ repeat: flipping ? Infinity : 0, duration: 0.6 }}
     >
@@ -77,7 +84,7 @@ export function CoinFlipGame({
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-2xl text-[#49EACB]">
-          Place your bet, pick “Choose Winning Symbol,” then flip!
+          Place your bet, choose a symbol, then flip!
         </p>
       </div>
     );
