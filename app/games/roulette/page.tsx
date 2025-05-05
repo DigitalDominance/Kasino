@@ -20,7 +20,7 @@ import { Montserrat } from "next/font/google";
 import "./styles.css";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
-const API = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api";
+const API = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 const LOADING_MSGS = ["Verifying transaction", "Spinning wheel", "Finalizing result"];
 
 export default function RoulettePage() {
