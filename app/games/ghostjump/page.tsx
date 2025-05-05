@@ -250,7 +250,7 @@ function SpaceJumpContent() {
   const settleInBackground = (floorsReached: number) => {
     axios
       .post(
-        "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/settle",
+        "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle",
         { gameId, floorsReached }
       )
       .catch(console.error);
@@ -294,7 +294,7 @@ function SpaceJumpContent() {
     // 3) call play API
     setLoading(true);
     const { data } = await axios.post(
-      "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/play",
+      "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play",
       {
         gameName: "Ghost Jump",
         clientSeed: rawSeed,
