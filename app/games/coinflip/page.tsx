@@ -23,7 +23,7 @@ const LOADING_MESSAGES = [
   "Flipping coins",
   "Finalizing result",
 ];
-const BACKEND = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api";
+const BACKEND = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 
 export default function CoinFlipPage() {
   const { isConnected, balance } = useWallet();
