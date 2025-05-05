@@ -57,7 +57,7 @@ export default function UpgradeGame() {
   const [loadingMessage, setLoadingMessage] = useState("");
   const messages = ["Verifying transaction", "Processing upgrade", "Finalizing result"];
 
-  const apiUrl = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api";
+  const apiUrl = "https://kasino-backend-4818b4b69870.herokuapp.com/api";
 
   // typing effect for loading messages
   useEffect(() => {
