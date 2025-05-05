@@ -23,20 +23,21 @@ export function CoinFlipGame({
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    let timeoutId: NodeJS.Timeout;
+    // declare here so cleanup always sees them
+    let intervalId: ReturnType<typeof setInterval>;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     if (isPlaying) {
-      // start quick flip animation
       setFlipping(true);
       setShowResult(false);
 
+      // rapid random‐flip every 100ms
       intervalId = setInterval(() => {
         setUserCoin(Math.random() < 0.5 ? "sun" : "moon");
         setHouseCoin(Math.random() < 0.5 ? "sun" : "moon");
       }, 100);
 
-      // after 2s, finalize based on result
+      // after exactly 2s, lock in the final coins
       timeoutId = setTimeout(() => {
         clearInterval(intervalId);
 
@@ -52,8 +53,9 @@ export function CoinFlipGame({
         setShowResult(true);
         onGameEnd();
       }, 2000);
+
     } else {
-      // reset state when not playing
+      // if they dropped out of playing mid‐animation, reset immediately
       setFlipping(false);
       setShowResult(false);
     }
@@ -62,7 +64,7 @@ export function CoinFlipGame({
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };
-  }, [isPlaying]);
+  }, [isPlaying, result, selectedSymbol, onGameEnd]);
 
   const renderCoin = (side: "sun" | "moon", highlight: boolean) => (
     <motion.div
