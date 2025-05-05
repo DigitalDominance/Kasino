@@ -49,7 +49,7 @@ export function CoinFlipGame({
       setFlipping(false);
       setShowResult(true);
       onGameEnd();
-    }, 2000);
+    }, 3000);
 
     return () => {
       clearInterval(interval);
