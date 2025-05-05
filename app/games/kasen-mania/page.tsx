@@ -23,7 +23,7 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-const API_URL = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com/api/game/play";
+const API_URL = "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play";
 const treasuryAddressT1 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!;
 const treasuryAddressT2 = process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
 
