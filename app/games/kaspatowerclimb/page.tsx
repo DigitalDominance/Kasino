@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -16,8 +17,6 @@ import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
-import clientPromise from "@/app/lib/mongodb"; // MongoDB client import
-import { MongoClient } from 'mongodb';
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
@@ -101,24 +100,6 @@ function TowerClimbGame({
   );
 }
 
-// MongoDB game data fetch function
-async function fetchGameData(gameId: string) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("test");
-    const gameEntry = await db.collection("gameentries").findOne({ _id: gameId });
-
-    if (!gameEntry) {
-      throw new Error("Game entry not found");
-    }
-
-    return gameEntry;
-  } catch (error) {
-    console.error("Error fetching game data:", error);
-    return null;
-  }
-}
-
 export default function KaspaTowerClimbPage() {
   const { isConnected, balance } = useWallet();
 
@@ -198,16 +179,15 @@ export default function KaspaTowerClimbPage() {
 
   // helper to call /settle
   async function settle(id: string, floorsReached: number) {
-    const { data } = await axios.post(`${apiUrl}/game/settle`, {
-      gameId: id,
-      floorsReached
-    });
-    return data;
-  }
+  const { data } = await axios.post(`${apiUrl}/game/settle`, {
+    gameId: id,
+    floorsReached
+  });
+  return data;
+}
 
   // init tower after /play returns patterns
-  function initTower(gameState: any) {
-    const serverPatterns = gameState.patterns;
+  function initTower(serverPatterns: boolean[][]) {
     setFinishedRows([]);
     setFlipBoard(false);
     setCashoutClicked(false);
@@ -269,26 +249,14 @@ export default function KaspaTowerClimbPage() {
       });
       setLoading(false);
       if (!r.data.success) throw new Error("Play API failed");
-      const gameId = r.data.game._id;
-      setGameId(gameId);
-
-      // retry fetching game data from MongoDB every second
-      let retries = 0;
-      const fetchGame = async () => {
-        if (retries >= 10) return; // max retries to avoid infinite loop
-        const gameData = await fetchGameData(gameId);
-        if (gameData) {
-          initTower(gameData.gameState);
-          setGameResult(null);
-          setPregame(false);
-          setIsPlaying(true);
-          setCooldown(10);
-        } else {
-          retries += 1;
-          setTimeout(fetchGame, 1000);
-        }
-      };
-      fetchGame();
+      const g = r.data.game;
+      setServerSeed(g.serverSeed);
+      setGameId(g._id);
+      initTower(g.patterns);
+      setGameResult(null);
+      setPregame(false);
+      setIsPlaying(true);
+      setCooldown(10);
     } catch (e: any) {
       setLoading(false);
       alert(e.message);
@@ -347,24 +315,24 @@ export default function KaspaTowerClimbPage() {
 
   // 3) Cash out → immediate popup + background settle
   function handleCashOut() {
-    if (cashoutClicked) return;
-    setCashoutClicked(true);
-    setIsPlaying(false);
+  if (cashoutClicked) return;
+  setCashoutClicked(true);
+  setIsPlaying(false);
 
-    // locally compute payout & show popup immediately
-    const floors = finishedRows.length;
-    const payout = Number(betAmount) * Math.pow(1.1, floors);
-    setGameResult("win");
-    setWinAmount(payout);
-    setShowResultPopup(true);
+  // locally compute payout & show popup immediately
+  const floors = finishedRows.length;
+  const payout = Number(betAmount) * Math.pow(1.1, floors);
+  setGameResult("win");
+  setWinAmount(payout);
+  setShowResultPopup(true);
 
-    // background settle — pass the exact floor count
-    if (gameId) {
-      settle(gameId, floors).catch((err) =>
-        alert("Settle error: " + err.message)
-      );
-    }
+  // background settle — pass the exact floor count
+  if (gameId) {
+    settle(gameId, floors).catch((err) =>
+      alert("Settle error: " + err.message)
+    );
   }
+}
 
   // reset
   function resetGame() {
