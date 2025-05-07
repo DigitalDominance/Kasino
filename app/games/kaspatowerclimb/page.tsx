@@ -247,9 +247,12 @@ export default function KaspaTowerClimbPage() {
         betAmount: bet,
         txid,
       });
+      
+      const decryptedResponse = decryptData(r.data, process.env.SECRET_KEY || "mySecretKey1234567890abcdefghijklmnopqrstuvwxyz");
+
       setLoading(false);
-      if (!r.data.success) throw new Error("Play API failed");
-      const g = r.data.game;
+      if (!decryptedResponse.success) throw new Error("Play API failed");
+      const g = decryptedResponse.game;
       setServerSeed(g.serverSeed);
       setGameId(g._id);
       initTower(g.patterns);
