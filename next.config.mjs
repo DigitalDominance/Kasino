@@ -24,7 +24,7 @@ const nextConfig = {
   webpack(config, { isServer }) {
     // Modify webpack config to include node-loader for .node files
     config.resolve.extensions.push('.node'); // Ensure .node extension is resolved
-    config.target = 'node'; // Set target to node
+    config.target = 'web'; // Set target to node
     config.node = {
       __dirname: false, // Do not mock __dirname
     };
