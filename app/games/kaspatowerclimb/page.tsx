@@ -17,6 +17,7 @@ import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
 import clientPromise from "@/app/lib/mongodb"; // MongoDB client import
+import { MongoClient } from 'mongodb';
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
@@ -104,7 +105,7 @@ function TowerClimbGame({
 async function fetchGameData(gameId: string) {
   try {
     const client = await clientPromise;
-    const db = client.db("crypto-casino");
+    const db = client.db("test");
     const gameEntry = await db.collection("gameentries").findOne({ _id: gameId });
 
     if (!gameEntry) {
