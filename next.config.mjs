@@ -1,6 +1,6 @@
-let userConfig = undefined;
+let userConfig = undefined
 try {
-  userConfig = await import('./v0-user-next.config');
+  userConfig = await import('./v0-user-next.config')
 } catch (e) {
   // ignore error
 }
@@ -21,29 +21,13 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  webpack(config, { isServer }) {
-    // Modify webpack config to include node-loader for .node files
-    config.resolve.extensions.push('.node'); // Ensure .node extension is resolved
-    config.target = 'web'; // Set target to web for client-side
-    config.node = {
-      __dirname: false, // Do not mock __dirname
-    };
+}
 
-    config.module.rules.push({
-      test: /\.node$/,
-      loader: 'node-loader', // Use node-loader for .node files
-    });
-
-    return config;
-  }
-};
-
-// Merging the user configuration with the base nextConfig
-mergeConfig(nextConfig, userConfig);
+mergeConfig(nextConfig, userConfig)
 
 function mergeConfig(nextConfig, userConfig) {
   if (!userConfig) {
-    return;
+    return
   }
 
   for (const key in userConfig) {
@@ -54,11 +38,11 @@ function mergeConfig(nextConfig, userConfig) {
       nextConfig[key] = {
         ...nextConfig[key],
         ...userConfig[key],
-      };
+      }
     } else {
-      nextConfig[key] = userConfig[key];
+      nextConfig[key] = userConfig[key]
     }
   }
 }
 
-export default nextConfig;
+export default nextConfig
