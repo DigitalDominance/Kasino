@@ -17,6 +17,7 @@ import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/app/page";
 import { FaTwitter, FaTelegramPlane, FaGlobe } from "react-icons/fa";
+import { decryptData } from "@/utils/encryption";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
