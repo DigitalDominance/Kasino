@@ -20,9 +20,9 @@ import { XPDisplay } from "@/app/page";
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const HOUSE_EDGE = 0.075; // 7.5% house edge
+const HOUSE_EDGE = 0.075;
 
-// Placeholder multipliers – must match your backend CROSS_MULTIPLIERS
+// Placeholder multipliers
 const CROSS_MULTIPLIERS = [2, 3, 5, 10, 20, 50];
 
 // Road/tile sizing
@@ -48,15 +48,15 @@ function KaspianCrossGame({
   isFalling,
   hasLost,
 }) {
-  // Auto-scroll logic
   const [scrollOffset, setScrollOffset] = useState(0);
+
   useEffect(() => {
-    const maxVisibleBeforeScroll = 3;
-    if (currentPosition > maxVisibleBeforeScroll) {
-      setScrollOffset((currentPosition - maxVisibleBeforeScroll) * ROAD_WIDTH);
-    } else {
-      setScrollOffset(0);
-    }
+    const maxVisible = 3;
+    setScrollOffset(
+      currentPosition > maxVisible
+        ? (currentPosition - maxVisible) * ROAD_WIDTH
+        : 0
+    );
   }, [currentPosition]);
 
   const mainRowTop = 160;
@@ -241,6 +241,85 @@ function KaspianCrossGame({
   );
 }
 
+// Promo / Info Card
+function PromoCard() {
+  const d1 = useMemo(() => Math.random() * 3 + 0.5, []);
+  const d2 = useMemo(() => Math.random() * 3 + 0.5, []);
+  const d3 = useMemo(() => Math.random() * 3 + 0.5, []);
+  return (
+    <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
+      <motion.h2
+        className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
+        animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+        style={{
+          backgroundImage:
+            "linear-gradient(270deg, #49EACB, #B19CD9, #49EACB)",
+          backgroundSize: "200% 200%",
+        }}
+      >
+        Kaspian Cross
+      </motion.h2>
+      <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
+        <div className="relative w-full h-full grid grid-cols-3 items-center">
+          <motion.div
+            className="justify-self-start ml-[15px]"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: d1,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image
+              src="/kaspa-kas-logo.webp"
+              alt="Kaspa Logo"
+              width={96}
+              height={96}
+              className="z-10"
+            />
+          </motion.div>
+          <motion.div
+            className="justify-self-center z-10"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: d2,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image src="/kaspian.webp" alt="Kaspian" width={96} height={96} />
+          </motion.div>
+          <motion.div
+            className="justify-self-end mr-[5px] z-10"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatDelay: d3,
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            <Image
+              src="/kaspiancar.webp"
+              alt="Car"
+              width={128}
+              height={128}
+              className="rotate-180"
+            />
+          </motion.div>
+        </div>
+      </div>
+      <p className="text-lg text-white mb-4 px-4 leading-7">
+        Cross the road one tile at a time and increase your payout. But beware,
+        avoid the Kaspa cars that are waiting to hit you if you lose!
+      </p>
+    </Card>
+  );
+}
+
 // Controls Component
 function KaspianCrossControls({
   betAmount,
@@ -252,29 +331,21 @@ function KaspianCrossControls({
   result,
   cooldown,
 }) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (errorMessage) {
-      const t = setTimeout(() => setErrorMessage(null), 3000);
+    if (error) {
+      const t = setTimeout(() => setError(null), 3000);
       return () => clearTimeout(t);
     }
-  }, [errorMessage]);
-  const showError = (msg: string) => setErrorMessage(msg);
+  }, [error]);
+  const showError = (m: string) => setError(m);
 
-  const handleStartClick = () => {
-    if (!isWalletConnected) {
-      showError("Please connect your wallet first");
-      return;
-    }
-    const bet = Number(betAmount);
-    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
-      showError(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
-      return;
-    }
-    if (bet > balance) {
-      showError("Insufficient balance");
-      return;
-    }
+  const handleStart = () => {
+    if (!isWalletConnected) return showError("Connect wallet first");
+    const b = Number(betAmount);
+    if (isNaN(b) || b < MIN_BET || b > MAX_BET)
+      return showError(`Bet ${MIN_BET}-${MAX_BET}`);
+    if (b > balance) return showError("Insufficient balance");
     onStartGame();
   };
 
@@ -292,7 +363,7 @@ function KaspianCrossControls({
                 className="bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8 w-full"
                 disabled={isPlaying || !isWalletConnected}
               />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-2 top-1/2 -translate-y-1/2">
                 <Image
                   src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
                   alt="KAS"
@@ -303,49 +374,23 @@ function KaspianCrossControls({
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount((n) => (Number(n) / 2).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant="outline" onClick={() => setBetAmount((n) => (Number(n) / 2).toString())} disabled={isPlaying || !isWalletConnected}>
                 ½
               </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount((n) => (Number(n) * 2).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant="outline" onClick={() => setBetAmount((n) => (Number(n) * 2).toString())} disabled={isPlaying || !isWalletConnected}>
                 2×
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setBetAmount(MIN_BET.toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant="outline" onClick={() => setBetAmount(MIN_BET.toString())} disabled={isPlaying || !isWalletConnected}>
                 Min
               </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount(Math.min(MAX_BET, balance).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
+              <Button variant="outline" onClick={() => setBetAmount(Math.min(MAX_BET, balance).toString())} disabled={isPlaying || !isWalletConnected}>
                 Max
               </Button>
             </div>
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {!isPlaying ? (
-              <Button
-                className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
-                onClick={handleStartClick}
-                disabled={!isWalletConnected || cooldown > 0}
-              >
+              <Button className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={handleStart} disabled={!isWalletConnected || cooldown > 0}>
                 {!isWalletConnected
                   ? "Connect Wallet"
                   : cooldown > 0
@@ -361,19 +406,11 @@ function KaspianCrossControls({
         </div>
       </Card>
       <AnimatePresence>
-        {errorMessage && (
-          <motion.div
-            initial={{ x: -300, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -300, opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-4 left-4 bg-gradient-to-r from-blue-700 to-black text-white px-4 py-2 rounded shadow-lg"
-          >
+        {error && (
+          <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -300, opacity: 0 }} transition={{ duration: 0.5 }} className="fixed bottom-4 left-4 bg-gradient-to-r from-blue-700 to-black text-white px-4 py-2 rounded shadow-lg">
             <div className="flex justify-between items-center">
-              <span>{errorMessage}</span>
-              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold">
-                X
-              </button>
+              <span>{error}</span>
+              <button onClick={() => setError(null)} className="ml-4 font-bold">X</button>
             </div>
           </motion.div>
         )}
@@ -386,7 +423,6 @@ function KaspianCrossControls({
 export default function KaspianCrossPage() {
   const { isConnected, balance } = useWallet();
 
-  // state
   const [pregame, setPregame] = useState(true);
   const [loading, setLoading] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
@@ -410,7 +446,7 @@ export default function KaspianCrossPage() {
   const [betAmount, setBetAmount] = useState("1");
   const [cooldown, setCooldown] = useState(0);
 
-  // loading typewriter
+  // Loading typewriter
   useEffect(() => {
     if (!loading) return;
     setMsgIndex(0);
@@ -420,10 +456,7 @@ export default function KaspianCrossPage() {
     if (!loading) return;
     const curr = messages[msgIndex];
     if (msgText.length < curr.length) {
-      const t = setTimeout(
-        () => setMsgText(curr.slice(0, msgText.length + 1)),
-        40
-      );
+      const t = setTimeout(() => setMsgText(curr.slice(0, msgText.length + 1)), 40);
       return () => clearTimeout(t);
     }
     const t2 = setTimeout(() => {
@@ -436,19 +469,10 @@ export default function KaspianCrossPage() {
   }, [loading, msgText, msgIndex]);
 
   const loadingOverlay = loading && (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-green-300 font-mono"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-green-300 font-mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div>
         {msgText}
-        <motion.span
-          className="ml-1"
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8 }}
-        >
+        <motion.span className="ml-1" animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }}>
           ●
         </motion.span>
       </div>
@@ -458,9 +482,7 @@ export default function KaspianCrossPage() {
   const API_BASE = "https://kasino-backend-4818b4b69870.herokuapp.com";
 
   const handleStartGame = async () => {
-    if (!isConnected) {
-      return alert("Connect wallet first");
-    }
+    if (!isConnected) return alert("Connect wallet first");
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
       return alert(`Bet ${MIN_BET}-${MAX_BET} within your balance`);
@@ -470,24 +492,17 @@ export default function KaspianCrossPage() {
     const arr = crypto.getRandomValues(new Uint8Array(32));
     const raw = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
     const hashBuf = await crypto.subtle.digest("SHA-256", arr);
-    const hash = Array.from(new Uint8Array(hashBuf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const hash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
     setClientSeed(raw);
     setServerSeedHash("");
 
     // deposit
     const [addr] = await window.kasware.getAccounts();
-    const treasury =
-      Math.random() < 0.5
-        ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
-        : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
-    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
-      priorityFee: 10000,
-    });
+    const treasury = Math.random() < 0.5 ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1! : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
+    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, { priorityFee: 10000 });
     const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
 
-    // call play
+    // play API
     setLoading(true);
     let data;
     try {
@@ -500,22 +515,16 @@ export default function KaspianCrossPage() {
         betAmount: bet,
         txid,
       }));
-    } catch (err) {
+    } catch {
       setLoading(false);
       return alert("Play API failed");
     }
     setLoading(false);
-
-    if (!data.success) {
-      return alert("Play API error");
-    }
+    if (!data.success) return alert("Play API error");
 
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
-    // reset board
-    setTiles(
-      CROSS_MULTIPLIERS.map((m, i) => ({ multiplier: m, position: i + 1 }))
-    );
+    setTiles(CROSS_MULTIPLIERS.map((m, i) => ({ multiplier: m, position: i + 1 })));
     setCurrentPosition(1);
     setIsJumping(false);
     setIsFalling(false);
@@ -530,7 +539,6 @@ export default function KaspianCrossPage() {
     setIsJumping(true);
     setTimeout(async () => {
       setIsJumping(false);
-      // ask backend to settle this step
       try {
         const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
           gameId,
@@ -556,7 +564,6 @@ export default function KaspianCrossPage() {
 
   const handleCashOut = async () => {
     if (!gameId) return;
-    // client‐side popup
     const multiplier = tiles[currentPosition - 1].multiplier;
     const payout = multiplier * Number(betAmount);
     setResult({
@@ -565,7 +572,6 @@ export default function KaspianCrossPage() {
       clientSeed,
       serverSeedHash,
     });
-    // backend settle
     try {
       await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
@@ -599,8 +605,8 @@ export default function KaspianCrossPage() {
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <AnimatePresence>{loadingOverlay}</AnimatePresence>
+
       <div className="flex-grow p-6">
-        {/* Header */}
         <header className="flex justify-between mb-6">
           <Link href="/" className="flex items-center text-[#49EACB] hover:underline">
             <ArrowLeft className="mr-2" /> Back
@@ -611,7 +617,6 @@ export default function KaspianCrossPage() {
           </div>
         </header>
 
-        {/* Game & Controls */}
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
@@ -694,15 +699,9 @@ export default function KaspianCrossPage() {
       </div>
       <SiteFooter />
 
-      {/* Result Popup */}
       <AnimatePresence>
         {result && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <Card className="bg-green-300 text-black p-8 rounded-xl text-center">
               <h2 className="text-3xl font-bold mb-4">
                 {result.gameResult === "win" ? "You Win!" : "Game Over"}
