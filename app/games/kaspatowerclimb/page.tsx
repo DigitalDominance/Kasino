@@ -30,7 +30,7 @@ const WIN_IMG = "/kaspatowerclimbwin.png";
 const LOSE_IMG = "/kaspatowerclimbloss.png";
 
 interface TowerRow {
-  pattern: boolean[];   // this holds either placeholder (all false) or actual revealed pattern
+  pattern: boolean[];   // all‐false placeholders or actual revealed
   revealed: boolean;
 }
 
@@ -72,7 +72,6 @@ function TowerClimbGame({
                 key={colIndex}
                 className="w-16 h-16 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
                 onClick={() => {
-                  // only active row, not revealed yet
                   if (rowIndex === finishedRows.length && !row.revealed) {
                     onCubeClick(colIndex);
                   }
@@ -93,23 +92,35 @@ function TowerClimbGame({
 export default function KaspaTowerClimbPage() {
   const { isConnected, balance } = useWallet();
 
+  // generate decorative logos once
+  const decorativeLogos = useMemo(
+    () =>
+      Array.from({ length: 50 }).map(() => ({
+        top: `${Math.random() * 80}%`,
+        left: `${Math.random() * 80}%`,
+      })),
+    []
+  );
+
+  // track whether we flipped the board on loss
+  const [flipBoard, setFlipBoard] = useState(false);
+
   // game state
   const [pregame, setPregame] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [betAmount, setBetAmount] = useState("1");
   const [finishedRows, setFinishedRows] = useState<TowerRow[]>([]);
   const [activeRow, setActiveRow] = useState<TowerRow | null>(null);
-  // we don't know future patterns until each settle, so just track count
   const [remainingRows, setRemainingRows] = useState(TOTAL_ROWS);
 
-  // seeds & result
+  // provably fair seeds & result
   const [clientSeed, setClientSeed] = useState<string | null>(null);
   const [serverSeed, setServerSeed] = useState<string | null>(null);
   const [gameResult, setGameResult] = useState<"win" | "lose" | null>(null);
   const [winAmount, setWinAmount] = useState(0);
   const [gameId, setGameId] = useState<string | null>(null);
 
-  // txid + loading
+  // deposit TXID + loading
   const [depositTxid, setDepositTxid] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const messages = [
@@ -136,9 +147,7 @@ export default function KaspaTowerClimbPage() {
     if (loadingMessage.length < curr.length) {
       const t = setTimeout(
         () =>
-          setLoadingMessage(
-            curr.slice(0, loadingMessage.length + 1)
-          ),
+          setLoadingMessage(curr.slice(0, loadingMessage.length + 1)),
         40
       );
       return () => clearTimeout(t);
@@ -152,7 +161,7 @@ export default function KaspaTowerClimbPage() {
     return () => clearTimeout(t2);
   }, [loading, loadingMessage, messageIndex]);
 
-  // cooldown
+  // cooldown between plays
   const [cooldown, setCooldown] = useState(0);
   useEffect(() => {
     if (cooldown > 0) {
@@ -161,70 +170,50 @@ export default function KaspaTowerClimbPage() {
     }
   }, [cooldown]);
 
-  // initialize blank board with placeholders only
+  // initialize blank board
   function initTower() {
     setFinishedRows([]);
-    setActiveRow({
-      pattern: Array(NUM_COLS).fill(false),
-      revealed: false,
-    });
+    setActiveRow({ pattern: Array(NUM_COLS).fill(false), revealed: false });
     setRemainingRows(TOTAL_ROWS - 1);
     setIsPlaying(true);
     setGameResult(null);
     setWinAmount(0);
     setCashoutClicked(false);
+    setFlipBoard(false);
   }
 
-  // Start game
+  // start a new game
   async function handleStartGame() {
     if (!isConnected) {
       alert("Please connect your wallet first");
       return;
     }
     const bet = Number(betAmount);
-    if (
-      isNaN(bet) ||
-      bet < MIN_BET ||
-      bet > MAX_BET ||
-      bet > balance
-    ) {
-      alert(
-        `Bet must be between ${MIN_BET} and ${MAX_BET}, and within your balance.`
-      );
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
+      alert(`Bet must be between ${MIN_BET} and ${MAX_BET}, and within your balance.`);
       return;
     }
 
     try {
-      // provably-fair seeds
+      // provably‐fair seeds
       const arr = new Uint8Array(32);
       crypto.getRandomValues(arr);
-      const raw = Array.from(arr)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      const raw = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
       const buf = await crypto.subtle.digest("SHA-256", arr);
-      const hash = Array.from(new Uint8Array(buf))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      const hash = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
       setClientSeed(raw);
 
       // deposit KAS
       const [addr] = await window.kasware.getAccounts();
       const treasury = Math.random() < 0.5 ? T1 : T2;
-      const dep = await window.kasware.sendKaspa(
-        treasury,
-        bet * 1e8,
-        { priorityFee: 10000 }
-      );
-      const txid =
-        typeof dep === "string"
-          ? JSON.parse(dep).id
-          : (dep as any).id;
+      const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, { priorityFee: 10000 });
+      const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
       setDepositTxid(txid);
 
-      // now start loading/typewriter
+      // loading overlay
       setLoading(true);
 
-      // call play
+      // call /play
       const r = await axios.post(`${apiUrl}/game/play`, {
         gameName: "Kaspa Tower Climb",
         clientSeed: raw,
@@ -235,12 +224,10 @@ export default function KaspaTowerClimbPage() {
         txid,
       });
       setLoading(false);
+      if (!r.data.success) throw new Error(r.data.message || "Play API failed");
 
-      if (!r.data.success)
-        throw new Error(r.data.message || "Play API failed");
-      const g = r.data.game;
-      setServerSeed(g.serverSeed);
-      setGameId(g._id);
+      setServerSeed(r.data.game.serverSeed);
+      setGameId(r.data.game._id);
 
       initTower();
       setPregame(false);
@@ -251,7 +238,7 @@ export default function KaspaTowerClimbPage() {
     }
   }
 
-  // settle a single tile click
+  // settle one tile click
   async function handleCubeClick(colIndex: number) {
     if (!gameId || !isPlaying) return;
     setIsPlaying(false);
@@ -262,31 +249,18 @@ export default function KaspaTowerClimbPage() {
         floorsReached: finishedRows.length + 1,
         tileIndex: colIndex,
       });
-      const {
-        gameResult: result,
-        winAmount: amt,
-        revealedTiles,
-        nextFloor,
-      } = data.game;
+      const { gameResult: result, winAmount: amt, revealedTiles } = data.game;
 
-      // reveal this row
-      setFinishedRows((rows) => [
-        ...rows,
-        { pattern: revealedTiles, revealed: true },
-      ]);
+      setFinishedRows((rows) => [...rows, { pattern: revealedTiles, revealed: true }]);
 
       if (result === "continue") {
-        // next blank row
-        setActiveRow({
-          pattern: Array(NUM_COLS).fill(false),
-          revealed: false,
-        });
+        setActiveRow({ pattern: Array(NUM_COLS).fill(false), revealed: false });
         setRemainingRows((r) => r - 1);
         setIsPlaying(true);
       } else {
-        // win or lose
         setGameResult(result);
         setWinAmount(amt);
+        setFlipBoard(result === "lose");
         setShowResultPopup(true);
       }
     } catch (err: any) {
@@ -294,7 +268,7 @@ export default function KaspaTowerClimbPage() {
     }
   }
 
-  // Cash out
+  // cash out
   const [cashoutClicked, setCashoutClicked] = useState(false);
   async function handleCashOut() {
     if (cashoutClicked || !gameId) return;
@@ -319,7 +293,7 @@ export default function KaspaTowerClimbPage() {
     }
   }
 
-  // reset
+  // reset everything
   function resetGame() {
     setPregame(true);
     setIsPlaying(false);
@@ -334,13 +308,14 @@ export default function KaspaTowerClimbPage() {
     setGameResult(null);
     setWinAmount(0);
     setCooldown(0);
+    setFlipBoard(false);
   }
 
   const [showResultPopup, setShowResultPopup] = useState(false);
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-      {/* Loading Overlay */}
+      {/* Loading */}
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -371,7 +346,7 @@ export default function KaspaTowerClimbPage() {
       {/* Deposit TXID */}
       {depositTxid && (
         <p className="px-6 mb-4 text-sm text-[#B6B6B6]">
-          Deposit TXID:{" "}
+          Deposit TXID:&nbsp;
           <a
             href={`https://kas.fyi/transaction/${depositTxid}`}
             target="_blank"
@@ -384,9 +359,8 @@ export default function KaspaTowerClimbPage() {
       )}
 
       <div className="flex-grow p-6">
-        {/* Main Grid */}
+        {/* Main grid */}
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
-          {/* Game Container */}
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/20 p-6 rounded-lg">
             <div className="w-full flex flex-col items-center">
               <div className="flex justify-between w-full mb-4">
@@ -398,27 +372,22 @@ export default function KaspaTowerClimbPage() {
 
               {pregame ? (
                 <div className="relative w-full min-h-[600px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-black to-[#004225]/80">
-                  {useMemo(() =>
-                    Array.from({ length: 50 }).map((_, idx) => ({
-                      top: `${Math.random() * 80}%`,
-                      left: `${Math.random() * 80}%`,
-                    })).map((pos, idx) => (
-                      <motion.div
-                        key={idx}
-                        className="absolute opacity-50"
-                        style={{ top: pos.top, left: pos.left }}
-                        whileHover={{ scale: 1.2 }}
-                      >
-                        <Image
-                          src="/kaspagameicon.png"
-                          alt="Kaspa Logo"
-                          width={30}
-                          height={30}
-                          style={{ border: "2px solid #004d00", borderRadius: "50%" }}
-                        />
-                      </motion.div>
-                    ))
-                  , [])}
+                  {decorativeLogos.map((pos, idx) => (
+                    <motion.div
+                      key={idx}
+                      className="absolute opacity-50"
+                      style={{ top: pos.top, left: pos.left }}
+                      whileHover={{ scale: 1.2 }}
+                    >
+                      <Image
+                        src="/kaspagameicon.png"
+                        alt="Kaspa Logo"
+                        width={30}
+                        height={30}
+                        style={{ border: "2px solid #004d00", borderRadius: "50%" }}
+                      />
+                    </motion.div>
+                  ))}
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <motion.h1
@@ -450,11 +419,10 @@ export default function KaspaTowerClimbPage() {
                   finishedRows={finishedRows}
                   activeRow={activeRow}
                   onCubeClick={handleCubeClick}
-                  flipBoard={false}
+                  flipBoard={flipBoard}
                 />
               )}
 
-              {/* only show after first successful row */}
               {isPlaying && finishedRows.length > 0 && (
                 <Button
                   className="mt-4 bg-[#49EACB] text-black"
@@ -469,7 +437,6 @@ export default function KaspaTowerClimbPage() {
             </div>
           </Card>
 
-          {/* Controls & Chat */}
           <div className="space-y-6">
             <TowerClimbControls
               betAmount={betAmount}
@@ -485,7 +452,6 @@ export default function KaspaTowerClimbPage() {
           </div>
         </div>
 
-        {/* Promo Section */}
         <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/20 p-6 text-center rounded-lg">
           <motion.h2
             className="text-4xl font-bold mb-4 bg-clip-text text-transparent"
@@ -519,7 +485,6 @@ export default function KaspaTowerClimbPage() {
 
       <SiteFooter />
 
-      {/* Result Popup */}
       <AnimatePresence>
         {showResultPopup && (
           <motion.div
@@ -640,40 +605,10 @@ function TowerClimbControls({
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount((n) => (Number(n) / 2).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
-                ½
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount((n) => (Number(n) * 2).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
-                2×
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setBetAmount(MIN_BET.toString())}
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Min
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setBetAmount(Math.min(MAX_BET, balance).toString())
-                }
-                disabled={isPlaying || !isWalletConnected}
-              >
-                Max
-              </Button>
+              <Button variant="outline" onClick={() => setBetAmount((n) => (Number(n) / 2).toString())} disabled={isPlaying || !isWalletConnected}>½</Button>
+              <Button variant="outline" onClick={() => setBetAmount((n) => (Number(n) * 2).toString())} disabled={isPlaying || !isWalletConnected}>2×</Button>
+              <Button variant="outline" onClick={() => setBetAmount(MIN_BET.toString())} disabled={isPlaying || !isWalletConnected}>Min</Button>
+              <Button variant="outline" onClick={() => setBetAmount(Math.min(MAX_BET, balance).toString())} disabled={isPlaying || !isWalletConnected}>Max</Button>
             </div>
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -703,12 +638,7 @@ function TowerClimbControls({
           >
             <div className="flex justify-between">
               <span>{errorMessage}</span>
-              <button
-                onClick={() => setErrorMessage(null)}
-                className="font-bold ml-4"
-              >
-                X
-              </button>
+              <button onClick={() => setErrorMessage(null)} className="font-bold ml-4">X</button>
             </div>
           </motion.div>
         )}
@@ -716,4 +646,3 @@ function TowerClimbControls({
     </>
   );
 }
-
