@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/ui/wallet-connection";
+import { WalletConnection } from "@/components/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import Image from "next/image";
