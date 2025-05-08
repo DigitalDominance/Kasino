@@ -1,3 +1,5 @@
+// app/pages/kaspa-tower-climb.tsx
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -7,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/wallet-connection";
+import { WalletConnection } from "@/components/ui/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import Image from "next/image";
@@ -677,4 +679,3 @@ function TowerClimbControls({
     </>
   );
 }
-
