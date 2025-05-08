@@ -249,7 +249,7 @@ export default function KaspaTowerClimbPage() {
         txid,
       });
       
-      const decryptedResponse = decryptData(r.data, process.env.SECRET_KEY || "mySecretKey1234567890abcdefghijklmnopqrstuvwxyz");
+      const decryptedResponse = decryptData(r.data, process.env.SECRET_KEY);
 
       setLoading(false);
       if (!decryptedResponse.success) throw new Error("Play API failed");
