@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { WalletConnection } from "@/components/wallet-connection";
+import { WalletConnection } from "@/components/ui/wallet-connection";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import Image from "next/image";
@@ -20,8 +20,10 @@ import { XPDisplay } from "@/app/page";
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 const MIN_BET = 1;
 const MAX_BET = 1000;
-const MAX_MULTIPLIER = 50;
 const HOUSE_EDGE = 0.075; // 7.5% house edge
+
+// Placeholder multipliers – must match your backend CROSS_MULTIPLIERS
+const CROSS_MULTIPLIERS = [2, 3, 5, 10, 20, 50];
 
 // Road/tile sizing
 const ROAD_WIDTH = 160;
@@ -37,12 +39,7 @@ const messages = [
   "Building lanes",
 ];
 
-// Calculate win probability with house edge
-function getWinProbability(currentMultiplier) {
-  return (1 / currentMultiplier) * (1 - HOUSE_EDGE);
-}
-
-// Kaspian Cross Game Component (from old UI)
+// Kaspian Cross Game Component
 function KaspianCrossGame({
   tiles,
   currentPosition,
@@ -50,7 +47,6 @@ function KaspianCrossGame({
   isJumping,
   isFalling,
   hasLost,
-  hasWon,
 }) {
   // Auto-scroll logic
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -107,7 +103,7 @@ function KaspianCrossGame({
             const isPast = tile.position < currentPosition;
             const isCurrent = tile.position === currentPosition;
             const isActive =
-              tile.position === currentPosition + 1 && !hasLost && !hasWon;
+              tile.position === currentPosition + 1 && !hasLost;
             return (
               <motion.div
                 key={tile.position}
@@ -184,7 +180,7 @@ function KaspianCrossGame({
             }}
           >
             <Image
-              src={isJumping ? "/kaspian.webp" : "/kaspian.webp"}
+              src="/kaspian.webp"
               alt="Kaspian"
               fill
               className="object-contain"
@@ -245,86 +241,7 @@ function KaspianCrossGame({
   );
 }
 
-// Promo / Info Card (old UI)
-function PromoCard() {
-  const randomDelay1 = useMemo(() => Math.random() * 3 + 0.5, []);
-  const randomDelay2 = useMemo(() => Math.random() * 3 + 0.5, []);
-  const randomDelay3 = useMemo(() => Math.random() * 3 + 0.5, []);
-
-  return (
-    <Card className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 flex flex-col items-center text-center">
-      <motion.h2
-        className="text-4xl font-bold mb-4 text-transparent bg-clip-text"
-        animate={{ backgroundPosition: ["0% 50%", "100% 50%"] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-        style={{
-          backgroundImage: "linear-gradient(270deg, #49EACB, #B19CD9, #49EACB)",
-          backgroundSize: "200% 200%",
-        }}
-      >
-        Kaspian Cross
-      </motion.h2>
-      <div className="relative w-full h-48 mb-4 bg-gradient-to-b from-green-900 to-purple-900 rounded-lg overflow-hidden">
-        <div className="relative w-full h-full grid grid-cols-3 items-center">
-          <motion.div
-            className="justify-self-start ml-[15px]"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{
-              repeat: Infinity,
-              repeatDelay: randomDelay1,
-              duration: 0.8,
-              ease: "easeInOut",
-            }}
-          >
-            <Image
-              src="/kaspa-kas-logo.webp"
-              alt="Kaspa Logo"
-              width={96}
-              height={96}
-              className="z-10"
-            />
-          </motion.div>
-          <motion.div
-            className="justify-self-center z-10"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{
-              repeat: Infinity,
-              repeatDelay: randomDelay2,
-              duration: 0.8,
-              ease: "easeInOut",
-            }}
-          >
-            <Image src="/kaspian.webp" alt="Kaspian" width={96} height={96} />
-          </motion.div>
-          <motion.div
-            className="justify-self-end mr-[5px] z-10"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{
-              repeat: Infinity,
-              repeatDelay: randomDelay3,
-              duration: 0.8,
-              ease: "easeInOut",
-            }}
-          >
-            <Image
-              src="/kaspiancar.webp"
-              alt="Car"
-              width={128}
-              height={128}
-              className="rotate-180"
-            />
-          </motion.div>
-        </div>
-      </div>
-      <p className="text-lg text-white mb-4 px-4 leading-7">
-        Cross the road one tile at a time and increase your payout. But beware, avoid the Kaspa
-        cars that are waiting to hit you if you lose!
-      </p>
-    </Card>
-  );
-}
-
-// Controls Component (old UI)
+// Controls Component
 function KaspianCrossControls({
   betAmount,
   setBetAmount,
@@ -332,19 +249,17 @@ function KaspianCrossControls({
   isWalletConnected,
   balance,
   onStartGame,
-  gameResult,
+  result,
   cooldown,
 }) {
-  const [errorMessage, setErrorMessage] = useState(null);
-
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   useEffect(() => {
     if (errorMessage) {
       const t = setTimeout(() => setErrorMessage(null), 3000);
       return () => clearTimeout(t);
     }
   }, [errorMessage]);
-
-  const showError = (msg) => setErrorMessage(msg);
+  const showError = (msg: string) => setErrorMessage(msg);
 
   const handleStartClick = () => {
     if (!isWalletConnected) {
@@ -352,11 +267,7 @@ function KaspianCrossControls({
       return;
     }
     const bet = Number(betAmount);
-    if (isNaN(bet)) {
-      showError("Enter a valid number");
-      return;
-    }
-    if (bet < MIN_BET || bet > MAX_BET) {
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET) {
       showError(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
       return;
     }
@@ -394,9 +305,8 @@ function KaspianCrossControls({
             <div className="grid grid-cols-4 gap-2">
               <Button
                 variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
                 onClick={() =>
-                  setBetAmount((Number(betAmount) / 2).toString())
+                  setBetAmount((n) => (Number(n) / 2).toString())
                 }
                 disabled={isPlaying || !isWalletConnected}
               >
@@ -404,9 +314,8 @@ function KaspianCrossControls({
               </Button>
               <Button
                 variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
                 onClick={() =>
-                  setBetAmount((Number(betAmount) * 2).toString())
+                  setBetAmount((n) => (Number(n) * 2).toString())
                 }
                 disabled={isPlaying || !isWalletConnected}
               >
@@ -414,7 +323,6 @@ function KaspianCrossControls({
               </Button>
               <Button
                 variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
                 onClick={() => setBetAmount(MIN_BET.toString())}
                 disabled={isPlaying || !isWalletConnected}
               >
@@ -422,7 +330,6 @@ function KaspianCrossControls({
               </Button>
               <Button
                 variant="outline"
-                className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
                 onClick={() =>
                   setBetAmount(Math.min(MAX_BET, balance).toString())
                 }
@@ -433,13 +340,6 @@ function KaspianCrossControls({
             </div>
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            {gameResult && (
-              <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-[#49EACB]">
-                  {gameResult}
-                </div>
-              </div>
-            )}
             {!isPlaying ? (
               <Button
                 className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -471,10 +371,7 @@ function KaspianCrossControls({
           >
             <div className="flex justify-between items-center">
               <span>{errorMessage}</span>
-              <button
-                onClick={() => setErrorMessage(null)}
-                className="ml-4 font-bold"
-              >
+              <button onClick={() => setErrorMessage(null)} className="ml-4 font-bold">
                 X
               </button>
             </div>
@@ -487,31 +384,33 @@ function KaspianCrossControls({
 
 // Main Page Component
 export default function KaspianCrossPage() {
-  return <KaspianCrossContent />;
-}
-
-function KaspianCrossContent() {
   const { isConnected, balance } = useWallet();
 
-  // State
+  // state
   const [pregame, setPregame] = useState(true);
   const [loading, setLoading] = useState(false);
   const [msgIndex, setMsgIndex] = useState(0);
   const [msgText, setMsgText] = useState("");
-  const [tiles, setTiles] = useState([]);
+  const [tiles, setTiles] = useState(
+    CROSS_MULTIPLIERS.map((m, i) => ({ multiplier: m, position: i + 1 }))
+  );
   const [currentPosition, setCurrentPosition] = useState(1);
   const [isJumping, setIsJumping] = useState(false);
   const [isFalling, setIsFalling] = useState(false);
   const [hasLost, setHasLost] = useState(false);
-  const [hasWon, setHasWon] = useState(false);
-  const [result, setResult] = useState(null);
-  const [gameId, setGameId] = useState(null);
+  const [result, setResult] = useState<{
+    gameResult: "win" | "lose";
+    winAmount: number;
+    clientSeed: string;
+    serverSeedHash: string;
+  } | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
   const [clientSeed, setClientSeed] = useState("");
   const [serverSeedHash, setServerSeedHash] = useState("");
   const [betAmount, setBetAmount] = useState("1");
   const [cooldown, setCooldown] = useState(0);
 
-  // Loading typewriter
+  // loading typewriter
   useEffect(() => {
     if (!loading) return;
     setMsgIndex(0);
@@ -536,7 +435,6 @@ function KaspianCrossContent() {
     return () => clearTimeout(t2);
   }, [loading, msgText, msgIndex]);
 
-  // Typewriter & three-dot
   const loadingOverlay = loading && (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-green-300 font-mono"
@@ -557,43 +455,43 @@ function KaspianCrossContent() {
     </motion.div>
   );
 
+  const API_BASE = "https://kasino-backend-4818b4b69870.herokuapp.com";
+
   const handleStartGame = async () => {
-  if (!isConnected) {
-    return alert("Connect wallet first");
-  }
-  const bet = Number(betAmount);
-  if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
-    return alert(`Bet ${MIN_BET}-${MAX_BET} within your balance`);
-  }
+    if (!isConnected) {
+      return alert("Connect wallet first");
+    }
+    const bet = Number(betAmount);
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
+      return alert(`Bet ${MIN_BET}-${MAX_BET} within your balance`);
+    }
 
-  // 1) build seeds
-  const arr = crypto.getRandomValues(new Uint8Array(32));
-  const raw = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
-  const hashBuf = await crypto.subtle.digest("SHA-256", arr);
-  const hash = Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  setClientSeed(raw);
-  setServerSeedHash("");
+    // seeds
+    const arr = crypto.getRandomValues(new Uint8Array(32));
+    const raw = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const hashBuf = await crypto.subtle.digest("SHA-256", arr);
+    const hash = Array.from(new Uint8Array(hashBuf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    setClientSeed(raw);
+    setServerSeedHash("");
 
-  // 2) deposit (no loader yet)
-  const [addr] = await window.kasware.getAccounts();
-  const treasury =
-    Math.random() < 0.5
-      ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
-      : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
-  const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
-    priorityFee: 10000,
-  });
-  const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
+    // deposit
+    const [addr] = await window.kasware.getAccounts();
+    const treasury =
+      Math.random() < 0.5
+        ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+        : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
+    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+      priorityFee: 10000,
+    });
+    const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
 
-  // 3) *now* show loader while we wait for your play API
-  setLoading(true);
-  let data;
-  try {
-    ({ data } = await axios.post(
-      "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play",
-      {
+    // call play
+    setLoading(true);
+    let data;
+    try {
+      ({ data } = await axios.post(`${API_BASE}/api/game/play`, {
         gameName: "Kaspian Cross",
         clientSeed: raw,
         clientSeedHash: hash,
@@ -601,99 +499,96 @@ function KaspianCrossContent() {
         walletAddress: addr,
         betAmount: bet,
         txid,
-      }
-    ));
-  } catch (err) {
-    setLoading(false);
-    return alert("Play API failed");
-  }
-  setLoading(false);
-
-  if (!data.success) {
-    return alert("Play API error");
-  }
-
-  // 4) reset all your in-memory game state *before* leaving pregame
-  setGameId(data.game._id);
-  setTiles(data.game.tiles);
-  setServerSeedHash(data.game.serverSeedHash);
-  setCurrentPosition(1);
-  setIsJumping(false);
-  setIsFalling(false);
-  setHasLost(false);
-  setHasWon(false);
-  setResult(null);
-  setCooldown(10);
-
-  // 5) _then_ flip into the real board
-  setPregame(false);
-};
-
-  // Jump
-  const handleJump = () => {
-    if (isJumping || isFalling || hasLost || hasWon) return;
-    setIsJumping(true);
-    setTimeout(() => {
-      setIsJumping(false);
-      const next = tiles[currentPosition];
-      if (next.isWin) {
-        setCurrentPosition((p) => p + 1);
-      } else {
-        setHasLost(true);
-        setIsFalling(true);
-        setTimeout(() => {
-          setResult({ gameResult: "lose", winAmount: 0, clientSeed, serverSeedHash });
-          axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle", { gameId, floorsReached: 0 }).catch(() => {});
-        }, 1500);
-      }
-    }, 800);
-  };
-
-  const API_BASE = "https://kasinobackenddev-0fc15c2c49dc.herokuapp.com";
-
-  // Cash Out
-  const handleCashOut = async () => {
-    if (!gameId) return;
-  
-    // Immediately show the popup with client-computed win
-    const payout = Number(betAmount) * (tiles[currentPosition - 1]?.multiplier || 0);
-    setResult({
-      gameResult: "win",
-      winAmount:  payout,
-      clientSeed,
-      serverSeedHash,
-    });
-  
-    // Fire & forget the settle call
-    try {
-      const { data } = await axios.post(
-        `${API_BASE}/api/game/settle`,
-        { gameId, floorsReached: currentPosition }
-      );
-      console.log("settle response", data);
+      }));
     } catch (err) {
-      console.error("settle error", err);
+      setLoading(false);
+      return alert("Play API failed");
     }
-  };
-
-
-  // Reset
-  const resetGame = () => {
-    setPregame(true);
     setLoading(false);
-    setTiles([]);
+
+    if (!data.success) {
+      return alert("Play API error");
+    }
+
+    setGameId(data.game._id);
+    setServerSeedHash(data.game.serverSeedHash);
+    // reset board
+    setTiles(
+      CROSS_MULTIPLIERS.map((m, i) => ({ multiplier: m, position: i + 1 }))
+    );
     setCurrentPosition(1);
     setIsJumping(false);
     setIsFalling(false);
     setHasLost(false);
-    setHasWon(false);
+    setResult(null);
+    setCooldown(10);
+    setPregame(false);
+  };
+
+  const handleJump = () => {
+    if (isJumping || isFalling || hasLost || result) return;
+    setIsJumping(true);
+    setTimeout(async () => {
+      setIsJumping(false);
+      // ask backend to settle this step
+      try {
+        const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+          gameId,
+          floorsReached: currentPosition,
+        });
+        if (data.success && data.gameResult === "continue") {
+          setCurrentPosition((p) => p + 1);
+        } else {
+          setHasLost(data.gameResult === "lose");
+          setIsFalling(true);
+          setResult({
+            gameResult: data.gameResult,
+            winAmount: data.winAmount,
+            clientSeed,
+            serverSeedHash,
+          });
+        }
+      } catch {
+        alert("Settle error");
+      }
+    }, 800);
+  };
+
+  const handleCashOut = async () => {
+    if (!gameId) return;
+    // client‐side popup
+    const multiplier = tiles[currentPosition - 1].multiplier;
+    const payout = multiplier * Number(betAmount);
+    setResult({
+      gameResult: "win",
+      winAmount: payout,
+      clientSeed,
+      serverSeedHash,
+    });
+    // backend settle
+    try {
+      await axios.post(`${API_BASE}/api/game/settle`, {
+        gameId,
+        floorsReached: currentPosition,
+      });
+    } catch {
+      console.error("Settle error");
+    }
+  };
+
+  const resetGame = () => {
+    setPregame(true);
+    setLoading(false);
+    setCurrentPosition(1);
+    setIsJumping(false);
+    setIsFalling(false);
+    setHasLost(false);
     setResult(null);
     setClientSeed("");
     setServerSeedHash("");
     setGameId(null);
   };
 
-  // Cooldown
   useEffect(() => {
     if (cooldown > 0) {
       const iv = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -704,7 +599,6 @@ function KaspianCrossContent() {
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
       <AnimatePresence>{loadingOverlay}</AnimatePresence>
-
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex justify-between mb-6">
@@ -729,9 +623,7 @@ function KaspianCrossContent() {
               </div>
 
               {pregame ? (
-                // Old pregame UI
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-green-900 to-purple-900">
-                  {/* falling elements omitted for brevity */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
                     <h1 className="text-5xl font-bold mb-4" style={{ color: "#49EACB" }}>
                       Kaspian CROSS
@@ -754,7 +646,6 @@ function KaspianCrossContent() {
                   </div>
                 </div>
               ) : (
-                // Actual Game Board
                 <>
                   <KaspianCrossGame
                     tiles={tiles}
@@ -763,20 +654,18 @@ function KaspianCrossContent() {
                     isJumping={isJumping}
                     isFalling={isFalling}
                     hasLost={hasLost}
-                    hasWon={hasWon}
                   />
-                  {currentPosition > 1 && !hasLost && (
+                  {currentPosition > 1 && !hasLost && !result && (
                     <div className="mt-4 text-center">
                       <div className="text-lg font-bold text-[#49EACB] mb-2">
-                        Current Multiplier: {tiles[currentPosition - 1]?.multiplier}×
+                        Current Multiplier: {tiles[currentPosition - 1].multiplier}×
                       </div>
                       <Button
                         onClick={handleCashOut}
                         className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
                       >
                         Cash Out (
-                        {((Number(betAmount) * tiles[currentPosition - 1]?.multiplier) || 0).toFixed(2)}{" "}
-                        KAS)
+                        {(Number(betAmount) * tiles[currentPosition - 1].multiplier).toFixed(2)} KAS)
                       </Button>
                     </div>
                   )}
@@ -793,7 +682,7 @@ function KaspianCrossContent() {
               isWalletConnected={isConnected}
               balance={balance}
               onStartGame={handleStartGame}
-              gameResult={result?.gameResult || null}
+              result={result?.gameResult || null}
               cooldown={cooldown}
             />
             <LiveChat textColor="#49EACB" />
@@ -840,3 +729,4 @@ function KaspianCrossContent() {
     </div>
   );
 }
+
