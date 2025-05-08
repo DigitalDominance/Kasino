@@ -30,7 +30,7 @@ const WIN_IMG = "/kaspatowerclimbwin.png";
 const LOSE_IMG = "/kaspatowerclimbloss.png";
 
 interface TowerRow {
-  pattern: boolean[];
+  pattern: boolean[];   // this holds either placeholder (all false) or actual revealed pattern
   revealed: boolean;
 }
 
@@ -56,7 +56,9 @@ function TowerClimbGame({
         <div
           key={rowIndex}
           className={`flex justify-center gap-2 transition-opacity duration-500 ${
-            !row.revealed && rowIndex >= finishedRows.length ? "opacity-40" : "opacity-100"
+            !row.revealed && rowIndex >= finishedRows.length
+              ? "opacity-40"
+              : "opacity-100"
           }`}
         >
           {row.pattern.map((cell, colIndex) => {
@@ -70,6 +72,7 @@ function TowerClimbGame({
                 key={colIndex}
                 className="w-16 h-16 cursor-pointer border border-gray-700 rounded-md overflow-hidden"
                 onClick={() => {
+                  // only active row, not revealed yet
                   if (rowIndex === finishedRows.length && !row.revealed) {
                     onCubeClick(colIndex);
                   }
@@ -96,7 +99,8 @@ export default function KaspaTowerClimbPage() {
   const [betAmount, setBetAmount] = useState("1");
   const [finishedRows, setFinishedRows] = useState<TowerRow[]>([]);
   const [activeRow, setActiveRow] = useState<TowerRow | null>(null);
-  const [lockedRows, setLockedRows] = useState<boolean[][]>([]);
+  // we don't know future patterns until each settle, so just track count
+  const [remainingRows, setRemainingRows] = useState(TOTAL_ROWS);
 
   // seeds & result
   const [clientSeed, setClientSeed] = useState<string | null>(null);
@@ -131,7 +135,10 @@ export default function KaspaTowerClimbPage() {
     const curr = messages[messageIndex];
     if (loadingMessage.length < curr.length) {
       const t = setTimeout(
-        () => setLoadingMessage(curr.slice(0, loadingMessage.length + 1)),
+        () =>
+          setLoadingMessage(
+            curr.slice(0, loadingMessage.length + 1)
+          ),
         40
       );
       return () => clearTimeout(t);
@@ -154,11 +161,14 @@ export default function KaspaTowerClimbPage() {
     }
   }, [cooldown]);
 
-  // init tower rows from /play
-  function initTower(serverPatterns: boolean[][]) {
+  // initialize blank board with placeholders only
+  function initTower() {
     setFinishedRows([]);
-    setActiveRow({ pattern: serverPatterns[0], revealed: false });
-    setLockedRows(serverPatterns.slice(1));
+    setActiveRow({
+      pattern: Array(NUM_COLS).fill(false),
+      revealed: false,
+    });
+    setRemainingRows(TOTAL_ROWS - 1);
     setIsPlaying(true);
     setGameResult(null);
     setWinAmount(0);
@@ -172,8 +182,15 @@ export default function KaspaTowerClimbPage() {
       return;
     }
     const bet = Number(betAmount);
-    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
-      alert(`Bet must be between ${MIN_BET} and ${MAX_BET}, and within your balance.`);
+    if (
+      isNaN(bet) ||
+      bet < MIN_BET ||
+      bet > MAX_BET ||
+      bet > balance
+    ) {
+      alert(
+        `Bet must be between ${MIN_BET} and ${MAX_BET}, and within your balance.`
+      );
       return;
     }
 
@@ -193,10 +210,15 @@ export default function KaspaTowerClimbPage() {
       // deposit KAS
       const [addr] = await window.kasware.getAccounts();
       const treasury = Math.random() < 0.5 ? T1 : T2;
-      const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
-        priorityFee: 10000,
-      });
-      const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
+      const dep = await window.kasware.sendKaspa(
+        treasury,
+        bet * 1e8,
+        { priorityFee: 10000 }
+      );
+      const txid =
+        typeof dep === "string"
+          ? JSON.parse(dep).id
+          : (dep as any).id;
       setDepositTxid(txid);
 
       // now start loading/typewriter
@@ -214,12 +236,13 @@ export default function KaspaTowerClimbPage() {
       });
       setLoading(false);
 
-      if (!r.data.success) throw new Error(r.data.message || "Play API failed");
+      if (!r.data.success)
+        throw new Error(r.data.message || "Play API failed");
       const g = r.data.game;
       setServerSeed(g.serverSeed);
       setGameId(g._id);
-      initTower(g.patterns);
 
+      initTower();
       setPregame(false);
       setCooldown(10);
     } catch (err: any) {
@@ -228,7 +251,7 @@ export default function KaspaTowerClimbPage() {
     }
   }
 
-  // Settle a tile click
+  // settle a single tile click
   async function handleCubeClick(colIndex: number) {
     if (!gameId || !isPlaying) return;
     setIsPlaying(false);
@@ -239,24 +262,31 @@ export default function KaspaTowerClimbPage() {
         floorsReached: finishedRows.length + 1,
         tileIndex: colIndex,
       });
-      const { gameResult, winAmount, revealedTiles, nextFloor } = data.game;
+      const {
+        gameResult: result,
+        winAmount: amt,
+        revealedTiles,
+        nextFloor,
+      } = data.game;
 
-      // add the revealed row
+      // reveal this row
       setFinishedRows((rows) => [
         ...rows,
         { pattern: revealedTiles, revealed: true },
       ]);
 
-      if (gameResult === "continue") {
-        // move to next row
-        const nextPattern = lockedRows[0];
-        setActiveRow({ pattern: nextPattern, revealed: false });
-        setLockedRows((prev) => prev.slice(1));
+      if (result === "continue") {
+        // next blank row
+        setActiveRow({
+          pattern: Array(NUM_COLS).fill(false),
+          revealed: false,
+        });
+        setRemainingRows((r) => r - 1);
         setIsPlaying(true);
       } else {
         // win or lose
-        setGameResult(gameResult);
-        setWinAmount(winAmount);
+        setGameResult(result);
+        setWinAmount(amt);
         setShowResultPopup(true);
       }
     } catch (err: any) {
@@ -296,7 +326,7 @@ export default function KaspaTowerClimbPage() {
     setShowResultPopup(false);
     setFinishedRows([]);
     setActiveRow(null);
-    setLockedRows([]);
+    setRemainingRows(TOTAL_ROWS);
     setGameId(null);
     setDepositTxid(null);
     setClientSeed(null);
@@ -420,17 +450,20 @@ export default function KaspaTowerClimbPage() {
                   finishedRows={finishedRows}
                   activeRow={activeRow}
                   onCubeClick={handleCubeClick}
-                  flipBoard={flipBoard}
+                  flipBoard={false}
                 />
               )}
 
+              {/* only show after first successful row */}
               {isPlaying && finishedRows.length > 0 && (
                 <Button
                   className="mt-4 bg-[#49EACB] text-black"
                   onClick={handleCashOut}
                   disabled={cashoutClicked}
                 >
-                  Cash Out (Payout: {(Number(betAmount) * Math.pow(1.1, finishedRows.length)).toFixed(2)} KAS)
+                  Cash Out (Payout:{" "}
+                  {(Number(betAmount) * Math.pow(1.1, finishedRows.length)).toFixed(2)}{" "}
+                  KAS)
                 </Button>
               )}
             </div>
@@ -609,14 +642,18 @@ function TowerClimbControls({
             <div className="grid grid-cols-4 gap-2">
               <Button
                 variant="outline"
-                onClick={() => setBetAmount((n) => (Number(n) / 2).toString())}
+                onClick={() =>
+                  setBetAmount((n) => (Number(n) / 2).toString())
+                }
                 disabled={isPlaying || !isWalletConnected}
               >
                 ½
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setBetAmount((n) => (Number(n) * 2).toString())}
+                onClick={() =>
+                  setBetAmount((n) => (Number(n) * 2).toString())
+                }
                 disabled={isPlaying || !isWalletConnected}
               >
                 2×
@@ -679,3 +716,4 @@ function TowerClimbControls({
     </>
   );
 }
+
