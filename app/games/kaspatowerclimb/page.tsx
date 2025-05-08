@@ -247,49 +247,38 @@ function TowerClimbContent() {
   };
 
   // Handle cube click on the active row.
-  const handleCubeClick = (cubeIndex: number) => {
+  const handleCubeClick = async (cubeIndex: number) => {
     if (!activeRow || activeRow.revealed) return;
+
     // First, update the clicked cube only.
     const newRevealedIndices = activeRow.revealedIndices ? [...activeRow.revealedIndices] : Array(NUM_COLS).fill(false);
     newRevealedIndices[cubeIndex] = true;
     setActiveRow({ ...activeRow, revealedIndices: newRevealedIndices });
 
-    // After 1 second, fully reveal the active row.
-    setTimeout(() => {
-      const fullyRevealedRow: TowerRow = {
-        ...activeRow,
-        revealed: true,
-        revealedIndices: Array(NUM_COLS).fill(true),
-      };
-      setActiveRow(fullyRevealedRow);
-      const outcome = activeRow.pattern[cubeIndex];
-      if (outcome) {
-        setTimeout(() => {
-          const newFinished = [...finishedRows, fullyRevealedRow];
-          setFinishedRows(newFinished);
-          if (newFinished.length < TOTAL_ROWS) {
-            const nextRow = lockedRows[0];
-            setActiveRow({ ...nextRow, revealed: false, revealedIndices: Array(NUM_COLS).fill(false) });
-            setLockedRows(prev => prev.slice(1));
-          } else {
-            handleCashOut();
-          }
-        }, 500);
-      } else {
-        setLockedRows(prev => prev.map(row => ({ ...row, revealed: true })));
-        setFlipBoard(true);
-        setGameResult("Game Over");
-        if (gameId) {
-          axios.post(`${apiUrl}/game/end`, {
-            gameId,
-            result: "lose",
-            winAmount: 0,
-          });
+    // After updating the clicked tile, fetch the entire row state from the backend
+    try {
+      const result = await axios.post(`${apiUrl}/game/settle`, {
+        gameId,
+        floorsReached: finishedRows.length + 1,  // Adjust according to the current row
+        cashoutMultiplier: cashoutClicked ? getMultiplier(finishedRows.length) : 0,  // Handle if player cashed out
+      });
+
+      if (result.data.success) {
+        const { gameResult, winAmount, revealedTiles } = result.data.game;
+        setGameResult(gameResult);  // Update game result
+        setActiveRow({ ...activeRow, revealedIndices: revealedTiles });  // Update active row with the revealed state
+        if (gameResult === "win" || gameResult === "lose") {
+          setIsPlaying(false);
+          setGameResult(gameResult);
+        } else {
+          setIsPlaying(true);  // Continue if it's not a win/loss
         }
-        setIsPlaying(false);
-        setLosePopup(true);
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Error during tile click:", error);
+      setGameResult("Error");
+      setIsPlaying(false);
+    }
   };
 
   // Handle cash out immediately on click.
