@@ -545,52 +545,59 @@ export default function KaspianCrossPage() {
   };
 
   const handleJump = () => {
-    if (isJumping || isFalling || hasLost || result) return;
-    setIsJumping(true);
-    setTimeout(async () => {
-      setIsJumping(false);
-      try {
-        const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
-          gameId,
-          floorsReached: currentPosition,
-        });
-        if (data.success && data.gameResult === "continue") {
-          setCurrentPosition((p) => p + 1);
-        } else {
-          setHasLost(data.gameResult === "lose");
-          setIsFalling(true);
-          setResult({
-            gameResult: data.gameResult,
-            winAmount: data.winAmount,
-            clientSeed,
-            serverSeedHash,
-          });
-        }
-      } catch {
-        alert("Settle error");
-      }
-    }, 800);
-  };
+  if (isJumping || isFalling || hasLost || result) return;
+  setIsJumping(true);
 
-  const handleCashOut = async () => {
-    if (!gameId) return;
-    const multiplier = tiles[currentPosition - 1].multiplier;
-    const payout = multiplier * Number(betAmount);
-    setResult({
-      gameResult: "win",
-      winAmount: payout,
-      clientSeed,
-      serverSeedHash,
-    });
+  setTimeout(async () => {
+    setIsJumping(false);
     try {
-      await axios.post(`${API_BASE}/api/game/settle`, {
+      const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
         floorsReached: currentPosition,
+        tileIndex:     currentPosition - 1,   // 👈 zero-based
       });
+      if (data.gameResult === "continue") {
+        setCurrentPosition((p) => p + 1);
+      } else {
+        const lost = data.gameResult === "lose";
+        setHasLost(lost);
+        setIsFalling(lost);
+        setResult({
+          gameResult: data.gameResult,
+          winAmount:  data.winAmount,
+          clientSeed,
+          serverSeedHash,
+        });
+      }
     } catch {
-      console.error("Settle error");
+      alert("Settle error");
     }
-  };
+  }, 800);
+};
+
+// Cash-out click
+const handleCashOut = async () => {
+  if (!gameId) return;
+  const multiplier = tiles[currentPosition - 1].multiplier;
+  try {
+    const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+      gameId,
+      floorsReached:     currentPosition,
+      cashoutMultiplier: multiplier,        // 👈 tell backend to win
+    });
+    if (data.success) {
+      setResult({
+        gameResult: data.gameResult,
+        winAmount:  data.winAmount,
+        clientSeed,
+        serverSeedHash,
+      });
+      setHasLost(false);
+    }
+  } catch {
+    console.error("Settle error");
+  }
+};
 
   const resetGame = () => {
     setPregame(true);
