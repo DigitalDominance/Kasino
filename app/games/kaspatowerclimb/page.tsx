@@ -223,7 +223,7 @@ function TowerClimbContent() {
       const txidString = parsedTx.id;
       setDepositTxid(txidString);
 
-      const startRes = await axios.post(`${apiUrl}/game/start`, {
+      const startRes = await axios.post(`${apiUrl}/game/play`, {
         gameName: "Kaspa Tower Climb",
         uniqueHash,
         walletAddress: currentWalletAddress,
@@ -292,7 +292,7 @@ function TowerClimbContent() {
     setIsPlaying(false);
     setCashoutPopup(true);
     try {
-      await axios.post(`${apiUrl}/game/end`, {
+      await axios.post(`${apiUrl}/game/settle`, {
         gameId,
         result: "win",
         winAmount: payout,
