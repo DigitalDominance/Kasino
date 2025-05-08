@@ -22,8 +22,18 @@ const MIN_BET = 1;
 const MAX_BET = 1000;
 const HOUSE_EDGE = 0.075;
 
-// Placeholder multipliers
-const CROSS_MULTIPLIERS = [2, 3, 5, 10, 20, 50];
+const CROSS_MULTIPLIERS = (() => {
+  const mults = [1.0, 1.2];
+  let current = 1.2;
+  // build out to 15 steps as on backend
+  while (mults.length < 15) {
+    if (current < 5) current += 0.5;
+    else if (current < 15) current += 1;
+    else current += 2;
+    mults.push(Number(current.toFixed(2)));
+  }
+  return mults;
+})();
 
 // Road/tile sizing
 const ROAD_WIDTH = 160;
