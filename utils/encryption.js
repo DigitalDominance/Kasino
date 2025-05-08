@@ -15,7 +15,8 @@ function ensure32ByteKey(secretKey) {
 }
 
 // Function to encrypt data using AES-256-CBC
-function encryptData(data, secretKey) {
+function encryptData(data) {
+  const secretKey = process.env.SECRET_KEY; // Access the secret key from environment variables
   const iv = crypto.randomBytes(16); // Generate a random IV
   
   // Ensure the secretKey is 32 bytes
@@ -30,7 +31,9 @@ function encryptData(data, secretKey) {
 }
 
 // Function to decrypt data (client-side or server-side as needed)
-function decryptData(encryptedData, iv, secretKey) {
+function decryptData(encryptedData, iv) {
+  const secretKey = process.env.SECRET_KEY; // Access the secret key from environment variables
+  
   // Ensure the secretKey is 32 bytes
   const key = ensure32ByteKey(secretKey);
 
