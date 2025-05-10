@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -33,7 +32,24 @@ const GHOST_JUMPING = "/ghostkasperjumping.webp";
 const SPACE_TILE = "/ghosttile.webp";
 const JUMP_TILE = "/ghosttile3.webp";
 
-type Tile = { multiplier: number; isWin: boolean; position: number };
+// API base
+const API_BASE = "https://kasino-backend-4818b4b69870.herokuapp.com";
+
+// Ghost Jump multipliers builder (must match backend)
+const MAX_GHOST_MULTIPLIER = 50;
+function buildGhostMultipliers() {
+  const mults = [1.0, 1.2];
+  let current = 1.7;
+  while (current <= MAX_GHOST_MULTIPLIER) {
+    mults.push(Number(current.toFixed(2)));
+    if (current < 5) current += 0.5;
+    else if (current < 15) current += 1;
+    else current += 2;
+  }
+  return mults;
+}
+
+type Tile = { multiplier: number; position: number };
 
 // Space Jump Game Component
 function SpaceJumpGame({
@@ -240,20 +256,15 @@ function SpaceJumpContent() {
 
   // Result popup
   const [result, setResult] = useState<{
-    gameResult: string;
+    gameResult: "win" | "lose";
     winAmount: number;
     clientSeed: string | null;
     serverSeedHash: string | null;
   } | null>(null);
 
-  // Settle game via API (fire-and-forget)
-  const settleInBackground = (floorsReached: number) => {
-    axios
-      .post(
-        "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle",
-        { gameId, floorsReached }
-      )
-      .catch(console.error);
+  // Fire-and-forget settle
+  const settleInBackground = (body: object) => {
+    axios.post(`${API_BASE}/api/game/settle`, body).catch(console.error);
   };
 
   // Start game
@@ -293,18 +304,15 @@ function SpaceJumpContent() {
 
     // 3) call play API
     setLoading(true);
-    const { data } = await axios.post(
-      "https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play",
-      {
-        gameName: "Ghost Jump",
-        clientSeed: rawSeed,
-        clientSeedHash: hash,
-        nonce: 0,
-        walletAddress: addr,
-        betAmount: bet,
-        txid,
-      }
-    );
+    const { data } = await axios.post(`${API_BASE}/api/game/play`, {
+      gameName: "Ghost Jump",
+      clientSeed: rawSeed,
+      clientSeedHash: hash,
+      nonce: 0,
+      walletAddress: addr,
+      betAmount: bet,
+      txid,
+    });
     setLoading(false);
 
     if (!data.success) {
@@ -314,7 +322,11 @@ function SpaceJumpContent() {
 
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
-    setTiles(data.game.tiles);
+
+    // generate multipliers locally
+    const mults = buildGhostMultipliers();
+    setTiles(mults.map((m, i) => ({ multiplier: m, position: i + 1 })));
+
     setCurrentPosition(1);
     setPregame(false);
     setIsPlaying(true);
@@ -323,23 +335,27 @@ function SpaceJumpContent() {
   // Jump to next tile
   const handleJump = () => {
     if (!isPlaying) return;
-    const next = tiles[currentPosition];
     setIsJumping(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsJumping(false);
-      if (next && next.isWin) {
-        setCurrentPosition((p) => p + 1);
-      } else {
-        setIsFalling(true);
-        setTimeout(() => {
+      try {
+        const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+          gameId,
+          tileIndex: currentPosition,
+        });
+        if (data.gameResult === "continue") {
+          setCurrentPosition((p) => p + 1);
+        } else {
+          setIsFalling(true);
           setResult({
-            gameResult: "lose",
-            winAmount: 0,
+            gameResult: data.gameResult,
+            winAmount: data.winAmount,
             clientSeed,
             serverSeedHash,
           });
-          settleInBackground(0);
-        }, 1500);
+        }
+      } catch {
+        alert("Settle error");
       }
     }, 800);
   };
@@ -355,10 +371,7 @@ function SpaceJumpContent() {
       clientSeed,
       serverSeedHash,
     });
-    setIsPlaying(false);
-    setIsJumping(false);
-    setIsFalling(false);
-    settleInBackground(currentPosition);
+    settleInBackground({ gameId, cashout: true, floorsReached: currentPosition });
   };
 
   // Reset
@@ -389,7 +402,7 @@ function SpaceJumpContent() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-      {/* Loading Overlay */}
+      {/* Loading */}
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -438,7 +451,7 @@ function SpaceJumpContent() {
           </div>
         </header>
 
-        {/* Main Grid */}
+        {/* Layout */}
         <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
@@ -514,7 +527,7 @@ function SpaceJumpContent() {
             </div>
           </Card>
 
-          {/* Right Column */}
+          {/* Controls */}
           <div className="space-y-6">
             <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
               <div className="space-y-4">
@@ -578,7 +591,6 @@ function SpaceJumpContent() {
                 </Button>
               </div>
             </Card>
-
             <LiveChat textColor="#49EACB" />
             <LiveWins textColor="#49EACB" />
           </div>
