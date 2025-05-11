@@ -371,7 +371,7 @@ function SpaceJumpContent() {
       clientSeed,
       serverSeedHash,
     });
-    settleInBackground({ gameId, cashout: true, floorsReached: currentPosition });
+    settleInBackground({ gameId, cashout: true, tileIndex: currentPosition });
   };
 
   // Reset
