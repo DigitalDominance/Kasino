@@ -17,6 +17,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { revealTile, calculatePayout, MinesGame, MinesTile } from "./mines-logic";
 import { useRouter } from "next/navigation";
 import { XPDisplay } from "@/app/page";
+import { Bomb, Diamond } from "./icons";
 import "./styles.css";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
