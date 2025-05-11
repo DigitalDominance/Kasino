@@ -1,7 +1,6 @@
-// mines-logic.ts
 export interface MinesTile {
-  isSafe: boolean;
   revealed: boolean;
+  isSafe?: boolean;
 }
 
 export interface MinesGame {
@@ -9,32 +8,26 @@ export interface MinesGame {
   clientSeed:     string;
   serverSeedHash: string;
   tiles:          MinesTile[];
-  multipliers:    number[];      // one multiplier per safe‐click, length = totalSafeTiles
+  multipliers:    number[];
   safeClicks:     number;
   betAmount:      number;
   isGameOver:     boolean;
 }
 
-// revealTile now just flips a single tile and bumps safeClicks
-export function revealTile(game: MinesGame, index: number): MinesGame {
-  if (game.isGameOver || game.tiles[index].revealed) return game;
+// Called when API tells us safe/lose:
+export function revealTile(
+  game: MinesGame,
+  index: number,
+  isSafe: boolean
+): MinesGame {
   const tiles = [...game.tiles];
-  tiles[index] = { ...tiles[index], revealed: true };
-
-  let safeClicks = game.safeClicks;
-  let isGameOver = game.isGameOver;
-
-  if (!tiles[index].isSafe) {
-    // hit a mine
-    isGameOver = true;
-  } else {
-    safeClicks++;
-  }
-
+  tiles[index] = { revealed: true, isSafe };
+  const safeClicks = game.safeClicks + (isSafe ? 1 : 0);
+  const isGameOver = game.isGameOver || !isSafe;
   return { ...game, tiles, safeClicks, isGameOver };
 }
 
-// compute payout locally from multipliers array
+// For cash-out:
 export function calculatePayout(game: MinesGame): number {
   if (game.safeClicks === 0) return 0;
   return game.betAmount * game.multipliers[game.safeClicks - 1];
