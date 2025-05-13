@@ -57,7 +57,7 @@ export function CrashGame({
     if (!isPlaying) return;
     intervalRef.current = setInterval(async () => {
       try {
-        const { data } = await axios.post("/api/game/settle", {
+        const { data } = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle", {
           gameId,
           checkMultiplier: multRef.current,
         });
