@@ -19,7 +19,7 @@ import "./styles.css";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 const MESSAGES = ["Verifying transaction", "Starting crash", "Finalizing result"];
-const API = "/api/game";
+const API = "https://kasino-backend-4818b4b69870.herokuapp.com/api/game";
 
 export default function CrashPage() {
   const [betAmount, setBetAmount] = useState("0.00");
