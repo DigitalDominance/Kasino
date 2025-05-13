@@ -206,6 +206,8 @@ export default function CrashPage() {
             betAmount={betAmount}
             setBetAmount={setBetAmount}
             isPlaying={isPlaying}
+            isWalletConnected={isConnected}
+            balance={balance}
             onPlaceBet={handlePlaceBet}
             onCashout={handleCashout}
             resetGame={reset}
