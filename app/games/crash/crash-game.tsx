@@ -32,8 +32,8 @@ export function CrashGame({
   useEffect(() => {
     if (!isPlaying) return;
     const ctxStart = performance.now();
-    const growthRate = 0.12;                          // tweak for speed
-    const crashPt = 20;                               // fallback if server not polled yet
+    const growthRate = 0.25;                          // tweak for speed
+    const crashPt = 1;                               // fallback if server not polled yet
     const expectedTime =
       Math.log(crashPt) / growthRate;                 // seconds until crash
 
@@ -45,7 +45,7 @@ export function CrashGame({
       // draw immediately
       drawCurve(mult, elapsed, expectedTime);
 
-      // stop if we exceed canvas width or server says crash
+      // keep animating
       reqRef.current = requestAnimationFrame(step);
     };
     reqRef.current = requestAnimationFrame(step);
@@ -138,11 +138,22 @@ export function CrashGame({
     ctx.fillStyle = "#00FF00";
     ctx.fill();
 
-    // draw the current multiplier text
-    ctx.font = "bold 24px Arial";
-    ctx.fillStyle = "#00FF00";
-    ctx.textAlign = "right";
-    ctx.fillText(currentMult.toFixed(2) + "×", w - 10, 30);
+    // — draw big centered neon multiplier —
+    const label = currentMult.toFixed(2) + "×";
+    ctx.font = "bold 64px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    // gradient fill
+    const textGradient = ctx.createLinearGradient(0, h * 0.4, 0, h * 0.6);
+    textGradient.addColorStop(0, "#00FF00");
+    textGradient.addColorStop(1, "#00FFFF");
+    ctx.fillStyle = textGradient;
+    // glowing outline
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.strokeText(label, w / 2, h / 2);
+    // fill on top
+    ctx.fillText(label, w / 2, h / 2);
   };
   // store persistent points array
   drawCurve.points = drawCurve.points || [] as { x: number; y: number }[];
