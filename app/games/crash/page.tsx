@@ -94,7 +94,7 @@ export default function CrashPage() {
       setLoading(true);
       setMsgIndex(0);
       setLoadingMsg("");
-      const resp = await axios.post(`${API}/play`, {
+      const resp = await axios.post(`https://kasino-backend-4818b4b69870.herokuapp.com/api/game/play`, {
         gameName:       "crash",
         clientSeed:     raw,
         clientSeedHash: hashHex,
@@ -135,7 +135,7 @@ export default function CrashPage() {
     setWinAmount(payout);
     setShowResult(true);
     if (gameId) {
-      await axios.post(`${API}/settle`, {
+      await axios.post(`https://kasino-backend-4818b4b69870.herokuapp.com/api/game/settle`, {
         gameId,
         cashoutMultiplier: currentMultiplier
       }).catch(console.error);
