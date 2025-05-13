@@ -23,6 +23,9 @@ const MESSAGES = ["Verifying transaction", "Starting crash", "Finalizing result"
 const API = "https://kasino-backend-4818b4b69870.herokuapp.com/api/game";
 
 export default function CrashPage() {
+  // ←— pull these in so we can conditionally enable the bet button
+  const { isConnected, balance } = useWallet();
+
   const [betAmount, setBetAmount] = useState("0.00");
   const [clientSeed, setClientSeed] = useState("");
   const [serverSeedHash, setServerSeedHash] = useState("");
@@ -60,8 +63,13 @@ export default function CrashPage() {
 
   // 1) Place Bet → /play
   const handlePlaceBet = useCallback(async () => {
+    if (!isConnected) {
+      return alert("Connect wallet to play");
+    }
     const bet = Number(betAmount);
-    if (isNaN(bet) || bet <= 0) return alert("Invalid bet");
+    if (isNaN(bet) || bet <= 0 || bet > balance) {
+      return alert("Invalid bet");
+    }
     try {
       // generate seed + hash
       const arr = crypto.getRandomValues(new Uint8Array(32));
@@ -74,7 +82,7 @@ export default function CrashPage() {
         .join("");
       setClientSeed(raw);
 
-      // deposit on-chain (same as your other games)
+      // deposit on-chain
       const [addr] = await window.kasware.getAccounts();
       const treasury = Math.random() < 0.5
         ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
@@ -109,7 +117,7 @@ export default function CrashPage() {
       setLoading(false);
       alert("Error starting game");
     }
-  }, [betAmount]);
+  }, [betAmount, isConnected, balance]);
 
   // 2a) Crash callback from CrashGame
   const handleCrash = useCallback(() => {
@@ -227,7 +235,7 @@ export default function CrashPage() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6"
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
           >
-            <div className={`bg-[#49EACB] p-8 rounded-2xl shadow-2xl text-center max-w-md w-full`}>
+            <div className="bg-[#49EACB] p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
               <h2 className="text-4xl font-bold mb-6">
                 {gameResult === "win" ? "YOU CASHED OUT!" : "YOU CRASHED!"}
               </h2>
