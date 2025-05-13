@@ -2,19 +2,20 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { CrashGame } from "@/components/CrashGame";
+import Link from "next/link";
+import axios from "axios";
+import { useWallet } from "@/contexts/WalletContext";
+import { CrashGame } from "./crash-game";
 import { CrashControls } from "./crash-controls";
+import { SiteFooter } from "@/components/site-footer";
+import { LiveChat } from "../mines/live-chat";
+import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { XPDisplay } from "@/app/page";
 import { Button } from "@/components/ui/button";
-import { SiteFooter } from "@/components/site-footer";
-import { LiveChat } from "@/components/live-chat";
-import { LiveWins } from "@/components/live-wins";
 import { Montserrat } from "next/font/google";
-import { motion, AnimatePresence } from "framer-motion";
 import "./styles.css";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
