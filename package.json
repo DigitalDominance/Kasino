@@ -14,7 +14,8 @@
     "npm": "10.x"
   },
   "dependencies": {
-    "react-tsparticles": "^2.12.2",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/engine": "^3.0.0",
     "tsparticles": "^3.8.1",
     "alea": "^1.0.1",
     "ethers": "^6.13.5",
