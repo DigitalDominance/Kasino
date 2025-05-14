@@ -42,7 +42,7 @@ export function LoadingAnimation() {
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
-        value: 0.5,
+        value: 0.2,
         random: { enable: true, minimumValue: 0.3 },
         animation: { enable: true, speed: 1, minimumValue: 0.1 },
       },
