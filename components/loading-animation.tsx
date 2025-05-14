@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Particles from "react-tsparticles";
+import { loadFull } from "tsparticles";
 
 export function LoadingAnimation() {
   const [showLoading, setShowLoading] = useState(true);
@@ -11,6 +13,38 @@ export function LoadingAnimation() {
     const timer = setTimeout(() => setShowLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const initParticles = useCallback(async (engine) => {
+    // this adds all the features from tsparticles bundle
+    await loadFull(engine);
+  }, []);
+
+  const particlesOptions = {
+    fullScreen: { enable: false },
+    particles: {
+      number: { value: 80, density: { enable: false } },
+      color: { value: "#49EACB" },
+      shape: { type: "circle" },
+      opacity: {
+        value: 0.8,
+        random: { enable: true, minimumValue: 0.4 },
+        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false }
+      },
+      size: {
+        value: { min: 1, max: 4 },
+        animation: { enable: true, speed: 3, minimumValue: 0.5, sync: false }
+      },
+      move: {
+        enable: true,
+        speed: 2,
+        direction: "none",
+        random: true,
+        outModes: { default: "out" }
+      }
+    },
+    interactivity: { events: { onHover: { enable: false }, onClick: { enable: false } } },
+    detectRetina: true
+  };
 
   return (
     <AnimatePresence>
@@ -22,45 +56,47 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Logo in the center */}
-          <div className="relative w-64 h-64">
-            <motion.div
-              className="absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
-            >
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
-                alt="Kasino Logo"
-                layout="fill"
-                objectFit="contain"
-              />
-            </motion.div>
+          {/* Particles behind */}
+          <div className="absolute inset-0 overflow-hidden">
+            <Particles
+              init={initParticles}
+              options={particlesOptions}
+            />
           </div>
 
-          {/* sweeping neon-green grid overlay */}
+          {/* Logo in front */}
           <motion.div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, #49EACB 1px, transparent 1px), linear-gradient(to bottom, #49EACB 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
+            className="relative w-64 h-64 flex items-center justify-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          >
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/KasinoLogo-dNjo5dabxCyYjru57bn36oP8Ww9KCS.png"
+              alt="Kasino Logo"
+              fill
+              className="object-contain"
+            />
+          </motion.div>
+
+          {/* Overlay pulse */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.3, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
             }}
-            initial={{ opacity: 1, backgroundPosition: "0px 0px" }}
-            animate={{
-              backgroundPosition: ["0px 0px", "-20px -20px"],
-              opacity: [1, 1, 0],
-            }}
-            transition={{ duration: 2, ease: "linear" }}
           />
 
-          {/* footer text */}
+          {/* Footer text */}
           <motion.div
             className="absolute bottom-8 left-0 right-0 text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 0.5 }}
+            transition={{ delay: 1, duration: 0.5 }}
           >
             <p className="text-[#B6B6B6] text-sm">Please Play Responsibly</p>
           </motion.div>
