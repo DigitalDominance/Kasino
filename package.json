@@ -14,6 +14,8 @@
     "npm": "10.x"
   },
   "dependencies": {
+    "react-tsparticles": "^2.10.1",
+    "tsparticles": "^2.12.1",
     "alea": "^1.0.1",
     "ethers": "^6.13.5",
     "@walletconnect/ethereum-provider": "2.19.2",
