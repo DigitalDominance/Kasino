@@ -33,7 +33,7 @@ export function CrashGame({
     if (!isPlaying) return;
     const ctxStart = performance.now();
     const growthRate = 0.25;                          // tweak for speed
-    const crashPt = 1;                               // fallback if server not polled yet
+    const crashPt = 20;                               // fallback if server not polled yet
     const expectedTime =
       Math.log(crashPt) / growthRate;                 // seconds until crash
 
