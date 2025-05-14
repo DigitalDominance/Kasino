@@ -15,35 +15,44 @@ export function LoadingAnimation() {
   }, []);
 
   const initParticles = useCallback(async (engine) => {
-    // this adds all the features from tsparticles bundle
     await loadFull(engine);
   }, []);
 
   const particlesOptions = {
     fullScreen: { enable: false },
+    fpsLimit: 60,
     particles: {
-      number: { value: 80, density: { enable: false } },
+      number: {
+        value: 80,
+        density: {
+          enable: true,
+          area: 800,
+        },
+      },
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
         value: 0.8,
-        random: { enable: true, minimumValue: 0.4 },
-        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false }
+        random: { enable: true, minimumValue: 0.3 },
+        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false },
       },
       size: {
         value: { min: 1, max: 4 },
-        animation: { enable: true, speed: 3, minimumValue: 0.5, sync: false }
+        animation: { enable: true, speed: 3, minimumValue: 0.5, sync: false },
       },
       move: {
         enable: true,
-        speed: 2,
+        speed: 1.5,
         direction: "none",
         random: true,
-        outModes: { default: "out" }
-      }
+        outModes: { default: "out" },
+      },
     },
-    interactivity: { events: { onHover: { enable: false }, onClick: { enable: false } } },
-    detectRetina: true
+    interactivity: {
+      detectsOn: "canvas",
+      events: { onHover: { enable: false }, onClick: { enable: false } },
+    },
+    detectRetina: true,
   };
 
   return (
@@ -56,15 +65,17 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Particles behind */}
-          <div className="absolute inset-0 overflow-hidden">
+          {/* Particles container */}
+          <div className="absolute inset-0">
             <Particles
+              id="loading-particles"
               init={initParticles}
               options={particlesOptions}
+              className="w-full h-full"
             />
           </div>
 
-          {/* Logo in front */}
+          {/* Logo */}
           <motion.div
             className="relative w-64 h-64 flex items-center justify-center"
             initial={{ scale: 0.8, opacity: 0 }}
@@ -79,7 +90,7 @@ export function LoadingAnimation() {
             />
           </motion.div>
 
-          {/* Overlay pulse */}
+          {/* Neon pulse overlay */}
           <motion.div
             className="absolute inset-0 pointer-events-none bg-[#49EACB]/20"
             initial={{ opacity: 0 }}
@@ -87,7 +98,7 @@ export function LoadingAnimation() {
             transition={{
               duration: 2,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
           />
 
