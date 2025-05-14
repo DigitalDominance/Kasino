@@ -10,17 +10,16 @@ export function LoadingAnimation() {
   const [showLoading, setShowLoading] = useState(true);
   const [engineReady, setEngineReady] = useState(false);
 
-  // hide after 2s
+  // Hide after 2s
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  // init tsParticles once
+  // Init tsParticles (with emitters) once
   useEffect(() => {
     initParticlesEngine(async (engine) => {
-      // load the full bundle (includes emitters plugin)
-      await loadFull(engine);
+      await loadFull(engine); // full bundle includes emitters
     }).then(() => setEngineReady(true));
   }, []);
 
@@ -28,35 +27,33 @@ export function LoadingAnimation() {
     fullScreen: { enable: false },
     fpsLimit: 60,
 
-    /* Emitters plugin configured to burst from center */
+    /* burst out of center */
     emitters: [
       {
-        position: { x: 50, y: 50 },      // center of the canvas
-        rate: { quantity: 4, delay: 0.1 },// 4 particles every 0.1s
-        life: { count: 0, duration: 2 },  // keep emitting for 2s
+        position: { x: 50, y: 50 },
+        rate: { quantity: 5, delay: 0.1 },
+        life: { count: 0, duration: 2 },
         size: { width: 0, height: 0 },
       },
     ],
 
     particles: {
-      number: { value: 0 },  // no initial particles
+      number: { value: 0 },
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
         value: 0.8,
         random: { enable: true, minimumValue: 0.3 },
-        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false },
+        animation: { enable: true, speed: 1, minimumValue: 0.1 },
       },
       size: {
         value: { min: 1, max: 4 },
-        animation: { enable: true, speed: 3, minimumValue: 0.5, sync: false },
+        animation: { enable: true, speed: 3, minimumValue: 0.5 },
       },
       move: {
         enable: true,
         speed: 2,
-        direction: "none",
-        random: false,
-        outModes: { default: "destroy" },  // remove particles when off-screen
+        outModes: { default: "destroy" },
       },
     },
 
@@ -73,7 +70,7 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* particles behind the logo */}
+          {/* Particles behind everything (z-10) */}
           {engineReady && (
             <div className="absolute inset-0 z-10">
               <Particles
@@ -84,9 +81,21 @@ export function LoadingAnimation() {
             </div>
           )}
 
-          {/* logo on top */}
+          {/* Neon pulse overlay (z-20) */}
           <motion.div
-            className="relative w-64 h-64 z-20 flex items-center justify-center"
+            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.3, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+
+          {/* Logo on top (z-30) */}
+          <motion.div
+            className="relative w-64 h-64 flex items-center justify-center z-30"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
@@ -99,21 +108,9 @@ export function LoadingAnimation() {
             />
           </motion.div>
 
-          {/* gentle neon pulse overlay */}
+          {/* Footer text (z-30) */}
           <motion.div
-            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.3, 0] }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* footer text */}
-          <motion.div
-            className="absolute bottom-8 left-0 right-0 text-center z-20"
+            className="absolute bottom-8 left-0 right-0 text-center z-30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.5 }}
