@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-// 👇 the new imports
 import Particles, { initParticlesEngine } from "@tsparticles/react";
-import { loadSlim } from "@tsparticles/slim";
+import { loadFull } from "tsparticles";
 
 export function LoadingAnimation() {
   const [showLoading, setShowLoading] = useState(true);
@@ -17,25 +16,36 @@ export function LoadingAnimation() {
     return () => clearTimeout(timer);
   }, []);
 
-  // init tsParticles only once
+  // init tsParticles once
   useEffect(() => {
     initParticlesEngine(async (engine) => {
-      // only load the slim bundle (neon circles/waves/etc)
-      await loadSlim(engine);
+      // load the full bundle (includes emitters plugin)
+      await loadFull(engine);
     }).then(() => setEngineReady(true));
   }, []);
 
   const particlesOptions = {
     fullScreen: { enable: false },
     fpsLimit: 60,
+
+    /* Emitters plugin configured to burst from center */
+    emitters: [
+      {
+        position: { x: 50, y: 50 },      // center of the canvas
+        rate: { quantity: 4, delay: 0.1 },// 4 particles every 0.1s
+        life: { count: 0, duration: 2 },  // keep emitting for 2s
+        size: { width: 0, height: 0 },
+      },
+    ],
+
     particles: {
-      number: { value: 100, density: { enable: true, area: 600 } },
+      number: { value: 0 },  // no initial particles
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
-        value: 0.7,
+        value: 0.8,
         random: { enable: true, minimumValue: 0.3 },
-        animation: { enable: true, speed: 1.2, minimumValue: 0.1, sync: false },
+        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false },
       },
       size: {
         value: { min: 1, max: 4 },
@@ -43,12 +53,13 @@ export function LoadingAnimation() {
       },
       move: {
         enable: true,
-        speed: 1.5,
+        speed: 2,
         direction: "none",
-        random: true,
-        outModes: { default: "out" },
+        random: false,
+        outModes: { default: "destroy" },  // remove particles when off-screen
       },
     },
+
     detectRetina: true,
   };
 
@@ -62,7 +73,7 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* particles only once engine is ready */}
+          {/* particles behind the logo */}
           {engineReady && (
             <div className="absolute inset-0 z-10">
               <Particles
@@ -73,7 +84,7 @@ export function LoadingAnimation() {
             </div>
           )}
 
-          {/* logo sits on top of particles */}
+          {/* logo on top */}
           <motion.div
             className="relative w-64 h-64 z-20 flex items-center justify-center"
             initial={{ scale: 0.8, opacity: 0 }}
@@ -88,7 +99,7 @@ export function LoadingAnimation() {
             />
           </motion.div>
 
-          {/* neon pulse overlay */}
+          {/* gentle neon pulse overlay */}
           <motion.div
             className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-10"
             initial={{ opacity: 0 }}
