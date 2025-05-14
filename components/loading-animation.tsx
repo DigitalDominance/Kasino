@@ -23,18 +23,15 @@ export function LoadingAnimation() {
     fpsLimit: 60,
     particles: {
       number: {
-        value: 80,
-        density: {
-          enable: true,
-          area: 800,
-        },
+        value: 120,
+        density: { enable: true, area: 600 },
       },
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
         value: 0.8,
         random: { enable: true, minimumValue: 0.3 },
-        animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false },
+        animation: { enable: true, speed: 1.2, minimumValue: 0.1, sync: false },
       },
       size: {
         value: { min: 1, max: 4 },
@@ -65,19 +62,9 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Particles container */}
-          <div className="absolute inset-0">
-            <Particles
-              id="loading-particles"
-              init={initParticles}
-              options={particlesOptions}
-              className="w-full h-full"
-            />
-          </div>
-
-          {/* Logo */}
+          {/* Logo at z-30 */}
           <motion.div
-            className="relative w-64 h-64 flex items-center justify-center"
+            className="relative w-64 h-64 flex items-center justify-center z-30"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
@@ -90,9 +77,19 @@ export function LoadingAnimation() {
             />
           </motion.div>
 
+          {/* Particles on top at z-40 */}
+          <div className="absolute inset-0 z-40">
+            <Particles
+              id="loading-particles"
+              init={initParticles}
+              options={particlesOptions}
+              className="w-full h-full"
+            />
+          </div>
+
           {/* Neon pulse overlay */}
           <motion.div
-            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20"
+            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-20"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 0.3, 0] }}
             transition={{
@@ -104,7 +101,7 @@ export function LoadingAnimation() {
 
           {/* Footer text */}
           <motion.div
-            className="absolute bottom-8 left-0 right-0 text-center"
+            className="absolute bottom-8 left-0 right-0 text-center z-20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.5 }}
