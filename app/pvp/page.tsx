@@ -145,7 +145,7 @@ function MultiplayerGamesContent() {
     {
       name: "Kaspa Dominoes",
       slug: "kaspa-dominoes",
-      image: "/placeholder.svg?height=250&width=400&query=dominoes with teal dots",
+      image: "/placeholder.svg?key=5nnlw",
       players: 45,
       activeTables: 9,
       description: "Classic dominoes with Kaspa-themed tiles and multiplayer modes",
@@ -154,7 +154,7 @@ function MultiplayerGamesContent() {
     {
       name: "Craps Showdown",
       slug: "craps-showdown",
-      image: "/placeholder.svg?height=250&width=400&query=craps table with teal dice",
+      image: "/placeholder.svg?key=o2pcd",
       players: 92,
       activeTables: 14,
       description: "Team-based craps with progressive jackpots",
@@ -163,7 +163,7 @@ function MultiplayerGamesContent() {
     {
       name: "Roulette Rivals",
       slug: "roulette-rivals",
-      image: "/placeholder.svg?height=250&width=400&query=multiplayer roulette wheel with teal accents",
+      image: "/placeholder.svg?key=sq99h",
       players: 124,
       activeTables: 18,
       description: "Competitive roulette with team strategies and leaderboards",
@@ -172,7 +172,7 @@ function MultiplayerGamesContent() {
     {
       name: "Weekly Championship",
       slug: "weekly-championship",
-      image: "/placeholder.svg?height=250&width=400&query=tournament podium with teal lighting",
+      image: "/placeholder.svg?key=csch9",
       players: 256,
       activeTables: 4,
       description: "Weekly tournaments across multiple games with qualification rounds",
@@ -622,7 +622,11 @@ function MultiplayerGamesContent() {
               </AnimatePresence>
 
               {/* Main Content */}
-              <main className="flex-1 p-3 sm:p-6 overflow-hidden">
+              <main className="flex-1 p-3 sm:p-6 overflow-hidden relative">
+                {/* Side gradients */}
+                <div className="hidden lg:block absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-[#49EACB]/10 to-transparent pointer-events-none"></div>
+                <div className="hidden lg:block absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-[#49EACB]/10 to-transparent pointer-events-none"></div>
+
                 <div className="container-xl">
                   {/* Multiplayer Banner */}
                   <motion.div
@@ -882,7 +886,7 @@ function MultiplayerGamesContent() {
                               }}
                               transition={{ duration: 0.3 }}
                             >
-                              <div className="relative aspect-[4/2.5] mt-1">
+                              <div className="relative aspect-[4/2.5]">
                                 <Image
                                   src={game.image || "/placeholder.svg"}
                                   alt={`${game.name} thumbnail`}
@@ -942,8 +946,7 @@ function MultiplayerGamesContent() {
                         {liveMatches.map((match, i) => {
                           // Find the corresponding game to get the image
                           const gameData = multiplayerGames.find((g) => g.name === match.game) || {
-                            image:
-                              "/placeholder.svg?height=250&width=400&query=multiplayer game table with teal accents",
+                            image: "/placeholder.svg?key=amjws",
                           }
 
                           return (
@@ -955,7 +958,7 @@ function MultiplayerGamesContent() {
                                 boxShadow: "0 0 20px rgba(73,234,203,0.5)",
                               }}
                             >
-                              <div className="relative aspect-[4/3] mt-1">
+                              <div className="relative aspect-[4/3]">
                                 <Image
                                   src={gameData.image || "/placeholder.svg"}
                                   alt={`${match.game} match`}
@@ -1022,13 +1025,13 @@ function MultiplayerGamesContent() {
 
                         // Find the corresponding game to get the image
                         const gameData = multiplayerGames.find((g) => g.name === tournament.game) || {
-                          image: "/placeholder.svg?height=250&width=400&query=tournament podium with teal lighting",
+                          image: "/placeholder.svg?key=2lxsi",
                         }
 
                         return (
                           <MotionCard
                             key={i}
-                            className={`overflow-hidden border border-[#49EACB] ${isActive ? "bg-gradient-to-r from-[#003f2f]/50 to-[#006d5b]/50" : "bg-black"}`}
+                            className={`overflow-hidden border border-[#49EACB] bg-black ${isActive ? "bg-gradient-to-r from-[#003f2f]/50 to-[#006d5b]/50" : ""}`}
                             whileHover={{
                               scale: 1.02,
                               boxShadow: "0 0 20px rgba(73,234,203,0.5)",
