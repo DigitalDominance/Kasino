@@ -3,33 +3,37 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
+// 👇 the new imports
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
 
 export function LoadingAnimation() {
   const [showLoading, setShowLoading] = useState(true);
+  const [engineReady, setEngineReady] = useState(false);
 
+  // hide after 2s
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  const initParticles = useCallback(async (engine) => {
-    await loadFull(engine);
+  // init tsParticles only once
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      // only load the slim bundle (neon circles/waves/etc)
+      await loadSlim(engine);
+    }).then(() => setEngineReady(true));
   }, []);
 
   const particlesOptions = {
     fullScreen: { enable: false },
     fpsLimit: 60,
     particles: {
-      number: {
-        value: 120,
-        density: { enable: true, area: 600 },
-      },
+      number: { value: 100, density: { enable: true, area: 600 } },
       color: { value: "#49EACB" },
       shape: { type: "circle" },
       opacity: {
-        value: 0.8,
+        value: 0.7,
         random: { enable: true, minimumValue: 0.3 },
         animation: { enable: true, speed: 1.2, minimumValue: 0.1, sync: false },
       },
@@ -45,10 +49,6 @@ export function LoadingAnimation() {
         outModes: { default: "out" },
       },
     },
-    interactivity: {
-      detectsOn: "canvas",
-      events: { onHover: { enable: false }, onClick: { enable: false } },
-    },
     detectRetina: true,
   };
 
@@ -62,9 +62,20 @@ export function LoadingAnimation() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Logo at z-30 */}
+          {/* particles only once engine is ready */}
+          {engineReady && (
+            <div className="absolute inset-0 z-10">
+              <Particles
+                id="loading-particles"
+                options={particlesOptions}
+                className="w-full h-full"
+              />
+            </div>
+          )}
+
+          {/* logo sits on top of particles */}
           <motion.div
-            className="relative w-64 h-64 flex items-center justify-center z-30"
+            className="relative w-64 h-64 z-20 flex items-center justify-center"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
@@ -77,19 +88,9 @@ export function LoadingAnimation() {
             />
           </motion.div>
 
-          {/* Particles on top at z-40 */}
-          <div className="absolute inset-0 z-40">
-            <Particles
-              id="loading-particles"
-              init={initParticles}
-              options={particlesOptions}
-              className="w-full h-full"
-            />
-          </div>
-
-          {/* Neon pulse overlay */}
+          {/* neon pulse overlay */}
           <motion.div
-            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-20"
+            className="absolute inset-0 pointer-events-none bg-[#49EACB]/20 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 0.3, 0] }}
             transition={{
@@ -99,7 +100,7 @@ export function LoadingAnimation() {
             }}
           />
 
-          {/* Footer text */}
+          {/* footer text */}
           <motion.div
             className="absolute bottom-8 left-0 right-0 text-center z-20"
             initial={{ opacity: 0 }}
