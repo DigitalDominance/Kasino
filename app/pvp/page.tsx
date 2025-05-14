@@ -15,7 +15,7 @@ import { Montserrat } from "next/font/google"
 import { GiSwordClash, GiPokerHand } from "react-icons/gi"
 import { FaTelegramPlane, FaGem, FaUsers, FaChess, FaDice } from "react-icons/fa"
 import { createPortal } from "react-dom"
-import { XPDisplay } from "@/components/xp-display" // Assuming this is exported from the main page
+import { XPDisplay } from "@/app/page"
 
 const montserrat = Montserrat({
   weight: "700",
