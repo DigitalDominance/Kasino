@@ -13,7 +13,7 @@ import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
 import { useWallet } from "@/contexts/WalletContext";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { RouletteControls } from "./roulette-controls";
 import { RouletteGame } from "./roulette-game";
 import { Montserrat } from "next/font/google";
