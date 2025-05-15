@@ -18,6 +18,7 @@ import axios from "axios"
 import { createPortal } from "react-dom"
 import { XPDisplay } from "@/components/xp-display"
 import { TutorialSystem } from "@/components/tutorial-system"
+import { useWallet } from "@/contexts/WalletContext"
 
 const montserrat = Montserrat({
   weight: "700",
@@ -63,6 +64,9 @@ function MainPageContent() {
     totalKasWon: 0,
   })
   const sidebarButtonRef = useRef<HTMLButtonElement>(null)
+  const xpDisplayRef = useRef<HTMLElement | null>(null)
+  const walletStatusRef = useRef<HTMLElement | null>(null)
+  const { walletAddress } = useWallet()
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
 
@@ -202,9 +206,31 @@ function MainPageContent() {
     return () => window.removeEventListener("resize", checkIfLargeScreen)
   }, [])
 
+  // Store references to the XP display and wallet status elements
+  useEffect(() => {
+    if (document) {
+      xpDisplayRef.current = document.querySelector(".xp-display-trigger")
+      walletStatusRef.current = document.querySelector(".wallet-status-trigger")
+    }
+  }, [isLoading])
+
   // Handle sidebar toggle
   const handleSidebarToggle = () => {
     setIsSidebarOpen((prev) => !prev)
+  }
+
+  // Handle daily rewards button click
+  const handleDailyRewardsClick = () => {
+    if (xpDisplayRef.current) {
+      xpDisplayRef.current.click()
+    }
+  }
+
+  // Handle referral program button click
+  const handleReferralProgramClick = () => {
+    if (walletStatusRef.current) {
+      walletStatusRef.current.click()
+    }
   }
 
   return (
@@ -446,7 +472,9 @@ function MainPageContent() {
                 className="flex items-center gap-1 sm:gap-4 shrink-0"
               >
                 <XPDisplay className="xp-display-trigger" />
-                <WalletConnection className="wallet-connection-trigger" />
+                <div className="wallet-status-trigger">
+                  <WalletConnection className="wallet-connection-trigger" />
+                </div>
               </motion.div>
             </header>
 
@@ -629,7 +657,7 @@ function MainPageContent() {
                       </div>
                       <div className="flex items-center justify-center gap-3 md:gap-4 lg:gap-5">
                         <div className="bg-[#49EACB]/20 p-2 md:p-3 lg:p-4 rounded-full">
-                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:w-12 text-[#49EACB]" />
+                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-[#49EACB]" />
                         </div>
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total Daily Wins</p>
@@ -640,7 +668,7 @@ function MainPageContent() {
                       </div>
                       <div className="flex items-center justify-center gap-3 md:gap-4 lg:gap-5">
                         <div className="bg-[#49EACB]/20 p-2 md:p-3 lg:p-4 rounded-full">
-                          <Flame className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:w-12 text-[#49EACB]" />
+                          <Flame className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-[#49EACB]" />
                         </div>
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total KAS Won</p>
@@ -653,7 +681,7 @@ function MainPageContent() {
                               className="mr-1 md:w-6 md:h-6 lg:w-8 lg:h-8"
                             />
                             <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white">
-                              {gameStats.totalKasWon.toLocaleString()}
+                              {gameStats.totalKasWon.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -1056,14 +1084,14 @@ function MainPageContent() {
                           </Link>
                           <Button
                             className="bg-black/30 text-white border border-[#49EACB]/30 hover:bg-black/50 flex items-center gap-2"
-                            onClick={() => document.querySelector(".xp-display-trigger")?.click()}
+                            onClick={handleDailyRewardsClick}
                           >
                             <GiCardRandom size={18} />
                             Daily Rewards
                           </Button>
                           <Button
                             className="bg-black/30 text-white border border-[#49EACB]/30 hover:bg-black/50 flex items-center gap-2"
-                            onClick={() => document.querySelector(".wallet-connection-trigger")?.click()}
+                            onClick={handleReferralProgramClick}
                           >
                             <GiPresent size={18} />
                             Referral Program
