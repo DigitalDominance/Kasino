@@ -621,7 +621,7 @@ function MainPageContent() {
                                 Welcome to <span className="text-[#49EACB]">Kasino</span>
                               </h2>
                               <p className="text-xs sm:text-base md:text-lg lg:text-xl text-gray-200 mb-2 sm:mb-6 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
-                                Play, win, and earn rewards with our exciting casino games
+                                Play, win, and earn rewards with our exciting, handcrafted games
                               </p>
                               <Button className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block">
                                 Play Now
@@ -1151,7 +1151,7 @@ function MainPageContent() {
                       <div className="absolute top-0 right-0 w-1/3 h-full opacity-10">
                         <div className="relative w-full h-full">
                           <Image
-                            src="/placeholder.svg?key=iv33u"
+                            src="/kaasperkasino.webp"
                             alt="Background Pattern"
                             fill
                             style={{ objectFit: "cover" }}
