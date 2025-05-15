@@ -17,12 +17,18 @@ import { LiveWins } from "../mines/live-wins";
 import { XPDisplay } from "@/components/xp-display";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://kasino-backend-4818b4b69870.herokuapp.com";
 const MIN_BET = 1;
 const MAX_BET = 1000;
 
 // loader messages
-const DEAL_MESSAGES = ["Verifying transaction", "Hashing game seed", "Shuffling deck"];
+const DEAL_MESSAGES = [
+  "Verifying transaction",
+  "Hashing game seed",
+  "Shuffling deck",
+];
 
 export default function BlackjackPage() {
   return <BlackjackContent />;
@@ -56,12 +62,15 @@ function BlackjackContent() {
     if (!isDealing) return;
     const full = DEAL_MESSAGES[dealMsgIdx];
     if (dealText.length < full.length) {
-      const t = setTimeout(() => setDealText(full.slice(0, dealText.length + 1)), 40);
+      const t = setTimeout(
+        () => setDealText(full.slice(0, dealText.length + 1)),
+        40
+      );
       return () => clearTimeout(t);
     }
     const t2 = setTimeout(() => {
       if (dealMsgIdx < DEAL_MESSAGES.length - 1) {
-        setDealMsgIdx(i => i + 1);
+        setDealMsgIdx((i) => i + 1);
         setDealText("");
       }
     }, 1200);
@@ -74,7 +83,8 @@ function BlackjackContent() {
     winAmount: number;
   } | null>(null);
 
-  const settleInBackground = (body: object) => axios.post(`${API_BASE}/api/game/settle`, body).catch(console.error);
+  const settleInBackground = (body: object) =>
+    axios.post(`${API_BASE}/api/game/settle`, body).catch(console.error);
 
   // --- DEAL ---
   const handleDeal = async () => {
@@ -84,15 +94,19 @@ function BlackjackContent() {
     }
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
-      alert(`Bet must be between ${MIN_BET} and ${MAX_BET}, within your balance.`);
+      alert(`Bet must be between ${MIN_BET} and ${MAX_BET} and ≤ your balance.`);
       return;
     }
 
     // provably-fair seeds
     const arr = crypto.getRandomValues(new Uint8Array(32));
-    const rawSeed = Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+    const rawSeed = Array.from(arr)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     const buf = await crypto.subtle.digest("SHA-256", arr);
-    const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    const hash = Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     setClientSeed(rawSeed);
 
     // on-chain deposit
@@ -101,8 +115,11 @@ function BlackjackContent() {
       Math.random() < 0.5
         ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
         : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!;
-    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, { priorityFee: 10000 });
-    const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
+    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+      priorityFee: 10000,
+    });
+    const txid =
+      typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
 
     // call play
     setIsDealing(true);
@@ -123,11 +140,12 @@ function BlackjackContent() {
 
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
-    // safe field access
-    const ph = data.game.playerHand ?? data.game.playerCards ?? [];
-    const dh = data.game.dealerHand  ?? data.game.dealerCards  ?? [];
-    setPlayerHand(ph);
-    setDealerHand(dh);
+
+    // Backend now returns `playerHand: string[]` and `dealerUpCard: string`
+    setPlayerHand(data.game.playerHand);
+    // always two slots—second will show face-down
+    setDealerHand([data.game.dealerUpCard, ""]);
+
     setPregame(false);
   };
 
@@ -135,7 +153,10 @@ function BlackjackContent() {
   const handleHit = async () => {
     if (!gameId) return;
     setActionLoading(true);
-    const { data } = await axios.post(`${API_BASE}/api/game/settle`, { gameId, action: "hit" });
+    const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+      gameId,
+      action: "hit",
+    });
     setActionLoading(false);
 
     if (data.gameResult === "continue") {
@@ -151,7 +172,10 @@ function BlackjackContent() {
   const handleStand = async () => {
     if (!gameId) return;
     setActionLoading(true);
-    const { data } = await axios.post(`${API_BASE}/api/game/settle`, { gameId, action: "stand" });
+    const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+      gameId,
+      action: "stand",
+    });
     setActionLoading(false);
 
     setDealerHand(data.dealerHand);
@@ -277,8 +301,12 @@ function BlackjackContent() {
               {/* Actions */}
               {!result && (
                 <div className="flex gap-4">
-                  <Button onClick={handleHit} disabled={actionLoading}>Hit</Button>
-                  <Button onClick={handleStand} disabled={actionLoading}>Stand</Button>
+                  <Button onClick={handleHit} disabled={actionLoading}>
+                    Hit
+                  </Button>
+                  <Button onClick={handleStand} disabled={actionLoading}>
+                    Stand
+                  </Button>
                 </div>
               )}
             </div>
@@ -293,7 +321,7 @@ function BlackjackContent() {
               <input
                 type="number"
                 value={betAmount}
-                onChange={e => setBetAmount(e.target.value)}
+                onChange={(e) => setBetAmount(e.target.value)}
                 className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
                 disabled={!pregame}
               />
@@ -311,7 +339,9 @@ function BlackjackContent() {
               <Button
                 variant="outline"
                 className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(String(Math.max(MIN_BET, Number(betAmount) / 2)))}
+                onClick={() =>
+                  setBetAmount(String(Math.max(MIN_BET, Number(betAmount) / 2)))
+                }
                 disabled={!pregame}
               >
                 ½
@@ -319,7 +349,11 @@ function BlackjackContent() {
               <Button
                 variant="outline"
                 className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(String(Math.min(MAX_BET, Number(betAmount) * 2)))}
+                onClick={() =>
+                  setBetAmount(
+                    String(Math.min(MAX_BET, Number(betAmount) * 2))
+                  )
+                }
                 disabled={!pregame}
               >
                 2×
@@ -335,7 +369,9 @@ function BlackjackContent() {
               <Button
                 variant="outline"
                 className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
-                onClick={() => setBetAmount(String(Math.min(MAX_BET, balance)))}
+                onClick={() =>
+                  setBetAmount(String(Math.min(MAX_BET, balance)))
+                }
                 disabled={!pregame}
               >
                 Max
@@ -376,7 +412,9 @@ function BlackjackContent() {
                 </p>
               )}
               {result.gameResult === "push" && (
-                <p className="text-2xl uppercase mb-4">Your bet was returned</p>
+                <p className="text-2xl uppercase mb-4">
+                  Your bet was returned
+                </p>
               )}
               {result.gameResult === "lose" && (
                 <p className="text-3xl animate-pulse uppercase text-red-500 mb-4">
@@ -386,10 +424,16 @@ function BlackjackContent() {
               <div className="bg-black/80 p-4 rounded-md mb-6 text-left">
                 <div className="flex items-center mb-2">
                   <ShieldCheck className="text-white mr-2" />
-                  <h3 className="text-lg font-semibold text-white m-0">Provably Fair</h3>
+                  <h3 className="text-lg font-semibold text-white m-0">
+                    Provably Fair
+                  </h3>
                 </div>
-                <p className="text-sm text-white break-all">Client Seed: {clientSeed}</p>
-                <p className="text-sm text-white break-all">Server Hash: {serverSeedHash}</p>
+                <p className="text-sm text-white break-all">
+                  Client Seed: {clientSeed}
+                </p>
+                <p className="text-sm text-white break-all">
+                  Server Hash: {serverSeedHash}
+                </p>
               </div>
               <Button onClick={resetGame} className="px-8 py-3">
                 Play Again
