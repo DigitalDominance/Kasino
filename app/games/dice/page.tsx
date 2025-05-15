@@ -9,7 +9,7 @@ import { ArrowLeft, Info, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { DiceGame } from "./dice-game";
 import { DiceControls } from "./dice-controls";
 import { LiveChat } from "../mines/live-chat";
