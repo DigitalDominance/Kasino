@@ -23,7 +23,8 @@ const API_BASE =
 const MIN_BET = 1;
 const MAX_BET = 1000;
 
-// loader messages
+type CardObj = { suit: string; rank: string; image: string };
+
 const DEAL_MESSAGES = [
   "Verifying transaction",
   "Hashing game seed",
@@ -37,15 +38,15 @@ export default function BlackjackPage() {
 function BlackjackContent() {
   const { isConnected, balance } = useWallet();
 
-  // seeds + bet
+  // seeds & bet
   const [betAmount, setBetAmount] = useState("1");
   const [clientSeed, setClientSeed] = useState<string | null>(null);
   const [serverSeedHash, setServerSeedHash] = useState<string | null>(null);
 
   // game state
   const [gameId, setGameId] = useState<string | null>(null);
-  const [playerHand, setPlayerHand] = useState<string[]>([]);
-  const [dealerHand, setDealerHand] = useState<string[]>([]);
+  const [playerHand, setPlayerHand] = useState<CardObj[]>([]);
+  const [dealerHand, setDealerHand] = useState<(CardObj | null)[]>([]);
   const [pregame, setPregame] = useState(true);
   const [isDealing, setIsDealing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -141,10 +142,9 @@ function BlackjackContent() {
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
 
-    // Backend now returns `playerHand: string[]` and `dealerUpCard: string`
-    setPlayerHand(data.game.playerHand);
-    // always two slots—second will show face-down
-    setDealerHand([data.game.dealerUpCard, ""]);
+    // backend returns object arrays
+    setPlayerHand(data.game.playerCards);
+    setDealerHand([data.game.dealerUpCard, null]);
 
     setPregame(false);
   };
@@ -160,10 +160,10 @@ function BlackjackContent() {
     setActionLoading(false);
 
     if (data.gameResult === "continue") {
-      setPlayerHand(data.playerHand);
+      setPlayerHand(data.playerCards);
     } else {
-      setPlayerHand(data.playerHand);
-      setDealerHand(data.dealerHand);
+      setPlayerHand(data.playerCards);
+      setDealerHand(data.dealerCards);
       setResult({ gameResult: "lose", winAmount: 0 });
     }
   };
@@ -178,7 +178,7 @@ function BlackjackContent() {
     });
     setActionLoading(false);
 
-    setDealerHand(data.dealerHand);
+    setDealerHand(data.dealerCards);
     if (data.gameResult === "win") {
       setResult({ gameResult: "win", winAmount: data.winAmount });
     } else if (data.gameResult === "push") {
@@ -263,7 +263,7 @@ function BlackjackContent() {
                 <h3 className="text-lg text-gray-200 mb-2">Dealer</h3>
                 <div className="flex gap-2 flex-wrap">
                   {dealerHand.map((c, i) => {
-                    const faceDown = i === 1 && !result;
+                    const faceDown = !result && c === null;
                     return (
                       <div key={i} className="relative w-16 h-24">
                         <Image
@@ -272,9 +272,10 @@ function BlackjackContent() {
                           className="object-contain"
                           alt={faceDown ? "face-down" : "card"}
                         />
-                        {!faceDown && (
+                        {!faceDown && c && (
                           <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                            {c}
+                            {c.rank}
+                            {c.suit[0].toUpperCase()}
                           </div>
                         )}
                       </div>
@@ -289,9 +290,15 @@ function BlackjackContent() {
                 <div className="flex gap-2 flex-wrap">
                   {playerHand.map((c, i) => (
                     <div key={i} className="relative w-16 h-24">
-                      <Image src="/placeholder.svg" fill className="object-contain" alt="card" />
+                      <Image
+                        src={c.image}
+                        fill
+                        className="object-contain"
+                        alt={`${c.rank}${c.suit[0].toUpperCase()}`}
+                      />
                       <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                        {c}
+                        {c.rank}
+                        {c.suit[0].toUpperCase()}
                       </div>
                     </div>
                   ))}
@@ -412,9 +419,7 @@ function BlackjackContent() {
                 </p>
               )}
               {result.gameResult === "push" && (
-                <p className="text-2xl uppercase mb-4">
-                  Your bet was returned
-                </p>
+                <p className="text-2xl uppercase mb-4">Your bet was returned</p>
               )}
               {result.gameResult === "lose" && (
                 <p className="text-3xl animate-pulse uppercase text-red-500 mb-4">
