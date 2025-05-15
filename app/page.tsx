@@ -100,6 +100,28 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ]
 
+  // Add a direct mapping function after the characterGames array definition
+  const getGameIdForWinCounter = (slug: string): string[] => {
+    // Map each slug to possible _id values in the API response
+    const mapping: Record<string, string[]> = {
+      ghostjump: ["Ghost Jump", "ghost jump"],
+      kaspiancross: ["Kaspian Cross", "kaspian cross"],
+      crash: ["crash", "Crash"],
+      mines: ["mines", "Mines"],
+      Upgrade: ["Upgrade", "upgrade"],
+      kaspatowerclimb: ["Kaspa Tower Climb", "kaspa tower climb"],
+      plinko: ["Plinko", "plinko"],
+      kaspacupgame: ["Guess The Cup", "guess the cup", "Kaspa Cup Game"],
+      roulette: ["roulette", "Roulette"],
+      dice: ["dice", "Dice"],
+      coinflip: ["coinflip", "Coin Flip", "CoinFlip"],
+      lootbox: ["Kasper Loot Box", "kasper loot box", "Loot Box"],
+      "kasen-mania": ["Kasen Mania", "kasen mania", "Kasen-Mania", "kasen-mania"],
+    }
+
+    return mapping[slug] || [slug]
+  }
+
   const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length)
 
@@ -183,15 +205,26 @@ function MainPageContent() {
       try {
         const res = await axios.get(`${apiUrl}/api/win-counter`)
         if (res.data.success) {
-          console.log("Win counter data:", res.data.counts)
+          console.log("Win counter data received:", res.data.counts)
+
+          // Log each game's _id for debugging
+          if (Array.isArray(res.data.counts)) {
+            console.log(
+              "Available game IDs in API response:",
+              res.data.counts
+                .map((c) => c._id)
+                .filter(Boolean)
+                .sort(),
+            )
+          }
+
           setWinCounter(res.data.counts || [])
         } else {
-          // If API returns success: false, initialize with empty array
+          console.error("API returned success: false for win counts")
           setWinCounter([])
         }
       } catch (error) {
         console.error("Error fetching win counts:", error)
-        // Initialize with empty array on error
         setWinCounter([])
       }
     }
@@ -621,7 +654,7 @@ function MainPageContent() {
                                 Welcome to <span className="text-[#49EACB]">Kasino</span>
                               </h2>
                               <p className="text-xs sm:text-base md:text-lg lg:text-xl text-gray-200 mb-2 sm:mb-6 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
-                                Play, win, and earn rewards with our exciting, handcrafted games
+                                Play, win, and earn rewards with our exciting casino games
                               </p>
                               <Button className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block">
                                 Play Now
@@ -843,39 +876,25 @@ function MainPageContent() {
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
 
                         // More flexible matching logic that checks for various formats
-                        const totalWins =
-                          winCounter.find((counter) => {
-                            if (!counter._id) return false
-                            const counterId = counter._id.toLowerCase()
+                        const totalWins = (() => {
+                          if (!winCounter || !Array.isArray(winCounter)) return 0
 
-                            // Check for exact match
-                            if (counterId === dataKey) return true
+                          const possibleIds = getGameIdForWinCounter(game.slug)
 
-                            // Check for capitalized version
-                            if (
-                              counterId ===
-                              dataKey
-                                .split(" ")
-                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                .join(" ")
-                                .toLowerCase()
-                            )
-                              return true
+                          for (const id of possibleIds) {
+                            const match = winCounter.find((counter) => counter && counter._id === id)
+                            if (match) {
+                              return match.totalWins || 0
+                            }
+                          }
 
-                            // Check for specific cases
-                            if (
-                              dataKey === "guess the cup" &&
-                              (counterId === "guess the cup" || counterId === "kaspa cup game")
-                            )
-                              return true
-                            if (
-                              dataKey === "kasper loot box" &&
-                              (counterId === "kasper loot box" || counterId === "loot box")
-                            )
-                              return true
-
-                            return false
-                          })?.totalWins || 0
+                          // If no match found, log for debugging
+                          console.log(
+                            `No win count match found for ${game.name} (${game.slug}). Possible IDs:`,
+                            possibleIds,
+                          )
+                          return 0
+                        })()
 
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
@@ -964,39 +983,25 @@ function MainPageContent() {
                         else if (dataKey === "kasen-mania") dataKey = "kasen mania"
 
                         // More flexible matching logic that checks for various formats
-                        const totalWins =
-                          winCounter.find((counter) => {
-                            if (!counter._id) return false
-                            const counterId = counter._id.toLowerCase()
+                        const totalWins = (() => {
+                          if (!winCounter || !Array.isArray(winCounter)) return 0
 
-                            // Check for exact match
-                            if (counterId === dataKey) return true
+                          const possibleIds = getGameIdForWinCounter(game.slug)
 
-                            // Check for capitalized version
-                            if (
-                              counterId ===
-                              dataKey
-                                .split(" ")
-                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                .join(" ")
-                                .toLowerCase()
-                            )
-                              return true
+                          for (const id of possibleIds) {
+                            const match = winCounter.find((counter) => counter && counter._id === id)
+                            if (match) {
+                              return match.totalWins || 0
+                            }
+                          }
 
-                            // Check for specific cases
-                            if (
-                              dataKey === "kasper loot box" &&
-                              (counterId === "kasper loot box" || counterId === "loot box")
-                            )
-                              return true
-                            if (
-                              dataKey === "kasen mania" &&
-                              (counterId === "kasen mania" || counterId === "kasen-mania")
-                            )
-                              return true
-
-                            return false
-                          })?.totalWins || 0
+                          // If no match found, log for debugging
+                          console.log(
+                            `No win count match found for ${game.name} (${game.slug}). Possible IDs:`,
+                            possibleIds,
+                          )
+                          return 0
+                        })()
 
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
@@ -1151,7 +1156,7 @@ function MainPageContent() {
                       <div className="absolute top-0 right-0 w-1/3 h-full opacity-10">
                         <div className="relative w-full h-full">
                           <Image
-                            src="/kaasperkasino.webp"
+                            src="/placeholder.svg?key=iv33u"
                             alt="Background Pattern"
                             fill
                             style={{ objectFit: "cover" }}
