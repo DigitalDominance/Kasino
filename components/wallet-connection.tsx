@@ -8,7 +8,7 @@ import { motion } from "framer-motion"
 import { Loader2 } from "lucide-react"
 import { debounce } from "underscore"
 
-export function WalletConnection() {
+export function WalletConnection({ className }: { className?: string }) {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet()
   const { showModal } = useModal()
   const [isLoading, setIsLoading] = useState(false)
@@ -87,26 +87,26 @@ export function WalletConnection() {
   }
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className={`flex items-center space-x-4 ${className || ""}`}>
       <WalletStatus />
       {!isConnected ? (
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
+            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
             onClick={handleConnect}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Connect Wallet"}
+            {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Connect Wallet"}
           </Button>
         </motion.div>
       ) : (
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold"
+            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
             onClick={handleDisconnect}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Disconnect"}
+            {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Disconnect"}
           </Button>
         </motion.div>
       )}
