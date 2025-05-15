@@ -177,6 +177,23 @@ function MainPageContent() {
     return () => clearInterval(interval)
   }, [apiUrl])
 
+  // Fetch win counts
+  useEffect(() => {
+    const fetchWinCounts = async () => {
+      try {
+        const res = await axios.get(`${apiUrl}/api/win-counts`)
+        if (res.data.success) {
+          setWinCounter(res.data.counts)
+        }
+      } catch (error) {
+        console.error("Error fetching win counts:", error)
+      }
+    }
+    fetchWinCounts()
+    const interval = setInterval(fetchWinCounts, 10000)
+    return () => clearInterval(interval)
+  }, [apiUrl])
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000)
     return () => clearTimeout(timer)
