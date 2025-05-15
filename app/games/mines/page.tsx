@@ -16,7 +16,7 @@ import { MinesControls } from "./mines-controls";
 import { useWallet } from "@/contexts/WalletContext";
 import { revealTile, calculatePayout, MinesGame, MinesTile } from "./mines-logic";
 import { useRouter } from "next/navigation";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { Bomb, Diamond } from "./icons";
 import "./styles.css";
 
