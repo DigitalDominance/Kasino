@@ -183,6 +183,7 @@ function MainPageContent() {
       try {
         const res = await axios.get(`${apiUrl}/api/win-counter`)
         if (res.data.success) {
+          console.log("Win counter data:", res.data.counts)
           setWinCounter(res.data.counts || [])
         } else {
           // If API returns success: false, initialize with empty array
@@ -620,7 +621,7 @@ function MainPageContent() {
                                 Welcome to <span className="text-[#49EACB]">Kasino</span>
                               </h2>
                               <p className="text-xs sm:text-base md:text-lg lg:text-xl text-gray-200 mb-2 sm:mb-6 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
-                                Play, win, and earn rewards with our exciting, handcrafted games
+                                Play, win, and earn rewards with our exciting casino games
                               </p>
                               <Button className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block">
                                 Play Now
@@ -840,11 +841,42 @@ function MainPageContent() {
                         if (dataKey === "kaspacupgame") dataKey = "guess the cup"
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
+
+                        // More flexible matching logic that checks for various formats
                         const totalWins =
-                          winCounter && winCounter.find
-                            ? winCounter.find((counter) => counter._id && counter._id.toLowerCase() === dataKey)
-                                ?.totalWins || 0
-                            : 0
+                          winCounter.find((counter) => {
+                            if (!counter._id) return false
+                            const counterId = counter._id.toLowerCase()
+
+                            // Check for exact match
+                            if (counterId === dataKey) return true
+
+                            // Check for capitalized version
+                            if (
+                              counterId ===
+                              dataKey
+                                .split(" ")
+                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(" ")
+                                .toLowerCase()
+                            )
+                              return true
+
+                            // Check for specific cases
+                            if (
+                              dataKey === "guess the cup" &&
+                              (counterId === "guess the cup" || counterId === "kaspa cup game")
+                            )
+                              return true
+                            if (
+                              dataKey === "kasper loot box" &&
+                              (counterId === "kasper loot box" || counterId === "loot box")
+                            )
+                              return true
+
+                            return false
+                          })?.totalWins || 0
+
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
                         return (
@@ -930,11 +962,42 @@ function MainPageContent() {
                         let dataKey = game.slug.toLowerCase()
                         if (dataKey === "lootbox") dataKey = "kasper loot box"
                         else if (dataKey === "kasen-mania") dataKey = "kasen mania"
+
+                        // More flexible matching logic that checks for various formats
                         const totalWins =
-                          winCounter && winCounter.find
-                            ? winCounter.find((counter) => counter._id && counter._id.toLowerCase() === dataKey)
-                                ?.totalWins || 0
-                            : 0
+                          winCounter.find((counter) => {
+                            if (!counter._id) return false
+                            const counterId = counter._id.toLowerCase()
+
+                            // Check for exact match
+                            if (counterId === dataKey) return true
+
+                            // Check for capitalized version
+                            if (
+                              counterId ===
+                              dataKey
+                                .split(" ")
+                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(" ")
+                                .toLowerCase()
+                            )
+                              return true
+
+                            // Check for specific cases
+                            if (
+                              dataKey === "kasper loot box" &&
+                              (counterId === "kasper loot box" || counterId === "loot box")
+                            )
+                              return true
+                            if (
+                              dataKey === "kasen mania" &&
+                              (counterId === "kasen mania" || counterId === "kasen-mania")
+                            )
+                              return true
+
+                            return false
+                          })?.totalWins || 0
+
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
                         return (
@@ -1088,8 +1151,8 @@ function MainPageContent() {
                       <div className="absolute top-0 right-0 w-1/3 h-full opacity-10">
                         <div className="relative w-full h-full">
                           <Image
-                            src="/kaasperkasino.webp"
-                            alt="Kasper Playing"
+                            src="/placeholder.svg?key=iv33u"
+                            alt="Background Pattern"
                             fill
                             style={{ objectFit: "cover" }}
                           />
