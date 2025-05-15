@@ -1,4 +1,3 @@
-// pages/games/blackjack.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,7 +21,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818
 const MIN_BET = 1;
 const MAX_BET = 1000;
 
-// simple loader messages for the “deal” step
+// loader messages
 const DEAL_MESSAGES = ["Verifying transaction", "Hashing game seed", "Shuffling deck"];
 
 export default function BlackjackPage() {
@@ -32,12 +31,12 @@ export default function BlackjackPage() {
 function BlackjackContent() {
   const { isConnected, balance } = useWallet();
 
-  // --- betting & provably-fair seeds ---
+  // seeds + bet
   const [betAmount, setBetAmount] = useState("1");
   const [clientSeed, setClientSeed] = useState<string | null>(null);
   const [serverSeedHash, setServerSeedHash] = useState<string | null>(null);
 
-  // --- game state ---
+  // game state
   const [gameId, setGameId] = useState<string | null>(null);
   const [playerHand, setPlayerHand] = useState<string[]>([]);
   const [dealerHand, setDealerHand] = useState<string[]>([]);
@@ -45,7 +44,7 @@ function BlackjackContent() {
   const [isDealing, setIsDealing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // --- loader typewriter state ---
+  // deal loader
   const [dealMsgIdx, setDealMsgIdx] = useState(0);
   const [dealText, setDealText] = useState("");
   useEffect(() => {
@@ -69,31 +68,30 @@ function BlackjackContent() {
     return () => clearTimeout(t2);
   }, [isDealing, dealMsgIdx, dealText]);
 
-  // --- result popup ---
+  // result popup
   const [result, setResult] = useState<{
     gameResult: "win" | "lose" | "push";
     winAmount: number;
   } | null>(null);
 
-  // send settle in background for “push” (no net win/loss)
-  const settleInBackground = (body: object) =>
-    axios.post(`${API_BASE}/api/game/settle`, body).catch(console.error);
+  const settleInBackground = (body: object) => axios.post(`${API_BASE}/api/game/settle`, body).catch(console.error);
 
-  // --- helper: deal (play) ---
+  // --- DEAL ---
   const handleDeal = async () => {
     if (!isConnected) return alert("Connect your wallet first");
     const bet = Number(betAmount);
-    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance)
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
       return alert(`Bet must be between ${MIN_BET} and ${MAX_BET} and ≤ your balance.`);
+    }
 
-    // 1) generate clientSeed & hash
+    // provably-fair seeds
     const arr = crypto.getRandomValues(new Uint8Array(32));
     const rawSeed = Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
     const buf = await crypto.subtle.digest("SHA-256", arr);
     const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
     setClientSeed(rawSeed);
 
-    // 2) on-chain deposit
+    // on-chain deposit
     const [addr] = await window.kasware.getAccounts();
     const treasury =
       Math.random() < 0.5
@@ -102,10 +100,10 @@ function BlackjackContent() {
     const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, { priorityFee: 10000 });
     const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id;
 
-    // 3) call /play
+    // call play
     setIsDealing(true);
     const { data } = await axios.post(`${API_BASE}/api/game/play`, {
-      gameName: "Blackjack",
+      gameName: "blackjack",
       clientSeed: rawSeed,
       clientSeedHash: hash,
       nonce: 0,
@@ -114,8 +112,8 @@ function BlackjackContent() {
       txid,
     });
     setIsDealing(false);
-
     if (!data.success) return alert("Play API failed");
+
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
     setPlayerHand(data.game.playerHand);
@@ -123,34 +121,26 @@ function BlackjackContent() {
     setPregame(false);
   };
 
-  // --- Hit action ---
+  // --- HIT ---
   const handleHit = async () => {
     if (!gameId) return;
     setActionLoading(true);
-    const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
-      gameId,
-      action: "hit",
-    });
+    const { data } = await axios.post(`${API_BASE}/api/game/settle`, { gameId, action: "hit" });
     setActionLoading(false);
-
     if (data.gameResult === "continue") {
       setPlayerHand(data.playerHand);
     } else {
-      // bust
       setPlayerHand(data.playerHand);
       setDealerHand(data.dealerHand);
       setResult({ gameResult: "lose", winAmount: 0 });
     }
   };
 
-  // --- Stand action ---
+  // --- STAND ---
   const handleStand = async () => {
     if (!gameId) return;
     setActionLoading(true);
-    const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
-      gameId,
-      action: "stand",
-    });
+    const { data } = await axios.post(`${API_BASE}/api/game/settle`, { gameId, action: "stand" });
     setActionLoading(false);
 
     setDealerHand(data.dealerHand);
@@ -158,14 +148,13 @@ function BlackjackContent() {
       setResult({ gameResult: "win", winAmount: data.winAmount });
     } else if (data.gameResult === "push") {
       setResult({ gameResult: "push", winAmount: 0 });
-      // return your bet on push
       settleInBackground({ gameId, action: "push" });
     } else {
       setResult({ gameResult: "lose", winAmount: 0 });
     }
   };
 
-  // --- Reset ---
+  // --- RESET ---
   const resetGame = () => {
     setPregame(true);
     setGameId(null);
@@ -179,30 +168,28 @@ function BlackjackContent() {
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
-      {/* Loading overlay for “Deal” */}
+      {/* DEAL Loader */}
       <AnimatePresence>
         {isDealing && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-[#49EACB] font-mono"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-[#49EACB] font-mono text-xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="flex items-center text-xl">
-              {dealText}
-              <motion.span
-                className="ml-2"
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ repeat: Infinity, duration: 0.8 }}
-              >
-                ●
-              </motion.span>
-            </div>
+            {dealText}
+            <motion.span
+              className="ml-2"
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+            >
+              ●
+            </motion.span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* HEADER */}
       <header className="flex items-center justify-between p-6">
         <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
           <ArrowLeft className="mr-2 w-5 h-5" /> Back to Games
@@ -213,76 +200,76 @@ function BlackjackContent() {
         </div>
       </header>
 
-      {/* Main grid */}
-      <div className="flex-1 p-6 grid grid-cols-[1fr_300px] gap-6">
-        {/* Left: blackjack table */}
-        <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
-          <div className="p-6 flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-[#49EACB]">Blackjack</h2>
-              <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
-                Reset
+      {/* MAIN GRID */}
+      <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        {/* LEFT: TABLE */}
+        <Card className="relative overflow-hidden min-h-[600px] bg-gradient-to-br from-[#003f2f] via-[#006d5b] to-[#003f2f] border-[#49EACB]/20 backdrop-blur-sm">
+          {/* Optional background image */}
+          {/* <Image src="/blackjack-table-bg.webp" fill className="object-cover opacity-20" alt="Table" /> */}
+
+          {pregame ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#49EACB] mb-4 text-center">
+                Welcome to Blackjack
+              </h1>
+              <p className="text-lg md:text-xl text-gray-200 mb-8 text-center">
+                Place your bet and test your luck at the table
+              </p>
+              <Button
+                size="lg"
+                className="bg-[#49EACB] text-black px-8 py-4 text-lg"
+                onClick={handleDeal}
+                disabled={!isConnected}
+              >
+                {!isConnected ? "Connect Wallet" : "Deal Cards"}
               </Button>
             </div>
-
-            {pregame ? (
-              <div className="flex-1 w-full rounded-lg bg-green-700 flex flex-col items-center justify-center">
-                <p className="text-xl text-white mb-4">Place your bet and hit Deal</p>
-                <Button onClick={handleDeal} disabled={!isConnected}>
-                  {!isConnected ? "Connect Wallet" : "Deal"}
-                </Button>
-              </div>
-            ) : (
-              <div className="w-full space-y-6">
-                {/* Dealer’s hand */}
-                <div>
-                  <h3 className="text-lg text-gray-200 mb-2">Dealer</h3>
-                  <div className="flex gap-2">
-                    {dealerHand.map((code, i) => (
-                      <div key={i} className="relative w-16 h-24">
-                        <Image src="/placeholder.svg" fill className="object-contain" />
-                        <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                          {code}
-                        </div>
+          ) : (
+            <div className="relative z-10 p-6 flex flex-col space-y-6">
+              {/* Dealer */}
+              <div>
+                <h3 className="text-lg text-gray-200 mb-2">Dealer</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {dealerHand.map((c, i) => (
+                    <div key={i} className="relative w-16 h-24">
+                      <Image src="/placeholder.svg" fill className="object-contain" alt="card" />
+                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+                        {c}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-
-                {/* Player’s hand */}
-                <div>
-                  <h3 className="text-lg text-gray-200 mb-2">You</h3>
-                  <div className="flex gap-2">
-                    {playerHand.map((code, i) => (
-                      <div key={i} className="relative w-16 h-24">
-                        <Image src="/placeholder.svg" fill className="object-contain" />
-                        <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                          {code}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                {!result && (
-                  <div className="space-x-4">
-                    <Button onClick={handleHit} disabled={actionLoading}>
-                      Hit
-                    </Button>
-                    <Button onClick={handleStand} disabled={actionLoading}>
-                      Stand
-                    </Button>
-                  </div>
-                )}
               </div>
-            )}
-          </div>
+
+              {/* Player */}
+              <div>
+                <h3 className="text-lg text-gray-200 mb-2">Your Hand</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {playerHand.map((c, i) => (
+                    <div key={i} className="relative w-16 h-24">
+                      <Image src="/placeholder.svg" fill className="object-contain" alt="card" />
+                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+                        {c}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              {!result && (
+                <div className="flex gap-4">
+                  <Button onClick={handleHit} disabled={actionLoading}>Hit</Button>
+                  <Button onClick={handleStand} disabled={actionLoading}>Stand</Button>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
-        {/* Right: controls, chat, live wins */}
+        {/* RIGHT: CONTROLS + CHAT */}
         <div className="space-y-6">
-          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6 space-y-4">
+          <Card className="bg-[#49EACB]/10 border-[#49EACB]/20 backdrop-blur-sm p-6 space-y-4">
             <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
             <div className="relative">
               <input
@@ -342,7 +329,7 @@ function BlackjackContent() {
               onClick={handleDeal}
               disabled={!pregame || !isConnected}
             >
-              {!isConnected ? "Connect Wallet" : pregame ? "Deal" : "Dealt"}
+              {!isConnected ? "Connect Wallet" : pregame ? "Deal Cards" : "Dealt"}
             </Button>
           </Card>
 
@@ -353,7 +340,7 @@ function BlackjackContent() {
 
       <SiteFooter />
 
-      {/* Result Popup */}
+      {/* RESULT POPUP */}
       <AnimatePresence>
         {result && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -396,3 +383,4 @@ function BlackjackContent() {
     </div>
   );
 }
+
