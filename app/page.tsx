@@ -100,28 +100,6 @@ function MainPageContent() {
     { name: "Kasen Mania", slug: "kasen-mania", image: "/kasenmaniacard.webp" },
   ]
 
-  // Add a direct mapping function after the characterGames array definition
-  const getGameIdForWinCounter = (slug: string): string[] => {
-    // Map each slug to possible _id values in the API response
-    const mapping: Record<string, string[]> = {
-      ghostjump: ["Ghost Jump", "ghost jump"],
-      kaspiancross: ["Kaspian Cross", "kaspian cross"],
-      crash: ["crash", "Crash"],
-      mines: ["mines", "Mines"],
-      Upgrade: ["Upgrade", "upgrade"],
-      kaspatowerclimb: ["Kaspa Tower Climb", "kaspa tower climb"],
-      plinko: ["Plinko", "plinko"],
-      kaspacupgame: ["Guess The Cup", "guess the cup", "Kaspa Cup Game"],
-      roulette: ["roulette", "Roulette"],
-      dice: ["dice", "Dice"],
-      coinflip: ["coinflip", "Coin Flip", "CoinFlip"],
-      lootbox: ["Kasper Loot Box", "kasper loot box", "Loot Box"],
-      "kasen-mania": ["Kasen Mania", "kasen mania", "Kasen-Mania", "kasen-mania"],
-    }
-
-    return mapping[slug] || [slug]
-  }
-
   const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % mainBanners.length)
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + mainBanners.length) % mainBanners.length)
 
@@ -199,26 +177,16 @@ function MainPageContent() {
     return () => clearInterval(interval)
   }, [apiUrl])
 
-  // Fetch win counts
+  // Fetch win counts - Fixed to match the old implementation
   useEffect(() => {
     const fetchWinCounts = async () => {
       try {
         const res = await axios.get(`${apiUrl}/api/win-counter`)
         if (res.data.success) {
-          console.log("Win counter data received:", res.data.counts)
-
-          // Log each game's _id for debugging
-          if (Array.isArray(res.data.counts)) {
-            console.log(
-              "Available game IDs in API response:",
-              res.data.counts
-                .map((c) => c._id)
-                .filter(Boolean)
-                .sort(),
-            )
-          }
-
-          setWinCounter(res.data.counts || [])
+          console.log("Win counter data:", res.data)
+          // Check if the API returns winCounter (old format) or counts (new format)
+          const winData = res.data.winCounter || res.data.counts || []
+          setWinCounter(winData)
         } else {
           console.error("API returned success: false for win counts")
           setWinCounter([])
@@ -654,7 +622,7 @@ function MainPageContent() {
                                 Welcome to <span className="text-[#49EACB]">Kasino</span>
                               </h2>
                               <p className="text-xs sm:text-base md:text-lg lg:text-xl text-gray-200 mb-2 sm:mb-6 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
-                                Play, win, and earn rewards with our exciting casino games
+                                Play, win, and earn rewards with our exciting, handcrafted games
                               </p>
                               <Button className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block">
                                 Play Now
@@ -664,15 +632,16 @@ function MainPageContent() {
                         </motion.div>
                       ))}
                     </div>
+                    {/* Fixed banner navigation buttons for mobile */}
                     <button
                       onClick={prevBanner}
-                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
+                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base z-10"
                     >
                       <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     <button
                       onClick={nextBanner}
-                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base"
+                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-1 sm:p-2 rounded-full hover:bg-black/70 transition-colors text-xs sm:text-base z-10"
                     >
                       <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
@@ -875,26 +844,10 @@ function MainPageContent() {
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
 
-                        // More flexible matching logic that checks for various formats
-                        const totalWins = (() => {
-                          if (!winCounter || !Array.isArray(winCounter)) return 0
-
-                          const possibleIds = getGameIdForWinCounter(game.slug)
-
-                          for (const id of possibleIds) {
-                            const match = winCounter.find((counter) => counter && counter._id === id)
-                            if (match) {
-                              return match.totalWins || 0
-                            }
-                          }
-
-                          // If no match found, log for debugging
-                          console.log(
-                            `No win count match found for ${game.name} (${game.slug}). Possible IDs:`,
-                            possibleIds,
-                          )
-                          return 0
-                        })()
+                        // Use the same approach as the old code
+                        const totalWins =
+                          winCounter.find((counter) => counter && counter._id && counter._id.toLowerCase() === dataKey)
+                            ?.totalWins || 0
 
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
@@ -982,26 +935,10 @@ function MainPageContent() {
                         if (dataKey === "lootbox") dataKey = "kasper loot box"
                         else if (dataKey === "kasen-mania") dataKey = "kasen mania"
 
-                        // More flexible matching logic that checks for various formats
-                        const totalWins = (() => {
-                          if (!winCounter || !Array.isArray(winCounter)) return 0
-
-                          const possibleIds = getGameIdForWinCounter(game.slug)
-
-                          for (const id of possibleIds) {
-                            const match = winCounter.find((counter) => counter && counter._id === id)
-                            if (match) {
-                              return match.totalWins || 0
-                            }
-                          }
-
-                          // If no match found, log for debugging
-                          console.log(
-                            `No win count match found for ${game.name} (${game.slug}). Possible IDs:`,
-                            possibleIds,
-                          )
-                          return 0
-                        })()
+                        // Use the same approach as the old code
+                        const totalWins =
+                          winCounter.find((counter) => counter && counter._id && counter._id.toLowerCase() === dataKey)
+                            ?.totalWins || 0
 
                         const rawScore = highScores[dataKey] || 0
                         const highScoreVal = rawScore > 0 ? rawScore.toFixed(2) : "N/A"
@@ -1156,7 +1093,7 @@ function MainPageContent() {
                       <div className="absolute top-0 right-0 w-1/3 h-full opacity-10">
                         <div className="relative w-full h-full">
                           <Image
-                            src="/placeholder.svg?key=iv33u"
+                            src="/kaasperkasino.webp"
                             alt="Background Pattern"
                             fill
                             style={{ objectFit: "cover" }}
