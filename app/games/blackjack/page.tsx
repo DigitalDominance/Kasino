@@ -78,10 +78,14 @@ function BlackjackContent() {
 
   // --- DEAL ---
   const handleDeal = async () => {
-    if (!isConnected) return alert("Connect your wallet first");
+    if (!isConnected) {
+      alert("Connect your wallet first");
+      return;
+    }
     const bet = Number(betAmount);
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
-      return alert(`Bet must be between ${MIN_BET} and ${MAX_BET} and ≤ your balance.`);
+      alert(`Bet must be between ${MIN_BET} and ${MAX_BET}, within your balance.`);
+      return;
     }
 
     // provably-fair seeds
@@ -112,12 +116,18 @@ function BlackjackContent() {
       txid,
     });
     setIsDealing(false);
-    if (!data.success) return alert("Play API failed");
+    if (!data.success) {
+      alert("Play API failed");
+      return;
+    }
 
     setGameId(data.game._id);
     setServerSeedHash(data.game.serverSeedHash);
-    setPlayerHand(data.game.playerHand);
-    setDealerHand(data.game.dealerHand);
+    // safe field access
+    const ph = data.game.playerHand ?? data.game.playerCards ?? [];
+    const dh = data.game.dealerHand  ?? data.game.dealerCards  ?? [];
+    setPlayerHand(ph);
+    setDealerHand(dh);
     setPregame(false);
   };
 
@@ -127,6 +137,7 @@ function BlackjackContent() {
     setActionLoading(true);
     const { data } = await axios.post(`${API_BASE}/api/game/settle`, { gameId, action: "hit" });
     setActionLoading(false);
+
     if (data.gameResult === "continue") {
       setPlayerHand(data.playerHand);
     } else {
@@ -204,9 +215,6 @@ function BlackjackContent() {
       <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
         {/* LEFT: TABLE */}
         <Card className="relative overflow-hidden min-h-[600px] bg-gradient-to-br from-[#003f2f] via-[#006d5b] to-[#003f2f] border-[#49EACB]/20 backdrop-blur-sm">
-          {/* Optional background image */}
-          {/* <Image src="/blackjack-table-bg.webp" fill className="object-cover opacity-20" alt="Table" /> */}
-
           {pregame ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#49EACB] mb-4 text-center">
@@ -230,14 +238,24 @@ function BlackjackContent() {
               <div>
                 <h3 className="text-lg text-gray-200 mb-2">Dealer</h3>
                 <div className="flex gap-2 flex-wrap">
-                  {dealerHand.map((c, i) => (
-                    <div key={i} className="relative w-16 h-24">
-                      <Image src="/placeholder.svg" fill className="object-contain" alt="card" />
-                      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                        {c}
+                  {dealerHand.map((c, i) => {
+                    const faceDown = i === 1 && !result;
+                    return (
+                      <div key={i} className="relative w-16 h-24">
+                        <Image
+                          src="/placeholder.svg"
+                          fill
+                          className="object-contain"
+                          alt={faceDown ? "face-down" : "card"}
+                        />
+                        {!faceDown && (
+                          <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+                            {c}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -383,4 +401,3 @@ function BlackjackContent() {
     </div>
   );
 }
-
