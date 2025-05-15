@@ -177,11 +177,11 @@ function MainPageContent() {
     return () => clearInterval(interval)
   }, [apiUrl])
 
-  // Fetch win counts
+  // Fetch win counter
   useEffect(() => {
     const fetchWinCounts = async () => {
       try {
-        const res = await axios.get(`${apiUrl}/api/win-counts`)
+        const res = await axios.get(`${apiUrl}/api/win-counter`)
         if (res.data.success) {
           setWinCounter(res.data.counts)
         }
