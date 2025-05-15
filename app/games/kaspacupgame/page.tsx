@@ -14,7 +14,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { SiteFooter } from "@/components/site-footer";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] });
 
