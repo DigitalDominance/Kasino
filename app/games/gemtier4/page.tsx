@@ -9,7 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletConnection } from "@/components/wallet-connection";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import axios from "axios";
 import Image from "next/image";
 import { useWallet } from "@/contexts/WalletContext";
