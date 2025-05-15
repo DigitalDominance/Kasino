@@ -8,7 +8,7 @@ import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 import { useWallet } from "@/contexts/WalletContext";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { CoinFlipGame } from "./coinflip-game";
 import { CoinFlipControls } from "./coinflip-controls";
 import { LiveChat } from "../mines/live-chat";
