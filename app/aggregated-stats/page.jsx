@@ -7,7 +7,7 @@ import CountUp from "react-countup";
 import Link from "next/link";
 import Image from "next/image";
 import { WalletConnection } from "@/components/wallet-connection";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { SiteFooter } from "@/components/site-footer";
 import { Montserrat } from "next/font/google";
 
