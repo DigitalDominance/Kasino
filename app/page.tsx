@@ -152,7 +152,7 @@ function MainPageContent() {
     }
 
     fetchDisplayStats()
-    const interval = setInterval(fetchDisplayStats, 30000) // Refresh every 30 seconds
+    const interval = setInterval(fetchDisplayStats, 10000) // Refresh every 10 seconds
     return () => clearInterval(interval)
   }, [apiUrl])
 
@@ -205,51 +205,6 @@ function MainPageContent() {
   // Handle sidebar toggle
   const handleSidebarToggle = () => {
     setIsSidebarOpen((prev) => !prev)
-  }
-
-  function AnimatedCounter({
-    value,
-    formatter = (val: number) => val.toLocaleString(),
-  }: { value: number; formatter?: (val: number) => string }) {
-    const [displayValue, setDisplayValue] = useState("0")
-    const countRef = useRef<number>(0)
-    const requestRef = useRef<number>()
-    const startTimeRef = useRef<number>()
-    const duration = 1500 // Animation duration in ms
-
-    useEffect(() => {
-      if (value === countRef.current) return
-
-      const startValue = countRef.current
-      const endValue = value
-      countRef.current = endValue
-
-      const animate = (timestamp: number) => {
-        if (!startTimeRef.current) startTimeRef.current = timestamp
-        const elapsed = timestamp - startTimeRef.current
-
-        if (elapsed < duration) {
-          const progress = elapsed / duration
-          // Easing function for smoother animation
-          const easeOutQuart = 1 - Math.pow(1 - progress, 4)
-          const currentValue = Math.floor(startValue + (endValue - startValue) * easeOutQuart)
-          setDisplayValue(formatter(currentValue))
-          requestRef.current = requestAnimationFrame(animate)
-        } else {
-          setDisplayValue(formatter(endValue))
-          startTimeRef.current = undefined
-        }
-      }
-
-      requestRef.current = requestAnimationFrame(animate)
-      return () => {
-        if (requestRef.current) {
-          cancelAnimationFrame(requestRef.current)
-        }
-      }
-    }, [value, formatter])
-
-    return <span className="count-animation">{displayValue}</span>
   }
 
   return (
@@ -657,7 +612,7 @@ function MainPageContent() {
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total Players</p>
                           <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white">
-                            <AnimatedCounter value={gameStats.uniquePlayers} />
+                            {gameStats.uniquePlayers.toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -668,24 +623,24 @@ function MainPageContent() {
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Games Played</p>
                           <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white">
-                            <AnimatedCounter value={gameStats.gamesPlayed} />
+                            {gameStats.gamesPlayed.toLocaleString()}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-center gap-3 md:gap-4 lg:gap-5">
                         <div className="bg-[#49EACB]/20 p-2 md:p-3 lg:p-4 rounded-full">
-                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-[#49EACB]" />
+                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:w-12 text-[#49EACB]" />
                         </div>
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total Daily Wins</p>
                           <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white">
-                            <AnimatedCounter value={gameStats.totalDailyWins} />
+                            {gameStats.totalDailyWins.toLocaleString()}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-center gap-3 md:gap-4 lg:gap-5">
                         <div className="bg-[#49EACB]/20 p-2 md:p-3 lg:p-4 rounded-full">
-                          <Flame className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-[#49EACB]" />
+                          <Flame className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:w-12 text-[#49EACB]" />
                         </div>
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total KAS Won</p>
@@ -698,7 +653,7 @@ function MainPageContent() {
                               className="mr-1 md:w-6 md:h-6 lg:w-8 lg:h-8"
                             />
                             <p className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-white">
-                              <AnimatedCounter value={gameStats.totalKasWon} />
+                              {gameStats.totalKasWon.toLocaleString()}
                             </p>
                           </div>
                         </div>
