@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { LiveChat } from "../mines/live-chat";
 import { LiveWins } from "../mines/live-wins";
 import { WalletConnection } from "@/components/wallet-connection";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { Montserrat } from "next/font/google";
 import axios from "axios";
 import Image from "next/image";
