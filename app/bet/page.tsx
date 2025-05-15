@@ -10,7 +10,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { WalletConnection } from "@/components/wallet-connection";
-import { XPDisplay } from "@/app/page";
+import { XPDisplay } from "@/components/xp-display";
 import { Montserrat } from "next/font/google";
 import { useWallet } from "@/contexts/WalletContext";
 import { v4 as uuidv4 } from "uuid";
