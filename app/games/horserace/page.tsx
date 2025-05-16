@@ -76,9 +76,6 @@ function HorseRaceContent() {
   const [msgIndex, setMsgIndex] = useState(0)
   const [msgText, setMsgText] = useState("")
 
-  // Add a countdown state
-  const [countdown, setCountdown] = useState<number | null>(null)
-
   useEffect(() => {
     if (!loading) return
     setMsgIndex(0)
@@ -185,7 +182,7 @@ function HorseRaceContent() {
     }
   }
 
-  // In the handleSelectHorse function, modify it to include the countdown:
+  // Select horse and start race
   const handleSelectHorse = async (horseId: number) => {
     if (!isPlaying || selectedHorse !== null) return
 
@@ -202,21 +199,8 @@ function HorseRaceContent() {
         return
       }
 
-      // Move to race screen with countdown
-      setCountdown(3)
-
-      // Countdown timer
-      const countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev === null || prev <= 1) {
-            clearInterval(countdownInterval)
-            // Start race after countdown
-            setIsRacing(true)
-            return null
-          }
-          return prev - 1
-        })
-      }, 1000)
+      // Start race immediately (no countdown)
+      setIsRacing(true)
 
       // Wait for animation to complete before showing result
       setTimeout(() => {
@@ -232,7 +216,7 @@ function HorseRaceContent() {
             winningHorse: data.winningHorse,
           })
         }, 2000)
-      }, 11000) // Increased to account for countdown + race animation
+      }, 8000) // Race animation duration
     } catch (error) {
       console.error("Error settling game:", error)
       alert("Failed to complete race. Please try again.")
@@ -328,7 +312,6 @@ function HorseRaceContent() {
                   raceFinished={raceFinished}
                   selectedHorse={selectedHorse}
                   winningHorse={winningHorse}
-                  countdown={countdown}
                 />
               )}
             </div>
@@ -601,9 +584,8 @@ const RaceTrack = React.forwardRef<
     raceFinished: boolean
     selectedHorse: number | null
     winningHorse: number | null
-    countdown: number | null
   }
->(({ horses, isRacing, raceFinished, selectedHorse, winningHorse, countdown }, ref) => {
+>(({ horses, isRacing, raceFinished, selectedHorse, winningHorse }, ref) => {
   return (
     <div
       ref={ref}
@@ -611,86 +593,85 @@ const RaceTrack = React.forwardRef<
     >
       {/* Race track background */}
       <div className="absolute inset-0">
-        {/* Finish line */}
-        <div className="absolute top-0 right-12 bottom-0 w-4 bg-white/20 z-10 flex flex-col">
-          <div className="flex-1 bg-black/30"></div>
-          <div className="flex-1 bg-white/30"></div>
-          <div className="flex-1 bg-black/30"></div>
-          <div className="flex-1 bg-white/30"></div>
-          <div className="flex-1 bg-black/30"></div>
-          <div className="flex-1 bg-white/30"></div>
-          <div className="flex-1 bg-black/30"></div>
-          <div className="flex-1 bg-white/30"></div>
-          <div className="flex-1 bg-black/30"></div>
-          <div className="flex-1 bg-white/30"></div>
-        </div>
+        {/* Track lanes - styled as grass and moved down to use more space */}
+        <div className="absolute top-[50px] bottom-[50px] left-0 right-0">
+          {horses.map((horse, index) => (
+            <div
+              key={horse.id}
+              className={`absolute left-0 right-0 h-[100px] border-t border-b border-white/10 ${
+                selectedHorse === horse.id ? "bg-[#49EACB]/10" : ""
+              }`}
+              style={{
+                top: `${index * 120}px`,
+                backgroundImage: 'url("/grass-texture.webp")',
+                backgroundSize: "cover",
+                backgroundRepeat: "repeat-x",
+              }}
+            >
+              {/* Lane number */}
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
+                {horse.id}
+              </div>
 
-        {/* Track lanes - styled as grass */}
-        {horses.map((horse, index) => (
-          <div
-            key={horse.id}
-            className={`absolute left-0 right-0 h-[100px] border-t border-b border-white/10 ${
-              selectedHorse === horse.id ? "bg-[#49EACB]/10" : ""
-            }`}
-            style={{
-              top: `${index * 120}px`,
-              backgroundImage: 'url("/grass-texture.webp")',
-              backgroundSize: "cover",
-              backgroundRepeat: "repeat-x",
-            }}
-          >
-            {/* Lane number */}
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
-              {horse.id}
-            </div>
+              {/* Finish line for each lane */}
+              <div className="absolute top-0 right-12 bottom-0 w-4 bg-white/20 z-10 flex flex-col">
+                <div className="flex-1 bg-black/30"></div>
+                <div className="flex-1 bg-white/30"></div>
+                <div className="flex-1 bg-black/30"></div>
+                <div className="flex-1 bg-white/30"></div>
+                <div className="flex-1 bg-black/30"></div>
+                <div className="flex-1 bg-white/30"></div>
+              </div>
 
-            {/* Horse - completely reworked animation */}
-            <div className="absolute top-0 left-0 right-0 h-full">
-              <motion.div
-                className="absolute top-1/2 transform -translate-y-[60%] w-24 h-24"
-                initial={{ left: "20px" }}
-                animate={isRacing ? { left: "calc(100% - 120px)" } : { left: "20px" }}
-                transition={{
-                  duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
-                  ease: "easeInOut",
-                }}
-              >
-                <div className="relative w-full h-full">
-                  <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} fill className="object-contain" />
-                  {selectedHorse === horse.id && (
-                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
-                      Your Pick
-                    </div>
-                  )}
-                  {raceFinished && winningHorse === horse.id && (
+              {/* Horse - completely reworked animation */}
+              <div className="absolute top-0 left-0 right-0 h-full">
+                <motion.div
+                  className="absolute top-1/2 transform -translate-y-[60%] w-24 h-24"
+                  initial={{ left: "20px" }}
+                  animate={isRacing ? { left: "calc(100% - 120px)" } : { left: "20px" }}
+                  transition={{
+                    duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <div className="relative w-full h-full">
                     <motion.div
-                      className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY }}
+                      animate={
+                        raceFinished && winningHorse === horse.id
+                          ? {
+                              filter: [
+                                "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
+                                "drop-shadow(0 0 15px rgba(73, 234, 203, 0.8))",
+                                "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
+                              ],
+                            }
+                          : {}
+                      }
+                      transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
                     >
-                      Winner!
+                      <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} fill className="object-contain" />
                     </motion.div>
-                  )}
-                </div>
-              </motion.div>
+                    {selectedHorse === horse.id && (
+                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
+                        Your Pick
+                      </div>
+                    )}
+                    {raceFinished && winningHorse === horse.id && (
+                      <motion.div
+                        className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY }}
+                      >
+                        Winner!
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Countdown overlay - moved to race screen */}
-      {countdown !== null && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.5, opacity: 0 }}
-            className="text-[150px] font-bold text-[#49EACB]"
-          >
-            {countdown === 0 ? "GO!" : countdown}
-          </motion.div>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Race status */}
       {isRacing && !raceFinished && (
