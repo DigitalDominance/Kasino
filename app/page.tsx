@@ -85,6 +85,7 @@ function MainPageContent() {
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
+    { name: "Horse Race", slug: "horserace", image: "/horseracecard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
     { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
     { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
@@ -1036,6 +1037,7 @@ function MainPageContent() {
                           else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp"
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
+                          else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
                           return (
                             <MotionCard
                               key={i}
