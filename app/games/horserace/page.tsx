@@ -546,22 +546,6 @@ const RaceTrack = React.forwardRef<
     winningHorse: number | null
   }
 >(({ horses, isRacing, raceFinished, selectedHorse, winningHorse }, ref) => {
-  // Generate random speeds for each horse
-  const horseSpeeds = useRef(
-    horses.map((horse) => ({
-      baseSpeed: Math.random() * 0.3 + 0.7,
-      variability: Math.random() * 0.2,
-    })),
-  )
-
-  // Ensure winning horse is fastest in the end
-  useEffect(() => {
-    if (winningHorse !== null && isRacing) {
-      const winningIndex = winningHorse - 1
-      horseSpeeds.current[winningIndex].baseSpeed = 1.2 // Make winning horse faster
-    }
-  }, [winningHorse, isRacing])
-
   return (
     <div
       ref={ref}
@@ -583,14 +567,19 @@ const RaceTrack = React.forwardRef<
           <div className="flex-1 bg-white/30"></div>
         </div>
 
-        {/* Track lanes */}
+        {/* Track lanes - styled as grass */}
         {horses.map((horse, index) => (
           <div
             key={horse.id}
-            className={`absolute left-0 right-0 h-[100px] border-t-2 border-b-2 border-dashed border-white/20 ${
+            className={`absolute left-0 right-0 h-[100px] border-t border-b border-white/10 ${
               selectedHorse === horse.id ? "bg-[#49EACB]/10" : ""
             }`}
-            style={{ top: `${index * 120}px` }}
+            style={{
+              top: `${index * 120}px`,
+              backgroundImage: 'url("/grass-texture.webp")',
+              backgroundSize: "cover",
+              backgroundRepeat: "repeat-x",
+            }}
           >
             {/* Lane number */}
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
@@ -599,36 +588,22 @@ const RaceTrack = React.forwardRef<
 
             {/* Horse */}
             <motion.div
-              className="absolute top-1/2 transform -translate-y-1/2 w-16 h-16"
+              className="absolute top-1/2 transform -translate-y-1/2 w-24 h-24"
               initial={{ x: 20 }}
               animate={
                 isRacing
                   ? {
-                      x:
-                        winningHorse === horse.id
-                          ? "calc(100% - 80px)"
-                          : [
-                              "20%",
-                              "40%",
-                              "60%",
-                              winningHorse === horse.id ? "calc(100% - 80px)" : "calc(100% - 120px)",
-                            ],
+                      x: "calc(100% - 120px)",
                     }
                   : { x: 20 }
               }
               transition={{
-                duration: isRacing ? 8 : 0,
+                duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
                 ease: "easeInOut",
-                times: winningHorse === horse.id ? [0, 0.3, 0.6, 1] : [0, 0.4, 0.7, 1],
               }}
             >
               <div className="relative w-full h-full">
-                <Image
-                  src={`/placeholder-fpr5k.png?height=64&width=64&query=cartoon racing horse ${horse.id}`}
-                  alt={`Horse ${horse.id}`}
-                  width={64}
-                  height={64}
-                />
+                <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} fill className="object-contain" />
                 {selectedHorse === horse.id && (
                   <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
                     Your Pick
@@ -648,8 +623,7 @@ const RaceTrack = React.forwardRef<
           </div>
         ))}
 
-        {/* Track base */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-[#2e7d32] z-0"></div>
+        {/* No green strip at the bottom that would cover the 5th lane */}
       </div>
 
       {/* Race status */}
