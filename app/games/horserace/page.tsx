@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState, useEffect, useRef, useLayoutEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -586,8 +586,8 @@ const RaceTrack = React.forwardRef<
     winningHorse: number | null
   }
 >(({ horses, isRacing, raceFinished, selectedHorse, winningHorse }, ref) => {
-  // Preload the dirt texture
-  useLayoutEffect(() => {
+  // Preload the dirt texture with a regular useEffect
+  useEffect(() => {
     const img = new Image()
     img.src = "/dirt.webp"
   }, [])
@@ -646,27 +646,32 @@ const RaceTrack = React.forwardRef<
                     }}
                   >
                     <div className="relative w-full h-full">
-                      <motion.div
-                        animate={
-                          raceFinished && isWinningLane
-                            ? {
-                                filter: [
-                                  "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
-                                  "drop-shadow(0 0 15px rgba(73, 234, 203, 0.8))",
-                                  "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
-                                ],
-                              }
-                            : {}
-                        }
-                        transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
-                      >
+                      {raceFinished && isWinningLane ? (
+                        <motion.div
+                          animate={{
+                            filter: [
+                              "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
+                              "drop-shadow(0 0 15px rgba(73, 234, 203, 0.8))",
+                              "drop-shadow(0 0 0px rgba(73, 234, 203, 0))",
+                            ],
+                          }}
+                          transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
+                        >
+                          <Image
+                            src={`/horse${horse.id}.webp`}
+                            alt={`Horse ${horse.id}`}
+                            fill
+                            className="object-contain"
+                          />
+                        </motion.div>
+                      ) : (
                         <Image
                           src={`/horse${horse.id}.webp`}
                           alt={`Horse ${horse.id}`}
                           fill
                           className="object-contain"
                         />
-                      </motion.div>
+                      )}
                       {selectedHorse === horse.id && (
                         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
                           Your Pick
