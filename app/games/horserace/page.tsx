@@ -202,7 +202,7 @@ function HorseRaceContent() {
         return
       }
 
-      // Start countdown before race
+      // Move to race screen with countdown
       setCountdown(3)
 
       // Countdown timer
@@ -609,20 +609,6 @@ const RaceTrack = React.forwardRef<
       ref={ref}
       className="w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] relative"
     >
-      {/* Countdown overlay */}
-      {countdown !== null && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.5, opacity: 0 }}
-            className="text-[150px] font-bold text-[#49EACB]"
-          >
-            {countdown === 0 ? "GO!" : countdown}
-          </motion.div>
-        </div>
-      )}
-
       {/* Race track background */}
       <div className="absolute inset-0">
         {/* Finish line */}
@@ -658,43 +644,53 @@ const RaceTrack = React.forwardRef<
               {horse.id}
             </div>
 
-            {/* Horse */}
-            <motion.div
-              className="absolute top-1/2 transform -translate-y-1/2 w-24 h-24"
-              initial={{ x: 20 }}
-              animate={
-                isRacing
-                  ? {
-                      x: "calc(100% - 120px)",
-                    }
-                  : { x: 20 }
-              }
-              transition={{
-                duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
-                ease: "easeInOut",
-              }}
-            >
-              <div className="relative w-full h-full">
-                <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} fill className="object-contain" />
-                {selectedHorse === horse.id && (
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
-                    Your Pick
-                  </div>
-                )}
-                {raceFinished && winningHorse === horse.id && (
-                  <motion.div
-                    className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY }}
-                  >
-                    Winner!
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
+            {/* Horse - completely reworked animation */}
+            <div className="absolute top-0 left-0 right-0 h-full">
+              <motion.div
+                className="absolute top-1/2 transform -translate-y-[60%] w-24 h-24"
+                initial={{ left: "20px" }}
+                animate={isRacing ? { left: "calc(100% - 120px)" } : { left: "20px" }}
+                transition={{
+                  duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
+                  ease: "easeInOut",
+                }}
+              >
+                <div className="relative w-full h-full">
+                  <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} fill className="object-contain" />
+                  {selectedHorse === horse.id && (
+                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[#49EACB] text-black text-xs px-2 py-1 rounded-full">
+                      Your Pick
+                    </div>
+                  )}
+                  {raceFinished && winningHorse === horse.id && (
+                    <motion.div
+                      className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY }}
+                    >
+                      Winner!
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Countdown overlay - moved to race screen */}
+      {countdown !== null && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            className="text-[150px] font-bold text-[#49EACB]"
+          >
+            {countdown === 0 ? "GO!" : countdown}
+          </motion.div>
+        </div>
+      )}
 
       {/* Race status */}
       {isRacing && !raceFinished && (
