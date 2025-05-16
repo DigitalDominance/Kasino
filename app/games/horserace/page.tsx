@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, ShieldCheck, Trophy, Clock, Percent } from "lucide-react"
+import { ArrowLeft, ShieldCheck, Trophy, Clock } from "lucide-react"
 import Link from "next/link"
 import { SiteFooter } from "@/components/site-footer"
 import { WalletConnection } from "@/components/wallet-connection"
@@ -27,11 +27,24 @@ const messages = ["Verifying transaction", "Hashing game seed", "Preparing horse
 // API base
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
 
+// Horse rarity definitions
+const HORSE_RARITIES = [
+  { name: "Common", color: "#49EACB", multiplier: 2 },
+  { name: "Uncommon", color: "#4CAF50", multiplier: 3 },
+  { name: "Rare", color: "#2196F3", multiplier: 4 },
+  { name: "Epic", color: "#9C27B0", multiplier: 5 },
+  { name: "Legendary", color: "#F44336", multiplier: 10 },
+]
+
 // Types
 interface Horse {
   id: number
   multiplier: number
   winChance?: number
+  rarity?: {
+    name: string
+    color: string
+  }
 }
 
 // Main Page
@@ -147,7 +160,17 @@ function HorseRaceContent() {
 
       setGameId(data.game._id)
       setServerSeedHash(data.game.serverSeedHash)
-      setHorses(data.game.horses)
+
+      // Add rarity information to horses
+      const horsesWithRarity = data.game.horses.map((horse: Horse) => {
+        const rarityInfo = HORSE_RARITIES.find((r) => r.multiplier === horse.multiplier)
+        return {
+          ...horse,
+          rarity: rarityInfo,
+        }
+      })
+
+      setHorses(horsesWithRarity)
       setPregame(false)
       setIsPlaying(true)
       setSelectedHorse(null)
@@ -212,16 +235,6 @@ function HorseRaceContent() {
     setSelectedHorse(null)
     setWinningHorse(null)
     setGameId(null)
-  }
-
-  // Calculate win chance percentage
-  const calculateWinChance = (multiplier: number) => {
-    // Simple inverse relationship with house edge
-    const HOUSE_EDGE = 0.05
-    const rawChance = 1 / multiplier
-    const totalRawChance = horses.reduce((sum, horse) => sum + 1 / horse.multiplier, 0)
-    const adjustedChance = (rawChance * (1 - HOUSE_EDGE)) / totalRawChance
-    return (adjustedChance * 100).toFixed(2)
   }
 
   return (
@@ -289,12 +302,7 @@ function HorseRaceContent() {
               {pregame ? (
                 <PreGameScreen onStart={handleStartGame} isConnected={isConnected} />
               ) : isPlaying && !isRacing ? (
-                <HorseSelectionScreen
-                  horses={horses}
-                  onSelectHorse={handleSelectHorse}
-                  selectedHorse={selectedHorse}
-                  calculateWinChance={calculateWinChance}
-                />
+                <HorseSelectionScreen horses={horses} onSelectHorse={handleSelectHorse} selectedHorse={selectedHorse} />
               ) : (
                 <RaceTrack
                   ref={raceTrackRef}
@@ -384,7 +392,7 @@ function HorseRaceContent() {
       {/* Result Popup */}
       <AnimatePresence>
         {result && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
             <Card className="bg-[#49EACB] p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
               <h2 className="text-4xl font-bold mb-6 text-black">
                 {result.gameResult === "win" ? "You Win!" : "You Lose!"}
@@ -418,7 +426,7 @@ function HorseRaceContent() {
 // Pre-game welcome screen
 function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnected: boolean }) {
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
+    <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
       <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
         <motion.h1
           className="text-5xl font-bold mb-4"
@@ -429,16 +437,53 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           Horse Racing
         </motion.h1>
         <motion.p
-          className="text-xl tracking-wider mb-4"
+          className="text-xl tracking-wider mb-8"
           animate={{ opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#ffffff" }}
         >
           PLACE YOUR BETS AND WIN BIG
         </motion.p>
-        <div className="mt-10 mb-10">
-          <Image src="/placeholder-pgy3p.png" alt="Horse Racing" width={150} height={150} />
+
+        {/* Horse images in a nice arrangement */}
+        <div className="relative w-full max-w-2xl h-64 mb-8">
+          <motion.div
+            className="absolute left-[10%] bottom-0"
+            animate={{ x: [-20, 0, -20], y: [0, -10, 0] }}
+            transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          >
+            <Image src="/horse1.webp" alt="Horse 1" width={120} height={120} />
+          </motion.div>
+          <motion.div
+            className="absolute left-[30%] bottom-0"
+            animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
+            transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
+          >
+            <Image src="/horse2.webp" alt="Horse 2" width={120} height={120} />
+          </motion.div>
+          <motion.div
+            className="absolute left-[50%] bottom-0 transform -translate-x-1/2"
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.2 }}
+          >
+            <Image src="/horse3.webp" alt="Horse 3" width={140} height={140} />
+          </motion.div>
+          <motion.div
+            className="absolute right-[30%] bottom-0"
+            animate={{ x: [0, -20, 0], y: [0, -12, 0] }}
+            transition={{ duration: 4.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.7 }}
+          >
+            <Image src="/horse4.webp" alt="Horse 4" width={120} height={120} />
+          </motion.div>
+          <motion.div
+            className="absolute right-[10%] bottom-0"
+            animate={{ x: [20, 0, 20], y: [0, -8, 0] }}
+            transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 1 }}
+          >
+            <Image src="/horse5.webp" alt="Horse 5" width={120} height={120} />
+          </motion.div>
         </div>
+
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-6">
           <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={onStart} disabled={!isConnected}>
             {!isConnected ? "Connect Wallet to Play" : "Start Horse Race"}
@@ -459,15 +504,13 @@ function HorseSelectionScreen({
   horses,
   onSelectHorse,
   selectedHorse,
-  calculateWinChance,
 }: {
   horses: Horse[]
   onSelectHorse: (id: number) => void
   selectedHorse: number | null
-  calculateWinChance: (multiplier: number) => string
 }) {
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] p-6">
+    <div className="w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] p-6 overflow-y-auto">
       <h3 className="text-2xl font-bold text-center text-white mb-6">Choose Your Horse</h3>
 
       <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
@@ -486,12 +529,7 @@ function HorseSelectionScreen({
           >
             <div className="flex items-center">
               <div className="w-16 h-16 relative mr-4">
-                <Image
-                  src={`/placeholder-fpr5k.png?height=64&width=64&query=cartoon racing horse ${horse.id}`}
-                  alt={`Horse ${horse.id}`}
-                  width={64}
-                  height={64}
-                />
+                <Image src={`/horse${horse.id}.webp`} alt={`Horse ${horse.id}`} width={64} height={64} />
               </div>
               <div className="flex-1">
                 <h4 className="text-lg font-bold text-white">Horse #{horse.id}</h4>
@@ -503,10 +541,11 @@ function HorseSelectionScreen({
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <Percent className="h-4 w-4 text-[#49EACB] mr-1" />
                     <span className="text-sm text-white">
-                      Win Chance:{" "}
-                      <span className="text-[#49EACB] font-bold">{calculateWinChance(horse.multiplier)}%</span>
+                      Rarity:{" "}
+                      <span className="font-bold" style={{ color: horse.rarity?.color || "#49EACB" }}>
+                        {horse.rarity?.name || "Common"}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -549,7 +588,7 @@ const RaceTrack = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] relative"
+      className="w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] relative"
     >
       {/* Race track background */}
       <div className="absolute inset-0">
@@ -622,8 +661,6 @@ const RaceTrack = React.forwardRef<
             </motion.div>
           </div>
         ))}
-
-        {/* No green strip at the bottom that would cover the 5th lane */}
       </div>
 
       {/* Race status */}
