@@ -603,9 +603,10 @@ const RaceTrack = React.forwardRef<
               }`}
               style={{
                 top: `${index * 120}px`,
-                backgroundImage: 'url("/grass-texture.webp")',
+                backgroundImage: 'url("/dirt.webp")',
                 backgroundSize: "cover",
-                backgroundRepeat: "repeat-x",
+                backgroundRepeat: "repeat",
+                width: "100%",
               }}
             >
               {/* Lane number */}
