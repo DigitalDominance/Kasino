@@ -76,6 +76,9 @@ function HorseRaceContent() {
   const [msgIndex, setMsgIndex] = useState(0)
   const [msgText, setMsgText] = useState("")
 
+  // Add a countdown state
+  const [countdown, setCountdown] = useState<number | null>(null)
+
   useEffect(() => {
     if (!loading) return
     setMsgIndex(0)
@@ -182,7 +185,7 @@ function HorseRaceContent() {
     }
   }
 
-  // Select horse and start race
+  // In the handleSelectHorse function, modify it to include the countdown:
   const handleSelectHorse = async (horseId: number) => {
     if (!isPlaying || selectedHorse !== null) return
 
@@ -199,7 +202,21 @@ function HorseRaceContent() {
         return
       }
 
-      setIsRacing(true)
+      // Start countdown before race
+      setCountdown(3)
+
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(countdownInterval)
+            // Start race after countdown
+            setIsRacing(true)
+            return null
+          }
+          return prev - 1
+        })
+      }, 1000)
 
       // Wait for animation to complete before showing result
       setTimeout(() => {
@@ -215,7 +232,7 @@ function HorseRaceContent() {
             winningHorse: data.winningHorse,
           })
         }, 2000)
-      }, 8000) // Race animation duration
+      }, 11000) // Increased to account for countdown + race animation
     } catch (error) {
       console.error("Error settling game:", error)
       alert("Failed to complete race. Please try again.")
@@ -311,6 +328,7 @@ function HorseRaceContent() {
                   raceFinished={raceFinished}
                   selectedHorse={selectedHorse}
                   winningHorse={winningHorse}
+                  countdown={countdown}
                 />
               )}
             </div>
@@ -445,18 +463,18 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           PLACE YOUR BETS AND WIN BIG
         </motion.p>
 
-        {/* Horse images in a nice arrangement */}
-        <div className="relative w-full max-w-2xl h-64 mb-8">
+        {/* Horse images in a nice arrangement with fixed positions to prevent overlap */}
+        <div className="relative w-full max-w-3xl h-64 mb-8">
           <motion.div
-            className="absolute left-[10%] bottom-0"
-            animate={{ x: [-20, 0, -20], y: [0, -10, 0] }}
+            className="absolute left-[5%] bottom-0"
+            animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           >
             <Image src="/horse1.webp" alt="Horse 1" width={120} height={120} />
           </motion.div>
           <motion.div
-            className="absolute left-[30%] bottom-0"
-            animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
+            className="absolute left-[25%] bottom-0"
+            animate={{ y: [0, -15, 0] }}
             transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
           >
             <Image src="/horse2.webp" alt="Horse 2" width={120} height={120} />
@@ -469,15 +487,15 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             <Image src="/horse3.webp" alt="Horse 3" width={140} height={140} />
           </motion.div>
           <motion.div
-            className="absolute right-[30%] bottom-0"
-            animate={{ x: [0, -20, 0], y: [0, -12, 0] }}
+            className="absolute right-[25%] bottom-0"
+            animate={{ y: [0, -12, 0] }}
             transition={{ duration: 4.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.7 }}
           >
             <Image src="/horse4.webp" alt="Horse 4" width={120} height={120} />
           </motion.div>
           <motion.div
-            className="absolute right-[10%] bottom-0"
-            animate={{ x: [20, 0, 20], y: [0, -8, 0] }}
+            className="absolute right-[5%] bottom-0"
+            animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 1 }}
           >
             <Image src="/horse5.webp" alt="Horse 5" width={120} height={120} />
@@ -574,7 +592,7 @@ function HorseSelectionScreen({
   )
 }
 
-// Race track component
+// Fix the RaceTrack component to ensure horses move from left to right
 const RaceTrack = React.forwardRef<
   HTMLDivElement,
   {
@@ -583,13 +601,28 @@ const RaceTrack = React.forwardRef<
     raceFinished: boolean
     selectedHorse: number | null
     winningHorse: number | null
+    countdown: number | null
   }
->(({ horses, isRacing, raceFinished, selectedHorse, winningHorse }, ref) => {
+>(({ horses, isRacing, raceFinished, selectedHorse, winningHorse, countdown }, ref) => {
   return (
     <div
       ref={ref}
       className="w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a] relative"
     >
+      {/* Countdown overlay */}
+      {countdown !== null && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            className="text-[150px] font-bold text-[#49EACB]"
+          >
+            {countdown === 0 ? "GO!" : countdown}
+          </motion.div>
+        </div>
+      )}
+
       {/* Race track background */}
       <div className="absolute inset-0">
         {/* Finish line */}
