@@ -66,7 +66,16 @@ function MainPageContent() {
   const sidebarButtonRef = useRef<HTMLButtonElement>(null)
   const xpDisplayRef = useRef<HTMLElement | null>(null)
   const walletStatusRef = useRef<HTMLElement | null>(null)
+  const originalGamesRef = useRef<HTMLDivElement>(null)
+  const [showDailyLootPopup, setShowDailyLootPopup] = useState(false)
+  const [showReferralPopup, setShowReferralPopup] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { walletAddress } = useWallet()
+
+  // Set mounted after component mounts (client only)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
 
@@ -244,19 +253,37 @@ function MainPageContent() {
     setIsSidebarOpen((prev) => !prev)
   }
 
+  // Handle scroll to original games section
+  const scrollToOriginalGames = () => {
+    if (originalGamesRef.current) {
+      originalGamesRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   // Handle daily rewards button click
   const handleDailyRewardsClick = () => {
-    if (xpDisplayRef.current) {
-      xpDisplayRef.current.click()
-    }
+    setShowDailyLootPopup(true)
   }
 
   // Handle referral program button click
   const handleReferralProgramClick = () => {
-    if (walletStatusRef.current) {
-      walletStatusRef.current.click()
-    }
+    setShowReferralPopup(true)
   }
+
+  // Daily Loot Boxes data
+  const dailyLootBoxes = [
+    { name: "Level 1 Daily Loot Box", slug: "Level1DailyLootBox", image: "/Level1Card.webp", requiredLevel: 1 },
+    { name: "Level 10 Daily Loot Box", slug: "Level10DailyLootBox", image: "/Level10Card.webp", requiredLevel: 10 },
+    { name: "Level 20 Daily Loot Box", slug: "Level20DailyLootBox", image: "/Level20Card.webp", requiredLevel: 20 },
+    { name: "Level 30 Daily Loot Box", slug: "Level30DailyLootBox", image: "/Level30Card.webp", requiredLevel: 30 },
+    { name: "Level 40 Daily Loot Box", slug: "Level40DailyLootBox", image: "/Level40Card.webp", requiredLevel: 40 },
+    { name: "Level 50 Daily Loot Box", slug: "Level50DailyLootBox", image: "/Level50Card.webp", requiredLevel: 50 },
+    { name: "Level 60 Daily Loot Box", slug: "Level60DailyLootBox", image: "/Level60Card.webp", requiredLevel: 60 },
+    { name: "Level 70 Daily Loot Box", slug: "Level70DailyLootBox", image: "/Level70Card.webp", requiredLevel: 70 },
+    { name: "Level 80 Daily Loot Box", slug: "Level80DailyLootBox", image: "/Level80Card.webp", requiredLevel: 80 },
+    { name: "Level 90 Daily Loot Box", slug: "Level90DailyLootBox", image: "/Level90Card.webp", requiredLevel: 90 },
+    { name: "Level 100 Daily Loot Box", slug: "Level100DailyLootBox", image: "/Level100Card.webp", requiredLevel: 100 },
+  ]
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
@@ -625,7 +652,10 @@ function MainPageContent() {
                               <p className="text-xs sm:text-base md:text-lg lg:text-xl text-gray-200 mb-2 sm:mb-6 max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto">
                                 Play, win, and earn rewards with our exciting, handcrafted games
                               </p>
-                              <Button className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block">
+                              <Button
+                                className="bg-[#49EACB] text-black font-bold hover:bg-[#49EACB]/80 hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] text-xs sm:text-sm md:text-base lg:text-lg py-1 sm:py-2 h-auto sm:h-10 md:h-12 lg:h-14 px-4 md:px-6 lg:px-8 absolute sm:relative bottom-4 sm:bottom-auto hidden sm:inline-block"
+                                onClick={scrollToOriginalGames}
+                              >
                                 Play Now
                               </Button>
                             </motion.div>
@@ -826,10 +856,12 @@ function MainPageContent() {
 
                   {/* Original Games */}
                   <motion.div
+                    ref={originalGamesRef}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
                     className="mb-12"
+                    id="original-games"
                   >
                     <h2 className="text-3xl md:text-4xl font-bold mb-6 flex items-center hover-effect transition-all duration-500">
                       <span className="icon-primary inline-block mr-3 text-3xl md:text-4xl">
@@ -844,6 +876,7 @@ function MainPageContent() {
                         if (dataKey === "kaspacupgame") dataKey = "guess the cup"
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
+                        if (dataKey === "horserace") dataKey = "horse race"
 
                         // Use the same approach as the old code
                         const totalWins =
@@ -1037,7 +1070,7 @@ function MainPageContent() {
                           else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp"
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
-                          else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
+                          else if (lwGame === "horse race") cardImage = "/horseracecard.webp"
                           return (
                             <MotionCard
                               key={i}
@@ -1143,6 +1176,126 @@ function MainPageContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {showDailyLootPopup && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              >
+                <div className="absolute inset-0 bg-black/70" onClick={() => setShowDailyLootPopup(false)}></div>
+                <div className="relative bg-gray-800 p-3 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10">
+                  <motion.button
+                    onClick={() => setShowDailyLootPopup(false)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                  >
+                    ×
+                  </motion.button>
+                  <div className="text-center mb-4 sm:mb-6">
+                    <h2 className="text-xl sm:text-3xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
+
+                    {/* Large display of current level */}
+                    <div className="flex flex-col items-center my-2 sm:my-4">
+                      <p className="text-white text-base sm:text-lg mb-2">Connect your wallet to view loot boxes</p>
+                    </div>
+
+                    <p className="text-gray-300 mt-2 text-sm sm:text-base">Available once every 24 hours</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 justify-items-center">
+                    {dailyLootBoxes.map((box) => (
+                      <div
+                        key={box.slug}
+                        className="relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 border-red-500 w-full max-w-[250px] flex flex-col"
+                      >
+                        {/* Overlay for locked state */}
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                          <div className="text-center p-2">
+                            <p className="text-red-400 font-bold">Connect Wallet</p>
+                          </div>
+                        </div>
+
+                        <div className="relative w-full h-40">
+                          <Image
+                            src={box.image || "/placeholder.svg"}
+                            alt={box.name}
+                            fill
+                            style={{ objectFit: "cover" }}
+                            className="rounded-md"
+                          />
+                        </div>
+                        <div className="mt-2 text-center">
+                          <h3 className="font-bold text-white">{box.name}</h3>
+                          <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* Referral Program Popup Modal rendered via a Portal (only on client) */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {showReferralPopup && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              >
+                <div className="absolute inset-0 bg-black/70" onClick={() => setShowReferralPopup(false)}></div>
+                <div className="relative bg-gray-800 p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg z-10">
+                  <motion.button
+                    onClick={() => setShowReferralPopup(false)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                  >
+                    ×
+                  </motion.button>
+                  <div className="text-center mb-3 sm:mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#49EACB] mb-2">Referral Program</h2>
+                    <p className="text-white mb-4">Connect your wallet to access the referral program</p>
+                    <div className="bg-gray-900 p-4 rounded-lg mb-4">
+                      <p className="text-gray-300 mb-2">Earn rewards when friends join using your referral code!</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="bg-gray-700 p-2 rounded text-gray-400 w-full text-center">
+                          Connect wallet to view your code
+                        </div>
+                        <Button disabled className="bg-gray-600 text-gray-300">
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-[#49EACB] font-bold mb-2">Benefits:</h3>
+                      <ul className="list-disc list-inside text-gray-300 space-y-1">
+                        <li>Earn 10% of your referrals' XP</li>
+                        <li>Get 5 gems for each new referral</li>
+                        <li>Special bonuses for top referrers</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
     </div>
   )
 }
