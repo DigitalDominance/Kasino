@@ -914,7 +914,6 @@ function MainPageContent() {
                         if (dataKey === "kaspacupgame") dataKey = "guess the cup"
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
-                        if (dataKey === "horserace") dataKey = "horse race"
 
                         // Use the same approach as the old code
                         const totalWins =
@@ -1108,7 +1107,7 @@ function MainPageContent() {
                           else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp"
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
-                          else if (lwGame === "horse race") cardImage = "/horseracecard.webp"
+                          else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
                           return (
                             <MotionCard
                               key={i}
