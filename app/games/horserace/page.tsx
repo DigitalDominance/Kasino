@@ -199,12 +199,14 @@ function HorseRaceContent() {
         return
       }
 
+      // Set winning horse before starting the race
+      setWinningHorse(data.winningHorse)
+
       // Start race immediately (no countdown)
       setIsRacing(true)
 
       // Wait for animation to complete before showing result
       setTimeout(() => {
-        setWinningHorse(data.winningHorse)
         setRaceFinished(true)
 
         setTimeout(() => {
@@ -631,7 +633,7 @@ const RaceTrack = React.forwardRef<
                   initial={{ left: "20px" }}
                   animate={isRacing ? { left: "calc(100% - 120px)" } : { left: "20px" }}
                   transition={{
-                    duration: isRacing ? (winningHorse === horse.id ? 7 : 7 + Math.random() * 1.5) : 0,
+                    duration: isRacing ? (winningHorse === horse.id ? 7 : 8 + index * 0.5) : 0,
                     ease: "easeInOut",
                   }}
                 >
