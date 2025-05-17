@@ -19,6 +19,9 @@ import { createPortal } from "react-dom"
 import { XPDisplay } from "@/components/xp-display"
 import { TutorialSystem } from "@/components/tutorial-system"
 import { useWallet } from "@/contexts/WalletContext"
+import DailyLootPopup from "@/components/DailyLootPopup";
+import ReferralPopup from "@/components/ReferralPopup";
+
 
 const montserrat = Montserrat({
   weight: "700",
@@ -1199,195 +1202,22 @@ function MainPageContent() {
         )}
       </AnimatePresence>
 
-      {/* Daily Loot Box Popup Modal rendered via a Portal (only on client) */}
-      {mounted &&
-        createPortal(
-          <AnimatePresence>
-            {showDailyLootPopup && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowDailyLootPopup(false)}></div>
-                <div className="relative bg-gray-800 p-3 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10">
-                  <motion.button
-                    onClick={() => setShowDailyLootPopup(false)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
-                  >
-                    ×
-                  </motion.button>
-                  <div className="text-center mb-4 sm:mb-6">
-                    <h2 className="text-xl sm:text-3xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
-
-                    {/* Large display of current level */}
-                    <div className="flex flex-col items-center my-2 sm:my-4">
-                      <p className="text-white text-base sm:text-lg mb-2">Your Current Level</p>
-                      <motion.div
-                        className={`relative rounded-full border-2 border-[#49EACB]`}
-                        style={{ width: "60px", height: "60px", overflow: "hidden" }}
-                      >
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            backgroundImage: "url('/xpimage.webp')",
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            backgroundRepeat: "no-repeat",
-                            zIndex: 0,
-                          }}
-                        />
-                        <span
-                          style={{ fontSize: "1.25rem" }}
-                          className="relative flex items-center justify-center h-full w-full z-10"
-                        >
-                          {walletAddress ? "1" : "?"}
-                        </span>
-                      </motion.div>
-                    </div>
-
-                    <p className="text-gray-300 mt-2 text-sm sm:text-base">Available once every 24 hours</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 justify-items-center">
-                    {dailyLootBoxes.map((box) => {
-                      const isLocked = !walletAddress || 1 < box.requiredLevel
-                      const isOnCooldown = false // We would need to implement cooldown logic
-                      const cooldownTime = 0
-
-                      return (
-                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
-                          <motion.div
-                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 ${
-                              isLocked ? "border-red-500" : isOnCooldown ? "border-yellow-500" : "border-[#49EACB]"
-                            } hover:shadow-lg transition-all duration-200 w-full max-w-[250px] flex flex-col`}
-                            whileHover={{
-                              scale: isLocked || isOnCooldown ? 1 : 1.05,
-                              boxShadow: isLocked || isOnCooldown ? "none" : "0 0 20px rgba(73, 234, 203, 0.5)",
-                            }}
-                          >
-                            {/* Overlay for locked or cooldown state */}
-                            {(isLocked || isOnCooldown) && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
-                                <div className="text-center p-2">
-                                  {isLocked ? (
-                                    walletAddress ? (
-                                      <p className="text-red-400 font-bold">Requires Level {box.requiredLevel}</p>
-                                    ) : (
-                                      <p className="text-red-400 font-bold">Connect Wallet</p>
-                                    )
-                                  ) : (
-                                    <>
-                                      <p className="text-yellow-400 font-bold">On Cooldown</p>
-                                      <p className="text-white text-sm">{formatTime(cooldownTime)}</p>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="relative w-full h-40">
-                              <Image
-                                src={box.image || "/placeholder.svg"}
-                                alt={box.name}
-                                fill
-                                style={{ objectFit: "cover" }}
-                                className="rounded-md"
-                              />
-                            </div>
-                            <div className="mt-2 text-center">
-                              <h3 className="font-bold text-white">{box.name}</h3>
-                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
-                            </div>
-                          </motion.div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
-
-      {/* Referral Program Popup Modal rendered via a Portal (only on client) */}
-      {mounted &&
-        createPortal(
-          <AnimatePresence>
-            {showReferralPopup && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowReferralPopup(false)}></div>
-                <div className="relative bg-gray-800 p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg z-10">
-                  <motion.button
-                    onClick={() => setShowReferralPopup(false)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
-                  >
-                    ×
-                  </motion.button>
-                  <div className="text-center mb-3 sm:mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#49EACB] mb-2">Referral Program</h2>
-                    <div className="flex justify-center items-center gap-2 mb-4">
-                      <span className="text-lg sm:text-xl font-bold text-white">
-                        {walletAddress ? "Your Referrals: 0" : "Connect Wallet to View Referrals"}
-                      </span>
-                    </div>
-                    <div className="bg-gray-900 p-4 rounded-lg mb-4">
-                      <p className="text-gray-300 mb-2">Earn rewards when friends join using your referral code!</p>
-                      <div className="flex items-center justify-center gap-2">
-                        {walletAddress ? (
-                          <>
-                            <div className="bg-gray-700 p-2 rounded text-white w-full text-center">
-                              {walletAddress.substring(0, 10)}...{walletAddress.substring(walletAddress.length - 10)}
-                            </div>
-                            <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">Copy</Button>
-                          </>
-                        ) : (
-                          <>
-                            <div className="bg-gray-700 p-2 rounded text-gray-400 w-full text-center">
-                              Connect wallet to view your code
-                            </div>
-                            <Button disabled className="bg-gray-600 text-gray-300">
-                              Copy
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
-                        <div className="text-center mb-2 font-bold text-white">Referral Rewards</div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-300">Earn 10% of your referrals' XP</p>
-                          <p className="text-sm text-gray-300">Get 5 gems for each new referral</p>
-                        </div>
-                      </div>
-                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
-                        <div className="text-center mb-2 font-bold text-white">Special Bonuses</div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-300">Top referrers get exclusive rewards</p>
-                          <p className="text-sm text-gray-300">Monthly leaderboard prizes</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
+      {/* REPLACED INLINE POPUPS WITH COMPONENTS */}
+      {mounted && (
+        <DailyLootPopup
+          show={showDailyLootPopup}
+          onClose={() => setShowDailyLootPopup(false)}
+          walletAddress={walletAddress}
+        />
+      )}
+      {mounted && (
+        <ReferralPopup
+          show={showReferralPopup}
+          onClose={() => setShowReferralPopup(false)}
+          walletAddress={walletAddress}
+          showNotification={showNotification}
+        />
+      )}
     </div>
-  )
+  );
 }
