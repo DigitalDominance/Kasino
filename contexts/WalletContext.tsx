@@ -528,19 +528,6 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     }
   }
 
-  const handleEditReferralCode = () => {
-    if (timeRemaining && timeRemaining > 0) return
-    setIsEditingCode(true)
-    setNewReferralCode(referralData?.referralCode || "")
-  }
-
-  const cancelEditReferralCode = () => {
-    setIsEditingCode(false)
-    setNewReferralCode("")
-    setEditStatus("idle")
-    setEditErrorMessage("")
-  }
-
   const saveReferralCode = async () => {
     if (!walletAddress || !newReferralCode || editStatus === "processing") return
 
@@ -554,17 +541,19 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
       })
 
       if (res.data.success) {
-        setEditStatus("success")
-        showNotification("Referral code updated successfully!", "success")
-
         // Update the referral data with the new code
         if (referralData) {
-          setReferralData({
+          const updatedData = {
             ...referralData,
             referralCode: res.data.referralCode,
             lastReferralEdit: new Date(),
-          })
+          }
+          setReferralData(updatedData)
         }
+
+        // Set success state
+        setEditStatus("success")
+        showNotification("Referral code updated successfully!", "success")
 
         // Reset edit mode after a short delay
         setTimeout(() => {
@@ -588,6 +577,18 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
     }
   }
 
+  const handleEditReferralCode = () => {
+    setIsEditingCode(true)
+    setNewReferralCode(referralData?.referralCode || "")
+  }
+
+  const cancelEditReferralCode = () => {
+    setIsEditingCode(false)
+    setNewReferralCode("")
+    setEditErrorMessage("")
+    setEditStatus("idle")
+  }
+
   return createPortal(
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
@@ -600,7 +601,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
       }}
     >
       <motion.div
-        className="bg-gradient-to-b from-gray-900 to-black rounded-xl p-8 w-11/12 max-w-lg relative border border-[#49EACB]/30 shadow-[0_0_15px_rgba(73,234,203,0.3)]"
+        className="bg-gradient-to-b from-[#003f2f] to-black rounded-xl p-8 w-11/12 max-w-lg relative border border-[#49EACB]/30 shadow-[0_0_15px_rgba(73,234,203,0.3)]"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
@@ -649,7 +650,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                   className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 ${
                     currentReferralBonus < 5
                       ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-[#49EACB] to-[#3AAFB9] text-black hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] hover:scale-[1.02]"
+                      : "bg-gradient-to-r from-[#49EACB] to-[#006d5b] text-black hover:shadow-[0_0_15px_rgba(73,234,203,0.5)] hover:scale-[1.02]"
                   }`}
                 >
                   {payoutStatus === "processing"
@@ -737,7 +738,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({ referralData, onClose, sh
                           editStatus === "processing" ||
                           editStatus === "success"
                             ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                            : "bg-[#49EACB] text-black hover:bg-[#3AAFB9]"
+                            : "bg-[#49EACB] text-black hover:bg-[#006d5b]"
                         } transition-colors`}
                       >
                         {editStatus === "processing" ? (
