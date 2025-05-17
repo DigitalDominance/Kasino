@@ -122,6 +122,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const checkUserAccount = async (address: string) => {
     try {
+      // Fetch referral data from your external backend API
       const response = await axios.get(
         `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(address)}`,
       )
@@ -136,23 +137,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }
 
-  const createAccount = async (
-    email: string,
-    username: string,
-    password: string,
-    referredBy?: string,
-  ) => {
+  const createAccount = async (email: string, username: string, password: string, referredBy?: string) => {
     try {
       const response = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          username,
-          password,
-          walletAddress,
-          referredBy: referredBy || null,
-        }),
+        body: JSON.stringify({ email, username, password, walletAddress, referredBy: referredBy || null }),
       })
       const data = await response.json()
       if (response.ok) {
@@ -215,7 +205,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const accounts = await kasware.requestAccounts()
         if (accounts.length > 0) {
           const isCorrectNetwork = await checkNetwork()
-          if (!isCorrectNetwork) return null
+          if (!isCorrectNetwork) {
+            return null
+          }
           setWalletAddress(accounts[0])
           setupEventListeners()
           await updateBalance()
@@ -281,7 +273,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   )
 }
 
-
 export const WalletStatus: React.FC = () => {
   const { isConnected, username, balance, walletAddress, showNotification } = useWallet()
   const [referralPopupVisible, setReferralPopupVisible] = useState(false)
@@ -294,32 +285,33 @@ export const WalletStatus: React.FC = () => {
   } | null>(null)
   const [hoverTooltipVisible, setHoverTooltipVisible] = useState(false)
 
-  // Fetch referral info
+  // Fetch full user data including referral fields from the proper backend API
   useEffect(() => {
     const fetchReferralData = async () => {
-      if (!walletAddress) return
-      try {
-        const res = await axios.get(
-          `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(
-            walletAddress
-          )}`
-        )
-        if (res.data?.user) {
-          setReferralData({
-            referralCount: res.data.user.referralCount || 0,
-            referralBonus: res.data.user.referralBonus || 0,
-            referralCode: res.data.user.referralCode,
-            referredBy: res.data.user.referredBy || null,
-            lastReferralEdit: res.data.user.lastReferralEdit
-              ? new Date(res.data.user.lastReferralEdit)
-              : null,
-          })
+      if (walletAddress) {
+        try {
+          const res = await axios.get(
+            `https://kasino-backend-4818b4b69870.herokuapp.com/api/user?walletAddress=${encodeURIComponent(
+              walletAddress,
+            )}`,
+          )
+          if (res.data && res.data.user) {
+            setReferralData({
+              referralCount: res.data.user.referralCount || 0,
+              referralBonus: res.data.user.referralBonus || 0,
+              referralCode: res.data.user.referralCode || "",
+              referredBy: res.data.user.referredBy || null,
+              lastReferralEdit: res.data.user.lastReferralEdit ? new Date(res.data.user.lastReferralEdit) : null,
+            })
+          }
+        } catch (error) {
+          console.error("Error fetching referral data", error)
         }
-      } catch (err) {
-        console.error("Error fetching referral data", err)
       }
     }
-    if (isConnected) fetchReferralData()
+    if (isConnected) {
+      fetchReferralData()
+    }
   }, [isConnected, walletAddress])
 
   return isConnected ? (
@@ -353,10 +345,10 @@ export const WalletStatus: React.FC = () => {
       </div>
 
       <AnimatePresence>
-        {referralPopupVisible && referralData && (
+        {referralPopupVisible && (
           <ReferralPopup
             referralData={referralData}
-            setReferralData={setReferralData}            {/* ← pass setter */}
+            setReferralData={setReferralData}
             onClose={() => setReferralPopupVisible(false)}
             showNotification={showNotification}
             walletAddress={walletAddress}
@@ -367,11 +359,7 @@ export const WalletStatus: React.FC = () => {
   ) : null
 }
 
-
-export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({
-  message,
-  type,
-}) => {
+export const Notification: React.FC<{ message: string; type: "success" | "error" }> = ({ message, type }) => {
   const notifType = type === "error" || message.toLowerCase().includes("error") ? "error" : "success"
   return (
     <AnimatePresence>
@@ -380,12 +368,15 @@ export const Notification: React.FC<{ message: string; type: "success" | "error"
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
-        className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50 ${
-          notifType === "success"
-            ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-white"
-            : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"
-        }`}
-        style={{ backgroundSize: "400% 400%" }}
+        className={`fixed bottom-4 left-4 p-4 rounded-md shadow-md z-50
+          ${
+            notifType === "success"
+              ? "bg-gradient-to-r from-[#49EACB] via-black to-[#49EACB] text-white"
+              : "bg-gradient-to-r from-[#F87171] via-black to-[#991B1B] text-white"
+          }`}
+        style={{
+          backgroundSize: "400% 400%",
+        }}
       >
         {message}
       </motion.div>
@@ -400,9 +391,15 @@ interface ReferralPopupProps {
     referralCode: string
     referredBy?: string | null
     lastReferralEdit?: Date | null
-  }
+  } | null
   setReferralData: React.Dispatch<
-    React.SetStateAction<ReferralPopupProps["referralData"]>
+    React.SetStateAction<{
+      referralCount: number
+      referralBonus: number
+      referralCode: string
+      referredBy?: string | null
+      lastReferralEdit?: Date | null
+    } | null>
   >
   onClose: () => void
   showNotification: (message: string, type: "success" | "error") => void
@@ -411,35 +408,31 @@ interface ReferralPopupProps {
 
 const ReferralPopup: React.FC<ReferralPopupProps> = ({
   referralData,
-  setReferralData,     // ← destructure setter
+  setReferralData,
   onClose,
   showNotification,
   walletAddress,
 }) => {
-  const [payoutStatus, setPayoutStatus] = useState<"idle" | "processing" | "completed" | "failed">(
-    "idle"
-  )
+  const [payoutStatus, setPayoutStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle")
   const [inputReferralCode, setInputReferralCode] = useState("")
   const [claimStatus, setClaimStatus] = useState<"idle" | "processing" | "claimed">("idle")
   const [showWithdrawTooltip, setShowWithdrawTooltip] = useState(false)
   const [isEditingCode, setIsEditingCode] = useState(false)
   const [newReferralCode, setNewReferralCode] = useState("")
-  const [editStatus, setEditStatus] = useState<"idle" | "processing" | "success" | "error">(
-    "idle"
-  )
+  const [editStatus, setEditStatus] = useState<"idle" | "processing" | "success" | "error">("idle")
   const [editErrorMessage, setEditErrorMessage] = useState("")
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
   const [showEditTooltip, setShowEditTooltip] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const [currentReferralBonus, setCurrentReferralBonus] = useState<number>(
-    referralData.referralBonus
-  )
+  // Local state to refresh bonus display
+  const [currentReferralBonus, setCurrentReferralBonus] = useState<number>(referralData?.referralBonus ?? 0)
 
   useEffect(() => {
-    setCurrentReferralBonus(referralData.referralBonus)
+    setCurrentReferralBonus(referralData?.referralBonus ?? 0)
 
-    if (referralData.lastReferralEdit) {
+    // Calculate time remaining for edit cooldown
+    if (referralData?.lastReferralEdit) {
       const lastEdit = new Date(referralData.lastReferralEdit).getTime()
       const now = Date.now()
       const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
@@ -447,6 +440,8 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
 
       if (remainingMs > 0) {
         setTimeRemaining(remainingMs)
+
+        // Start countdown timer
         intervalRef.current = setInterval(() => {
           setTimeRemaining((prev) => {
             if (prev === null || prev <= 1000) {
@@ -468,112 +463,146 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
 
   const formatTimeRemaining = (ms: number): string => {
     if (ms <= 0) return "Available now"
+
     const days = Math.floor(ms / (1000 * 60 * 60 * 24))
     const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
-    if (days > 0) return `${days}d ${hours}h remaining`
-    if (hours > 0) return `${hours}h ${minutes}m remaining`
-    const seconds = Math.floor((ms % (1000 * 60)) / 1000)
-    return `${minutes}m ${seconds}s remaining`
+
+    if (days > 0) {
+      return `${days}d ${hours}h remaining`
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`
+    } else {
+      const seconds = Math.floor((ms % (1000 * 60)) / 1000)
+      return `${minutes}m ${seconds}s remaining`
+    }
   }
 
   const copyReferralLink = () => {
-    const link = `https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`
-    navigator.clipboard.writeText(link)
-    showNotification("Referral link copied!", "success")
+    if (referralData) {
+      const referralLink = `https://www.kascasino.xyz/signup?ref=${referralData.referralCode}`
+      navigator.clipboard.writeText(referralLink)
+      showNotification("Referral link copied!", "success")
+    }
   }
+
   const copyReferralCode = () => {
-    navigator.clipboard.writeText(referralData.referralCode)
-    showNotification("Referral code copied!", "success")
+    if (referralData) {
+      navigator.clipboard.writeText(referralData.referralCode)
+      showNotification("Referral code copied!", "success")
+    }
   }
 
   const handleWithdraw = async () => {
-    if (currentReferralBonus < 5 || !walletAddress) return
-    setPayoutStatus("processing")
-    try {
-      const res = await axios.post(
-        "https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout",
-        { walletAddress }
-      )
-      if (res.data.success) {
-        setPayoutStatus("completed")
-        setCurrentReferralBonus(0)
-        showNotification("Payout completed!", "success")
-      } else {
+    if (referralData && currentReferralBonus >= 5 && walletAddress) {
+      setPayoutStatus("processing")
+      try {
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/payout", {
+          walletAddress,
+        })
+        if (res.data.success) {
+          setPayoutStatus("completed")
+          // reset bonus display
+          setCurrentReferralBonus(0)
+          showNotification("Payout completed!", "success")
+        } else {
+          setPayoutStatus("failed")
+          showNotification("Payout failed. Please try again.", "error")
+        }
+      } catch (error) {
         setPayoutStatus("failed")
         showNotification("Payout failed. Please try again.", "error")
       }
-    } catch {
-      setPayoutStatus("failed")
-      showNotification("Payout failed. Please try again.", "error")
     }
   }
 
   const handleClaimReferral = async () => {
-    if (!walletAddress) return
+    if (!referralData || !walletAddress) return
+    // Prevent self-claim
     if (inputReferralCode.trim() === referralData.referralCode) {
       showNotification("You cannot claim your own referral code.", "error")
       return
     }
-    setClaimStatus("processing")
-    try {
-      const res = await axios.post(
-        "https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim",
-        { walletAddress, referralCode: inputReferralCode.trim() }
-      )
-      if (res.data.success) {
-        setClaimStatus("claimed")
-        showNotification("Referral code claimed!", "success")
-      } else {
+    if (claimStatus === "idle" && inputReferralCode.trim() !== "") {
+      setClaimStatus("processing")
+      try {
+        const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/claim", {
+          walletAddress,
+          referralCode: inputReferralCode.trim(),
+        })
+        if (res.data.success) {
+          setClaimStatus("claimed")
+          showNotification("Referral code claimed!", "success")
+        } else {
+          setClaimStatus("idle")
+          showNotification(res.data.message || res.data.error, "error")
+        }
+      } catch (error) {
         setClaimStatus("idle")
-        showNotification(res.data.message, "error")
+        showNotification("Failed to claim referral code.", "error")
       }
-    } catch {
-      setClaimStatus("idle")
-      showNotification("Failed to claim referral code.", "error")
     }
   }
 
   const saveReferralCode = async () => {
-    if (!walletAddress || newReferralCode.length !== 6) return
+    if (!walletAddress || !newReferralCode || editStatus === "processing") return
+
     setEditStatus("processing")
     setEditErrorMessage("")
 
     try {
-      const res = await axios.post(
-        "https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/edit",
-        { walletAddress, newCode: newReferralCode }
-      )
+      const res = await axios.post("https://kasino-backend-4818b4b69870.herokuapp.com/api/referral/edit", {
+        walletAddress,
+        newCode: newReferralCode,
+      })
+
+      console.log("API Response:", res.data)
+
       if (res.data.success) {
-        // **Use the passed-in setter** to update both code & timestamp
-        setReferralData({
-          ...referralData,
-          referralCode: res.data.referralCode,
-          lastReferralEdit: new Date(),
-        })
+        // Update the local state with the new referral code
+        if (referralData) {
+          const updatedReferralData = {
+            ...referralData,
+            referralCode: res.data.referralCode || newReferralCode,
+            lastReferralEdit: new Date(),
+          }
+
+          // Update the parent component's state
+          setReferralData(updatedReferralData)
+        }
+
+        // Set success state
         setEditStatus("success")
         showNotification("Referral code updated successfully!", "success")
+
+        // Reset edit mode after a short delay
         setTimeout(() => {
           setIsEditingCode(false)
           setEditStatus("idle")
         }, 1500)
+
+        // Set the cooldown timer
         setTimeRemaining(30 * 24 * 60 * 60 * 1000)
       } else {
         setEditStatus("error")
         setEditErrorMessage(res.data.message || "Failed to update referral code.")
       }
-    } catch (err: any) {
+    } catch (error: any) {
+      console.error("Error updating referral code:", error)
       setEditStatus("error")
-      setEditErrorMessage(
-        err.response?.data?.message || "Failed to update referral code. Please try again."
-      )
+      if (error.response && error.response.data && error.response.data.message) {
+        setEditErrorMessage(error.response.data.message)
+      } else {
+        setEditErrorMessage("Failed to update referral code. Please try again.")
+      }
     }
   }
 
   const handleEditReferralCode = () => {
     setIsEditingCode(true)
-    setNewReferralCode(referralData.referralCode)
+    setNewReferralCode(referralData?.referralCode || "")
   }
+
   const cancelEditReferralCode = () => {
     setIsEditingCode(false)
     setNewReferralCode("")
