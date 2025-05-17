@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Menu, ChevronLeft, ChevronRight, X, Zap, Trophy, Flame } from "lucide-react"
+import { Menu, ChevronLeft, ChevronRight, X, Zap, Trophy, Flame, Copy } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
@@ -899,7 +899,7 @@ function MainPageContent() {
                         if (dataKey === "kaspacupgame") dataKey = "guess the cup"
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
-                        if (dataKey === "horserace") dataKey = "horse race"
+
 
                         // Use the same approach as the old code
                         const totalWins =
@@ -1093,7 +1093,7 @@ function MainPageContent() {
                           else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp"
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
-                          else if (lwGame === "horse race") cardImage = "/horseracecard.webp"
+                          else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
                           return (
                             <MotionCard
                               key={i}
@@ -1321,69 +1321,110 @@ function MainPageContent() {
           <AnimatePresence>
             {showReferralPopup && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setShowReferralPopup(false)
+                }}
               >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowReferralPopup(false)}></div>
-                <div className="relative bg-gray-800 p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg z-10">
-                  <motion.button
+                <motion.div
+                  className="bg-gradient-to-b from-[#003f2f] to-black rounded-xl p-8 w-11/12 max-w-lg relative border border-[#49EACB]/30 shadow-[0_0_15px_rgba(73,234,203,0.3)]"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
                     onClick={() => setShowReferralPopup(false)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-800"
                   >
-                    ×
-                  </motion.button>
-                  <div className="text-center mb-3 sm:mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#49EACB] mb-2">Referral Program</h2>
-                    <div className="flex justify-center items-center gap-2 mb-4">
-                      <span className="text-lg sm:text-xl font-bold text-white">
-                        {walletAddress ? "Your Referrals: 0" : "Connect Wallet to View Referrals"}
-                      </span>
+                    <X size={20} />
+                  </button>
+
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-extrabold text-[#49EACB] mb-2">Your Referrals</h2>
+                    <div className="h-1 w-20 bg-gradient-to-r from-[#49EACB]/0 via-[#49EACB] to-[#49EACB]/0 mx-auto"></div>
+                    <p className="text-gray-300 mt-2 text-sm">Earn 2% on your friends' bets</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+                      <p className="text-gray-400 text-sm mb-1">People Referred</p>
+                      <p className="text-3xl font-bold text-[#49EACB]">0</p>
                     </div>
-                    <div className="bg-gray-900 p-4 rounded-lg mb-4">
-                      <p className="text-gray-300 mb-2">Earn rewards when friends join using your referral code!</p>
-                      <div className="flex items-center justify-center gap-2">
-                        {walletAddress ? (
-                          <>
-                            <div className="bg-gray-700 p-2 rounded text-white w-full text-center">
-                              {walletAddress.substring(0, 10)}...{walletAddress.substring(walletAddress.length - 10)}
-                            </div>
-                            <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">Copy</Button>
-                          </>
-                        ) : (
-                          <>
-                            <div className="bg-gray-700 p-2 rounded text-gray-400 w-full text-center">
-                              Connect wallet to view your code
-                            </div>
-                            <Button disabled className="bg-gray-600 text-gray-300">
-                              Copy
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
-                        <div className="text-center mb-2 font-bold text-white">Referral Rewards</div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-300">Earn 10% of your referrals' XP</p>
-                          <p className="text-sm text-gray-300">Get 5 gems for each new referral</p>
-                        </div>
-                      </div>
-                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
-                        <div className="text-center mb-2 font-bold text-white">Special Bonuses</div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-300">Top referrers get exclusive rewards</p>
-                          <p className="text-sm text-gray-300">Monthly leaderboard prizes</p>
-                        </div>
-                      </div>
+                    <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
+                      <p className="text-gray-400 text-sm mb-1">Bonus Earned</p>
+                      <p className="text-3xl font-bold text-[#49EACB]">
+                        0.00 <span className="text-sm">KAS</span>
+                      </p>
                     </div>
                   </div>
-                </div>
+
+                  <div className="mb-6">
+                    <div className="relative inline-block w-full">
+                      <button
+                        disabled={true}
+                        className="w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 bg-gray-700 text-gray-400 cursor-not-allowed"
+                      >
+                        Withdraw Bonus
+                      </button>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-gray-800 border border-[#49EACB] rounded shadow text-white text-sm whitespace-nowrap"
+                      >
+                        Minimum 5 KAS Earned Required
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Referral Code Section */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold mb-2 text-white flex items-center">Your Referral Code</h3>
+                    <div className="flex items-center">
+                      <div className="flex-1 p-3 bg-gray-800/80 border border-[#49EACB]/30 rounded-l-lg cursor-pointer transition-all duration-200 text-center text-white font-mono hover:bg-gray-800 hover:border-[#49EACB]/50">
+                        {walletAddress ? walletAddress.substring(0, 6) : "??????"}
+                      </div>
+                      <button className="p-3 bg-[#49EACB]/10 border border-l-0 border-[#49EACB]/30 rounded-r-lg text-[#49EACB] hover:bg-[#49EACB]/20 transition-colors">
+                        <Copy size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Referral Link Section */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold mb-2 text-white">Your Referral Link</h3>
+                    <div className="flex items-center">
+                      <div className="flex-1 p-3 bg-gray-800/80 border border-[#49EACB]/30 rounded-l-lg cursor-pointer transition-all duration-200 text-center text-white text-sm truncate hover:bg-gray-800 hover:border-[#49EACB]/50">
+                        {`https://www.kascasino.xyz/signup?ref=${walletAddress ? walletAddress.substring(0, 6) : "??????"}`}
+                      </div>
+                      <button className="p-3 bg-[#49EACB]/10 border border-l-0 border-[#49EACB]/30 rounded-r-lg text-[#49EACB] hover:bg-[#49EACB]/20 transition-colors">
+                        <Copy size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Claim Referral Section */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-bold mb-2 text-white">Claim a Referral Code</h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 p-3 rounded-l-lg bg-gray-800 text-white border border-[#49EACB]/50 focus:border-[#49EACB] focus:outline-none focus:ring-1 focus:ring-[#49EACB] placeholder-gray-500"
+                        placeholder="Enter referral code"
+                      />
+                      <button className="px-6 rounded-r-lg font-semibold bg-[#49EACB] text-black hover:bg-[#3AAFB9] transition-colors">
+                        Claim
+                      </button>
+                    </div>
+                    <p className="text-gray-400 text-xs mt-2">Earn 100 XP by claiming a friend's referral code</p>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>,
