@@ -462,19 +462,19 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
   }, [referralData])
 
   const formatTimeRemaining = (ms: number): string => {
-    if (ms <= 0) return "Available now"
+    if (ms <= 0) return "now"
 
     const days = Math.floor(ms / (1000 * 60 * 60 * 24))
     const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
 
     if (days > 0) {
-      return `${days}d ${hours}h remaining`
+      return `${days}d ${hours}h`
     } else if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`
+      return `${hours}h ${minutes}m`
     } else {
       const seconds = Math.floor((ms % (1000 * 60)) / 1000)
-      return `${minutes}m ${seconds}s remaining`
+      return `${minutes}m ${seconds}s`
     }
   }
 
@@ -706,9 +706,9 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
                       disabled={timeRemaining !== null && timeRemaining > 0}
                       onMouseEnter={() => timeRemaining !== null && timeRemaining > 0 && setShowEditTooltip(true)}
                       onMouseLeave={() => setShowEditTooltip(false)}
-                      className={`p-1 rounded-full ${
+                      className={`p-1 rounded-full transition-colors ${
                         timeRemaining !== null && timeRemaining > 0
-                          ? "text-gray-500 cursor-not-allowed"
+                          ? "text-gray-400 cursor-not-allowed opacity-60"
                           : "text-[#49EACB] hover:bg-[#49EACB]/10"
                       }`}
                     >
@@ -724,7 +724,7 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
                       >
                         <div className="flex items-center">
                           <Clock size={12} className="mr-1 text-[#49EACB]" />
-                          {formatTimeRemaining(timeRemaining)}
+                          <span>Edit again in {formatTimeRemaining(timeRemaining)}</span>
                         </div>
                       </motion.div>
                     )}
