@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Menu, ChevronLeft, ChevronRight, X, Zap, Trophy, Flame, Copy } from "lucide-react"
+import { Menu, ChevronLeft, ChevronRight, X, Zap, Trophy, Flame, Copy, Edit2 } from "lucide-react"
 import { SiteFooter } from "@/components/site-footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { WalletConnection } from "@/components/wallet-connection"
@@ -736,7 +736,7 @@ function MainPageContent() {
                       </div>
                       <div className="flex items-center justify-center gap-3 md:gap-4 lg:gap-5">
                         <div className="bg-[#49EACB]/20 p-2 md:p-3 lg:p-4 rounded-full">
-                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-[#49EACB]" />
+                          <Trophy className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 xl:w-12 xl:w-12 text-[#49EACB]" />
                         </div>
                         <div>
                           <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-200">Total Daily Wins</p>
@@ -899,7 +899,7 @@ function MainPageContent() {
                         if (dataKey === "kaspacupgame") dataKey = "guess the cup"
                         if (dataKey === "ghostjump") dataKey = "ghost jump"
                         if (dataKey === "kaspiancross") dataKey = "kaspian cross"
-
+                        if (dataKey === "horserace") dataKey = "horse race"
 
                         // Use the same approach as the old code
                         const totalWins =
@@ -1093,7 +1093,7 @@ function MainPageContent() {
                           else if (lwGame === "guess the cup") cardImage = "/guessthecupcard.webp"
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
-                          else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
+                          else if (lwGame === "horse race") cardImage = "/horseracecard.webp"
                           return (
                             <MotionCard
                               key={i}
@@ -1212,25 +1212,46 @@ function MainPageContent() {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50 p-4"
               >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowDailyLootPopup(false)}></div>
-                <div className="relative bg-gray-800 p-3 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10">
+                <div
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  onClick={() => setShowDailyLootPopup(false)}
+                ></div>
+                <motion.div
+                  className="relative bg-black p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: 1.2, backgroundColor: "rgba(73, 234, 203, 0.2)" }}
                     whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                    className="absolute top-3 right-3 text-[#49EACB] font-bold text-xl bg-transparent rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     ×
                   </motion.button>
-                  <div className="text-center mb-4 sm:mb-6">
-                    <h2 className="text-xl sm:text-3xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
+                  <div className="text-center mb-6">
+                    <motion.h2
+                      className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#49EACB] via-[#006d5b] to-[#49EACB] bg-clip-text text-transparent"
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.2 }}
+                    >
+                      Daily Free Loot Boxes
+                    </motion.h2>
 
                     {/* Large display of current level */}
-                    <div className="flex flex-col items-center my-2 sm:my-4">
+                    <motion.div
+                      className="flex flex-col items-center my-4"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.3 }}
+                    >
                       <p className="text-white text-base sm:text-lg mb-2">Your Current Level</p>
                       <motion.div
-                        className={`relative rounded-full border-2 border-[#49EACB]`}
-                        style={{ width: "60px", height: "60px", overflow: "hidden" }}
+                        className="relative rounded-full border-2 border-[#49EACB] shadow-[0_0_15px_rgba(73,234,203,0.5)]"
+                        style={{ width: "70px", height: "70px", overflow: "hidden" }}
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(73,234,203,0.8)" }}
                       >
                         <div
                           className="absolute inset-0"
@@ -1243,18 +1264,18 @@ function MainPageContent() {
                           }}
                         />
                         <span
-                          style={{ fontSize: "1.25rem" }}
-                          className="relative flex items-center justify-center h-full w-full z-10"
+                          style={{ fontSize: "1.5rem" }}
+                          className="relative flex items-center justify-center h-full w-full z-10 font-bold text-[#49EACB]"
                         >
                           {walletAddress ? "1" : "?"}
                         </span>
                       </motion.div>
-                    </div>
+                    </motion.div>
 
                     <p className="text-gray-300 mt-2 text-sm sm:text-base">Available once every 24 hours</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 justify-items-center">
-                    {dailyLootBoxes.map((box) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 justify-items-center">
+                    {dailyLootBoxes.map((box, index) => {
                       const isLocked = !walletAddress || 1 < box.requiredLevel
                       const isOnCooldown = false // We would need to implement cooldown logic
                       const cooldownTime = 0
@@ -1262,17 +1283,20 @@ function MainPageContent() {
                       return (
                         <Link href={`/games/${box.slug}`} key={box.slug} passHref>
                           <motion.div
-                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 ${
+                            className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer border-2 ${
                               isLocked ? "border-red-500" : isOnCooldown ? "border-yellow-500" : "border-[#49EACB]"
-                            } hover:shadow-lg transition-all duration-200 w-full max-w-[250px] flex flex-col`}
+                            } hover:shadow-lg transition-all duration-200 w-full max-w-[180px] flex flex-col`}
                             whileHover={{
                               scale: isLocked || isOnCooldown ? 1 : 1.05,
                               boxShadow: isLocked || isOnCooldown ? "none" : "0 0 20px rgba(73, 234, 203, 0.5)",
                             }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
                           >
                             {/* Overlay for locked or cooldown state */}
                             {(isLocked || isOnCooldown) && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 rounded-lg">
                                 <div className="text-center p-2">
                                   {isLocked ? (
                                     walletAddress ? (
@@ -1290,25 +1314,25 @@ function MainPageContent() {
                               </div>
                             )}
 
-                            <div className="relative w-full h-40">
+                            <div className="relative w-full h-28">
                               <Image
                                 src={box.image || "/placeholder.svg"}
                                 alt={box.name}
                                 fill
                                 style={{ objectFit: "cover" }}
-                                className="rounded-md"
+                                className="rounded-t-md"
                               />
                             </div>
-                            <div className="mt-2 text-center">
-                              <h3 className="font-bold text-white">{box.name}</h3>
-                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                            <div className="p-2 text-center bg-gray-800">
+                              <h3 className="font-bold text-white text-sm">{box.name}</h3>
+                              <p className="text-xs text-[#49EACB]">Level {box.requiredLevel}+</p>
                             </div>
                           </motion.div>
                         </Link>
                       )
                     })}
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>,
@@ -1354,12 +1378,12 @@ function MainPageContent() {
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
                       <p className="text-gray-400 text-sm mb-1">People Referred</p>
-                      <p className="text-3xl font-bold text-[#49EACB]">0</p>
+                      <p className="text-3xl font-bold text-[#49EACB]">{walletAddress ? "0" : "?"}</p>
                     </div>
                     <div className="bg-gray-800/50 rounded-lg p-4 text-center border border-gray-700">
                       <p className="text-gray-400 text-sm mb-1">Bonus Earned</p>
                       <p className="text-3xl font-bold text-[#49EACB]">
-                        0.00 <span className="text-sm">KAS</span>
+                        {walletAddress ? "0.00" : "?.??"} <span className="text-sm">KAS</span>
                       </p>
                     </div>
                   </div>
@@ -1385,7 +1409,19 @@ function MainPageContent() {
 
                   {/* Referral Code Section */}
                   <div className="mb-6">
-                    <h3 className="text-lg font-bold mb-2 text-white flex items-center">Your Referral Code</h3>
+                    <h3 className="text-lg font-bold mb-2 text-white flex items-center">
+                      Your Referral Code
+                      {walletAddress && (
+                        <div className="relative ml-2">
+                          <button
+                            disabled={true}
+                            className="p-1 rounded-full text-gray-400 cursor-not-allowed opacity-60"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </h3>
                     <div className="flex items-center">
                       <div className="flex-1 p-3 bg-gray-800/80 border border-[#49EACB]/30 rounded-l-lg cursor-pointer transition-all duration-200 text-center text-white font-mono hover:bg-gray-800 hover:border-[#49EACB]/50">
                         {walletAddress ? walletAddress.substring(0, 6) : "??????"}
