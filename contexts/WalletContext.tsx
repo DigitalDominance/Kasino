@@ -501,9 +501,18 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
           walletAddress,
         })
         if (res.data.success) {
-          setPayoutStatus("completed")
-          // reset bonus display
+          // Immediately update both the display value and the referralData
           setCurrentReferralBonus(0)
+          setReferralData((prevData) => {
+            if (prevData) {
+              return {
+                ...prevData,
+                referralBonus: 0,
+              }
+            }
+            return prevData
+          })
+          setPayoutStatus("completed")
           showNotification("Payout completed!", "success")
         } else {
           setPayoutStatus("failed")
@@ -701,21 +710,25 @@ const ReferralPopup: React.FC<ReferralPopupProps> = ({
                 Your Referral Code
                 {!isEditingCode && (
                   <div className="relative ml-2">
-                    <button
-                      onClick={handleEditReferralCode}
-                      disabled={timeRemaining !== null && timeRemaining > 0}
+                    <div
                       onMouseEnter={() => timeRemaining !== null && timeRemaining > 0 && setShowEditTooltip(true)}
                       onMouseLeave={() => setShowEditTooltip(false)}
-                      className={`p-1 rounded-full transition-colors ${
-                        timeRemaining !== null && timeRemaining > 0
-                          ? "text-gray-400 cursor-not-allowed opacity-60"
-                          : "text-[#49EACB] hover:bg-[#49EACB]/10"
-                      }`}
+                      className="inline-block"
                     >
-                      <Edit2 size={16} />
-                    </button>
+                      <button
+                        onClick={handleEditReferralCode}
+                        disabled={timeRemaining !== null && timeRemaining > 0}
+                        className={`p-1 rounded-full transition-colors ${
+                          timeRemaining !== null && timeRemaining > 0
+                            ? "text-gray-400 cursor-not-allowed opacity-60"
+                            : "text-[#49EACB] hover:bg-[#49EACB]/10"
+                        }`}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                    </div>
 
-                    {showEditTooltip && timeRemaining !== null && timeRemaining > 0 && (
+                    {showEditTooltip && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
