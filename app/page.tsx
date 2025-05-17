@@ -1366,13 +1366,21 @@ function MainPageContent() {
                         )}
                       </div>
                     </div>
-                    <div className="text-left">
-                      <h3 className="text-[#49EACB] font-bold mb-2">Benefits:</h3>
-                      <ul className="list-disc list-inside text-gray-300 space-y-1">
-                        <li>Earn 10% of your referrals' XP</li>
-                        <li>Get 5 gems for each new referral</li>
-                        <li>Special bonuses for top referrers</li>
-                      </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
+                        <div className="text-center mb-2 font-bold text-white">Referral Rewards</div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-300">Earn 10% of your referrals' XP</p>
+                          <p className="text-sm text-gray-300">Get 5 gems for each new referral</p>
+                        </div>
+                      </div>
+                      <div className="bg-gray-900 rounded-lg p-2 border-2 border-[#49EACB]">
+                        <div className="text-center mb-2 font-bold text-white">Special Bonuses</div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-300">Top referrers get exclusive rewards</p>
+                          <p className="text-sm text-gray-300">Monthly leaderboard prizes</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
