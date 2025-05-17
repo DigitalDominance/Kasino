@@ -22,8 +22,6 @@ export function XPDisplay({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false)
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({})
   const [isLoadingCooldowns, setIsLoadingCooldowns] = useState(true)
-  const [showNotification, setShowNotification] = useState(false)
-  const [notificationCount, setNotificationCount] = useState(0)
 
   // Daily Loot Boxes data
   const dailyLootBoxes = [
@@ -115,20 +113,6 @@ export function XPDisplay({ className }: { className?: string }) {
     }
   }, [])
 
-  // Calculate available loot boxes
-  useEffect(() => {
-    if (!isLoadingCooldowns && userData.level > 0) {
-      let count = 0
-      dailyLootBoxes.forEach((box) => {
-        if (userData.level >= box.requiredLevel && (!cooldowns[box.slug] || cooldowns[box.slug] <= 0)) {
-          count++
-        }
-      })
-      setNotificationCount(count)
-      setShowNotification(count > 0)
-    }
-  }, [userData.level, cooldowns, isLoadingCooldowns])
-
   useEffect(() => {
     const fetchXP = async () => {
       try {
@@ -214,12 +198,6 @@ export function XPDisplay({ className }: { className?: string }) {
   const levelStr = displayLevel.toString()
   const fontSize = levelStr.length > 2 ? "0.75rem" : levelStr.length > 1 ? "0.9rem" : "1.125rem"
 
-  // Popup styling classes.
-  const hoverPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-4 text-white w-64 text-sm"
-  const smallPopupClass =
-    "absolute bg-gray-800/80 backdrop-blur-md border border-teal-500 rounded shadow-lg z-50 p-1 text-white w-48 text-xs"
-
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
@@ -235,7 +213,7 @@ export function XPDisplay({ className }: { className?: string }) {
     >
       {/* XP Circle - Clickable to show daily loot boxes */}
       <motion.div
-        className={`relative rounded-full border-2 cursor-pointer ${borderColorClass}`}
+        className={`relative rounded-full border-2 cursor-pointer ${borderColorClass} shadow-[0_0_10px_rgba(73,234,203,0.5)]`}
         style={{
           width: "36px",
           height: "36px",
@@ -246,6 +224,7 @@ export function XPDisplay({ className }: { className?: string }) {
           },
         }}
         animate={isFlipping ? { rotateY: 360 } : { rotateY: 0 }}
+        whileHover={{ scale: 1.1, boxShadow: "0 0 15px rgba(73,234,203,0.8)" }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
         onClick={() => setShowDailyLootPopup(true)}
       >
@@ -265,19 +244,12 @@ export function XPDisplay({ className }: { className?: string }) {
         >
           {displayLevel}
         </span>
-
-        {/* Notification badge */}
-        {showNotification && (
-          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center z-20 animate-pulse">
-            {notificationCount}
-          </div>
-        )}
       </motion.div>
 
       {/* Gem Display */}
       <div
         onClick={() => setShowGemPopup(true)}
-        className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-2 sm:px-3 rounded ml-1 sm:ml-2 border border-[#49EACB] cursor-pointer h-8 sm:h-12"
+        className="flex items-center bg-gray-900 bg-opacity-60 backdrop-blur-md text-white px-2 sm:px-3 rounded ml-1 sm:ml-2 border border-[#49EACB] cursor-pointer h-8 sm:h-12 hover:bg-gray-800 hover:shadow-[0_0_10px_rgba(73,234,203,0.5)] transition-all duration-300"
       >
         <span className="mr-1 text-white text-sm sm:text-base font-bold">{userData.gems}</span>
         <Image src="/gem.webp" alt="Gem" width={20} height={20} className="sm:w-[28px] sm:h-[28px]" />
@@ -291,14 +263,14 @@ export function XPDisplay({ className }: { className?: string }) {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-full mt-1`}
+            className="absolute left-[-60px] top-full mt-1 bg-black/80 backdrop-blur-md border border-[#49EACB] rounded shadow-lg z-50 p-1 text-white w-auto text-xs px-2"
           >
             +{gemGain} {gemGain === 1 ? "GEM" : "GEMS"}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hover Popup */}
+      {/* Enhanced Hover Tooltip */}
       <AnimatePresence>
         {isHovered && (
           <motion.div
@@ -306,24 +278,34 @@ export function XPDisplay({ className }: { className?: string }) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2 }}
-            className={`${hoverPopupClass} top-0 right-full mr-2 hidden sm:block`}
+            className="absolute top-0 right-full mr-2 hidden sm:block bg-black/90 backdrop-blur-md border border-[#49EACB] rounded-lg shadow-lg z-50 p-4 text-white w-64 text-sm"
           >
             {displayLevel < 100 ? (
               <>
-                <div className="text-teal-300 mb-1">
+                <div className="text-[#49EACB] mb-2 font-bold text-lg">Level {displayLevel}</div>
+                <div className="text-[#49EACB] mb-1">
                   XP: {userData.totalXp.toLocaleString()} / {nextThreshold.toFixed(0)}
                 </div>
-                <div className="flex justify-between mb-1">
+                <div className="flex justify-between mb-1 text-xs">
                   <span>{xpProgress.toFixed(0)} XP</span>
                   <span>{xpNeeded.toFixed(0)} XP</span>
                 </div>
-                <div className="w-full bg-gray-700 rounded h-1">
-                  <div style={{ width: `${progressPercent}%` }} className="bg-teal-500 h-1 rounded"></div>
+                <div className="w-full bg-gray-800 rounded-full h-2 mb-1 overflow-hidden">
+                  <div
+                    style={{ width: `${progressPercent}%` }}
+                    className="h-full rounded-full bg-gradient-to-r from-[#003f2f] via-[#49EACB] to-[#006d5b]"
+                  ></div>
                 </div>
-                <div className="mt-1 text-center">{progressPercent.toFixed(1)}% to next level</div>
+                <div className="mt-1 text-center text-[#49EACB] font-bold">
+                  {progressPercent.toFixed(1)}% to next level
+                </div>
               </>
             ) : (
-              <div className="text-center">Max Level Reached!</div>
+              <div className="text-center">
+                <div className="text-[#49EACB] font-bold text-lg mb-2">Level {displayLevel}</div>
+                <div className="text-white">Max Level Reached!</div>
+                <div className="mt-2 text-[#49EACB]">Total XP: {userData.totalXp.toLocaleString()}</div>
+              </div>
             )}
           </motion.div>
         )}
@@ -337,7 +319,7 @@ export function XPDisplay({ className }: { className?: string }) {
             animate={{ opacity: 1, x: -30 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-1/2 transform -translate-y-1/2`}
+            className="absolute left-[-60px] top-1/2 transform -translate-y-1/2 bg-black/80 backdrop-blur-md border border-[#49EACB] rounded shadow-lg z-50 p-1 text-white w-auto text-xs px-2"
           >
             +{xpGain} XP
           </motion.div>
@@ -352,7 +334,7 @@ export function XPDisplay({ className }: { className?: string }) {
             animate={{ opacity: 1, x: -30, y: -10 }}
             exit={{ opacity: 0, x: -50, y: -10 }}
             transition={{ duration: 0.5 }}
-            className={`${smallPopupClass} left-[-60px] top-0`}
+            className="absolute left-[-60px] top-0 bg-black/80 backdrop-blur-md border border-[#49EACB] rounded shadow-lg z-50 p-1 text-white w-auto text-xs px-2"
           >
             Leveled Up!
           </motion.div>
@@ -371,25 +353,46 @@ export function XPDisplay({ className }: { className?: string }) {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50 p-4"
               >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowDailyLootPopup(false)}></div>
-                <div className="relative bg-gray-800 p-3 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10">
+                <div
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  onClick={() => setShowDailyLootPopup(false)}
+                ></div>
+                <motion.div
+                  className="relative bg-black p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar z-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
                   <motion.button
                     onClick={() => setShowDailyLootPopup(false)}
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: 1.2, backgroundColor: "rgba(73, 234, 203, 0.2)" }}
                     whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                    className="absolute top-3 right-3 text-[#49EACB] font-bold text-xl bg-transparent rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     ×
                   </motion.button>
-                  <div className="text-center mb-4 sm:mb-6">
-                    <h2 className="text-xl sm:text-3xl font-bold text-[#49EACB]">Daily Free Loot Boxes</h2>
+                  <div className="text-center mb-6">
+                    <motion.h2
+                      className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#49EACB] via-[#006d5b] to-[#49EACB] bg-clip-text text-transparent"
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.2 }}
+                    >
+                      Daily Free Loot Boxes
+                    </motion.h2>
 
                     {/* Large display of current level */}
-                    <div className="flex flex-col items-center my-2 sm:my-4">
+                    <motion.div
+                      className="flex flex-col items-center my-4"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.3 }}
+                    >
                       <p className="text-white text-base sm:text-lg mb-2">Your Current Level</p>
                       <motion.div
-                        className={`relative rounded-full border-2 ${borderColorClass}`}
-                        style={{ width: "60px", height: "60px", overflow: "hidden" }}
+                        className={`relative rounded-full border-2 ${borderColorClass} shadow-[0_0_15px_rgba(73,234,203,0.5)]`}
+                        style={{ width: "70px", height: "70px", overflow: "hidden" }}
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(73,234,203,0.8)" }}
                       >
                         <div
                           className="absolute inset-0"
@@ -402,18 +405,18 @@ export function XPDisplay({ className }: { className?: string }) {
                           }}
                         />
                         <span
-                          style={{ fontSize: "1.25rem" }}
-                          className="relative flex items-center justify-center h-full w-full z-10"
+                          style={{ fontSize: "1.5rem" }}
+                          className="relative flex items-center justify-center h-full w-full z-10 font-bold"
                         >
                           {displayLevel}
                         </span>
                       </motion.div>
-                    </div>
+                    </motion.div>
 
                     <p className="text-gray-300 mt-2 text-sm sm:text-base">Available once every 24 hours</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 justify-items-center">
-                    {dailyLootBoxes.map((box) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 justify-items-center">
+                    {dailyLootBoxes.map((box, index) => {
                       const isLocked = userData.level < box.requiredLevel
                       const isOnCooldown = cooldowns[box.slug] && cooldowns[box.slug] > 0
                       const cooldownTime = cooldowns[box.slug] || 0
@@ -421,17 +424,20 @@ export function XPDisplay({ className }: { className?: string }) {
                       return (
                         <Link href={`/games/${box.slug}`} key={box.slug} passHref>
                           <motion.div
-                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 ${
+                            className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer border-2 ${
                               isLocked ? "border-red-500" : isOnCooldown ? "border-yellow-500" : "border-[#49EACB]"
-                            } hover:shadow-lg transition-all duration-200 w-full max-w-[250px] flex flex-col`}
+                            } hover:shadow-lg transition-all duration-200 w-full max-w-[180px] flex flex-col`}
                             whileHover={{
                               scale: isLocked || isOnCooldown ? 1 : 1.05,
                               boxShadow: isLocked || isOnCooldown ? "none" : "0 0 20px rgba(73, 234, 203, 0.5)",
                             }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
                           >
                             {/* Overlay for locked or cooldown state */}
                             {(isLocked || isOnCooldown) && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 rounded-lg">
                                 <div className="text-center p-2">
                                   {isLocked ? (
                                     <p className="text-red-400 font-bold">Requires Level {box.requiredLevel}</p>
@@ -445,25 +451,25 @@ export function XPDisplay({ className }: { className?: string }) {
                               </div>
                             )}
 
-                            <div className="relative w-full h-40">
+                            <div className="relative w-full h-28">
                               <Image
                                 src={box.image || "/placeholder.svg"}
                                 alt={box.name}
                                 fill
                                 style={{ objectFit: "cover" }}
-                                className="rounded-md"
+                                className="rounded-t-md"
                               />
                             </div>
-                            <div className="mt-2 text-center">
-                              <h3 className="font-bold text-white">{box.name}</h3>
-                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                            <div className="p-2 text-center bg-gray-800">
+                              <h3 className="font-bold text-white text-sm">{box.name}</h3>
+                              <p className="text-xs text-[#49EACB]">Level {box.requiredLevel}+</p>
                             </div>
                           </motion.div>
                         </Link>
                       )
                     })}
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>,
@@ -482,22 +488,43 @@ export function XPDisplay({ className }: { className?: string }) {
                 transition={{ duration: 0.3 }}
                 className="fixed inset-0 flex items-center justify-center z-50 p-4"
               >
-                <div className="absolute inset-0 bg-black/70" onClick={() => setShowGemPopup(false)}></div>
-                <div className="relative bg-gray-800 p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg z-10">
+                <div
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  onClick={() => setShowGemPopup(false)}
+                ></div>
+                <motion.div
+                  className="relative bg-black p-4 sm:p-6 rounded-lg border-2 border-[#49EACB] w-11/12 max-w-lg z-10"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
                   <motion.button
                     onClick={() => setShowGemPopup(false)}
-                    whileHover={{ scale: 1.2 }}
+                    whileHover={{ scale: 1.2, backgroundColor: "rgba(73, 234, 203, 0.2)" }}
                     whileTap={{ scale: 0.9 }}
-                    className="absolute top-2 right-2 text-[#49EACB] font-bold text-xl"
+                    className="absolute top-3 right-3 text-[#49EACB] font-bold text-xl bg-transparent rounded-full w-8 h-8 flex items-center justify-center"
                   >
                     ×
                   </motion.button>
-                  <div className="text-center mb-3 sm:mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#49EACB] mb-2">Your Gems</h2>
-                    <div className="flex justify-center items-center gap-2">
-                      <span className="text-lg sm:text-xl font-bold text-white">{userData.gems}</span>
-                      <Image src="/gem.webp" alt="Gem" width={30} height={30} className="sm:w-[40px] sm:h-[40px]" />
-                    </div>
+                  <div className="text-center mb-6">
+                    <motion.h2
+                      className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#49EACB] via-[#006d5b] to-[#49EACB] bg-clip-text text-transparent mb-4"
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.2 }}
+                    >
+                      Your Gems
+                    </motion.h2>
+                    <motion.div
+                      className="flex justify-center items-center gap-3 bg-gray-900/50 p-4 rounded-lg border border-[#49EACB]/30 shadow-[0_0_15px_rgba(73,234,203,0.2)]"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.4, delay: 0.3 }}
+                      whileHover={{ boxShadow: "0 0 20px rgba(73,234,203,0.4)" }}
+                    >
+                      <span className="text-2xl sm:text-3xl font-bold text-white">{userData.gems}</span>
+                      <Image src="/gem.webp" alt="Gem" width={40} height={40} className="sm:w-[50px] sm:h-[50px]" />
+                    </motion.div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {[1, 2, 3, 4].map((tier) => {
@@ -505,32 +532,40 @@ export function XPDisplay({ className }: { className?: string }) {
                       return (
                         <Link href={`https://www.kascasino.xyz/games/gemtier${tier}`} key={tier} passHref>
                           <motion.div
-                            className="bg-gray-900 rounded-lg p-2 cursor-pointer border-2 border-[#49EACB] hover:shadow-lg transition-all duration-200"
+                            className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer border border-[#49EACB]/50 hover:shadow-lg transition-all duration-200"
                             whileHover={{
-                              scale: 1.05,
-                              boxShadow: "0 0 20px rgba(73, 234, 203, 0.5)",
+                              scale: 1.03,
+                              boxShadow: "0 0 20px rgba(73,234,203,0.5)",
+                              borderColor: "rgba(73,234,203,0.8)",
                             }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.3 + tier * 0.1 }}
                           >
-                            <div className="text-center mb-2 font-bold text-white">Gem Crate Tier {tier}</div>
+                            <div className="text-center p-2 bg-gradient-to-r from-[#003f2f] to-[#006d5b] font-bold text-white">
+                              Gem Crate Tier {tier}
+                            </div>
                             <div className="relative w-full h-32">
                               <Image
                                 src={`/gemtier${tier}.webp`}
                                 alt={`Gem Crate Tier ${tier}`}
                                 fill
                                 style={{ objectFit: "cover" }}
-                                className="rounded-md"
                               />
                             </div>
-                            <div className="text-center mt-2">
-                              <span className="font-bold text-white">Gems Required:</span>{" "}
-                              <span className="font-bold text-[#49EACB]">{requiredGems}</span>
+                            <div className="text-center p-3 bg-gray-800">
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="font-bold text-white">Required:</span>
+                                <span className="font-bold text-[#49EACB]">{requiredGems}</span>
+                                <Image src="/gem.webp" alt="Gem" width={16} height={16} />
+                              </div>
                             </div>
                           </motion.div>
                         </Link>
                       )
                     })}
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>,
