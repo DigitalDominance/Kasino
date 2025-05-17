@@ -43,6 +43,14 @@ interface GameStats {
   totalKasWon: number
 }
 
+// Helper function to format time
+const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  return `${hours}h ${minutes}m ${secs}s`
+}
+
 export default function MainPage() {
   return <MainPageContent />
 }
@@ -219,7 +227,9 @@ function MainPageContent() {
   // Show age popup after loading completes
   useEffect(() => {
     if (!isLoading) {
-      setShowAgePopup(true)
+      // Check if user has already confirmed age in this session
+      const hasConfirmedAge = sessionStorage.getItem("ageConfirmed") === "true"
+      setShowAgePopup(!hasConfirmedAge)
     }
   }, [isLoading])
 
@@ -284,6 +294,19 @@ function MainPageContent() {
     { name: "Level 90 Daily Loot Box", slug: "Level90DailyLootBox", image: "/Level90Card.webp", requiredLevel: 90 },
     { name: "Level 100 Daily Loot Box", slug: "Level100DailyLootBox", image: "/Level100Card.webp", requiredLevel: 100 },
   ]
+
+  // Handle age confirmation
+  const handleAgeConfirm = () => {
+    // Store confirmation in session storage
+    sessionStorage.setItem("ageConfirmed", "true")
+    setShowAgePopup(false)
+  }
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`
+  }
 
   return (
     <div className={`${montserrat.className} min-h-screen bg-black`}>
@@ -474,7 +497,7 @@ function MainPageContent() {
                         </label>
                       </div>
                       <Button
-                        onClick={() => setShowAgePopup(false)}
+                        onClick={handleAgeConfirm}
                         disabled={!ageChecked}
                         className="bg-[#49EACB] text-black font-semibold"
                       >
@@ -1204,39 +1227,86 @@ function MainPageContent() {
 
                     {/* Large display of current level */}
                     <div className="flex flex-col items-center my-2 sm:my-4">
-                      <p className="text-white text-base sm:text-lg mb-2">Connect your wallet to view loot boxes</p>
+                      <p className="text-white text-base sm:text-lg mb-2">Your Current Level</p>
+                      <motion.div
+                        className={`relative rounded-full border-2 border-[#49EACB]`}
+                        style={{ width: "60px", height: "60px", overflow: "hidden" }}
+                      >
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            backgroundImage: "url('/xpimage.webp')",
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
+                            zIndex: 0,
+                          }}
+                        />
+                        <span
+                          style={{ fontSize: "1.25rem" }}
+                          className="relative flex items-center justify-center h-full w-full z-10"
+                        >
+                          {walletAddress ? "1" : "?"}
+                        </span>
+                      </motion.div>
                     </div>
 
                     <p className="text-gray-300 mt-2 text-sm sm:text-base">Available once every 24 hours</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 justify-items-center">
-                    {dailyLootBoxes.map((box) => (
-                      <div
-                        key={box.slug}
-                        className="relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 border-red-500 w-full max-w-[250px] flex flex-col"
-                      >
-                        {/* Overlay for locked state */}
-                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
-                          <div className="text-center p-2">
-                            <p className="text-red-400 font-bold">Connect Wallet</p>
-                          </div>
-                        </div>
+                    {dailyLootBoxes.map((box) => {
+                      const isLocked = !walletAddress || 1 < box.requiredLevel
+                      const isOnCooldown = false // We would need to implement cooldown logic
+                      const cooldownTime = 0
 
-                        <div className="relative w-full h-40">
-                          <Image
-                            src={box.image || "/placeholder.svg"}
-                            alt={box.name}
-                            fill
-                            style={{ objectFit: "cover" }}
-                            className="rounded-md"
-                          />
-                        </div>
-                        <div className="mt-2 text-center">
-                          <h3 className="font-bold text-white">{box.name}</h3>
-                          <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
-                        </div>
-                      </div>
-                    ))}
+                      return (
+                        <Link href={`/games/${box.slug}`} key={box.slug} passHref>
+                          <motion.div
+                            className={`relative bg-gray-900 rounded-lg p-2 cursor-pointer border-2 ${
+                              isLocked ? "border-red-500" : isOnCooldown ? "border-yellow-500" : "border-[#49EACB]"
+                            } hover:shadow-lg transition-all duration-200 w-full max-w-[250px] flex flex-col`}
+                            whileHover={{
+                              scale: isLocked || isOnCooldown ? 1 : 1.05,
+                              boxShadow: isLocked || isOnCooldown ? "none" : "0 0 20px rgba(73, 234, 203, 0.5)",
+                            }}
+                          >
+                            {/* Overlay for locked or cooldown state */}
+                            {(isLocked || isOnCooldown) && (
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 rounded-lg">
+                                <div className="text-center p-2">
+                                  {isLocked ? (
+                                    walletAddress ? (
+                                      <p className="text-red-400 font-bold">Requires Level {box.requiredLevel}</p>
+                                    ) : (
+                                      <p className="text-red-400 font-bold">Connect Wallet</p>
+                                    )
+                                  ) : (
+                                    <>
+                                      <p className="text-yellow-400 font-bold">On Cooldown</p>
+                                      <p className="text-white text-sm">{formatTime(cooldownTime)}</p>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="relative w-full h-40">
+                              <Image
+                                src={box.image || "/placeholder.svg"}
+                                alt={box.name}
+                                fill
+                                style={{ objectFit: "cover" }}
+                                className="rounded-md"
+                              />
+                            </div>
+                            <div className="mt-2 text-center">
+                              <h3 className="font-bold text-white">{box.name}</h3>
+                              <p className="text-sm text-gray-300">Level {box.requiredLevel}+</p>
+                            </div>
+                          </motion.div>
+                        </Link>
+                      )
+                    })}
                   </div>
                 </div>
               </motion.div>
@@ -1269,16 +1339,31 @@ function MainPageContent() {
                   </motion.button>
                   <div className="text-center mb-3 sm:mb-4">
                     <h2 className="text-xl sm:text-2xl font-bold text-[#49EACB] mb-2">Referral Program</h2>
-                    <p className="text-white mb-4">Connect your wallet to access the referral program</p>
+                    <div className="flex justify-center items-center gap-2 mb-4">
+                      <span className="text-lg sm:text-xl font-bold text-white">
+                        {walletAddress ? "Your Referrals: 0" : "Connect Wallet to View Referrals"}
+                      </span>
+                    </div>
                     <div className="bg-gray-900 p-4 rounded-lg mb-4">
                       <p className="text-gray-300 mb-2">Earn rewards when friends join using your referral code!</p>
                       <div className="flex items-center justify-center gap-2">
-                        <div className="bg-gray-700 p-2 rounded text-gray-400 w-full text-center">
-                          Connect wallet to view your code
-                        </div>
-                        <Button disabled className="bg-gray-600 text-gray-300">
-                          Copy
-                        </Button>
+                        {walletAddress ? (
+                          <>
+                            <div className="bg-gray-700 p-2 rounded text-white w-full text-center">
+                              {walletAddress.substring(0, 10)}...{walletAddress.substring(walletAddress.length - 10)}
+                            </div>
+                            <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80">Copy</Button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-gray-700 p-2 rounded text-gray-400 w-full text-center">
+                              Connect wallet to view your code
+                            </div>
+                            <Button disabled className="bg-gray-600 text-gray-300">
+                              Copy
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-left">
