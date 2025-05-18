@@ -30,6 +30,7 @@ interface CardType {
   suit: string
   rank: string
   image?: string
+  flipped?: boolean
 }
 
 // Helper function to calculate hand value
@@ -81,6 +82,9 @@ function BlackjackContent() {
   const [isHitting, setIsHitting] = useState(false)
   const [isStanding, setIsStanding] = useState(false)
   const [dealerDrawing, setDealerDrawing] = useState(false)
+  const [newPlayerCard, setNewPlayerCard] = useState<CardType | null>(null)
+  const [newDealerCard, setNewDealerCard] = useState<CardType | null>(null)
+  const [revealingDealerCards, setRevealingDealerCards] = useState(false)
 
   // Provably-fair & results
   const [clientSeed, setClientSeed] = useState<string | null>(null)
@@ -220,7 +224,20 @@ function BlackjackContent() {
       setGameId(data.game._id)
       setServerSeedHash(data.game.serverSeedHash)
 
-      // Set initial cards
+      // Set initial cards with flipped state
+      const initialPlayerCards = data.game.playerCards.map((card: CardType) => ({
+        ...card,
+        flipped: false,
+      }))
+
+      const initialDealerCards = [
+        {
+          ...data.game.dealerUpCard,
+          flipped: false,
+        },
+      ]
+
+      // Set initial game state
       setPregame(false)
       setIsPlaying(true)
       setGameStatus("player-turn")
@@ -229,11 +246,35 @@ function BlackjackContent() {
       // Delay to simulate dealing animation
       setTimeout(() => {
         playCardSound()
-        setPlayerCards(data.game.playerCards)
-        setDealerCards([data.game.dealerUpCard])
-        setDealerUpCardOnly(true)
-        setIsDealing(false)
-      }, 1000)
+
+        // First set the cards as back-facing
+        setPlayerCards(initialPlayerCards)
+        setDealerCards(initialDealerCards)
+
+        // Then flip them one by one with delays
+        setTimeout(() => {
+          const updatedPlayerCards = [...initialPlayerCards]
+          updatedPlayerCards[0] = { ...updatedPlayerCards[0], flipped: true }
+          setPlayerCards(updatedPlayerCards)
+          playCardSound()
+
+          setTimeout(() => {
+            const updatedDealerCards = [...initialDealerCards]
+            updatedDealerCards[0] = { ...updatedDealerCards[0], flipped: true }
+            setDealerCards(updatedDealerCards)
+            playCardSound()
+
+            setTimeout(() => {
+              const finalPlayerCards = [...updatedPlayerCards]
+              finalPlayerCards[1] = { ...initialPlayerCards[1], flipped: true }
+              setPlayerCards(finalPlayerCards)
+              playCardSound()
+
+              setIsDealing(false)
+            }, 500)
+          }, 500)
+        }, 500)
+      }, 500)
 
       setLoading(false)
     } catch (error) {
@@ -262,23 +303,39 @@ function BlackjackContent() {
         return
       }
 
-      // Update player cards
-      setPlayerCards(data.playerCards)
+      // Get the new card (last card in the updated array)
+      const newCard = data.playerCards[data.playerCards.length - 1]
 
-      // Check if player busted
-      if (data.gameResult === "lose") {
-        setGameStatus("complete")
-        setTimeout(() => {
-          setResult({
-            gameResult: "lose",
-            winAmount: 0,
-            clientSeed,
-            serverSeedHash,
-          })
-        }, 2000) // Increased delay to 2 seconds
-      }
+      // Add the new card as flipped=false first (showing back)
+      setNewPlayerCard({ ...newCard, flipped: false })
 
-      setIsHitting(false)
+      // After a short delay, flip the card to show its face
+      setTimeout(() => {
+        // Update all player cards including the newly flipped one
+        const updatedCards = data.playerCards.map((card: CardType, index: number) => ({
+          ...card,
+          flipped: index < data.playerCards.length - 1 ? true : true,
+        }))
+
+        setPlayerCards(updatedCards)
+        setNewPlayerCard(null)
+        playCardSound()
+
+        // Check if player busted
+        if (data.gameResult === "lose") {
+          setGameStatus("complete")
+          setTimeout(() => {
+            setResult({
+              gameResult: "lose",
+              winAmount: 0,
+              clientSeed,
+              serverSeedHash,
+            })
+          }, 2000) // Increased delay to 2 seconds
+        }
+
+        setIsHitting(false)
+      }, 800)
     } catch (error) {
       console.error("Error hitting:", error)
       alert("Failed to hit. Please try again.")
@@ -306,20 +363,72 @@ function BlackjackContent() {
         return
       }
 
-      // Reveal dealer's hole card first
-      setDealerUpCardOnly(false)
+      // First reveal dealer's hole card with flip animation
+      setRevealingDealerCards(true)
       playCardSound()
 
-      // Animate dealer drawing cards
-      setDealerDrawing(true)
+      // Add the dealer's hidden card first
+      if (data.dealerCards.length > 1) {
+        const secondCard = data.dealerCards[1]
+        const updatedDealerCards = [...dealerCards, { ...secondCard, flipped: false }]
+        setDealerCards(updatedDealerCards)
 
-      // Delay to show dealer drawing cards
-      setTimeout(() => {
-        setDealerCards(data.dealerCards)
-        setDealerDrawing(false)
+        // Flip the second card after a delay
+        setTimeout(() => {
+          const flippedCards = updatedDealerCards.map((card, idx) => ({
+            ...card,
+            flipped: true,
+          }))
+          setDealerCards(flippedCards)
+          playCardSound()
+
+          // Now reveal any additional dealer cards one by one
+          let currentIndex = 2
+          const revealNextCard = () => {
+            if (currentIndex < data.dealerCards.length) {
+              const nextCard = data.dealerCards[currentIndex]
+              setNewDealerCard({ ...nextCard, flipped: false })
+
+              setTimeout(() => {
+                const updatedCards = [
+                  ...flippedCards,
+                  ...data.dealerCards.slice(2, currentIndex).map((c) => ({ ...c, flipped: true })),
+                  { ...nextCard, flipped: true },
+                ]
+                setDealerCards(updatedCards)
+                setNewDealerCard(null)
+                playCardSound()
+
+                currentIndex++
+                setTimeout(revealNextCard, 500)
+              }, 500)
+            } else {
+              // All cards revealed
+              setRevealingDealerCards(false)
+              setDealerUpCardOnly(false)
+              setGameStatus("complete")
+
+              // Show result after all cards are revealed
+              setTimeout(() => {
+                setResult({
+                  gameResult: data.gameResult,
+                  winAmount: data.winAmount,
+                  clientSeed,
+                  serverSeedHash,
+                })
+              }, 1500)
+            }
+          }
+
+          // Start revealing additional cards after a delay
+          setTimeout(revealNextCard, 500)
+        }, 800)
+      } else {
+        // No additional dealer cards
+        setDealerUpCardOnly(false)
+        setRevealingDealerCards(false)
         setGameStatus("complete")
 
-        // Show result after 2 seconds
         setTimeout(() => {
           setResult({
             gameResult: data.gameResult,
@@ -327,8 +436,8 @@ function BlackjackContent() {
             clientSeed,
             serverSeedHash,
           })
-        }, 2000) // Increased delay to 2 seconds
-      }, 1500)
+        }, 1500)
+      }
 
       setIsStanding(false)
     } catch (error) {
@@ -353,6 +462,9 @@ function BlackjackContent() {
     setClientSeed(null)
     setServerSeedHash(null)
     setGameId(null)
+    setNewPlayerCard(null)
+    setNewDealerCard(null)
+    setRevealingDealerCards(false)
   }
 
   return (
@@ -433,6 +545,9 @@ function BlackjackContent() {
                   isHitting={isHitting}
                   isStanding={isStanding}
                   dealerDrawing={dealerDrawing}
+                  newPlayerCard={newPlayerCard}
+                  newDealerCard={newDealerCard}
+                  revealingDealerCards={revealingDealerCards}
                 />
               )}
             </div>
@@ -596,7 +711,13 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ rotate: [0, 7, 0] }}
             transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
           >
-            <Image src="/blockscards/kspades.webp" alt="King of Spades" width={120} height={180} className="shadow-lg" />
+            <Image
+              src="/blockscards/kspades.webp"
+              alt="King of Spades"
+              width={120}
+              height={180}
+              className="shadow-lg"
+            />
           </motion.div>
         </div>
 
@@ -628,6 +749,9 @@ function BlackjackTable({
   isHitting,
   isStanding,
   dealerDrawing,
+  newPlayerCard,
+  newDealerCard,
+  revealingDealerCards,
 }: {
   playerCards: CardType[]
   dealerCards: CardType[]
@@ -641,6 +765,9 @@ function BlackjackTable({
   isHitting: boolean
   isStanding: boolean
   dealerDrawing: boolean
+  newPlayerCard: CardType | null
+  newDealerCard: CardType | null
+  revealingDealerCards: boolean
 }) {
   return (
     <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
@@ -657,13 +784,11 @@ function BlackjackTable({
               initial={{
                 x: index === 0 ? -300 : 300,
                 y: -100,
-                rotateY: index === 0 || !dealerUpCardOnly ? 0 : 180,
                 zIndex: index,
               }}
               animate={{
                 x: (index - (dealerCards.length - 1) / 2) * 60,
                 y: 0,
-                rotateY: index === 0 || !dealerUpCardOnly ? 0 : 180,
                 zIndex: index,
               }}
               transition={{
@@ -672,36 +797,79 @@ function BlackjackTable({
                 damping: 20,
                 delay: index * 0.2 + (isDealing ? 0.5 : 0),
               }}
-              style={{ transformStyle: "preserve-3d" }}
             >
-              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg">
-                <Image
-                  src={
-                    index === 0 || !dealerUpCardOnly
-                      ? `/blockscards/${dealerCards[index].rank.toLowerCase()}${dealerCards[index].suit}.webp`
-                      : "/blockscards/cardback.webp"
-                  }
-                  alt={
-                    index === 0 || !dealerUpCardOnly
-                      ? `${dealerCards[index].rank} of ${dealerCards[index].suit}`
-                      : "Card back"
-                  }
-                  fill
-                  className="rounded-lg object-cover"
-                />
+              {/* Card container with 3D perspective */}
+              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
+                {/* Card inner container that will flip */}
+                <motion.div
+                  className="relative w-full h-full"
+                  style={{ transformStyle: "preserve-3d" }}
+                  initial={{ rotateY: 180 }}
+                  animate={{ rotateY: card.flipped ? 0 : 180 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                >
+                  {/* Card front */}
+                  <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+                    <Image
+                      src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
+                      alt={`${card.rank} of ${card.suit}`}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
+
+                  {/* Card back */}
+                  <div
+                    className="absolute w-full h-full backface-hidden"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    <Image src="/blockscards/cardback.webp" alt="Card back" fill className="rounded-lg object-cover" />
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           ))}
 
-          {/* Dealer drawing animation */}
-          {dealerDrawing && (
+          {/* New dealer card animation */}
+          {newDealerCard && (
             <motion.div
-              className="absolute right-[-150px]"
-              animate={{ x: [-150, 0], opacity: [0, 1, 0] }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              className="absolute"
+              initial={{ x: 300, y: -100, zIndex: dealerCards.length }}
+              animate={{
+                x: (dealerCards.length - dealerCards.length / 2) * 60,
+                y: 0,
+                zIndex: dealerCards.length,
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg">
-                <Image src="/blockscards/cardback.webp" alt="Drawing card" fill className="rounded-lg object-cover" />
+              {/* Card container with 3D perspective */}
+              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
+                {/* Card inner container that will flip */}
+                <motion.div
+                  className="relative w-full h-full"
+                  style={{ transformStyle: "preserve-3d" }}
+                  initial={{ rotateY: 180 }}
+                  animate={{ rotateY: newDealerCard.flipped ? 0 : 180 }}
+                  transition={{ duration: 0.8, ease: "easeInOut", delay: 0.3 }}
+                >
+                  {/* Card front */}
+                  <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+                    <Image
+                      src={`/blockscards/${newDealerCard.rank.toLowerCase()}${newDealerCard.suit}.webp`}
+                      alt={`${newDealerCard.rank} of ${newDealerCard.suit}`}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
+
+                  {/* Card back */}
+                  <div
+                    className="absolute w-full h-full backface-hidden"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    <Image src="/blockscards/cardback.webp" alt="Card back" fill className="rounded-lg object-cover" />
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
@@ -728,26 +896,78 @@ function BlackjackTable({
                 delay: index < 2 ? index * 0.2 : 0,
               }}
             >
-              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg">
-                <Image
-                  src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
-                  alt={`${card.rank} of ${card.suit}`}
-                  fill
-                  className="rounded-lg object-cover"
-                />
+              {/* Card container with 3D perspective */}
+              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
+                {/* Card inner container that will flip */}
+                <motion.div
+                  className="relative w-full h-full"
+                  style={{ transformStyle: "preserve-3d" }}
+                  initial={{ rotateY: 180 }}
+                  animate={{ rotateY: card.flipped ? 0 : 180 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                >
+                  {/* Card front */}
+                  <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+                    <Image
+                      src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
+                      alt={`${card.rank} of ${card.suit}`}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
+
+                  {/* Card back */}
+                  <div
+                    className="absolute w-full h-full backface-hidden"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    <Image src="/blockscards/cardback.webp" alt="Card back" fill className="rounded-lg object-cover" />
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           ))}
 
-          {/* Hit animation */}
-          {isHitting && (
+          {/* New player card animation */}
+          {newPlayerCard && (
             <motion.div
-              className="absolute right-[-150px]"
-              animate={{ x: [-150, 0], opacity: [0, 1, 0] }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              className="absolute"
+              initial={{ x: 300, y: 100, zIndex: playerCards.length }}
+              animate={{
+                x: (playerCards.length - (playerCards.length - 1) / 2) * 60,
+                y: 0,
+                zIndex: playerCards.length,
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg">
-                <Image src="/blockscards/cardback.webp" alt="Drawing card" fill className="rounded-lg object-cover" />
+              {/* Card container with 3D perspective */}
+              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
+                {/* Card inner container that will flip */}
+                <motion.div
+                  className="relative w-full h-full"
+                  style={{ transformStyle: "preserve-3d" }}
+                  initial={{ rotateY: 180 }}
+                  animate={{ rotateY: newPlayerCard.flipped ? 0 : 180 }}
+                  transition={{ duration: 0.8, ease: "easeInOut", delay: 0.3 }}
+                >
+                  {/* Card front */}
+                  <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+                    <Image
+                      src={`/blockscards/${newPlayerCard.rank.toLowerCase()}${newPlayerCard.suit}.webp`}
+                      alt={`${newPlayerCard.rank} of ${newPlayerCard.suit}`}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
+
+                  {/* Card back */}
+                  <div
+                    className="absolute w-full h-full backface-hidden"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  >
+                    <Image src="/blockscards/cardback.webp" alt="Card back" fill className="rounded-lg object-cover" />
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
