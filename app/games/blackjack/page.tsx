@@ -176,32 +176,31 @@ function BlackjackContent() {
       return
     }
 
-    // Preload card images
-    preloadCardImages()
-
-    // 1) generate clientSeed + hash
-    const arr = crypto.getRandomValues(new Uint8Array(32))
-    const rawSeed = Array.from(arr)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("")
-    const buf = await crypto.subtle.digest("SHA-256", arr)
-    const hash = Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("")
-    setClientSeed(rawSeed)
-
-    // 2) send deposit on-chain
-    const [addr] = await window.kasware.getAccounts()
-    const treasury =
-      Math.random() < 0.5 ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1! : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
-    const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
-      priorityFee: 10000,
-    })
-    const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
-
-    // 3) call play API
-    setLoading(true)
     try {
+      // 1) generate clientSeed + hash
+      const arr = crypto.getRandomValues(new Uint8Array(32))
+      const rawSeed = Array.from(arr)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+      const buf = await crypto.subtle.digest("SHA-256", arr)
+      const hash = Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+      setClientSeed(rawSeed)
+
+      // 2) send deposit on-chain
+      const [addr] = await window.kasware.getAccounts()
+      const treasury =
+        Math.random() < 0.5
+          ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+          : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
+      const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+        priorityFee: 10000,
+      })
+      const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
+
+      // 3) call play API
+      setLoading(true)
       const { data } = await axios.post(`${API_BASE}/api/game/play`, {
         gameName: "blackjack",
         clientSeed: rawSeed,
@@ -811,22 +810,4 @@ function BlackjackTable({
       </div>
     </div>
   )
-}
-
-// Add this function to preload card images
-const preloadCardImages = () => {
-  const suits = ["heart", "diamond", "club", "spade"]
-  const ranks = ["a", "2", "3", "4", "5", "6", "7", "8", "9", "10", "j", "q", "k"]
-
-  // Preload card back
-  const cardBackImg = new Image()
-  cardBackImg.src = "/blockscards/cardback.webp"
-
-  // Preload all card images
-  suits.forEach((suit) => {
-    ranks.forEach((rank) => {
-      const img = new Image()
-      img.src = `/blockscards/${rank}${suit}.webp`
-    })
-  })
 }
