@@ -337,17 +337,58 @@ function BlackjackContent() {
 
           setPlayerCards(flippedCards)
 
-          // Check if player busted
-          if (data.gameResult === "lose") {
+          // Check if player busted or got exactly 21 with auto-stand
+          if (data.gameResult === "lose" || data.gameResult === "win" || data.gameResult === "push") {
+            // Player either busted or hit exactly 21 (auto-stand)
             setGameStatus("complete")
-            setTimeout(() => {
-              setResult({
-                gameResult: "lose",
-                winAmount: 0,
-                clientSeed,
-                serverSeedHash,
-              })
-            }, 1500)
+
+            // If we have dealer cards in the response, it means player hit 21 and dealer played
+            if (data.dealerCards && data.dealerCards.length > 1) {
+              // Show dealer's full hand
+              setDealerUpCardOnly(false)
+
+              // Create dealer cards with flipped state
+              const dealerCardsWithState = data.dealerCards.map((card) => ({
+                ...card,
+                flipped: true,
+              }))
+
+              // Reveal dealer's cards with animation
+              setRevealingDealerCards(true)
+
+              // First set just the first card (already visible)
+              const firstDealerCard = dealerCards[0]
+
+              // Then add all dealer cards with animation
+              setTimeout(() => {
+                setDealerCards(dealerCardsWithState)
+                playCardSound()
+
+                setTimeout(() => {
+                  setRevealingDealerCards(false)
+
+                  // Show final result
+                  setTimeout(() => {
+                    setResult({
+                      gameResult: data.gameResult,
+                      winAmount: data.winAmount || 0,
+                      clientSeed,
+                      serverSeedHash,
+                    })
+                  }, 1000)
+                }, 600)
+              }, 600)
+            } else {
+              // Regular bust case
+              setTimeout(() => {
+                setResult({
+                  gameResult: data.gameResult,
+                  winAmount: data.winAmount || 0,
+                  clientSeed,
+                  serverSeedHash,
+                })
+              }, 1500)
+            }
           }
 
           setIsHitting(false)
