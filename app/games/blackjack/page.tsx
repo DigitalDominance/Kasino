@@ -176,6 +176,9 @@ function BlackjackContent() {
       return
     }
 
+    // Preload card images
+    preloadCardImages()
+
     // 1) generate clientSeed + hash
     const arr = crypto.getRandomValues(new Uint8Array(32))
     const rawSeed = Array.from(arr)
@@ -273,7 +276,7 @@ function BlackjackContent() {
             clientSeed,
             serverSeedHash,
           })
-        }, 1000)
+        }, 2000) // Increased delay to 2 seconds
       }
 
       setIsHitting(false)
@@ -317,7 +320,7 @@ function BlackjackContent() {
         setDealerDrawing(false)
         setGameStatus("complete")
 
-        // Show result
+        // Show result after 2 seconds
         setTimeout(() => {
           setResult({
             gameResult: data.gameResult,
@@ -325,7 +328,7 @@ function BlackjackContent() {
             clientSeed,
             serverSeedHash,
           })
-        }, 1000)
+        }, 2000) // Increased delay to 2 seconds
       }, 1500)
 
       setIsStanding(false)
@@ -587,20 +590,14 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ rotate: [0, -3, 0] }}
             transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
           >
-            <Image
-              src="/blockscards/khearts.webp"
-              alt="King of Hearts"
-              width={120}
-              height={180}
-              className="shadow-lg"
-            />
+            <Image src="/blockscards/cardback.webp" alt="Card Back" width={120} height={180} className="shadow-lg" />
           </motion.div>
           <motion.div
             className="absolute left-[60%] top-[10%]"
             animate={{ rotate: [0, 7, 0] }}
             transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
           >
-            <Image src="/blockscards/qclubs.webp" alt="Queen of Clubs" width={120} height={180} className="shadow-lg" />
+            <Image src="/blockscards/kspade.webp" alt="King of Spades" width={120} height={180} className="shadow-lg" />
           </motion.div>
         </div>
 
@@ -794,19 +791,19 @@ function BlackjackTable({
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#49EACB]/20 backdrop-blur-md p-4 rounded-lg border-2 border-[#49EACB] text-center"
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#49EACB]/20 backdrop-blur-md p-4 rounded-lg border-2 border-[#49EACB] text-center z-50"
           >
             <h2 className="text-3xl font-bold text-[#49EACB] mb-2">Blackjack!</h2>
           </motion.div>
         )}
 
-        {/* Bust notification */}
+        {/* Bust notification - increased z-index to 50 */}
         {playerValue > 21 && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500/20 backdrop-blur-md p-4 rounded-lg border-2 border-red-500 text-center"
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500/20 backdrop-blur-md p-4 rounded-lg border-2 border-red-500 text-center z-50"
           >
             <h2 className="text-3xl font-bold text-red-500 mb-2">Bust!</h2>
           </motion.div>
@@ -814,4 +811,22 @@ function BlackjackTable({
       </div>
     </div>
   )
+}
+
+// Add this function to preload card images
+const preloadCardImages = () => {
+  const suits = ["heart", "diamond", "club", "spade"]
+  const ranks = ["a", "2", "3", "4", "5", "6", "7", "8", "9", "10", "j", "q", "k"]
+
+  // Preload card back
+  const cardBackImg = new Image()
+  cardBackImg.src = "/blockscards/cardback.webp"
+
+  // Preload all card images
+  suits.forEach((suit) => {
+    ranks.forEach((rank) => {
+      const img = new Image()
+      img.src = `/blockscards/${rank}${suit}.webp`
+    })
+  })
 }
