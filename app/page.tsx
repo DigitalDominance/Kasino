@@ -116,6 +116,7 @@ function MainPageContent() {
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
+    { name: "Blackjack", slug: "blackjack", image: "/blackjackcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Horse Race", slug: "horserace", image: "/horseracecard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
@@ -1108,6 +1109,7 @@ function MainPageContent() {
                           else if (lwGame === "kasper loot box") cardImage = "/kasperlootboxcard.webp"
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
                           else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
+                          else if (lwGame === "blackjack") cardImage = "/blackjackcard.webp"
                           return (
                             <MotionCard
                               key={i}
