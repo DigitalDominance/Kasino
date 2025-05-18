@@ -258,48 +258,36 @@ function BlackjackContent() {
       setPlayerCards([])
       setDealerCards([])
 
-      // Delay to simulate dealing animation - deal cards one by one
+      // Deal all cards at once (back-facing)
       setTimeout(() => {
-        // Deal first player card
-        setPlayerCards([initialPlayerCards[0]])
+        setPlayerCards(initialPlayerCards)
+        setDealerCards(initialDealerCards)
         playCardSound()
 
+        // Flip all cards with slight delays between them
         setTimeout(() => {
-          // Deal dealer's up card
-          setDealerCards([initialDealerCards[0]])
+          // Flip first player card
+          const updatedPlayerCards1 = [{ ...initialPlayerCards[0], flipped: true }, initialPlayerCards[1]]
+          setPlayerCards(updatedPlayerCards1)
           playCardSound()
 
           setTimeout(() => {
-            // Deal second player card
-            setPlayerCards([initialPlayerCards[0], initialPlayerCards[1]])
+            // Flip dealer card
+            const updatedDealerCards = [{ ...initialDealerCards[0], flipped: true }]
+            setDealerCards(updatedDealerCards)
             playCardSound()
 
-            // Now flip the cards one by one
             setTimeout(() => {
-              // Flip first player card
-              const updatedPlayerCards1 = [{ ...initialPlayerCards[0], flipped: true }, initialPlayerCards[1]]
-              setPlayerCards(updatedPlayerCards1)
+              // Flip second player card
+              const updatedPlayerCards2 = [updatedPlayerCards1[0], { ...initialPlayerCards[1], flipped: true }]
+              setPlayerCards(updatedPlayerCards2)
               playCardSound()
 
-              setTimeout(() => {
-                // Flip dealer card
-                const updatedDealerCards = [{ ...initialDealerCards[0], flipped: true }]
-                setDealerCards(updatedDealerCards)
-                playCardSound()
-
-                setTimeout(() => {
-                  // Flip second player card
-                  const updatedPlayerCards2 = [updatedPlayerCards1[0], { ...initialPlayerCards[1], flipped: true }]
-                  setPlayerCards(updatedPlayerCards2)
-                  playCardSound()
-
-                  setIsDealing(false)
-                }, 400)
-              }, 400)
-            }, 400)
-          }, 400)
-        }, 400)
-      }, 400)
+              setIsDealing(false)
+            }, 250)
+          }, 250)
+        }, 300)
+      }, 300)
 
       setLoading(false)
     } catch (error) {
@@ -807,7 +795,7 @@ function BlackjackTable({
       {/* Dealer area */}
       <div className="absolute top-0 left-0 right-0 h-1/2 flex flex-col items-center justify-center p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-[#49EACB] mb-2">Dealer {dealerUpCardOnly ? "" : `(${dealerValue})`}</h3>
+          <h3 className="text-xl font-bold text-[#49EACB] mb-2">Dealer ({dealerValue})</h3>
         </div>
         <div className="flex justify-center items-center h-40 relative">
           {dealerCards.map((card, index) => (
