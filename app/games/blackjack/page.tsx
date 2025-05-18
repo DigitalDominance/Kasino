@@ -582,7 +582,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ rotate: [0, 5, 0] }}
             transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           >
-            <Image src="/blockscards/aspade.webp" alt="Ace of Spades" width={120} height={180} className="shadow-lg" />
+            <Image src="/blockscards/aspades.webp" alt="Ace of Spades" width={120} height={180} className="shadow-lg" />
           </motion.div>
           <motion.div
             className="absolute left-[45%] top-[15%]"
@@ -596,7 +596,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ rotate: [0, 7, 0] }}
             transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
           >
-            <Image src="/blockscards/kspade.webp" alt="King of Spades" width={120} height={180} className="shadow-lg" />
+            <Image src="/blockscards/kspades.webp" alt="King of Spades" width={120} height={180} className="shadow-lg" />
           </motion.div>
         </div>
 
