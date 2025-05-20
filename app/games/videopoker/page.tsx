@@ -238,9 +238,14 @@ function VideoPokerContent() {
         let delay = 300
         for (let i = 0; i < initialPlayerCards.length; i++) {
           setTimeout(() => {
-            const updatedCards = [...initialPlayerCards]
-            updatedCards[i] = { ...updatedCards[i], flipped: true }
-            setPlayerCards(updatedCards)
+            setPlayerCards((prevCards) => {
+              const updatedCards = [...prevCards]
+              // Make sure we have enough cards in the array
+              if (i < updatedCards.length) {
+                updatedCards[i] = { ...updatedCards[i], flipped: true }
+              }
+              return updatedCards
+            })
             playCardSound()
 
             // After all cards are flipped
@@ -914,6 +919,7 @@ function VideoPokerTable({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute -bottom-8 left-0 right-0 text-center"
+                    onClick={(e) => e.stopPropagation()} // Prevent clicks on the indicator from toggling hold
                   >
                     <span className="bg-[#49EACB] text-black px-3 py-1 rounded-md font-bold text-sm">HOLD</span>
                   </motion.div>
