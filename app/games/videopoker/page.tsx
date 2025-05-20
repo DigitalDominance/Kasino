@@ -556,28 +556,6 @@ function VideoPokerContent() {
               </div>
             </Card>
 
-            {/* Mini Paytable */}
-            <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4">
-              <h3 className="text-lg font-bold text-[#49EACB] mb-2">Paytable</h3>
-              <div className="space-y-1 text-sm">
-                {Object.entries(PAYTABLE).map(([rank, multiplier]) => (
-                  <div key={rank} className="flex justify-between items-center">
-                    <span>{HAND_RANK_NAMES[rank]}</span>
-                    <div className="flex items-center">
-                      <Image
-                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                        alt="KAS"
-                        width={14}
-                        height={14}
-                        className="mr-1"
-                      />
-                      <span className="font-bold text-[#49EACB]">{(Number(betAmount) * multiplier).toFixed(2)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
             <LiveChat textColor="#49EACB" />
             <LiveWins textColor="#49EACB" />
           </div>
