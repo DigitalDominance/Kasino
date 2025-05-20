@@ -316,17 +316,46 @@ function VideoPokerContent() {
 
       // Flip the new cards with slight delays
       let delay = 300
+      let cardsToFlip = updatedCards.filter((_, idx) => !holds[idx]).length
+
+      if (cardsToFlip === 0) {
+        // If all cards were held, we still need to complete the game
+        setTimeout(() => {
+          setIsDrawing(false)
+          setGamePhase("complete")
+          setHandRank(data.rank)
+
+          // Show result after a short delay
+          setTimeout(() => {
+            setResult({
+              gameResult: data.gameResult,
+              winAmount: data.winAmount,
+              rank: data.rank,
+              clientSeed,
+              serverSeedHash,
+            })
+          }, 1000)
+        }, 500)
+        return
+      }
+
+      // Flip each non-held card with animation
       for (let i = 0; i < updatedCards.length; i++) {
         if (!holds[i]) {
           setTimeout(() => {
-            const flippedCards = [...updatedCards]
-            flippedCards[i] = { ...flippedCards[i], flipped: true }
-            setPlayerCards(flippedCards)
+            setPlayerCards((prevCards) => {
+              const flippedCards = [...prevCards]
+              if (i < flippedCards.length) {
+                flippedCards[i] = { ...flippedCards[i], flipped: true }
+              }
+              return flippedCards
+            })
+
             playCardSound()
 
             // Check if this is the last card to flip
-            const remainingToFlip = updatedCards.filter((_, idx) => !holds[idx] && idx >= i).length
-            if (remainingToFlip === 1) {
+            cardsToFlip--
+            if (cardsToFlip === 0) {
               // After all new cards are flipped
               setTimeout(() => {
                 setIsDrawing(false)
@@ -348,26 +377,6 @@ function VideoPokerContent() {
           }, delay)
           delay += 250
         }
-      }
-
-      // If all cards were held, we still need to complete the game
-      if (holds.every((hold) => hold)) {
-        setTimeout(() => {
-          setIsDrawing(false)
-          setGamePhase("complete")
-          setHandRank(data.rank)
-
-          // Show result after a short delay
-          setTimeout(() => {
-            setResult({
-              gameResult: data.gameResult,
-              winAmount: data.winAmount,
-              rank: data.rank,
-              clientSeed,
-              serverSeedHash,
-            })
-          }, 1000)
-        }, 500)
       }
     } catch (error) {
       console.error("Error drawing:", error)
@@ -549,44 +558,23 @@ function VideoPokerContent() {
 
             {/* Mini Paytable */}
             <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-4">
-              <h3 className="text-lg font-bold text-[#49EACB] mb-2">Paytable (1 KAS)</h3>
+              <h3 className="text-lg font-bold text-[#49EACB] mb-2">Paytable</h3>
               <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Royal Flush</span>
-                  <span className="font-bold text-[#49EACB]">100x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Straight Flush</span>
-                  <span className="font-bold text-[#49EACB]">50x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Four of a Kind</span>
-                  <span className="font-bold text-[#49EACB]">25x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Full House</span>
-                  <span className="font-bold text-[#49EACB]">9x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Flush</span>
-                  <span className="font-bold text-[#49EACB]">6x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Straight</span>
-                  <span className="font-bold text-[#49EACB]">4x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Three of a Kind</span>
-                  <span className="font-bold text-[#49EACB]">3x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Two Pair</span>
-                  <span className="font-bold text-[#49EACB]">2x</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Jacks or Better</span>
-                  <span className="font-bold text-[#49EACB]">1x</span>
-                </div>
+                {Object.entries(PAYTABLE).map(([rank, multiplier]) => (
+                  <div key={rank} className="flex justify-between items-center">
+                    <span>{HAND_RANK_NAMES[rank]}</span>
+                    <div className="flex items-center">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={14}
+                        height={14}
+                        className="mr-1"
+                      />
+                      <span className="font-bold text-[#49EACB]">{(Number(betAmount) * multiplier).toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </Card>
 
@@ -668,12 +656,23 @@ function VideoPokerContent() {
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-white mb-2">Payouts (per 1 KAS bet)</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Payouts (Current Bet: {Number(betAmount).toFixed(2)} KAS)
+              </h3>
               <div className="grid grid-cols-3 gap-2 mb-6">
-                {Object.entries(PAYTABLE).map(([rank, payout]) => (
+                {Object.entries(PAYTABLE).map(([rank, multiplier]) => (
                   <div key={rank} className="bg-gray-800 p-2 rounded text-center">
                     <p className="text-sm text-gray-300">{HAND_RANK_NAMES[rank]}</p>
-                    <p className="font-bold text-[#49EACB]">{payout}x</p>
+                    <div className="font-bold text-[#49EACB] flex items-center justify-center">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={16}
+                        height={16}
+                        className="mr-1"
+                      />
+                      <span>{(Number(betAmount) * multiplier).toFixed(2)}</span>
+                    </div>
                   </div>
                 ))}
               </div>
