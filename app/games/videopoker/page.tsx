@@ -78,7 +78,7 @@ function VideoPokerContent() {
   const [showPaytable, setShowPaytable] = useState(false)
 
   // Animations
-  const [isDealing, setIsDealing] = useState(false)
+  const [isDealing, setIsDealing] = useState(isDealing)
   const [isDrawing, setIsDrawing] = useState(false)
 
   // Provably-fair & results
@@ -142,8 +142,14 @@ function VideoPokerContent() {
   // Toggle hold for a card
   const toggleHold = (index: number) => {
     if (gamePhase !== "hold") return
+
+    console.log(`Toggling hold for card ${index}`)
+
     const newHolds = [...holds]
     newHolds[index] = !newHolds[index]
+
+    console.log("New holds array:", newHolds)
+
     setHolds(newHolds)
   }
 
@@ -204,6 +210,9 @@ function VideoPokerContent() {
       setGameId(data.gameId)
       setServerSeedHash(data.serverSeedHash)
 
+      // Ensure we're using all 5 cards from the API response
+      console.log("Initial cards from API:", data.playerHand)
+
       // Set initial cards with flipped state
       const initialPlayerCards = data.playerHand.map((card: CardType) => ({
         ...card,
@@ -261,9 +270,11 @@ function VideoPokerContent() {
     setIsDrawing(true)
 
     try {
+      console.log("Sending holds to API:", holds)
+
       const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
-        holds,
+        holds, // This should be the correct holds array with true/false values
       })
 
       if (!data.success) {
@@ -272,6 +283,8 @@ function VideoPokerContent() {
         setGamePhase("hold")
         return
       }
+
+      console.log("Final hand from API:", data.finalHand)
 
       // Get the final hand
       const finalHand = data.finalHand
