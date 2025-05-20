@@ -78,7 +78,7 @@ function VideoPokerContent() {
   const [showPaytable, setShowPaytable] = useState(false)
 
   // Animations
-  const [isDealing, setIsDealing] = useState(isDealing)
+  const [isDealing, setIsDealing] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
 
   // Provably-fair & results
