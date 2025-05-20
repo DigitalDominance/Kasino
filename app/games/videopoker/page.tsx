@@ -33,9 +33,9 @@ interface CardType {
   flipped?: boolean
 }
 
-// Paytable
+// Updated paytable to match backend
 const PAYTABLE = {
-  royalFlush: 250,
+  royalFlush: 100,
   straightFlush: 50,
   fourKind: 25,
   fullHouse: 9,
@@ -201,11 +201,11 @@ function VideoPokerContent() {
         return
       }
 
-      setGameId(data.game._id)
-      setServerSeedHash(data.game.serverSeedHash)
+      setGameId(data.gameId)
+      setServerSeedHash(data.serverSeedHash)
 
       // Set initial cards with flipped state
-      const initialPlayerCards = data.game.playerHand.map((card: CardType) => ({
+      const initialPlayerCards = data.playerHand.map((card: CardType) => ({
         ...card,
         flipped: false,
       }))
@@ -535,7 +535,7 @@ function VideoPokerContent() {
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Royal Flush</span>
-                  <span className="font-bold text-[#49EACB]">250x</span>
+                  <span className="font-bold text-[#49EACB]">100x</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Straight Flush</span>
@@ -955,7 +955,7 @@ function VideoPokerTable({
             </div>
             <div>
               <span className="text-gray-300 text-sm">Max Win:</span>{" "}
-              <span className="text-[#49EACB] font-bold">{betAmount * 250} KAS</span>
+              <span className="text-[#49EACB] font-bold">{betAmount * 100} KAS</span>
             </div>
           </div>
         </div>
