@@ -119,6 +119,7 @@ function MainPageContent() {
     { name: "Blackjack", slug: "blackjack", image: "/blackjackcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Horse Race", slug: "horserace", image: "/horseracecard.webp" },
+    { name: "Video Poker", slug: "videopoker", image: "/videopokercard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
     { name: "Kaspa Tower Climb", slug: "kaspatowerclimb", image: "/kaspatowerclimbcard.webp" },
     { name: "Plinko", slug: "plinko", image: "/plinkocard.webp" },
@@ -1110,6 +1111,7 @@ function MainPageContent() {
                           else if (lwGame === "kasen mania") cardImage = "/kasenmaniacard.webp"
                           else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
                           else if (lwGame === "blackjack") cardImage = "/blackjackcard.webp"
+                          else if (lwGame === "videopoker") cardImage = "/videopokercard.webp"
                           return (
                             <MotionCard
                               key={i}
