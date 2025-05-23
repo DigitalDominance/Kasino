@@ -816,7 +816,7 @@ function CrapsTable({
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.5 }}
-          className="absolute top-[60%] left-1/2 transform -translate-x-1/2 z-30"
+          className="absolute top-[60%] left-0 right-0 flex justify-center z-30"
         >
           <div className="bg-[#49EACB]/20 backdrop-blur-md px-8 py-4 rounded-lg border border-[#49EACB]/50">
             <h3 className="text-3xl font-bold text-[#49EACB]">Roll: {currentRoll.total}</h3>
@@ -845,7 +845,7 @@ function CrapsTable({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50"
+          className="absolute bottom-16 left-0 right-0 flex justify-center z-50"
         >
           <Button
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
