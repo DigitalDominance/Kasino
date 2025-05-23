@@ -50,6 +50,7 @@ function CrapsContent() {
   const [currentRoll, setCurrentRoll] = useState<DiceRoll | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [pendingRoll, setPendingRoll] = useState<number | null>(null) // Store API result until animation completes
 
   // Provably-fair & results
   const [clientSeed, setClientSeed] = useState<string | null>(null)
@@ -189,9 +190,10 @@ function CrapsContent() {
       setServerSeedHash(data.serverSeedHash || data.game.serverSeedHash)
       setLoading(false)
 
-      // Extract come-out roll
+      // Extract come-out roll but don't display it yet - store it in pendingRoll
       const comeOutRoll = data.comeOutRoll || data.game.comeOutRoll
       const point = data.point || data.game.point
+      setPendingRoll(comeOutRoll)
 
       // Let dice continue rolling for a bit after API returns
       setTimeout(() => {
@@ -225,7 +227,9 @@ function CrapsContent() {
           total: comeOutRoll,
         })
 
+        // Now that animation is complete, add to rolls array
         setRolls([comeOutRoll])
+        setPendingRoll(null)
 
         // Stop rolling animation
         setTimeout(() => {
@@ -303,6 +307,9 @@ function CrapsContent() {
       const roll = data.roll
       const gameResult = data.gameResult
 
+      // Store the roll result but don't display it yet
+      setPendingRoll(roll)
+
       // Let dice continue rolling for a bit after API returns
       setTimeout(() => {
         // Calculate individual dice values that add up to the roll
@@ -335,7 +342,9 @@ function CrapsContent() {
           total: roll,
         })
 
+        // Now that animation is complete, add to rolls array
         setRolls((prevRolls) => [...prevRolls, roll])
+        setPendingRoll(null)
 
         // Stop rolling animation
         setTimeout(() => {
@@ -389,6 +398,7 @@ function CrapsContent() {
     setClientSeed(null)
     setServerSeedHash(null)
     setGameId(null)
+    setPendingRoll(null)
   }
 
   return (
@@ -474,6 +484,7 @@ function CrapsContent() {
                   isRolling={isRolling}
                   rolls={rolls}
                   betAmount={Number(betAmount)}
+                  pendingRoll={pendingRoll}
                 />
               )}
             </div>
@@ -711,7 +722,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           </motion.div>
         </div>
 
-        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-4">
+        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-16">
           <h3 className="text-xl font-bold text-[#49EACB] mb-2">How to Play</h3>
           <ol className="text-left text-gray-200 space-y-2">
             <li>1. Place your bet and roll the dice (Come-Out Roll)</li>
@@ -753,6 +764,7 @@ function CrapsTable({
   isRolling,
   rolls,
   betAmount,
+  pendingRoll,
 }: {
   currentRoll: DiceRoll | null
   point: number | null
@@ -761,6 +773,7 @@ function CrapsTable({
   isRolling: boolean
   rolls: number[]
   betAmount: number
+  pendingRoll: number | null
 }) {
   return (
     <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
@@ -882,9 +895,9 @@ function CrapsTable({
           </div>
         )}
 
-        {/* Previous rolls */}
-        {rolls.length > 0 && (
-          <div className="absolute bottom-16 left-0 right-0 flex justify-center">
+        {/* Previous rolls - moved down to avoid overlap */}
+        {rolls.length > 0 && !isRolling && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center">
             <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-lg border border-[#49EACB]/30">
               <div className="flex items-center gap-4">
                 <div>
