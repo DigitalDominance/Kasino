@@ -711,7 +711,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           </motion.div>
         </div>
 
-        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-8">
+        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-4">
           <h3 className="text-xl font-bold text-[#49EACB] mb-2">How to Play</h3>
           <ol className="text-left text-gray-200 space-y-2">
             <li>1. Place your bet and roll the dice (Come-Out Roll)</li>
@@ -725,7 +725,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
+          className="absolute bottom-8 left-0 right-0 flex justify-center z-30"
         >
           <Button
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-10 py-2"
@@ -793,21 +793,16 @@ function CrapsTable({
                 animate={
                   isRolling
                     ? {
-                        rotateY: [0, 180, 360, 540, 720, 900, 1080, 1260, 1440, 1620, 1800],
-                        x: 0,
-                        y: 0,
-                        scale: 1,
+                        rotateY: [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880],
                       }
                     : {
                         rotateY: 0,
-                        x: 0,
-                        y: 0,
-                        scale: 1,
                       }
                 }
                 transition={{
-                  duration: isRolling ? 2 : 0.3,
+                  duration: isRolling ? 3 : 0.3,
                   ease: "linear",
+                  repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
                 }}
               >
                 <Die value={isRolling ? (Math.floor(Date.now() / 100) % 6) + 1 : currentRoll.die1} size={100} />
@@ -816,21 +811,16 @@ function CrapsTable({
                 animate={
                   isRolling
                     ? {
-                        rotateY: [0, -180, -360, -540, -720, -900, -1080, -1260, -1440, -1620, -1800],
-                        x: 0,
-                        y: 0,
-                        scale: 1,
+                        rotateY: [0, -360, -720, -1080, -1440, -1800, -2160, -2520, -2880],
                       }
                     : {
                         rotateY: 0,
-                        x: 0,
-                        y: 0,
-                        scale: 1,
                       }
                 }
                 transition={{
-                  duration: isRolling ? 2 : 0.3,
+                  duration: isRolling ? 3 : 0.3,
                   ease: "linear",
+                  repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
                 }}
               >
                 <Die value={isRolling ? (Math.floor(Date.now() / 90) % 6) + 1 : currentRoll.die2} size={100} />
@@ -894,7 +884,7 @@ function CrapsTable({
 
         {/* Previous rolls */}
         {rolls.length > 0 && (
-          <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+          <div className="absolute bottom-16 left-0 right-0 flex justify-center">
             <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-lg border border-[#49EACB]/30">
               <div className="flex items-center gap-4">
                 <div>
