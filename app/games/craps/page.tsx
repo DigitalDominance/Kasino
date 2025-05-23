@@ -147,27 +147,12 @@ function CrapsContent() {
       })
       const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
 
-      // Set initial game state first - show dice rolling before API call
-      // Start the rolling animation first with consistent style
-      setIsRolling(true)
-
-      // Set initial game state first - show dice rolling before API call
+      // Set initial game state
       setPregame(false)
       setIsPlaying(true)
       setGamePhase("come-out")
-      setIsRolling(true)
 
-      // Initialize with random dice that will be rolling
-      setCurrentRoll({
-        die1: Math.floor(Math.random() * 6) + 1,
-        die2: Math.floor(Math.random() * 6) + 1,
-        total: 0, // Will be updated with actual total
-      })
-
-      // Play dice sound
-      playDiceRollSound()
-
-      // 3) call play API while dice are rolling
+      // 3) call play API with loading animation
       setLoading(true)
       const { data } = await axios.post(`${API_BASE}/api/game/play`, {
         gameName: "craps",
@@ -182,7 +167,6 @@ function CrapsContent() {
       if (!data.success) {
         alert("Play API failed")
         setLoading(false)
-        setIsRolling(false)
         resetGame()
         return
       }
@@ -191,12 +175,22 @@ function CrapsContent() {
       setServerSeedHash(data.serverSeedHash || data.game.serverSeedHash)
       setLoading(false)
 
-      // Extract come-out roll but don't display it yet - store it in pendingRoll
+      // Extract come-out roll
       const comeOutRoll = data.comeOutRoll || data.game.comeOutRoll
       const point = data.point || data.game.point
-      setPendingRoll(comeOutRoll)
 
-      // Let dice continue rolling for a consistent amount of time
+      // NOW start the dice animation after API success
+      setIsRolling(true)
+      playDiceRollSound()
+
+      // Initialize with random dice that will be rolling
+      setCurrentRoll({
+        die1: Math.floor(Math.random() * 6) + 1,
+        die2: Math.floor(Math.random() * 6) + 1,
+        total: 0,
+      })
+
+      // Let dice roll for animation duration
       setTimeout(() => {
         // Calculate individual dice values that add up to the come-out roll
         const die1 = Math.floor(Math.random() * 6) + 1
@@ -207,11 +201,9 @@ function CrapsContent() {
         let finalDie2 = die2
 
         if (die2 < 1 || die2 > 6) {
-          // Redistribute the total across two valid dice
           finalDie1 = Math.min(6, Math.max(1, Math.floor(comeOutRoll / 2)))
           finalDie2 = comeOutRoll - finalDie1
 
-          // Final adjustment if still invalid
           if (finalDie2 < 1) {
             finalDie1 = 1
             finalDie2 = comeOutRoll - 1
@@ -228,48 +220,39 @@ function CrapsContent() {
           total: comeOutRoll,
         })
 
-        // Now that animation is complete, add to rolls array
         setRolls([comeOutRoll])
-        setPendingRoll(null)
+        setIsRolling(false)
 
-        // Stop rolling animation
+        // Check immediate win/loss or establish point after dice settle
         setTimeout(() => {
-          setIsRolling(false)
-
-          // Check immediate win/loss or establish point after dice settle
-          setTimeout(() => {
-            if ([7, 11].includes(comeOutRoll)) {
-              // Win on 7 or 11
-              setGamePhase("complete")
-              setTimeout(() => {
-                setResult({
-                  gameResult: "win",
-                  winAmount: Number(betAmount) * 2,
-                  clientSeed,
-                  serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
-                  finalRoll: comeOutRoll,
-                })
-              }, 1000)
-            } else if ([2, 3, 12].includes(comeOutRoll)) {
-              // Lose on 2, 3, or 12
-              setGamePhase("complete")
-              setTimeout(() => {
-                setResult({
-                  gameResult: "lose",
-                  winAmount: 0,
-                  clientSeed,
-                  serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
-                  finalRoll: comeOutRoll,
-                })
-              }, 1000)
-            } else {
-              // Establish point
-              setPoint(comeOutRoll)
-              setGamePhase("point")
-            }
-          }, 300)
+          if ([7, 11].includes(comeOutRoll)) {
+            setGamePhase("complete")
+            setTimeout(() => {
+              setResult({
+                gameResult: "win",
+                winAmount: Number(betAmount) * 2,
+                clientSeed,
+                serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
+                finalRoll: comeOutRoll,
+              })
+            }, 1000)
+          } else if ([2, 3, 12].includes(comeOutRoll)) {
+            setGamePhase("complete")
+            setTimeout(() => {
+              setResult({
+                gameResult: "lose",
+                winAmount: 0,
+                clientSeed,
+                serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
+                finalRoll: comeOutRoll,
+              })
+            }, 1000)
+          } else {
+            setPoint(comeOutRoll)
+            setGamePhase("point")
+          }
         }, 500)
-      }, 2000) // Consistent animation time regardless of API response time
+      }, DICE_ANIMATION_DURATION * 1000)
     } catch (error) {
       console.error("Error starting game:", error)
       alert("Failed to start game. Please try again.")
@@ -281,19 +264,8 @@ function CrapsContent() {
   const handleRoll = async () => {
     if (gamePhase !== "point") return
 
-    // Start rolling animation immediately
-    setIsRolling(true)
-    playDiceRollSound()
-
-    // Set random dice that will be rolling
-    setCurrentRoll((prev) => ({
-      die1: Math.floor(Math.random() * 6) + 1,
-      die2: Math.floor(Math.random() * 6) + 1,
-      total: prev?.total || 0,
-    }))
-
     try {
-      // Call API while dice are rolling
+      // Call API first
       const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
         action: "roll",
@@ -301,32 +273,36 @@ function CrapsContent() {
 
       if (!data.success) {
         alert("Roll action failed")
-        setIsRolling(false)
         return
       }
 
       const roll = data.roll
       const gameResult = data.gameResult
 
-      // Store the roll result but don't display it yet
-      setPendingRoll(roll)
+      // NOW start the dice animation after API success
+      setIsRolling(true)
+      playDiceRollSound()
 
-      // Let dice continue rolling for a consistent amount of time
+      // Set random dice that will be rolling
+      setCurrentRoll((prev) => ({
+        die1: Math.floor(Math.random() * 6) + 1,
+        die2: Math.floor(Math.random() * 6) + 1,
+        total: prev?.total || 0,
+      }))
+
+      // Let dice roll for animation duration
       setTimeout(() => {
         // Calculate individual dice values that add up to the roll
         const die1 = Math.floor(Math.random() * 6) + 1
         const die2 = roll - die1
 
-        // If die2 is invalid, adjust the dice values
         let finalDie1 = die1
         let finalDie2 = die2
 
         if (die2 < 1 || die2 > 6) {
-          // Redistribute the total across two valid dice
           finalDie1 = Math.min(6, Math.max(1, Math.floor(roll / 2)))
           finalDie2 = roll - finalDie1
 
-          // Final adjustment if still invalid
           if (finalDie2 < 1) {
             finalDie1 = 1
             finalDie2 = roll - 1
@@ -343,47 +319,39 @@ function CrapsContent() {
           total: roll,
         })
 
-        // Now that animation is complete, add to rolls array
         setRolls((prevRolls) => [...prevRolls, roll])
-        setPendingRoll(null)
+        setIsRolling(false)
 
-        // Stop rolling animation
+        // Check win/loss or continue after dice settle
         setTimeout(() => {
-          setIsRolling(false)
-
-          // Check win/loss or continue after dice settle
-          setTimeout(() => {
-            if (gameResult === "win") {
-              setGamePhase("complete")
-              setTimeout(() => {
-                setResult({
-                  gameResult: "win",
-                  winAmount: data.winAmount,
-                  clientSeed,
-                  serverSeedHash,
-                  finalRoll: roll,
-                })
-              }, 1000)
-            } else if (gameResult === "lose") {
-              setGamePhase("complete")
-              setTimeout(() => {
-                setResult({
-                  gameResult: "lose",
-                  winAmount: 0,
-                  clientSeed,
-                  serverSeedHash,
-                  finalRoll: roll,
-                })
-              }, 1000)
-            }
-            // If gameResult is "continue", we stay in point phase
-          }, 300)
+          if (gameResult === "win") {
+            setGamePhase("complete")
+            setTimeout(() => {
+              setResult({
+                gameResult: "win",
+                winAmount: data.winAmount,
+                clientSeed,
+                serverSeedHash,
+                finalRoll: roll,
+              })
+            }, 1000)
+          } else if (gameResult === "lose") {
+            setGamePhase("complete")
+            setTimeout(() => {
+              setResult({
+                gameResult: "lose",
+                winAmount: 0,
+                clientSeed,
+                serverSeedHash,
+                finalRoll: roll,
+              })
+            }, 1000)
+          }
         }, 500)
-      }, 2000) // Consistent animation time regardless of API response time
+      }, DICE_ANIMATION_DURATION * 1000)
     } catch (error) {
       console.error("Error rolling:", error)
       alert("Failed to roll. Please try again.")
-      setIsRolling(false)
     }
   }
 
@@ -485,7 +453,6 @@ function CrapsContent() {
                   isRolling={isRolling}
                   rolls={rolls}
                   betAmount={Number(betAmount)}
-                  pendingRoll={pendingRoll}
                 />
               )}
             </div>
@@ -756,7 +723,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
   )
 }
 
-// Craps Table Component
+// Craps Table Component - Completely restructured layout
 function CrapsTable({
   currentRoll,
   point,
@@ -765,7 +732,6 @@ function CrapsTable({
   isRolling,
   rolls,
   betAmount,
-  pendingRoll,
 }: {
   currentRoll: DiceRoll | null
   point: number | null
@@ -774,173 +740,169 @@ function CrapsTable({
   isRolling: boolean
   rolls: number[]
   betAmount: number
-  pendingRoll: number | null
 }) {
   return (
     <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
-      {/* Point display */}
-      <div className="absolute top-6 left-0 right-0 flex justify-center">
-        {point !== null && (gamePhase === "point" || gamePhase === "complete") && (
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-[#49EACB]/20 backdrop-blur-md px-6 py-3 rounded-lg border-2 border-[#49EACB] text-center"
-          >
+      {/* Point display - Top */}
+      {point !== null && (gamePhase === "point" || gamePhase === "complete") && (
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="absolute top-6 left-0 right-0 flex justify-center z-10"
+        >
+          <div className="bg-[#49EACB]/20 backdrop-blur-md px-6 py-3 rounded-lg border-2 border-[#49EACB] text-center">
             <h2 className="text-2xl font-bold text-[#49EACB]">Point: {point}</h2>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dice area - Center */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+        {currentRoll ? (
+          <motion.div
+            className="flex justify-center items-center gap-8"
+            initial={{ y: -300, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <motion.div
+              animate={
+                isRolling
+                  ? {
+                      rotateY: [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880],
+                    }
+                  : {
+                      rotateY: 0,
+                    }
+              }
+              transition={{
+                duration: DICE_ANIMATION_DURATION,
+                ease: "linear",
+                repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
+              }}
+            >
+              <Die value={isRolling ? (Math.floor(Date.now() / 100) % 6) + 1 : currentRoll.die1} size={100} />
+            </motion.div>
+            <motion.div
+              animate={
+                isRolling
+                  ? {
+                      rotateY: [0, -360, -720, -1080, -1440, -1800, -2160, -2520, -2880],
+                    }
+                  : {
+                      rotateY: 0,
+                    }
+              }
+              transition={{
+                duration: DICE_ANIMATION_DURATION,
+                ease: "linear",
+                repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
+              }}
+            >
+              <Die value={isRolling ? (Math.floor(Date.now() / 90) % 6) + 1 : currentRoll.die2} size={100} />
+            </motion.div>
           </motion.div>
+        ) : (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-400 text-lg">Roll the dice to start</p>
+          </div>
         )}
       </div>
 
-      {/* Craps table */}
-      <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex flex-col items-center justify-center p-6">
-        {/* Dice area */}
-        <div className="relative w-full max-w-md h-64 mb-8">
-          {currentRoll ? (
-            <motion.div
-              className="flex justify-center items-center gap-8"
-              initial={{ y: -300, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <motion.div
-                animate={
-                  isRolling
-                    ? {
-                        rotateY: [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880],
-                      }
-                    : {
-                        rotateY: 0,
-                      }
-                }
-                transition={{
-                  duration: DICE_ANIMATION_DURATION,
-                  ease: "linear",
-                  repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
-                }}
-              >
-                <Die value={isRolling ? (Math.floor(Date.now() / 100) % 6) + 1 : currentRoll.die1} size={100} />
-              </motion.div>
-              <motion.div
-                animate={
-                  isRolling
-                    ? {
-                        rotateY: [0, -360, -720, -1080, -1440, -1800, -2160, -2520, -2880],
-                      }
-                    : {
-                        rotateY: 0,
-                      }
-                }
-                transition={{
-                  duration: DICE_ANIMATION_DURATION,
-                  ease: "linear",
-                  repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
-                }}
-              >
-                <Die value={isRolling ? (Math.floor(Date.now() / 90) % 6) + 1 : currentRoll.die2} size={100} />
-              </motion.div>
-            </motion.div>
-          ) : (
-            <div className="flex justify-center items-center h-full">
-              <p className="text-gray-400 text-lg">Roll the dice to start</p>
-            </div>
-          )}
-        </div>
-
-        {/* Roll total display */}
-        {currentRoll && !isRolling && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.5 }}
-            className="mb-8"
-          >
-            <div className="bg-[#49EACB]/20 backdrop-blur-md px-8 py-4 rounded-lg border border-[#49EACB]/50">
-              <h3 className="text-3xl font-bold text-[#49EACB]">Roll: {currentRoll.total}</h3>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Game instructions */}
-        {gamePhase === "point" && !isRolling && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 text-center text-gray-300 absolute bottom-24 left-0 right-0"
-          >
-            <p>
-              Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
-              <span className="text-red-400 font-bold">7</span> to lose
-            </p>
-          </motion.div>
-        )}
-
-        {/* Game controls - moved down to avoid overlap */}
-        {gamePhase === "point" && !isRolling && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="absolute bottom-8 left-0 right-0 flex justify-center"
-          >
-            <Button
-              className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
-              onClick={onRoll}
-              disabled={isRolling}
-            >
-              ROLL AGAIN
-            </Button>
-          </motion.div>
-        )}
-
-        {/* Rolling status */}
-        {isRolling && (
-          <div className="text-center mt-4">
-            <p className="text-lg text-[#49EACB] animate-pulse">Rolling dice...</p>
+      {/* Roll total display - Below dice */}
+      {currentRoll && !isRolling && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.5 }}
+          className="absolute top-[60%] left-1/2 transform -translate-x-1/2 z-30"
+        >
+          <div className="bg-[#49EACB]/20 backdrop-blur-md px-8 py-4 rounded-lg border border-[#49EACB]/50">
+            <h3 className="text-3xl font-bold text-[#49EACB]">Roll: {currentRoll.total}</h3>
           </div>
-        )}
+        </motion.div>
+      )}
 
-        {/* Previous rolls - moved down to avoid overlap */}
-        {rolls.length > 0 && !isRolling && (
-          <div className="absolute bottom-1 left-0 right-0 flex justify-center">
-            <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-lg border border-[#49EACB]/30">
-              <div className="flex items-center gap-4">
-                <div>
-                  <span className="text-gray-300 text-sm">Bet:</span>{" "}
-                  <span className="text-[#49EACB] font-bold">{betAmount} KAS</span>
-                </div>
-                <div>
-                  <span className="text-gray-300 text-sm">Rolls:</span>{" "}
-                  <span className="text-[#49EACB]">
-                    {rolls.map((roll, index) => (
-                      <span
-                        key={index}
-                        className={`${
-                          index === 0
-                            ? [7, 11].includes(roll)
-                              ? "text-green-400"
-                              : [2, 3, 12].includes(roll)
-                                ? "text-red-400"
-                                : "text-yellow-400"
-                            : roll === point
-                              ? "text-green-400"
-                              : roll === 7
-                                ? "text-red-400"
-                                : ""
-                        } font-bold`}
-                      >
-                        {roll}
-                        {index < rolls.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </span>
-                </div>
+      {/* Game instructions - Above button area */}
+      {gamePhase === "point" && !isRolling && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="absolute bottom-32 left-0 right-0 text-center text-gray-300 z-40"
+        >
+          <p className="text-lg">
+            Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
+            <span className="text-red-400 font-bold">7</span> to lose
+          </p>
+        </motion.div>
+      )}
+
+      {/* Game controls - Bottom center */}
+      {gamePhase === "point" && !isRolling && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50"
+        >
+          <Button
+            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
+            onClick={onRoll}
+            disabled={isRolling}
+          >
+            ROLL AGAIN
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Rolling status */}
+      {isRolling && (
+        <div className="absolute bottom-32 left-0 right-0 text-center z-40">
+          <p className="text-lg text-[#49EACB] animate-pulse">Rolling dice...</p>
+        </div>
+      )}
+
+      {/* Previous rolls - Bottom */}
+      {rolls.length > 0 && !isRolling && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-60">
+          <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-lg border border-[#49EACB]/30">
+            <div className="flex items-center gap-4 text-sm">
+              <div>
+                <span className="text-gray-300">Bet:</span>{" "}
+                <span className="text-[#49EACB] font-bold">{betAmount} KAS</span>
+              </div>
+              <div>
+                <span className="text-gray-300">Rolls:</span>{" "}
+                <span className="text-[#49EACB]">
+                  {rolls.map((roll, index) => (
+                    <span
+                      key={index}
+                      className={`${
+                        index === 0
+                          ? [7, 11].includes(roll)
+                            ? "text-green-400"
+                            : [2, 3, 12].includes(roll)
+                              ? "text-red-400"
+                              : "text-yellow-400"
+                          : roll === point
+                            ? "text-green-400"
+                            : roll === 7
+                              ? "text-red-400"
+                              : ""
+                      } font-bold`}
+                    >
+                      {roll}
+                      {index < rolls.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </span>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
