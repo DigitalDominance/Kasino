@@ -22,6 +22,7 @@ const MIN_BET = 1
 const MAX_BET = 1000
 const messages = ["Verifying transaction", "Hashing game seed", "Preparing dice"]
 const DICE_ANIMATION_DURATION = 1.5 // Consistent animation duration
+const RESULT_POPUP_DELAY = 1200 // 2 second delay for result popup
 
 // API base
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
@@ -227,6 +228,7 @@ function CrapsContent() {
         setTimeout(() => {
           if ([7, 11].includes(comeOutRoll)) {
             setGamePhase("complete")
+            // Add delay before showing result popup
             setTimeout(() => {
               setResult({
                 gameResult: "win",
@@ -235,9 +237,10 @@ function CrapsContent() {
                 serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
                 finalRoll: comeOutRoll,
               })
-            }, 1000)
+            }, RESULT_POPUP_DELAY)
           } else if ([2, 3, 12].includes(comeOutRoll)) {
             setGamePhase("complete")
+            // Add delay before showing result popup
             setTimeout(() => {
               setResult({
                 gameResult: "lose",
@@ -246,7 +249,7 @@ function CrapsContent() {
                 serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
                 finalRoll: comeOutRoll,
               })
-            }, 1000)
+            }, RESULT_POPUP_DELAY)
           } else {
             setPoint(comeOutRoll)
             setGamePhase("point")
@@ -326,6 +329,7 @@ function CrapsContent() {
         setTimeout(() => {
           if (gameResult === "win") {
             setGamePhase("complete")
+            // Add delay before showing result popup
             setTimeout(() => {
               setResult({
                 gameResult: "win",
@@ -334,9 +338,10 @@ function CrapsContent() {
                 serverSeedHash,
                 finalRoll: roll,
               })
-            }, 1000)
+            }, RESULT_POPUP_DELAY)
           } else if (gameResult === "lose") {
             setGamePhase("complete")
+            // Add delay before showing result popup
             setTimeout(() => {
               setResult({
                 gameResult: "lose",
@@ -345,7 +350,7 @@ function CrapsContent() {
                 serverSeedHash,
                 finalRoll: roll,
               })
-            }, 1000)
+            }, RESULT_POPUP_DELAY)
           }
         }, 500)
       }, DICE_ANIMATION_DURATION * 1000)
