@@ -722,7 +722,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           </motion.div>
         </div>
 
-        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-16">
+        <div className="bg-black/50 backdrop-blur-sm p-6 rounded-lg max-w-lg text-center mb-24">
           <h3 className="text-xl font-bold text-[#49EACB] mb-2">How to Play</h3>
           <ol className="text-left text-gray-200 space-y-2">
             <li>1. Place your bet and roll the dice (Come-Out Roll)</li>
@@ -879,7 +879,7 @@ function CrapsTable({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="mt-6 text-center text-gray-300 absolute bottom-20 left-0 right-0"
+            className="mt-6 text-center text-gray-300 absolute bottom-12 left-0 right-0"
           >
             <p>
               Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
@@ -897,7 +897,7 @@ function CrapsTable({
 
         {/* Previous rolls - moved down to avoid overlap */}
         {rolls.length > 0 && !isRolling && (
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+          <div className="absolute bottom-1 left-0 right-0 flex justify-center">
             <div className="bg-black/30 backdrop-blur-sm px-6 py-2 rounded-lg border border-[#49EACB]/30">
               <div className="flex items-center gap-4">
                 <div>
