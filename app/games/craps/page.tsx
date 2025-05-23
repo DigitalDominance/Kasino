@@ -180,53 +180,76 @@ function CrapsContent() {
       setTimeout(() => {
         playDiceRollSound()
 
-        // Calculate individual dice values (we don't get these from API, so we'll simulate them)
-        // In a real implementation, you'd get these from the API
-        const die1 = Math.min(comeOutRoll, 6)
-        const die2 = comeOutRoll - die1 > 0 ? comeOutRoll - die1 : 1
+        // Start the rolling animation first
+        setIsRolling(true)
 
-        setCurrentRoll({
-          die1,
-          die2,
-          total: comeOutRoll,
-        })
-
-        setRolls([comeOutRoll])
-
-        // After dice stop rolling
+        // After 2.5 seconds of rolling animation, show the actual result
         setTimeout(() => {
+          // Calculate individual dice values that add up to the come-out roll
+          const comeOutRoll = data.comeOutRoll || data.game.comeOutRoll
+          const die1 = Math.floor(Math.random() * 6) + 1
+          const die2 = comeOutRoll - die1
+
+          // If die2 is invalid, adjust the dice values
+          let finalDie1 = die1
+          let finalDie2 = die2
+
+          if (die2 < 1 || die2 > 6) {
+            // Redistribute the total across two valid dice
+            finalDie1 = Math.min(6, Math.max(1, Math.floor(comeOutRoll / 2)))
+            finalDie2 = comeOutRoll - finalDie1
+
+            // Final adjustment if still invalid
+            if (finalDie2 < 1) {
+              finalDie1 = 1
+              finalDie2 = comeOutRoll - 1
+            } else if (finalDie2 > 6) {
+              finalDie1 = comeOutRoll - 6
+              finalDie2 = 6
+            }
+          }
+
+          setCurrentRoll({
+            die1: finalDie1,
+            die2: finalDie2,
+            total: comeOutRoll,
+          })
+
+          setRolls([comeOutRoll])
           setIsRolling(false)
 
-          // Check immediate win/loss or establish point
-          if ([7, 11].includes(comeOutRoll)) {
-            // Win on 7 or 11
-            setGamePhase("complete")
-            setTimeout(() => {
-              setResult({
-                gameResult: "win",
-                winAmount: Number(betAmount) * 2,
-                clientSeed,
-                serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
-                finalRoll: comeOutRoll,
-              })
-            }, 1500)
-          } else if ([2, 3, 12].includes(comeOutRoll)) {
-            // Lose on 2, 3, or 12
-            setGamePhase("complete")
-            setTimeout(() => {
-              setResult({
-                gameResult: "lose",
-                winAmount: 0,
-                clientSeed,
-                serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
-                finalRoll: comeOutRoll,
-              })
-            }, 1500)
-          } else {
-            // Establish point
-            setPoint(comeOutRoll)
-            setGamePhase("point")
-          }
+          // Check immediate win/loss or establish point after dice settle
+          setTimeout(() => {
+            if ([7, 11].includes(comeOutRoll)) {
+              // Win on 7 or 11
+              setGamePhase("complete")
+              setTimeout(() => {
+                setResult({
+                  gameResult: "win",
+                  winAmount: Number(betAmount) * 2,
+                  clientSeed,
+                  serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
+                  finalRoll: comeOutRoll,
+                })
+              }, 1500)
+            } else if ([2, 3, 12].includes(comeOutRoll)) {
+              // Lose on 2, 3, or 12
+              setGamePhase("complete")
+              setTimeout(() => {
+                setResult({
+                  gameResult: "lose",
+                  winAmount: 0,
+                  clientSeed,
+                  serverSeedHash: data.serverSeedHash || data.game.serverSeedHash,
+                  finalRoll: comeOutRoll,
+                })
+              }, 1500)
+            } else {
+              // Establish point
+              setPoint(comeOutRoll)
+              setGamePhase("point")
+            }
+          }, 500)
         }, 2500)
       }, 1000)
 
@@ -242,8 +265,6 @@ function CrapsContent() {
   const handleRoll = async () => {
     if (gamePhase !== "point") return
 
-    setIsRolling(true)
-
     try {
       const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
@@ -252,35 +273,52 @@ function CrapsContent() {
 
       if (!data.success) {
         alert("Roll action failed")
-        setIsRolling(false)
         return
       }
 
-      // Extract roll result
-      const roll = data.roll
-      const gameResult = data.gameResult
-
-      // Simulate dice rolling animation
+      // Start rolling animation
+      setIsRolling(true)
       playDiceRollSound()
 
-      // Calculate individual dice values (we don't get these from API, so we'll simulate them)
-      const die1 = Math.min(roll, 6)
-      const die2 = roll - die1 > 0 ? roll - die1 : 1
-
+      // After 2.5 seconds of rolling animation, show the actual result
       setTimeout(() => {
+        const roll = data.roll
+        const gameResult = data.gameResult
+
+        // Calculate individual dice values that add up to the roll
+        const die1 = Math.floor(Math.random() * 6) + 1
+        const die2 = roll - die1
+
+        // If die2 is invalid, adjust the dice values
+        let finalDie1 = die1
+        let finalDie2 = die2
+
+        if (die2 < 1 || die2 > 6) {
+          // Redistribute the total across two valid dice
+          finalDie1 = Math.min(6, Math.max(1, Math.floor(roll / 2)))
+          finalDie2 = roll - finalDie1
+
+          // Final adjustment if still invalid
+          if (finalDie2 < 1) {
+            finalDie1 = 1
+            finalDie2 = roll - 1
+          } else if (finalDie2 > 6) {
+            finalDie1 = roll - 6
+            finalDie2 = 6
+          }
+        }
+
         setCurrentRoll({
-          die1,
-          die2,
+          die1: finalDie1,
+          die2: finalDie2,
           total: roll,
         })
 
         setRolls((prevRolls) => [...prevRolls, roll])
+        setIsRolling(false)
 
-        // After dice stop rolling
+        // Check win/loss or continue after dice settle
         setTimeout(() => {
-          setIsRolling(false)
-
-          // Check win/loss or continue
           if (gameResult === "win") {
             setGamePhase("complete")
             setTimeout(() => {
@@ -305,8 +343,8 @@ function CrapsContent() {
             }, 1500)
           }
           // If gameResult is "continue", we stay in point phase
-        }, 2500)
-      }, 1000)
+        }, 500)
+      }, 2500)
     } catch (error) {
       console.error("Error rolling:", error)
       alert("Failed to roll. Please try again.")
@@ -658,7 +696,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           </ol>
         </div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-2">
           <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={onStart} disabled={!isConnected}>
             {!isConnected ? "Connect Wallet to Play" : "Roll Dice"}
           </Button>
@@ -721,31 +759,57 @@ function CrapsTable({
                 animate={
                   isRolling
                     ? {
-                        rotateX: [0, 360, 720, 1080, 1440],
-                        rotateY: [0, 360, 720, 1080, 1440],
-                        x: [-20, 20, -10, 10, 0],
-                        y: [-20, 10, -5, 15, 0],
+                        rotateX: [0, 180, 360, 540, 720, 900, 1080],
+                        rotateY: [0, 270, 540, 810, 1080, 1350, 1620],
+                        rotateZ: [0, 90, 180, 270, 360, 450, 540],
+                        x: [-30, 30, -20, 20, -10, 10, 0],
+                        y: [-40, 20, -30, 15, -20, 10, 0],
+                        scale: [1, 1.1, 0.9, 1.05, 0.95, 1.02, 1],
                       }
-                    : {}
+                    : {
+                        rotateX: 0,
+                        rotateY: 0,
+                        rotateZ: 0,
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                      }
                 }
-                transition={{ duration: 2, ease: "easeOut" }}
+                transition={{
+                  duration: isRolling ? 2.5 : 0.5,
+                  ease: isRolling ? "easeOut" : "easeInOut",
+                  times: isRolling ? [0, 0.15, 0.3, 0.45, 0.6, 0.8, 1] : undefined,
+                }}
               >
-                <Die value={isRolling ? (Date.now() % 6) + 1 : currentRoll.die1} size={100} />
+                <Die value={isRolling ? Math.floor(Math.random() * 6) + 1 : currentRoll.die1} size={100} />
               </motion.div>
               <motion.div
                 animate={
                   isRolling
                     ? {
-                        rotateX: [0, -360, -720, -1080, -1440],
-                        rotateY: [0, -360, -720, -1080, -1440],
-                        x: [20, -20, 10, -10, 0],
-                        y: [10, -10, 5, -15, 0],
+                        rotateX: [0, -180, -360, -540, -720, -900, -1080],
+                        rotateY: [0, -270, -540, -810, -1080, -1350, -1620],
+                        rotateZ: [0, -90, -180, -270, -360, -450, -540],
+                        x: [30, -30, 20, -20, 10, -10, 0],
+                        y: [-20, 30, -25, 20, -15, 12, 0],
+                        scale: [1, 0.9, 1.1, 0.95, 1.05, 0.98, 1],
                       }
-                    : {}
+                    : {
+                        rotateX: 0,
+                        rotateY: 0,
+                        rotateZ: 0,
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                      }
                 }
-                transition={{ duration: 2, ease: "easeOut" }}
+                transition={{
+                  duration: isRolling ? 2.5 : 0.5,
+                  ease: isRolling ? "easeOut" : "easeInOut",
+                  times: isRolling ? [0, 0.15, 0.3, 0.45, 0.6, 0.8, 1] : undefined,
+                }}
               >
-                <Die value={isRolling ? (Date.now() % 6) + 1 : currentRoll.die2} size={100} />
+                <Die value={isRolling ? Math.floor(Math.random() * 6) + 1 : currentRoll.die2} size={100} />
               </motion.div>
             </motion.div>
           ) : (
