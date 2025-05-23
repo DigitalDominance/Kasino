@@ -21,6 +21,7 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] })
 const MIN_BET = 1
 const MAX_BET = 1000
 const messages = ["Verifying transaction", "Hashing game seed", "Preparing dice"]
+const DICE_ANIMATION_DURATION = 1.5 // Consistent animation duration
 
 // API base
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
@@ -195,7 +196,7 @@ function CrapsContent() {
       const point = data.point || data.game.point
       setPendingRoll(comeOutRoll)
 
-      // Let dice continue rolling for a bit after API returns
+      // Let dice continue rolling for a consistent amount of time
       setTimeout(() => {
         // Calculate individual dice values that add up to the come-out roll
         const die1 = Math.floor(Math.random() * 6) + 1
@@ -267,8 +268,8 @@ function CrapsContent() {
               setGamePhase("point")
             }
           }, 300)
-        }, 1000)
-      }, 1500)
+        }, 500)
+      }, 2000) // Consistent animation time regardless of API response time
     } catch (error) {
       console.error("Error starting game:", error)
       alert("Failed to start game. Please try again.")
@@ -310,7 +311,7 @@ function CrapsContent() {
       // Store the roll result but don't display it yet
       setPendingRoll(roll)
 
-      // Let dice continue rolling for a bit after API returns
+      // Let dice continue rolling for a consistent amount of time
       setTimeout(() => {
         // Calculate individual dice values that add up to the roll
         const die1 = Math.floor(Math.random() * 6) + 1
@@ -377,8 +378,8 @@ function CrapsContent() {
             }
             // If gameResult is "continue", we stay in point phase
           }, 300)
-        }, 1000)
-      }, 1000)
+        }, 500)
+      }, 2000) // Consistent animation time regardless of API response time
     } catch (error) {
       console.error("Error rolling:", error)
       alert("Failed to roll. Please try again.")
@@ -813,7 +814,7 @@ function CrapsTable({
                       }
                 }
                 transition={{
-                  duration: isRolling ? 3 : 0.3,
+                  duration: DICE_ANIMATION_DURATION,
                   ease: "linear",
                   repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
                 }}
@@ -831,7 +832,7 @@ function CrapsTable({
                       }
                 }
                 transition={{
-                  duration: isRolling ? 3 : 0.3,
+                  duration: DICE_ANIMATION_DURATION,
                   ease: "linear",
                   repeat: isRolling ? Number.POSITIVE_INFINITY : 0,
                 }}
@@ -860,9 +861,29 @@ function CrapsTable({
           </motion.div>
         )}
 
-        {/* Game controls */}
+        {/* Game instructions */}
         {gamePhase === "point" && !isRolling && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="mt-6 text-center text-gray-300 absolute bottom-24 left-0 right-0"
+          >
+            <p>
+              Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
+              <span className="text-red-400 font-bold">7</span> to lose
+            </p>
+          </motion.div>
+        )}
+
+        {/* Game controls - moved down to avoid overlap */}
+        {gamePhase === "point" && !isRolling && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="absolute bottom-8 left-0 right-0 flex justify-center"
+          >
             <Button
               className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
               onClick={onRoll}
@@ -870,21 +891,6 @@ function CrapsTable({
             >
               ROLL AGAIN
             </Button>
-          </motion.div>
-        )}
-
-        {/* Game instructions */}
-        {gamePhase === "point" && !isRolling && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 text-center text-gray-300 absolute bottom-12 left-0 right-0"
-          >
-            <p>
-              Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
-              <span className="text-red-400 font-bold">7</span> to lose
-            </p>
           </motion.div>
         )}
 
