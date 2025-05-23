@@ -118,6 +118,7 @@ function MainPageContent() {
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Blackjack", slug: "blackjack", image: "/blackjackcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
+    { name: "Craps", slug: "craps", image: "/crapscard.webp" },
     { name: "Horse Race", slug: "horserace", image: "/horseracecard.webp" },
     { name: "Video Poker", slug: "videopoker", image: "/videopokercard.webp" },
     { name: "Upgrade", slug: "Upgrade", image: "/upgradecard.webp" },
@@ -1112,6 +1113,7 @@ function MainPageContent() {
                           else if (lwGame === "horserace") cardImage = "/horseracecard.webp"
                           else if (lwGame === "blackjack") cardImage = "/blackjackcard.webp"
                           else if (lwGame === "videopoker") cardImage = "/videopokercard.webp"
+                          else if (lwGame === "craps") cardImage = "/crapscard.webp"
                           return (
                             <MotionCard
                               key={i}
