@@ -146,6 +146,10 @@ function CrapsContent() {
       const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
 
       // Set initial game state first - show dice rolling before API call
+      // Start the rolling animation first with consistent style
+      setIsRolling(true)
+
+      // Set initial game state first - show dice rolling before API call
       setPregame(false)
       setIsPlaying(true)
       setGamePhase("come-out")
@@ -717,8 +721,17 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           </ol>
         </div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-2">
-          <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={onStart} disabled={!isConnected}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="absolute bottom-12 left-0 right-0 flex justify-center z-30"
+        >
+          <Button
+            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-10 py-2"
+            onClick={onStart}
+            disabled={!isConnected}
+          >
             {!isConnected ? "Connect Wallet to Play" : "Roll Dice"}
           </Button>
         </motion.div>
@@ -780,10 +793,10 @@ function CrapsTable({
                 animate={
                   isRolling
                     ? {
-                        rotateY: [0, 180, 360, 540, 720, 900, 1080, 1260, 1440],
-                        x: [-20, 20, -15, 15, -10, 10, -5, 5, 0],
-                        y: [0, 5, -5, 10, -10, 5, -5, 2, 0],
-                        scale: [1, 1.05, 0.95, 1.02, 0.98, 1.03, 0.97, 1.01, 1],
+                        rotateY: [0, 180, 360, 540, 720, 900, 1080, 1260, 1440, 1620, 1800],
+                        x: 0,
+                        y: 0,
+                        scale: 1,
                       }
                     : {
                         rotateY: 0,
@@ -793,9 +806,8 @@ function CrapsTable({
                       }
                 }
                 transition={{
-                  duration: isRolling ? 2.5 : 0.5,
-                  ease: isRolling ? "easeInOut" : "easeOut",
-                  times: isRolling ? [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1] : undefined,
+                  duration: isRolling ? 2 : 0.3,
+                  ease: "linear",
                 }}
               >
                 <Die value={isRolling ? (Math.floor(Date.now() / 100) % 6) + 1 : currentRoll.die1} size={100} />
@@ -804,10 +816,10 @@ function CrapsTable({
                 animate={
                   isRolling
                     ? {
-                        rotateY: [0, -180, -360, -540, -720, -900, -1080, -1260, -1440],
-                        x: [20, -20, 15, -15, 10, -10, 5, -5, 0],
-                        y: [0, -5, 5, -10, 10, -5, 5, -2, 0],
-                        scale: [1, 0.95, 1.05, 0.98, 1.02, 0.97, 1.03, 0.99, 1],
+                        rotateY: [0, -180, -360, -540, -720, -900, -1080, -1260, -1440, -1620, -1800],
+                        x: 0,
+                        y: 0,
+                        scale: 1,
                       }
                     : {
                         rotateY: 0,
@@ -817,9 +829,8 @@ function CrapsTable({
                       }
                 }
                 transition={{
-                  duration: isRolling ? 2.5 : 0.5,
-                  ease: isRolling ? "easeInOut" : "easeOut",
-                  times: isRolling ? [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1] : undefined,
+                  duration: isRolling ? 2 : 0.3,
+                  ease: "linear",
                 }}
               >
                 <Die value={isRolling ? (Math.floor(Date.now() / 90) % 6) + 1 : currentRoll.die2} size={100} />
@@ -865,7 +876,7 @@ function CrapsTable({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="mt-6 text-center text-gray-300"
+            className="mt-6 text-center text-gray-300 absolute bottom-20 left-0 right-0"
           >
             <p>
               Roll <span className="text-[#49EACB] font-bold">{point}</span> again to win, or{" "}
