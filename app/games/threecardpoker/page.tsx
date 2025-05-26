@@ -237,11 +237,11 @@ function ThreeCardPokerContent() {
         return
       }
 
-      setGameId(data.game._id)
-      setServerSeedHash(data.game.serverSeedHash)
+      setGameId(data.gameId)
+      setServerSeedHash(data.serverSeedHash)
 
       // Set initial cards with flipped state
-      const initialPlayerCardsData = data.game.playerHand.map((card: CardType) => ({
+      const initialPlayerCardsData = data.playerHand.map((card: CardType) => ({
         ...card,
         flipped: false,
       }))
