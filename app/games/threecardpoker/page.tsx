@@ -256,6 +256,13 @@ function ThreeCardPokerContent() {
       setPlayerCards([])
       setDealerCards([])
 
+      // Set dealer cards as back-facing initially
+      const initialDealerCards = [
+        { suit: "hidden", rank: "hidden", flipped: false },
+        { suit: "hidden", rank: "hidden", flipped: false },
+        { suit: "hidden", rank: "hidden", flipped: false },
+      ]
+
       // Deal player cards with animation
       setTimeout(() => {
         // Deal all cards at once (back-facing)
@@ -299,6 +306,11 @@ function ThreeCardPokerContent() {
         }, 250)
       }, 300)
 
+      // Show dealer cards as back-facing
+      setTimeout(() => {
+        setDealerCards(initialDealerCards)
+      }, 100)
+
       setLoading(false)
     } catch (error) {
       console.error("Error starting game:", error)
@@ -311,13 +323,29 @@ function ThreeCardPokerContent() {
   const handlePlay = async () => {
     if (gameStatus !== "decision") return
 
-    setIsRevealing(true)
-    setGameStatus("dealer-reveal")
-
     try {
+      // Make the additional "play" bet
+      const bet = Number(betAmount)
+      const [addr] = await window.kasware.getAccounts()
+      const treasury =
+        Math.random() < 0.5
+          ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+          : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
+
+      // Send the play bet (equal to ante)
+      const playDep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+        priorityFee: 10000,
+      })
+      const playTxid = typeof playDep === "string" ? JSON.parse(playDep).id : (playDep as any).id
+
+      setIsRevealing(true)
+      setGameStatus("dealer-reveal")
+
+      // Call settle with play action and playTxid
       const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
         action: "play",
+        playTxid,
       })
 
       if (!data.success) {
@@ -333,7 +361,7 @@ function ThreeCardPokerContent() {
         flipped: false,
       }))
 
-      // Set dealer cards (back-facing)
+      // Replace the placeholder dealer cards with actual cards (still back-facing)
       setDealerCards(dealerCardsWithState)
 
       // Flip dealer cards with animation
@@ -789,8 +817,12 @@ function PokerTable({
                   {/* Card front */}
                   <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
                     <Image
-                      src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
-                      alt={`${card.rank} of ${card.suit}`}
+                      src={
+                        card.suit === "hidden"
+                          ? "/blockscards/cardback.webp"
+                          : `/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`
+                      }
+                      alt={card.suit === "hidden" ? "Card back" : `${card.rank} of ${card.suit}`}
                       fill
                       className="rounded-lg object-cover"
                     />
