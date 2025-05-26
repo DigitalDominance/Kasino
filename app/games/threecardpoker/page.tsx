@@ -873,74 +873,136 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           PLAY OR FOLD - BEAT THE DEALER
         </motion.p>
 
-        {/* Card images in a nice arrangement */}
-        <div className="relative w-full max-w-3xl h-64 mb-8">
-          <motion.div
-            className="absolute left-[30%] top-[10%]"
-            animate={{ rotate: [0, 5, 0] }}
-            transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          >
-            <Image src="/blockscards/aspades.webp" alt="Ace of Spades" width={120} height={180} className="shadow-lg" />
-          </motion.div>
-          <motion.div
-            className="absolute left-[45%] top-[15%]"
-            animate={{ rotate: [0, -3, 0] }}
-            transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
-          >
-            <Image
-              src="/blockscards/khearts.webp"
-              alt="King of Hearts"
-              width={120}
-              height={180}
-              className="shadow-lg"
-            />
-          </motion.div>
-          <motion.div
-            className="absolute left-[60%] top-[10%]"
-            animate={{ rotate: [0, 7, 0] }}
-            transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
-          >
-            <Image
-              src="/blockscards/qdiamonds.webp"
-              alt="Queen of Diamonds"
-              width={120}
-              height={180}
-              className="shadow-lg"
-            />
-          </motion.div>
-        </div>
+        {/* New layout with cards on both sides of the instructions */}
+        <div className="flex justify-between items-center w-full px-8 mb-8">
+          {/* Left side cards */}
+          <div className="relative w-[200px] h-[200px]">
+            <motion.div
+              className="absolute left-[10%] top-[10%]"
+              animate={{ rotate: [0, 5, 0] }}
+              transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+            >
+              <Image
+                src="/blockscards/aspades.webp"
+                alt="Ace of Spades"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
+            <motion.div
+              className="absolute left-[40%] top-[30%]"
+              animate={{ rotate: [0, -3, 0] }}
+              transition={{ duration: 3.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
+            >
+              <Image
+                src="/blockscards/jclubs.webp"
+                alt="Jack of Clubs"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
+            <motion.div
+              className="absolute left-[70%] top-[50%]"
+              animate={{ rotate: [0, 7, 0] }}
+              transition={{ duration: 4.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
+            >
+              <Image
+                src="/blockscards/10hearts.webp"
+                alt="10 of Hearts"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
+          </div>
 
-        <div className="bg-black/60 p-6 rounded-lg max-w-2xl text-center mb-8">
-          <h3 className="text-[#49EACB] text-xl font-bold mb-3">How to Play</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="text-[#49EACB] font-bold mb-2">Main Game</h4>
-              <ul className="text-white text-left space-y-2">
-                <li>• Place your ante bet</li>
-                <li>• Receive three cards</li>
-                <li>• Choose to Play (place additional bet equal to ante) or Fold (forfeit ante)</li>
-                <li>• Dealer needs Queen high or better to qualify</li>
-                <li>• If dealer doesn't qualify, ante pays 1:1 and play bet is returned</li>
-                <li>• If dealer qualifies and you win, both ante and play pay 1:1</li>
-              </ul>
+          {/* Center instructions */}
+          <div className="bg-black/60 p-6 rounded-lg max-w-xl text-center">
+            <h3 className="text-[#49EACB] text-xl font-bold mb-3">How to Play</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-[#49EACB] font-bold mb-2">Main Game</h4>
+                <ul className="text-white text-left space-y-2">
+                  <li>• Place your ante bet</li>
+                  <li>• Receive three cards</li>
+                  <li>• Choose to Play (place additional bet equal to ante) or Fold (forfeit ante)</li>
+                  <li>• Dealer needs Queen high or better to qualify</li>
+                  <li>• If dealer doesn't qualify, ante pays 1:1 and play bet is returned</li>
+                  <li>• If dealer qualifies and you win, both ante and play pay 1:1</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-[#49EACB] font-bold mb-2">Pair Plus</h4>
+                <ul className="text-white text-left space-y-2">
+                  <li>• Optional side bet</li>
+                  <li>• Pays based on your hand strength</li>
+                  <li>• Straight Flush: 40:1</li>
+                  <li>• Three of a Kind: 30:1</li>
+                  <li>• Straight: 6:1</li>
+                  <li>• Flush: 4:1</li>
+                  <li>• Pair: 1:1</li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <h4 className="text-[#49EACB] font-bold mb-2">Pair Plus</h4>
-              <ul className="text-white text-left space-y-2">
-                <li>• Optional side bet</li>
-                <li>• Pays based on your hand strength</li>
-                <li>• Straight Flush: 40:1</li>
-                <li>• Three of a Kind: 30:1</li>
-                <li>• Straight: 6:1</li>
-                <li>• Flush: 4:1</li>
-                <li>• Pair: 1:1</li>
-              </ul>
-            </div>
+          </div>
+
+          {/* Right side cards */}
+          <div className="relative w-[200px] h-[200px]">
+            <motion.div
+              className="absolute left-[10%] top-[50%]"
+              animate={{ rotate: [0, -4, 0] }}
+              transition={{ duration: 3.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+            >
+              <Image
+                src="/blockscards/qdiamonds.webp"
+                alt="Queen of Diamonds"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
+            <motion.div
+              className="absolute left-[40%] top-[30%]"
+              animate={{ rotate: [0, 6, 0] }}
+              transition={{ duration: 4.5, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.2 }}
+            >
+              <Image
+                src="/blockscards/khearts.webp"
+                alt="King of Hearts"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
+            <motion.div
+              className="absolute left-[70%] top-[10%]"
+              animate={{ rotate: [0, -5, 0] }}
+              transition={{ duration: 3.7, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.7 }}
+            >
+              <Image
+                src="/blockscards/adiamonds.webp"
+                alt="Ace of Diamonds"
+                width={100}
+                height={150}
+                className="shadow-lg"
+              />
+            </motion.div>
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-6">
-          <Button className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80" onClick={onStart} disabled={!isConnected}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="absolute bottom-[35px]"
+        >
+          <Button
+            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-2 text-lg"
+            onClick={onStart}
+            disabled={!isConnected}
+          >
             {!isConnected ? "Connect Wallet to Play" : "Start Three Card Poker"}
           </Button>
         </motion.div>
