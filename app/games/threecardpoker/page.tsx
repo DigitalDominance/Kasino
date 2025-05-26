@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ShieldCheck, Info } from "lucide-react"
 import Link from "next/link"
 import { SiteFooter } from "@/components/site-footer"
 import { WalletConnection } from "@/components/wallet-connection"
@@ -15,6 +15,7 @@ import { useWallet } from "@/contexts/WalletContext"
 import { LiveChat } from "../mines/live-chat"
 import { LiveWins } from "../mines/live-wins"
 import { XPDisplay } from "@/components/xp-display"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Font & Constants
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] })
@@ -22,6 +23,16 @@ const MIN_BET = 1
 const MAX_BET = 1000
 const messages = ["Verifying transaction", "Hashing game seed", "Shuffling cards"]
 const RESULT_POPUP_DELAY = 2000 // 2 second delay for result popup
+
+// Pair Plus paytable
+const PAIR_PLUS_PAYTABLE = {
+  "Straight Flush": 40,
+  "Three of a Kind": 30,
+  Straight: 6,
+  Flush: 4,
+  Pair: 1,
+  "High Card": 0,
+}
 
 // API base
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
@@ -92,11 +103,13 @@ function ThreeCardPokerContent() {
   const [pregame, setPregame] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [betAmount, setBetAmount] = useState("1")
+  const [pairPlusBet, setPairPlusBet] = useState("0")
   const [playerCards, setPlayerCards] = useState<CardType[]>([])
   const [dealerCards, setDealerCards] = useState<CardType[]>([])
   const [playerHandRank, setPlayerHandRank] = useState<{ rank: number; name: string } | null>(null)
   const [dealerHandRank, setDealerHandRank] = useState<{ rank: number; name: string } | null>(null)
   const [gameStatus, setGameStatus] = useState<"betting" | "decision" | "dealer-reveal" | "complete">("betting")
+  const [showPaytable, setShowPaytable] = useState(false)
 
   // Animations
   const [isDealing, setIsDealing] = useState(false)
@@ -118,6 +131,8 @@ function ThreeCardPokerContent() {
     winAmount: number
     clientSeed: string | null
     serverSeedHash: string | null
+    pairPlusWin?: number
+    mainGameWin?: number
   } | null>(null)
 
   // Card dealing sound
@@ -183,6 +198,13 @@ function ThreeCardPokerContent() {
     return `/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`
   }
 
+  // Calculate potential Pair Plus win based on current bet
+  const calculatePotentialPairPlusWin = (handRank: { rank: number; name: string } | null, bet: number) => {
+    if (!handRank) return 0
+    const multiplier = PAIR_PLUS_PAYTABLE[handRank.name as keyof typeof PAIR_PLUS_PAYTABLE] || 0
+    return bet * multiplier
+  }
+
   // Start game
   const handleStartGame = async () => {
     if (!isConnected) {
@@ -191,8 +213,15 @@ function ThreeCardPokerContent() {
     }
 
     const bet = Number(betAmount)
+    const ppBet = Number(pairPlusBet)
+
     if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
       alert(`Bet between ${MIN_BET} and ${MAX_BET}, within your balance.`)
+      return
+    }
+
+    if (isNaN(ppBet) || ppBet < 0 || ppBet > MAX_BET || bet + ppBet > balance) {
+      alert(`Pair Plus bet must be between 0 and ${MAX_BET}, and total bet must be within your balance.`)
       return
     }
 
@@ -208,13 +237,15 @@ function ThreeCardPokerContent() {
         .join("")
       setClientSeed(rawSeed)
 
-      // 2) send deposit on-chain
+      // 2) send deposit on-chain (combined ante + pair plus)
       const [addr] = await window.kasware.getAccounts()
       const treasury =
         Math.random() < 0.5
           ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
           : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
-      const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+
+      const totalBet = bet + ppBet
+      const dep = await window.kasware.sendKaspa(treasury, totalBet * 1e8, {
         priorityFee: 10000,
       })
       const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
@@ -228,6 +259,7 @@ function ThreeCardPokerContent() {
         nonce: 0,
         walletAddress: addr,
         betAmount: bet,
+        pairPlusBet: ppBet,
         txid,
       })
 
@@ -324,16 +356,19 @@ function ThreeCardPokerContent() {
     if (gameStatus !== "decision") return
 
     try {
-      // Make the additional "play" bet
+      // Make the additional "play" bet (equal to ante)
       const bet = Number(betAmount)
+      const ppBet = Number(pairPlusBet)
+      const totalBet = bet // Only sending the ante amount as the play bet
+
       const [addr] = await window.kasware.getAccounts()
       const treasury =
         Math.random() < 0.5
           ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
           : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
 
-      // Send the play bet (equal to ante)
-      const playDep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+      // Send the play bet
+      const playDep = await window.kasware.sendKaspa(treasury, totalBet * 1e8, {
         priorityFee: 10000,
       })
       const playTxid = typeof playDep === "string" ? JSON.parse(playDep).id : (playDep as any).id
@@ -394,6 +429,13 @@ function ThreeCardPokerContent() {
             setIsRevealing(false)
             setGameStatus("complete")
 
+            // Calculate potential Pair Plus win
+            const ppBetNum = Number(pairPlusBet)
+            const pairPlusWin = playerHandRank ? calculatePotentialPairPlusWin(playerHandRank, ppBetNum) : 0
+
+            // Calculate main game win (total win - pair plus win)
+            const mainGameWin = data.winAmount - pairPlusWin
+
             // Show result after all cards are revealed with a delay
             setTimeout(() => {
               setResult({
@@ -401,6 +443,8 @@ function ThreeCardPokerContent() {
                 winAmount: data.winAmount,
                 clientSeed,
                 serverSeedHash,
+                pairPlusWin,
+                mainGameWin,
               })
             }, RESULT_POPUP_DELAY)
           }, 250)
@@ -432,6 +476,10 @@ function ThreeCardPokerContent() {
         return
       }
 
+      // Calculate potential Pair Plus win
+      const ppBetNum = Number(pairPlusBet)
+      const pairPlusWin = playerHandRank ? calculatePotentialPairPlusWin(playerHandRank, ppBetNum) : 0
+
       // Show result with a delay
       setTimeout(() => {
         setResult({
@@ -439,6 +487,8 @@ function ThreeCardPokerContent() {
           winAmount: data.winAmount,
           clientSeed,
           serverSeedHash,
+          pairPlusWin,
+          mainGameWin: 0, // Main game is lost when folding
         })
       }, RESULT_POPUP_DELAY)
     } catch (error) {
@@ -461,6 +511,7 @@ function ThreeCardPokerContent() {
     setClientSeed(null)
     setServerSeedHash(null)
     setGameId(null)
+    setShowPaytable(false)
   }
 
   return (
@@ -502,6 +553,64 @@ function ThreeCardPokerContent() {
         )}
       </AnimatePresence>
 
+      {/* Pair Plus Paytable Modal */}
+      <AnimatePresence>
+        {showPaytable && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPaytable(false)}
+          >
+            <motion.div
+              className="bg-[#004d40] p-6 rounded-lg max-w-md w-full shadow-xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-[#49EACB]">Pair Plus Paytable</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#49EACB] hover:bg-[#49EACB]/10"
+                  onClick={() => setShowPaytable(false)}
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <p className="text-white text-sm mb-4">
+                  Pair Plus is a side bet that pays based on the poker value of your hand, regardless of the dealer's
+                  hand.
+                </p>
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#49EACB]/30">
+                      <th className="text-left py-2 text-[#49EACB]">Hand</th>
+                      <th className="text-right py-2 text-[#49EACB]">Payout</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(PAIR_PLUS_PAYTABLE).map(([hand, payout]) => (
+                      <tr key={hand} className="border-b border-[#49EACB]/10">
+                        <td className="py-2 text-white">{hand}</td>
+                        <td className="py-2 text-right text-white">{payout > 0 ? `${payout}:1` : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-[#49EACB]/70 text-xs mt-4">
+                  Note: Pair Plus pays even if you fold or lose to the dealer.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex-grow p-6">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
@@ -539,6 +648,7 @@ function ThreeCardPokerContent() {
                   isDealing={isDealing}
                   isRevealing={isRevealing}
                   betAmount={Number(betAmount)}
+                  pairPlusBet={Number(pairPlusBet)}
                 />
               )}
             </div>
@@ -548,24 +658,80 @@ function ThreeCardPokerContent() {
           <div className="space-y-6">
             <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
               <div className="space-y-4">
-                <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
-                    disabled={isPlaying}
-                  />
-                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
-                    <Image
-                      src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
-                      alt="KAS"
-                      width={16}
-                      height={16}
+                {/* Ante Bet */}
+                <div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-[#49EACB]">Ante Bet (KAS)</label>
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(e.target.value)}
+                      className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+                      disabled={isPlaying}
                     />
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={16}
+                        height={16}
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* Pair Plus Bet */}
+                <div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-[#49EACB]">Pair Plus Bet (KAS)</label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-[#49EACB]"
+                            onClick={() => setShowPaytable(true)}
+                          >
+                            <Info className="h-4 w-4" />
+                            <span className="sr-only">Pair Plus Info</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View Pair Plus paytable</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="relative mt-1">
+                    <input
+                      type="number"
+                      value={pairPlusBet}
+                      onChange={(e) => setPairPlusBet(e.target.value)}
+                      className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+                      disabled={isPlaying}
+                    />
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={16}
+                        height={16}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total Bet Display */}
+                <div className="bg-[#49EACB]/10 p-2 rounded-md flex justify-between">
+                  <span className="text-sm text-[#49EACB]">Total Bet:</span>
+                  <span className="text-sm text-white font-bold">
+                    {(Number(betAmount) + Number(pairPlusBet)).toFixed(2)} KAS
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-4 gap-2">
                   <Button
                     variant="outline"
@@ -631,15 +797,41 @@ function ThreeCardPokerContent() {
               <h2 className="text-4xl font-bold mb-6 text-black">
                 {result.gameResult === "win" ? "You Win!" : result.gameResult === "push" ? "Push!" : "You Lose!"}
               </h2>
-              {result.gameResult === "win" ? (
-                <p className="text-4xl animate-pulse uppercase mb-4 text-black">
-                  You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
+
+              {/* Main Game Result */}
+              {result.mainGameWin !== undefined && (
+                <div className="mb-2">
+                  <p className="text-lg text-black">
+                    <span className="font-semibold">Main Game:</span>{" "}
+                    {result.gameResult === "win"
+                      ? `+${result.mainGameWin.toFixed(2)} KAS`
+                      : result.gameResult === "push"
+                        ? "Bets Returned"
+                        : "Ante Lost"}
+                  </p>
+                </div>
+              )}
+
+              {/* Pair Plus Result */}
+              {result.pairPlusWin !== undefined && result.pairPlusWin > 0 && (
+                <div className="mb-4">
+                  <p className="text-lg text-black">
+                    <span className="font-semibold">Pair Plus:</span> +{result.pairPlusWin.toFixed(2)} KAS
+                  </p>
+                </div>
+              )}
+
+              {/* Total Win */}
+              {result.winAmount > 0 ? (
+                <p className="text-4xl animate-pulse uppercase mb-6 text-black">
+                  Total Win: <strong>{result.winAmount.toFixed(2)}</strong> KAS!
                 </p>
               ) : result.gameResult === "push" ? (
-                <p className="text-2xl mb-4 text-black">Your bet has been returned.</p>
+                <p className="text-2xl mb-6 text-black">Your bet has been returned.</p>
               ) : (
-                <p className="text-2xl mb-4 text-black">Better luck next time!</p>
+                <p className="text-2xl mb-6 text-black">Better luck next time!</p>
               )}
+
               <div className="bg-black/80 p-6 rounded-md mb-6 text-left">
                 <div className="flex items-center mb-2">
                   <ShieldCheck className="text-white mr-2" />
@@ -720,14 +912,31 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
 
         <div className="bg-black/60 p-6 rounded-lg max-w-2xl text-center mb-8">
           <h3 className="text-[#49EACB] text-xl font-bold mb-3">How to Play</h3>
-          <ul className="text-white text-left space-y-2">
-            <li>• Place your ante bet</li>
-            <li>• Receive three cards</li>
-            <li>• Choose to Play (place additional bet equal to ante) or Fold (forfeit ante)</li>
-            <li>• Dealer needs Queen high or better to qualify</li>
-            <li>• If dealer doesn't qualify, ante pays 1:1 and play bet is returned</li>
-            <li>• If dealer qualifies and you win, both ante and play pay 1:1</li>
-          </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-[#49EACB] font-bold mb-2">Main Game</h4>
+              <ul className="text-white text-left space-y-2">
+                <li>• Place your ante bet</li>
+                <li>• Receive three cards</li>
+                <li>• Choose to Play (place additional bet equal to ante) or Fold (forfeit ante)</li>
+                <li>• Dealer needs Queen high or better to qualify</li>
+                <li>• If dealer doesn't qualify, ante pays 1:1 and play bet is returned</li>
+                <li>• If dealer qualifies and you win, both ante and play pay 1:1</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[#49EACB] font-bold mb-2">Pair Plus</h4>
+              <ul className="text-white text-left space-y-2">
+                <li>• Optional side bet</li>
+                <li>• Pays based on your hand strength</li>
+                <li>• Straight Flush: 40:1</li>
+                <li>• Three of a Kind: 30:1</li>
+                <li>• Straight: 6:1</li>
+                <li>• Flush: 4:1</li>
+                <li>• Pair: 1:1</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="mt-6">
@@ -756,6 +965,7 @@ function PokerTable({
   isDealing,
   isRevealing,
   betAmount,
+  pairPlusBet,
 }: {
   playerCards: CardType[]
   dealerCards: CardType[]
@@ -767,7 +977,13 @@ function PokerTable({
   isDealing: boolean
   isRevealing: boolean
   betAmount: number
+  pairPlusBet: number
 }) {
+  // Calculate potential Pair Plus win
+  const potentialPairPlusWin = playerHandRank
+    ? (PAIR_PLUS_PAYTABLE[playerHandRank.name as keyof typeof PAIR_PLUS_PAYTABLE] || 0) * pairPlusBet
+    : 0
+
   return (
     <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
       {/* Dealer area */}
@@ -933,10 +1149,28 @@ function PokerTable({
         )}
 
         {/* Bet display */}
-        <div className="absolute bottom-4 left-4 bg-black/50 rounded-lg p-2 flex items-center space-x-2">
-          <span className="text-[#49EACB] text-sm">Ante:</span>
-          <span className="text-white text-sm">{betAmount} KAS</span>
+        <div className="absolute bottom-4 left-4 bg-black/50 rounded-lg p-2 space-y-1">
+          <div className="flex items-center space-x-2">
+            <span className="text-[#49EACB] text-sm">Ante:</span>
+            <span className="text-white text-sm">{betAmount} KAS</span>
+          </div>
+          {pairPlusBet > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-[#49EACB] text-sm">Pair Plus:</span>
+              <span className="text-white text-sm">{pairPlusBet} KAS</span>
+            </div>
+          )}
         </div>
+
+        {/* Pair Plus potential win display */}
+        {pairPlusBet > 0 && playerHandRank && potentialPairPlusWin > 0 && (
+          <div className="absolute bottom-4 right-4 bg-[#49EACB]/20 rounded-lg p-2">
+            <div className="flex items-center space-x-2">
+              <span className="text-[#49EACB] text-sm">Pair Plus Win:</span>
+              <span className="text-white text-sm font-bold">{potentialPairPlusWin} KAS</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
