@@ -115,6 +115,7 @@ function MainPageContent() {
   const games = [
     { name: "Ghost Jump", slug: "ghostjump", image: "/ghostjumpcard.webp" },
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
+    { name: "Three Card Poker", slug: "threecardpoker", image: "/threecardpokercard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
     { name: "Blackjack", slug: "blackjack", image: "/blackjackcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
@@ -1114,6 +1115,7 @@ function MainPageContent() {
                           else if (lwGame === "blackjack") cardImage = "/blackjackcard.webp"
                           else if (lwGame === "videopoker") cardImage = "/videopokercard.webp"
                           else if (lwGame === "craps") cardImage = "/crapscard.webp"
+                          else if (lwGame === "threecardpoker") cardImage = "/threecardpokercard.webp"
                           return (
                             <MotionCard
                               key={i}
