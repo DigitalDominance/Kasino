@@ -21,6 +21,7 @@ const montserrat = Montserrat({ weight: "700", subsets: ["latin"] })
 const MIN_BET = 1
 const MAX_BET = 1000
 const messages = ["Verifying transaction", "Hashing game seed", "Shuffling cards"]
+const RESULT_POPUP_DELAY = 2000 // 2 second delay for result popup
 
 // API base
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
@@ -76,11 +77,19 @@ function BlackjackContent() {
   const [playerValue, setPlayerValue] = useState(0)
   const [dealerValue, setDealerValue] = useState(0)
   const [gameStatus, setGameStatus] = useState<"betting" | "player-turn" | "dealer-turn" | "complete">("betting")
+  const [canDouble, setCanDouble] = useState(false)
+  const [canSplit, setCanSplit] = useState(false)
+  const [isSplit, setIsSplit] = useState(false)
+  const [splitHands, setSplitHands] = useState<CardType[][]>([])
+  const [activeSplitHand, setActiveSplitHand] = useState(0)
+  const [splitHandValues, setSplitHandValues] = useState<number[]>([])
 
   // Animations
   const [isDealing, setIsDealing] = useState(false)
   const [isHitting, setIsHitting] = useState(false)
   const [isStanding, setIsStanding] = useState(false)
+  const [isDoubling, setIsDoubling] = useState(false)
+  const [isSplitting, setIsSplitting] = useState(false)
   const [dealerDrawing, setDealerDrawing] = useState(false)
   const [revealingDealerCards, setRevealingDealerCards] = useState(false)
 
@@ -135,6 +144,26 @@ function BlackjackContent() {
       }
     }
   }, [dealerCards, dealerUpCardOnly])
+
+  // Update split hand values
+  useEffect(() => {
+    if (splitHands.length > 0) {
+      const values = splitHands.map((hand) => calculateHandValue(hand))
+      setSplitHandValues(values)
+    }
+  }, [splitHands])
+
+  // Check if player can double or split
+  useEffect(() => {
+    if (playerCards.length === 2 && gameStatus === "player-turn" && !isSplit) {
+      setCanDouble(true)
+      // Can only split if both cards have the same rank
+      setCanSplit(playerCards[0].rank === playerCards[1].rank)
+    } else {
+      setCanDouble(false)
+      setCanSplit(false)
+    }
+  }, [playerCards, gameStatus, isSplit])
 
   // Typewriter effect for loading messages
   useEffect(() => {
@@ -348,7 +377,7 @@ function BlackjackContent() {
               setDealerUpCardOnly(false)
 
               // Create dealer cards with flipped state
-              const dealerCardsWithState = data.dealerCards.map((card) => ({
+              const dealerCardsWithState = data.dealerCards.map((card: CardType) => ({
                 ...card,
                 flipped: true,
               }))
@@ -367,7 +396,7 @@ function BlackjackContent() {
                 setTimeout(() => {
                   setRevealingDealerCards(false)
 
-                  // Show final result
+                  // Show final result after delay
                   setTimeout(() => {
                     setResult({
                       gameResult: data.gameResult,
@@ -375,7 +404,7 @@ function BlackjackContent() {
                       clientSeed,
                       serverSeedHash,
                     })
-                  }, 1000)
+                  }, RESULT_POPUP_DELAY)
                 }, 600)
               }, 600)
             } else {
@@ -387,7 +416,7 @@ function BlackjackContent() {
                   clientSeed,
                   serverSeedHash,
                 })
-              }, 1500)
+              }, RESULT_POPUP_DELAY)
             }
           }
 
@@ -478,7 +507,7 @@ function BlackjackContent() {
               setDealerUpCardOnly(false)
               setGameStatus("complete")
 
-              // Show result after all cards are revealed
+              // Show result after delay
               setTimeout(() => {
                 setResult({
                   gameResult: data.gameResult,
@@ -486,7 +515,7 @@ function BlackjackContent() {
                   clientSeed,
                   serverSeedHash,
                 })
-              }, 1000)
+              }, RESULT_POPUP_DELAY)
             }
           }
 
@@ -506,7 +535,7 @@ function BlackjackContent() {
             clientSeed,
             serverSeedHash,
           })
-        }, 1000)
+        }, RESULT_POPUP_DELAY)
       }
 
       setIsStanding(false)
@@ -515,6 +544,258 @@ function BlackjackContent() {
       alert("Failed to stand. Please try again.")
       setIsStanding(false)
       setGameStatus("player-turn")
+    }
+  }
+
+  // Double Down - double bet and receive one card
+  const handleDouble = async () => {
+    if (!canDouble || gameStatus !== "player-turn") return
+
+    setIsDoubling(true)
+
+    try {
+      // Send additional bet transaction
+      const [addr] = await window.kasware.getAccounts()
+      const treasury =
+        Math.random() < 0.5
+          ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+          : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
+      const dep = await window.kasware.sendKaspa(treasury, Number(betAmount) * 1e8, {
+        priorityFee: 10000,
+      })
+      const extraTxid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
+
+      // Call settle API with double action
+      const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+        gameId,
+        action: "double",
+        extraTxid,
+      })
+
+      if (!data.success) {
+        alert("Double down failed")
+        setIsDoubling(false)
+        return
+      }
+
+      // Get the new card (last card in the updated array)
+      const newCard = data.playerCards[data.playerCards.length - 1]
+
+      // Create updated cards array
+      const updatedCards = [...playerCards.map((card) => ({ ...card, flipped: true })), { ...newCard, flipped: false }]
+
+      // Update player cards with the new card (back facing)
+      setPlayerCards(updatedCards)
+
+      // Play sound and flip the new card
+      setTimeout(() => {
+        playCardSound()
+
+        setTimeout(() => {
+          const flippedCards = updatedCards.map((card) => ({
+            ...card,
+            flipped: true,
+          }))
+
+          setPlayerCards(flippedCards)
+
+          // Now reveal dealer cards
+          setGameStatus("dealer-turn")
+          setRevealingDealerCards(true)
+
+          // Reveal dealer cards one by one
+          if (data.dealerCards.length > 1) {
+            // Add the dealer's hidden card first (as back-facing)
+            const updatedDealerCards = [
+              ...dealerCards.map((card) => ({ ...card, flipped: true })),
+              { ...data.dealerCards[1], flipped: false },
+            ]
+
+            setDealerCards(updatedDealerCards)
+
+            setTimeout(() => {
+              playCardSound()
+
+              // Flip the hole card
+              const flippedDealerCards = updatedDealerCards.map((card) => ({
+                ...card,
+                flipped: true,
+              }))
+
+              setDealerCards(flippedDealerCards)
+
+              // Add any additional dealer cards
+              let currentIndex = 2
+
+              const revealNextCard = () => {
+                if (currentIndex < data.dealerCards.length) {
+                  const nextCard = data.dealerCards[currentIndex]
+                  const updatedCards = [...flippedDealerCards, { ...nextCard, flipped: false }]
+
+                  setDealerCards(updatedCards)
+
+                  setTimeout(() => {
+                    playCardSound()
+
+                    const finalCards = updatedCards.map((card) => ({
+                      ...card,
+                      flipped: true,
+                    }))
+
+                    setDealerCards(finalCards)
+
+                    currentIndex++
+                    setTimeout(revealNextCard, 600)
+                  }, 400)
+                } else {
+                  // All cards revealed
+                  setRevealingDealerCards(false)
+                  setDealerUpCardOnly(false)
+                  setGameStatus("complete")
+
+                  // Show result after delay
+                  setTimeout(() => {
+                    setResult({
+                      gameResult: data.gameResult,
+                      winAmount: data.winAmount,
+                      clientSeed,
+                      serverSeedHash,
+                    })
+                  }, RESULT_POPUP_DELAY)
+                }
+              }
+
+              setTimeout(revealNextCard, 600)
+            }, 600)
+          }
+
+          setIsDoubling(false)
+        }, 600)
+      }, 200)
+    } catch (error) {
+      console.error("Error doubling down:", error)
+      alert("Failed to double down. Please try again.")
+      setIsDoubling(false)
+    }
+  }
+
+  // Split - split identical cards into two hands
+  const handleSplit = async () => {
+    if (!canSplit || gameStatus !== "player-turn") return
+
+    setIsSplitting(true)
+
+    try {
+      // Send additional bet transaction
+      const [addr] = await window.kasware.getAccounts()
+      const treasury =
+        Math.random() < 0.5
+          ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+          : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
+      const dep = await window.kasware.sendKaspa(treasury, Number(betAmount) * 1e8, {
+        priorityFee: 10000,
+      })
+      const extraTxid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
+
+      // Call settle API with split action
+      const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+        gameId,
+        action: "split",
+        extraTxid,
+      })
+
+      if (!data.success) {
+        alert("Split failed")
+        setIsSplitting(false)
+        return
+      }
+
+      // Set split mode
+      setIsSplit(true)
+      setGameStatus("dealer-turn")
+
+      // Create split hands with flipped state
+      const splitHandsWithState = data.splitHands.map((hand: CardType[]) =>
+        hand.map((card) => ({ ...card, flipped: true })),
+      )
+
+      // Animate the split
+      setSplitHands(splitHandsWithState)
+
+      // Now reveal dealer cards
+      setRevealingDealerCards(true)
+
+      // Reveal dealer cards one by one
+      if (data.dealerCards.length > 1) {
+        // Add the dealer's hidden card first (as back-facing)
+        const updatedDealerCards = [
+          ...dealerCards.map((card) => ({ ...card, flipped: true })),
+          { ...data.dealerCards[1], flipped: false },
+        ]
+
+        setDealerCards(updatedDealerCards)
+
+        setTimeout(() => {
+          playCardSound()
+
+          // Flip the hole card
+          const flippedDealerCards = updatedDealerCards.map((card) => ({
+            ...card,
+            flipped: true,
+          }))
+
+          setDealerCards(flippedDealerCards)
+
+          // Add any additional dealer cards
+          let currentIndex = 2
+
+          const revealNextCard = () => {
+            if (currentIndex < data.dealerCards.length) {
+              const nextCard = data.dealerCards[currentIndex]
+              const updatedCards = [...flippedDealerCards, { ...nextCard, flipped: false }]
+
+              setDealerCards(updatedCards)
+
+              setTimeout(() => {
+                playCardSound()
+
+                const finalCards = updatedCards.map((card) => ({
+                  ...card,
+                  flipped: true,
+                }))
+
+                setDealerCards(finalCards)
+
+                currentIndex++
+                setTimeout(revealNextCard, 600)
+              }, 400)
+            } else {
+              // All cards revealed
+              setRevealingDealerCards(false)
+              setDealerUpCardOnly(false)
+              setGameStatus("complete")
+
+              // Show result after delay
+              setTimeout(() => {
+                setResult({
+                  gameResult: data.gameResult,
+                  winAmount: data.winAmount,
+                  clientSeed,
+                  serverSeedHash,
+                })
+              }, RESULT_POPUP_DELAY)
+            }
+          }
+
+          setTimeout(revealNextCard, 600)
+        }, 600)
+      }
+
+      setIsSplitting(false)
+    } catch (error) {
+      console.error("Error splitting:", error)
+      alert("Failed to split. Please try again.")
+      setIsSplitting(false)
     }
   }
 
@@ -533,6 +814,12 @@ function BlackjackContent() {
     setServerSeedHash(null)
     setGameId(null)
     setRevealingDealerCards(false)
+    setCanDouble(false)
+    setCanSplit(false)
+    setIsSplit(false)
+    setSplitHands([])
+    setActiveSplitHand(0)
+    setSplitHandValues([])
   }
 
   return (
@@ -608,12 +895,21 @@ function BlackjackContent() {
                   dealerValue={dealerValue}
                   onHit={handleHit}
                   onStand={handleStand}
+                  onDouble={handleDouble}
+                  onSplit={handleSplit}
                   gameStatus={gameStatus}
                   isDealing={isDealing}
                   isHitting={isHitting}
                   isStanding={isStanding}
+                  isDoubling={isDoubling}
+                  isSplitting={isSplitting}
                   dealerDrawing={dealerDrawing}
                   revealingDealerCards={revealingDealerCards}
+                  canDouble={canDouble}
+                  canSplit={canSplit}
+                  isSplit={isSplit}
+                  splitHands={splitHands}
+                  splitHandValues={splitHandValues}
                 />
               )}
             </div>
@@ -810,12 +1106,21 @@ function BlackjackTable({
   dealerValue,
   onHit,
   onStand,
+  onDouble,
+  onSplit,
   gameStatus,
   isDealing,
   isHitting,
   isStanding,
+  isDoubling,
+  isSplitting,
   dealerDrawing,
   revealingDealerCards,
+  canDouble,
+  canSplit,
+  isSplit,
+  splitHands,
+  splitHandValues,
 }: {
   playerCards: CardType[]
   dealerCards: CardType[]
@@ -824,12 +1129,21 @@ function BlackjackTable({
   dealerValue: number
   onHit: () => void
   onStand: () => void
+  onDouble: () => void
+  onSplit: () => void
   gameStatus: string
   isDealing: boolean
   isHitting: boolean
   isStanding: boolean
+  isDoubling: boolean
+  isSplitting: boolean
   dealerDrawing: boolean
   revealingDealerCards: boolean
+  canDouble: boolean
+  canSplit: boolean
+  isSplit: boolean
+  splitHands: CardType[][]
+  splitHandValues: number[]
 }) {
   return (
     <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
@@ -896,78 +1210,144 @@ function BlackjackTable({
 
       {/* Player area */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 flex flex-col items-center justify-center p-6">
-        <div className="flex justify-center items-center h-40 relative mb-8">
-          {playerCards.map((card, index) => (
-            <motion.div
-              key={`player-${index}`}
-              className="absolute"
-              initial={{ x: 300, y: 100, zIndex: index }}
-              animate={{
-                x: (index - (playerCards.length - 1) / 2) * 60,
-                y: 0,
-                zIndex: index,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 20,
-                delay: index < 2 ? index * 0.2 : 0,
-              }}
-            >
-              {/* Card container with 3D perspective */}
-              <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
-                {/* Card inner container that will flip */}
+        {!isSplit ? (
+          // Regular hand display
+          <>
+            <div className="flex justify-center items-center h-40 relative mb-8">
+              {playerCards.map((card, index) => (
                 <motion.div
-                  className="relative w-full h-full"
-                  style={{ transformStyle: "preserve-3d" }}
-                  initial={{ rotateY: 180 }}
-                  animate={{ rotateY: card.flipped ? 0 : 180 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  key={`player-${index}`}
+                  className="absolute"
+                  initial={{ x: 300, y: 100, zIndex: index }}
+                  animate={{
+                    x: (index - (playerCards.length - 1) / 2) * 60,
+                    y: 0,
+                    zIndex: index,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20,
+                    delay: index < 2 ? index * 0.2 : 0,
+                  }}
                 >
-                  {/* Card front */}
-                  <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
-                    <Image
-                      src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
-                      alt={`${card.rank} of ${card.suit}`}
-                      fill
-                      className="rounded-lg object-cover"
-                    />
-                  </div>
+                  {/* Card container with 3D perspective */}
+                  <div className="relative w-[120px] h-[180px] shadow-xl rounded-lg" style={{ perspective: "1000px" }}>
+                    {/* Card inner container that will flip */}
+                    <motion.div
+                      className="relative w-full h-full"
+                      style={{ transformStyle: "preserve-3d" }}
+                      initial={{ rotateY: 180 }}
+                      animate={{ rotateY: card.flipped ? 0 : 180 }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                    >
+                      {/* Card front */}
+                      <div className="absolute w-full h-full backface-hidden" style={{ backfaceVisibility: "hidden" }}>
+                        <Image
+                          src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
+                          alt={`${card.rank} of ${card.suit}`}
+                          fill
+                          className="rounded-lg object-cover"
+                        />
+                      </div>
 
-                  {/* Card back */}
-                  <div
-                    className="absolute w-full h-full backface-hidden"
-                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                  >
-                    <Image src="/blockscards/cardback.webp" alt="Card back" fill className="rounded-lg object-cover" />
+                      {/* Card back */}
+                      <div
+                        className="absolute w-full h-full backface-hidden"
+                        style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                      >
+                        <Image
+                          src="/blockscards/cardback.webp"
+                          alt="Card back"
+                          fill
+                          className="rounded-lg object-cover"
+                        />
+                      </div>
+                    </motion.div>
                   </div>
                 </motion.div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              ))}
+            </div>
 
-        <div className="mb-4">
-          <h3 className="text-xl font-bold text-[#49EACB] mb-2">Your Hand ({playerValue})</h3>
-        </div>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-[#49EACB] mb-2">Your Hand ({playerValue})</h3>
+            </div>
+          </>
+        ) : (
+          // Split hands display
+          <div className="flex gap-8 mb-8">
+            {splitHands.map((hand, handIndex) => (
+              <div key={`split-hand-${handIndex}`} className="flex flex-col items-center">
+                <div className="flex justify-center items-center h-40 relative mb-2">
+                  {hand.map((card, cardIndex) => (
+                    <motion.div
+                      key={`split-${handIndex}-${cardIndex}`}
+                      className="absolute"
+                      initial={{ x: 0, y: 0 }}
+                      animate={{
+                        x: (cardIndex - (hand.length - 1) / 2) * 50,
+                        y: 0,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                    >
+                      <div className="relative w-[100px] h-[150px] shadow-xl rounded-lg">
+                        <Image
+                          src={`/blockscards/${card.rank.toLowerCase()}${card.suit}.webp`}
+                          alt={`${card.rank} of ${card.suit}`}
+                          fill
+                          className="rounded-lg object-cover"
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                <h4 className="text-sm font-bold text-[#49EACB]">
+                  Hand {handIndex + 1} ({splitHandValues[handIndex] || 0})
+                </h4>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Game controls */}
-        {gameStatus === "player-turn" && (
+        {gameStatus === "player-turn" && !isSplit && (
           <div className="flex space-x-4">
             <Button
               className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8"
               onClick={onHit}
-              disabled={isHitting || isStanding}
+              disabled={isHitting || isStanding || isDoubling || isSplitting}
             >
               Hit
             </Button>
             <Button
               className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8"
               onClick={onStand}
-              disabled={isHitting || isStanding}
+              disabled={isHitting || isStanding || isDoubling || isSplitting}
             >
               Stand
             </Button>
+            {canDouble && (
+              <Button
+                className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8"
+                onClick={onDouble}
+                disabled={isHitting || isStanding || isDoubling || isSplitting}
+              >
+                Double
+              </Button>
+            )}
+            {canSplit && (
+              <Button
+                className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8"
+                onClick={onSplit}
+                disabled={isHitting || isStanding || isDoubling || isSplitting}
+              >
+                Split
+              </Button>
+            )}
           </div>
         )}
 
@@ -979,7 +1359,7 @@ function BlackjackTable({
         )}
 
         {/* Blackjack notification */}
-        {playerValue === 21 && playerCards.length === 2 && (
+        {playerValue === 21 && playerCards.length === 2 && !isSplit && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -991,7 +1371,7 @@ function BlackjackTable({
         )}
 
         {/* Bust notification - increased z-index to 50 */}
-        {playerValue > 21 && (
+        {playerValue > 21 && !isSplit && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
