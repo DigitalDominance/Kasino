@@ -69,6 +69,7 @@ function BingoContent() {
     winAmount: number
     clientSeed: string | null
     serverSeedHash: string | null
+    patterns?: number
   } | null>(null)
 
   // Ball drawing sound
@@ -87,11 +88,11 @@ function BingoContent() {
     }
   }
 
-  // Calculate potential win
+  // Calculate potential win - show range since it depends on patterns
   useEffect(() => {
     const bet = Number(betAmount)
     if (!isNaN(bet)) {
-      setPotentialWin(bet * 75)
+      setPotentialWin(bet * 2) // Minimum win (1 pattern = 2x)
     }
   }, [betAmount])
 
@@ -214,16 +215,29 @@ function BingoContent() {
       setDrawnNumbers((prev) => [...prev, data.number])
       playBallSound()
 
-      // Check if this number is on our card
-      let isOnCard = false
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-          if (bingoCard[row] && bingoCard[row][col] === data.number) {
-            setMarkedNumbers((prev) => new Set([...prev, data.number]))
-            isOnCard = true
-            break
+      // Check if this number is on our card (only if it's not a bomb)
+      if (data.gameResult === "continue") {
+        let isOnCard = false
+        for (let row = 0; row < 5; row++) {
+          for (let col = 0; col < 5; col++) {
+            if (bingoCard[row] && bingoCard[row][col] === data.number) {
+              setMarkedNumbers((prev) => new Set([...prev, data.number]))
+              isOnCard = true
+              break
+            }
           }
         }
+      } else if (data.gameResult === "lose" && data.reason === "bomb") {
+        // Hit a bomb - show result immediately
+        setTimeout(() => {
+          setResult({
+            gameResult: "lose",
+            winAmount: 0,
+            clientSeed,
+            serverSeedHash,
+          })
+          setGameStatus("complete")
+        }, RESULT_POPUP_DELAY)
       }
 
       setIsDrawing(false)
@@ -256,6 +270,7 @@ function BingoContent() {
           winAmount: data.winAmount || 0,
           clientSeed,
           serverSeedHash,
+          patterns: data.patterns || 0,
         })
         setGameStatus("complete")
       }, RESULT_POPUP_DELAY)
@@ -475,7 +490,7 @@ function BingoContent() {
                     </Button>
                   </div>
                   <div className="text-center text-sm text-[#49EACB] mb-2">
-                    Potential Win: {potentialWin.toFixed(2)} KAS (75x)
+                    Potential Win: {potentialWin.toFixed(2)}+ KAS (2x-13x based on patterns)
                   </div>
                   <Button
                     className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -510,11 +525,18 @@ function BingoContent() {
                 {result.gameResult === "win" ? "BINGO!" : "No Bingo"}
               </h2>
               {result.gameResult === "win" ? (
-                <p className="text-4xl animate-pulse uppercase mb-4 text-black">
-                  You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
-                </p>
+                <div className="mb-6">
+                  <p className="text-4xl animate-pulse uppercase mb-2 text-black">
+                    You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
+                  </p>
+                  <p className="text-lg text-black">
+                    {result.patterns} pattern{result.patterns !== 1 ? "s" : ""} completed!
+                  </p>
+                </div>
               ) : (
-                <p className="text-2xl mb-4 text-black">Better luck next time!</p>
+                <p className="text-2xl mb-4 text-black">
+                  {result.gameResult === "lose" ? "Better luck next time!" : "No winning patterns found!"}
+                </p>
               )}
               <div className="bg-black/80 p-6 rounded-md mb-6 text-left">
                 <div className="flex items-center mb-2">
