@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Volume2, VolumeX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useWallet } from "@/contexts/WalletContext"
-import { LiveChat } from "@/components/live-chat"
-import { LiveWins } from "@/components/live-wins"
+import { LiveChat } from "../mines/live-chat"
+import { LiveWins } from "../mines/live-wins"
 
 interface BingoCard {
   [key: number]: (number | string)[]
