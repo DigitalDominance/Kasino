@@ -1,214 +1,286 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
+import { useState, useEffect, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ArrowLeft, Volume2, VolumeX } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Card } from "@/components/ui/card"
+import { ArrowLeft, ShieldCheck } from "lucide-react"
+import Link from "next/link"
+import { SiteFooter } from "@/components/site-footer"
+import { WalletConnection } from "@/components/wallet-connection"
+import { Montserrat } from "next/font/google"
+import axios from "axios"
+import Image from "next/image"
 import { useWallet } from "@/contexts/WalletContext"
 import { LiveChat } from "../mines/live-chat"
 import { LiveWins } from "../mines/live-wins"
+import { XPDisplay } from "@/components/xp-display"
 
-interface BingoCard {
+// Font & Constants
+const montserrat = Montserrat({ weight: "700", subsets: ["latin"] })
+const MIN_BET = 1
+const MAX_BET = 1000
+const messages = ["Verifying transaction", "Hashing game seed", "Generating bingo card"]
+const RESULT_POPUP_DELAY = 2000 // 2 second delay for result popup
+
+// API base
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
+
+// Bingo card type
+interface BingoCardType {
   [key: number]: (number | string)[]
 }
 
-interface GameResult {
-  success: boolean
-  gameResult: string
-  winAmount: number
-  number?: number
+// Main Page
+export default function BingoPage() {
+  return <BingoContent />
 }
 
-export default function BingoGame() {
-  const router = useRouter()
-  const { isConnected } = useWallet()
+function BingoContent() {
+  const { isConnected, balance } = useWallet()
 
   // Game state
-  const [gameStarted, setGameStarted] = useState(false)
-  const [gameId, setGameId] = useState("")
-  const [serverSeedHash, setServerSeedHash] = useState("")
-  const [bingoCard, setBingoCard] = useState<BingoCard>({})
+  const [pregame, setPregame] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [betAmount, setBetAmount] = useState("1")
+  const [bingoCard, setBingoCard] = useState<BingoCardType>({})
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [currentBall, setCurrentBall] = useState<number | null>(null)
   const [markedNumbers, setMarkedNumbers] = useState<Set<number>>(new Set())
-  const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
-  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [gameStatus, setGameStatus] = useState<"betting" | "playing" | "complete">("betting")
+  const [potentialWin, setPotentialWin] = useState(0)
 
-  // Betting state
-  const [betAmount, setBetAmount] = useState(100)
-  const [showInfo, setShowInfo] = useState(false)
+  // Animations
+  const [isDrawing, setIsDrawing] = useState(false)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kasino-backend-4818b4b69870.herokuapp.com"
+  // Provably-fair & results
+  const [clientSeed, setClientSeed] = useState<string | null>(null)
+  const [serverSeedHash, setServerSeedHash] = useState<string | null>(null)
+  const [gameId, setGameId] = useState<string | null>(null)
 
-  // Sound effects
-  const playSound = (soundName: string) => {
-    if (!soundEnabled) return
-    try {
-      const audio = new Audio(`/${soundName}.mp3`)
-      audio.volume = 0.3
-      audio.play().catch(() => {})
-    } catch (error) {
-      console.log("Sound not available")
+  // Loading overlay + typewriter
+  const [loading, setLoading] = useState(false)
+  const [msgIndex, setMsgIndex] = useState(0)
+  const [msgText, setMsgText] = useState("")
+
+  // Result popup
+  const [result, setResult] = useState<{
+    gameResult: "win" | "lose"
+    winAmount: number
+    clientSeed: string | null
+    serverSeedHash: string | null
+  } | null>(null)
+
+  // Ball drawing sound
+  const ballSoundRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      ballSoundRef.current = new Audio("/dice-roll.mp3")
+    }
+  }, [])
+
+  const playBallSound = () => {
+    if (ballSoundRef.current) {
+      ballSoundRef.current.currentTime = 0
+      ballSoundRef.current.play().catch((err) => console.error("Error playing sound:", err))
     }
   }
 
-  const generateClientSeed = () => {
-    const array = new Uint8Array(32)
-    crypto.getRandomValues(array)
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("")
-  }
+  // Calculate potential win
+  useEffect(() => {
+    const bet = Number(betAmount)
+    if (!isNaN(bet)) {
+      setPotentialWin(bet * 75)
+    }
+  }, [betAmount])
 
-  const handleStartGame = async () => {
-    if (!isConnected) return
+  // Typewriter effect for loading messages
+  useEffect(() => {
+    if (!loading) return
+    setMsgIndex(0)
+    setMsgText("")
+  }, [loading])
 
-    setIsLoading(true)
-    try {
-      const clientSeed = generateClientSeed()
-      const clientSeedHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clientSeed))
-      const hashArray = Array.from(new Uint8Array(clientSeedHash))
-      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
-
-      // Get wallet address and send transaction
-      const accounts = await window.kasware.getAccounts()
-      const walletAddress = accounts[0]
-
-      const treasuryAddress =
-        Math.random() > 0.5 ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1 : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2
-
-      const txid = await window.kasware.sendKaspa({
-        to: treasuryAddress,
-        amount: Math.round(betAmount * 1e8),
-      })
-
-      // Show loading animation
-      setIsLoading(true)
-
-      // Call play API
-      const response = await fetch(`${apiUrl}/api/play`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gameName: "bingo",
-          walletAddress,
-          betAmount,
-          clientSeed,
-          clientSeedHash: hashHex,
-          txid,
-          nonce: Date.now(),
-        }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        setGameId(data.gameId)
-        setServerSeedHash(data.serverSeedHash)
-        setBingoCard(data.card)
-        setGameStarted(true)
-        setDrawnNumbers([])
-        setMarkedNumbers(new Set())
-        setCurrentBall(null)
-        playSound("card-sound")
+  useEffect(() => {
+    if (!loading) return
+    const curr = messages[msgIndex]
+    if (msgText.length < curr.length) {
+      const t = setTimeout(() => setMsgText(curr.slice(0, msgText.length + 1)), 40)
+      return () => clearTimeout(t)
+    }
+    const t2 = setTimeout(() => {
+      if (msgIndex < messages.length - 1) {
+        setMsgIndex((i) => i + 1)
+        setMsgText("")
       }
+    }, 2000)
+    return () => clearTimeout(t2)
+  }, [loading, msgText, msgIndex])
+
+  // Start game
+  const handleStartGame = async () => {
+    if (!isConnected) {
+      alert("Connect your wallet first")
+      return
+    }
+
+    const bet = Number(betAmount)
+    if (isNaN(bet) || bet < MIN_BET || bet > MAX_BET || bet > balance) {
+      alert(`Bet between ${MIN_BET} and ${MAX_BET}, within your balance.`)
+      return
+    }
+
+    try {
+      // 1) generate clientSeed + hash
+      const arr = crypto.getRandomValues(new Uint8Array(32))
+      const rawSeed = Array.from(arr)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+      const buf = await crypto.subtle.digest("SHA-256", arr)
+      const hash = Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+      setClientSeed(rawSeed)
+
+      // 2) send deposit on-chain
+      const [addr] = await window.kasware.getAccounts()
+      const treasury =
+        Math.random() < 0.5
+          ? process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T1!
+          : process.env.NEXT_PUBLIC_TREASURY_ADDRESS_T2!
+      const dep = await window.kasware.sendKaspa(treasury, bet * 1e8, {
+        priorityFee: 10000,
+      })
+      const txid = typeof dep === "string" ? JSON.parse(dep).id : (dep as any).id
+
+      // 3) call play API
+      setLoading(true)
+      const { data } = await axios.post(`${API_BASE}/api/game/play`, {
+        gameName: "bingo",
+        clientSeed: rawSeed,
+        clientSeedHash: hash,
+        nonce: 0,
+        walletAddress: addr,
+        betAmount: bet,
+        txid,
+      })
+
+      if (!data.success) {
+        alert("Play API failed")
+        setLoading(false)
+        return
+      }
+
+      setGameId(data.gameId)
+      setServerSeedHash(data.serverSeedHash)
+      setBingoCard(data.card)
+
+      // Set initial game state
+      setPregame(false)
+      setIsPlaying(true)
+      setGameStatus("playing")
+      setDrawnNumbers([])
+      setMarkedNumbers(new Set())
+      setCurrentBall(null)
+
+      setLoading(false)
     } catch (error) {
       console.error("Error starting game:", error)
-    } finally {
-      setIsLoading(false)
+      alert("Failed to start game. Please try again.")
+      setLoading(false)
     }
   }
 
+  // Draw a ball
   const handleDrawBall = async () => {
-    if (!gameId) return
+    if (!gameId || isDrawing) return
 
-    setIsLoading(true)
+    setIsDrawing(true)
     try {
-      const response = await fetch(`${apiUrl}/api/settle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gameId,
-          action: "draw",
-        }),
+      const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+        gameId,
+        action: "draw",
       })
 
-      const data = await response.json()
-      if (data.success && data.number) {
-        setCurrentBall(data.number)
-        setDrawnNumbers((prev) => [...prev, data.number])
+      if (!data.success) {
+        alert("Draw action failed")
+        setIsDrawing(false)
+        return
+      }
 
-        // Check if this number is on our card
-        let isOnCard = false
-        for (let row = 0; row < 5; row++) {
-          for (let col = 0; col < 5; col++) {
-            if (bingoCard[row] && bingoCard[row][col] === data.number) {
-              setMarkedNumbers((prev) => new Set([...prev, data.number]))
-              isOnCard = true
-              break
-            }
+      // Set the new ball
+      setCurrentBall(data.number)
+      setDrawnNumbers((prev) => [...prev, data.number])
+      playBallSound()
+
+      // Check if this number is on our card
+      let isOnCard = false
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (bingoCard[row] && bingoCard[row][col] === data.number) {
+            setMarkedNumbers((prev) => new Set([...prev, data.number]))
+            isOnCard = true
+            break
           }
         }
-
-        playSound(isOnCard ? "win-sound" : "dice-roll")
       }
+
+      setIsDrawing(false)
     } catch (error) {
       console.error("Error drawing ball:", error)
-    } finally {
-      setIsLoading(false)
+      alert("Failed to draw ball. Please try again.")
+      setIsDrawing(false)
     }
   }
 
+  // Call bingo
   const handleCallBingo = async () => {
     if (!gameId) return
 
-    setIsLoading(true)
     try {
-      const response = await fetch(`${apiUrl}/api/settle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gameId,
-          action: "call",
-        }),
+      const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
+        gameId,
+        action: "call",
       })
 
-      const data = await response.json()
-      if (data.success) {
-        // 2 second delay before showing result
-        setTimeout(() => {
-          setResult({
-            type: data.gameResult,
-            amount: data.winAmount || 0,
-            serverSeedHash,
-            gameId,
-          })
-        }, 2000)
-
-        if (data.gameResult === "win") {
-          playSound("win-sound")
-        } else {
-          playSound("lose-sound")
-        }
+      if (!data.success) {
+        alert("Call bingo action failed")
+        return
       }
+
+      // Show result after delay
+      setTimeout(() => {
+        setResult({
+          gameResult: data.gameResult,
+          winAmount: data.winAmount || 0,
+          clientSeed,
+          serverSeedHash,
+        })
+        setGameStatus("complete")
+      }, RESULT_POPUP_DELAY)
     } catch (error) {
       console.error("Error calling bingo:", error)
-    } finally {
-      setIsLoading(false)
+      alert("Failed to call bingo. Please try again.")
     }
   }
 
+  // Reset game
   const resetGame = () => {
-    setGameStarted(false)
-    setGameId("")
-    setServerSeedHash("")
+    setPregame(true)
+    setIsPlaying(false)
     setBingoCard({})
     setDrawnNumbers([])
     setMarkedNumbers(new Set())
     setCurrentBall(null)
+    setGameStatus("betting")
     setResult(null)
+    setClientSeed(null)
+    setServerSeedHash(null)
+    setGameId(null)
   }
 
+  // Check if there's a potential winning pattern
   const checkForWinningPattern = () => {
     if (!bingoCard || Object.keys(bingoCard).length === 0) return false
 
@@ -250,6 +322,7 @@ export default function BingoGame() {
     return diagonal1 || diagonal2
   }
 
+  // Get ball color based on number
   const getBallColor = (number: number) => {
     if (number >= 1 && number <= 15) return "bg-blue-500"
     if (number >= 16 && number <= 30) return "bg-red-500"
@@ -259,361 +332,488 @@ export default function BingoGame() {
     return "bg-gray-500"
   }
 
+  // Get column letter
   const getColumnLetter = (col: number) => {
     return ["B", "I", "N", "G", "O"][col]
   }
 
-  if (isLoading && !gameStarted) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl font-bold mb-4">Starting Bingo Game...</div>
-          <div className="flex space-x-1 justify-center">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="w-2 h-2 bg-[#49EACB] rounded-full animate-bounce"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!gameStarted) {
-    return (
-      <div className="min-h-screen bg-black text-white">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/games")}
-                className="text-[#49EACB] hover:bg-[#49EACB]/10"
+  return (
+    <div className={`${montserrat.className} min-h-screen bg-black text-white flex flex-col`}>
+      {/* Loading */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 text-[#49EACB] font-mono"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex items-center">
+              {msgText}
+              <motion.span
+                className="ml-2 text-xs"
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.8 }}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Games
-              </Button>
-              <h1 className="text-3xl font-bold text-[#49EACB]">Bingo</h1>
+                ●
+              </motion.span>
+              <motion.span
+                className="ml-0.5 text-xs"
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.8, delay: 0.2 }}
+              >
+                ●
+              </motion.span>
+              <motion.span
+                className="ml-0.5 text-xs"
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ repeat: Number.POSITIVE_INFINITY, duration: 0.8, delay: 0.4 }}
+              >
+                ●
+              </motion.span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="text-[#49EACB] hover:bg-[#49EACB]/10"
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex-grow p-6">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <Link href="/" className="inline-flex items-center text-[#49EACB] hover:underline">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
+          </Link>
+          <div className="flex items-center gap-4">
+            <XPDisplay />
+            <WalletConnection />
           </div>
+        </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Game Area */}
-            <div className="lg:col-span-3">
-              <Card className="bg-gradient-to-br from-[#49EACB]/10 to-[#49EACB]/5 border-[#49EACB]/20 p-8">
-                {/* Pre-game Screen */}
-                <div className="text-center">
-                  <div className="mb-8">
-                    <h2 className="text-4xl font-bold text-[#49EACB] mb-4">Welcome to Bingo!</h2>
-                    <p className="text-xl text-gray-300 mb-6">Get a line, column, or diagonal to win 75x your bet!</p>
-                  </div>
+        {/* Layout */}
+        <div className="grid grid-cols-[1fr_300px] gap-6 mb-6">
+          <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
+            <div className="p-6 flex flex-col h-full items-center">
+              <div className="flex justify-between items-center w-full mb-4">
+                <h2 className="text-2xl font-bold text-[#49EACB]">Bingo</h2>
+                <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
+                  Reset
+                </Button>
+              </div>
 
-                  {/* Animated Bingo Balls */}
-                  <div className="flex justify-center space-x-4 mb-8">
-                    {[7, 23, 45, 52, 68].map((num, index) => (
-                      <div
-                        key={num}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg ${getBallColor(num)} animate-bounce shadow-lg`}
-                        style={{ animationDelay: `${index * 0.2}s` }}
-                      >
-                        {num}
-                      </div>
-                    ))}
-                  </div>
+              {pregame ? (
+                <PreGameScreen onStart={handleStartGame} isConnected={isConnected} />
+              ) : (
+                <BingoGameScreen
+                  bingoCard={bingoCard}
+                  drawnNumbers={drawnNumbers}
+                  currentBall={currentBall}
+                  markedNumbers={markedNumbers}
+                  onDrawBall={handleDrawBall}
+                  onCallBingo={handleCallBingo}
+                  isDrawing={isDrawing}
+                  canCallBingo={checkForWinningPattern()}
+                  gameStatus={gameStatus}
+                />
+              )}
+            </div>
+          </Card>
 
-                  {/* Game Rules */}
-                  <div className="bg-black/30 rounded-lg p-6 mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#49EACB] mb-3">How to Play</h3>
-                        <ul className="space-y-2 text-gray-300">
-                          <li>• Place your bet and get a random Bingo card</li>
-                          <li>• Draw balls one by one</li>
-                          <li>• Mark matching numbers on your card</li>
-                          <li>• Call "Bingo" when you complete a pattern</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#49EACB] mb-3">Winning Patterns</h3>
-                        <ul className="space-y-2 text-gray-300">
-                          <li>• Any complete row (5 in a row)</li>
-                          <li>• Any complete column (5 in a column)</li>
-                          <li>• Any complete diagonal (5 diagonally)</li>
-                          <li>• Win 75x your bet amount!</li>
-                        </ul>
-                      </div>
+          {/* Controls */}
+          <div className="space-y-6">
+            {pregame && (
+              <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm p-6">
+                <div className="space-y-4">
+                  <label className="text-sm text-[#49EACB]">Bet Amount (KAS)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(e.target.value)}
+                      className="w-full bg-[#49EACB]/5 border-[#49EACB]/10 text-white pl-8"
+                      disabled={isPlaying}
+                    />
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                        alt="KAS"
+                        width={16}
+                        height={16}
+                      />
                     </div>
                   </div>
-
-                  {/* Bet Controls */}
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <Button
-                        onClick={() => setBetAmount(Math.max(1, betAmount / 2))}
-                        className="bg-[#49EACB]/20 text-[#49EACB] hover:bg-[#49EACB]/30"
-                      >
-                        ½
-                      </Button>
-                      <Button
-                        onClick={() => setBetAmount(Math.max(1, betAmount - 10))}
-                        className="bg-[#49EACB]/20 text-[#49EACB] hover:bg-[#49EACB]/30"
-                      >
-                        -10
-                      </Button>
-                      <div className="flex flex-col items-center">
-                        <label className="text-sm text-gray-400 mb-1">Bet Amount</label>
-                        <Input
-                          type="number"
-                          value={betAmount}
-                          onChange={(e) => setBetAmount(Math.max(1, Number.parseInt(e.target.value) || 1))}
-                          className="w-32 text-center bg-black/50 border-[#49EACB]/30 text-white"
-                          min="1"
-                        />
-                        <span className="text-xs text-gray-500 mt-1">KAS</span>
-                      </div>
-                      <Button
-                        onClick={() => setBetAmount(betAmount + 10)}
-                        className="bg-[#49EACB]/20 text-[#49EACB] hover:bg-[#49EACB]/30"
-                      >
-                        +10
-                      </Button>
-                      <Button
-                        onClick={() => setBetAmount(betAmount * 2)}
-                        className="bg-[#49EACB]/20 text-[#49EACB] hover:bg-[#49EACB]/30"
-                      >
-                        2×
-                      </Button>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-sm text-gray-400 mb-2">
-                        Potential Win: <span className="text-[#49EACB] font-bold">{betAmount * 75} KAS</span>
-                      </div>
-                      <Button
-                        onClick={handleStartGame}
-                        disabled={!isConnected || isLoading}
-                        className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-3 text-lg font-bold"
-                      >
-                        {!isConnected ? "Connect Wallet to Play" : "Start Bingo Game"}
-                      </Button>
-                    </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button
+                      variant="outline"
+                      className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                      onClick={() => setBetAmount(String(Math.max(MIN_BET, Number(betAmount) / 2)))}
+                      disabled={isPlaying}
+                    >
+                      ½
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                      onClick={() => setBetAmount(String(Math.min(MAX_BET, Number(betAmount) * 2)))}
+                      disabled={isPlaying}
+                    >
+                      2×
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                      onClick={() => setBetAmount(String(MIN_BET))}
+                      disabled={isPlaying}
+                    >
+                      Min
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-[#49EACB]/10 hover:bg-[#49EACB]/10"
+                      onClick={() => setBetAmount(String(Math.min(MAX_BET, balance)))}
+                      disabled={isPlaying}
+                    >
+                      Max
+                    </Button>
                   </div>
+                  <div className="text-center text-sm text-[#49EACB] mb-2">
+                    Potential Win: {potentialWin.toFixed(2)} KAS (75x)
+                  </div>
+                  <Button
+                    className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
+                    onClick={handleStartGame}
+                    disabled={isPlaying || !isConnected}
+                  >
+                    {!isConnected ? "Connect Wallet" : isPlaying ? "Game in Progress" : "Start Bingo"}
+                  </Button>
                 </div>
               </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <LiveChat />
-              <LiveWins />
-            </div>
+            )}
+            <LiveChat textColor="#49EACB" />
+            <LiveWins textColor="#49EACB" />
           </div>
         </div>
       </div>
-    )
+
+      <SiteFooter />
+
+      {/* Result Popup */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          >
+            <Card className="bg-[#49EACB] p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+              <h2 className="text-4xl font-bold mb-6 text-black">
+                {result.gameResult === "win" ? "BINGO!" : "No Bingo"}
+              </h2>
+              {result.gameResult === "win" ? (
+                <p className="text-4xl animate-pulse uppercase mb-4 text-black">
+                  You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
+                </p>
+              ) : (
+                <p className="text-2xl mb-4 text-black">Better luck next time!</p>
+              )}
+              <div className="bg-black/80 p-6 rounded-md mb-6 text-left">
+                <div className="flex items-center mb-2">
+                  <ShieldCheck className="text-white mr-2" />
+                  <h3 className="text-lg font-semibold text-white m-0">Provably Fair</h3>
+                </div>
+                <p className="text-sm text-white break-all">Client Seed: {result.clientSeed}</p>
+                <p className="text-sm text-white break-all">Server Hash: {result.serverSeedHash}</p>
+              </div>
+              <Button onClick={resetGame} className="px-8 py-3 bg-black text-white hover:bg-black/80">
+                Play Again
+              </Button>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// Pre-game welcome screen
+function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnected: boolean }) {
+  return (
+    <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+        <motion.h1
+          className="text-5xl font-bold mb-4"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          style={{ color: "#49EACB" }}
+        >
+          Bingo
+        </motion.h1>
+        <motion.p
+          className="text-xl tracking-wider mb-8"
+          animate={{ opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          style={{ color: "#ffffff" }}
+        >
+          GET A LINE, COLUMN OR DIAGONAL TO WIN
+        </motion.p>
+
+        {/* Game rules in the center */}
+        <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-lg mb-8">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold text-[#49EACB] mb-2">How to Play</h3>
+              <ul className="space-y-1 text-sm text-gray-300">
+                <li>• Place your bet and get a card</li>
+                <li>• Draw balls one by one</li>
+                <li>• Mark matching numbers on your card</li>
+                <li>• Call "Bingo" when you complete a pattern</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Winning Patterns</h3>
+              <ul className="space-y-1 text-sm text-gray-300">
+                <li>• Any complete row (5 in a row)</li>
+                <li>• Any complete column (5 in a column)</li>
+                <li>• Any complete diagonal (5 diagonally)</li>
+                <li>• Win 75x your bet amount!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Animated bingo balls on left and right */}
+        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 space-y-4">
+          <motion.div
+            className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          >
+            B-7
+          </motion.div>
+          <motion.div
+            className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.3 }}
+          >
+            I-23
+          </motion.div>
+          <motion.div
+            className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.6 }}
+          >
+            N-42
+          </motion.div>
+        </div>
+
+        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 space-y-4">
+          <motion.div
+            className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2.3, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.2 }}
+          >
+            G-55
+          </motion.div>
+          <motion.div
+            className="w-16 h-16 rounded-full bg-yellow-500 text-black flex items-center justify-center font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 1.9, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.5 }}
+          >
+            O-68
+          </motion.div>
+          <motion.div
+            className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2.1, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.8 }}
+          >
+            B-12
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="absolute bottom-[35px] left-1/2 transform -translate-x-1/2"
+        >
+          <Button
+            className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
+            onClick={onStart}
+            disabled={!isConnected}
+          >
+            {!isConnected ? "Connect Wallet to Play" : "Start Bingo"}
+          </Button>
+        </motion.div>
+      </div>
+
+      {/* Decorative elements */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-[#004d40] z-10"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#003c32] z-20"></div>
+    </div>
+  )
+}
+
+// Bingo Game Screen Component
+function BingoGameScreen({
+  bingoCard,
+  drawnNumbers,
+  currentBall,
+  markedNumbers,
+  onDrawBall,
+  onCallBingo,
+  isDrawing,
+  canCallBingo,
+  gameStatus,
+}: {
+  bingoCard: BingoCardType
+  drawnNumbers: number[]
+  currentBall: number | null
+  markedNumbers: Set<number>
+  onDrawBall: () => void
+  onCallBingo: () => void
+  isDrawing: boolean
+  canCallBingo: boolean
+  gameStatus: string
+}) {
+  // Get ball color based on number
+  const getBallColor = (number: number) => {
+    if (number >= 1 && number <= 15) return "bg-blue-500"
+    if (number >= 16 && number <= 30) return "bg-red-500"
+    if (number >= 31 && number <= 45) return "bg-white text-black"
+    if (number >= 46 && number <= 60) return "bg-green-500"
+    if (number >= 61 && number <= 75) return "bg-yellow-500 text-black"
+    return "bg-gray-500"
+  }
+
+  // Get column letter
+  const getColumnLetter = (col: number) => {
+    return ["B", "I", "N", "G", "O"][col]
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/games")}
-              className="text-[#49EACB] hover:bg-[#49EACB]/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Games
-            </Button>
-            <h1 className="text-3xl font-bold text-[#49EACB]">Bingo</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className="text-sm text-gray-400">Bet Amount</div>
-              <div className="text-lg font-bold text-[#49EACB]">{betAmount} KAS</div>
+    <div className="w-full h-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Bingo Card (takes 2 columns on medium+ screens) */}
+        <div className="md:col-span-2">
+          <div className="bg-[#004d40]/50 rounded-lg p-4">
+            <h3 className="text-xl font-bold text-[#49EACB] mb-4 text-center">Your Bingo Card</h3>
+
+            {/* Column Headers */}
+            <div className="grid grid-cols-5 gap-2 mb-2">
+              {["B", "I", "N", "G", "O"].map((letter) => (
+                <div key={letter} className="text-center font-bold text-[#49EACB] text-xl py-2">
+                  {letter}
+                </div>
+              ))}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="text-[#49EACB] hover:bg-[#49EACB]/10"
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </Button>
+
+            {/* Bingo Card Grid */}
+            <div className="grid grid-cols-5 gap-2">
+              {Array.from({ length: 5 }, (_, row) =>
+                Array.from({ length: 5 }, (_, col) => {
+                  const cell = bingoCard[row] && bingoCard[row][col]
+                  const isMarked = cell === "FREE" || markedNumbers.has(cell as number)
+                  const isFree = cell === "FREE"
+
+                  return (
+                    <div
+                      key={`${row}-${col}`}
+                      className={`
+                        aspect-square flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
+                        ${
+                          isMarked
+                            ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]"
+                            : "bg-black/50 border-gray-600 text-white"
+                        }
+                        ${isFree ? "bg-[#49EACB]/30" : ""}
+                      `}
+                    >
+                      {cell}
+                      {isMarked && !isFree && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Image
+                            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Kaspa-Icon-64-2jq8rPBjkF7DpZ7Rw7jXyXdd3dVlow.webp"
+                            alt="KAS"
+                            width={24}
+                            height={24}
+                            className="opacity-80"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                }),
+              )}
+            </div>
+
+            {/* Game Controls */}
+            <div className="mt-6 flex justify-center space-x-4">
+              <Button
+                onClick={onDrawBall}
+                disabled={isDrawing || gameStatus === "complete"}
+                className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-6 py-2"
+              >
+                {isDrawing ? "Drawing..." : "Draw Ball"}
+              </Button>
+
+              {canCallBingo && (
+                <Button
+                  onClick={onCallBingo}
+                  disabled={gameStatus === "complete"}
+                  className="bg-yellow-500 text-black hover:bg-yellow-400 px-6 py-2 animate-pulse"
+                >
+                  Call BINGO!
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Game Area */}
-          <div className="lg:col-span-3">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Bingo Card */}
-              <div className="xl:col-span-2">
-                <Card className="bg-gradient-to-br from-[#49EACB]/10 to-[#49EACB]/5 border-[#49EACB]/20 p-6">
-                  <h3 className="text-xl font-bold text-[#49EACB] mb-4 text-center">Your Bingo Card</h3>
-
-                  {/* Column Headers */}
-                  <div className="grid grid-cols-5 gap-2 mb-2">
-                    {["B", "I", "N", "G", "O"].map((letter) => (
-                      <div key={letter} className="text-center font-bold text-[#49EACB] text-xl py-2">
-                        {letter}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Bingo Card Grid */}
-                  <div className="grid grid-cols-5 gap-2">
-                    {Array.from({ length: 5 }, (_, row) =>
-                      Array.from({ length: 5 }, (_, col) => {
-                        const cell = bingoCard[row] && bingoCard[row][col]
-                        const isMarked = cell === "FREE" || markedNumbers.has(cell as number)
-                        const isFree = cell === "FREE"
-
-                        return (
-                          <div
-                            key={`${row}-${col}`}
-                            className={`
-                              aspect-square flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
-                              ${
-                                isMarked
-                                  ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]"
-                                  : "bg-black/50 border-gray-600 text-white"
-                              }
-                              ${isFree ? "bg-[#49EACB]/30" : ""}
-                            `}
-                          >
-                            {isFree ? "FREE" : cell}
-                            {isMarked && !isFree && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <img src="/kas-logo.png" alt="KAS" className="w-8 h-8 opacity-80" />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      }),
-                    )}
-                  </div>
-
-                  {/* Game Controls */}
-                  <div className="mt-6 flex justify-center space-x-4">
-                    <Button
-                      onClick={handleDrawBall}
-                      disabled={isLoading}
-                      className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-6 py-2"
-                    >
-                      {isLoading ? "Drawing..." : "Draw Ball"}
-                    </Button>
-
-                    {checkForWinningPattern() && (
-                      <Button
-                        onClick={handleCallBingo}
-                        disabled={isLoading}
-                        className="bg-yellow-500 text-black hover:bg-yellow-400 px-6 py-2 animate-pulse"
-                      >
-                        Call BINGO!
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              </div>
-
-              {/* Ball Display and History */}
-              <div className="space-y-6">
-                {/* Current Ball */}
-                <Card className="bg-gradient-to-br from-[#49EACB]/10 to-[#49EACB]/5 border-[#49EACB]/20 p-6">
-                  <h3 className="text-lg font-bold text-[#49EACB] mb-4 text-center">Current Ball</h3>
-                  <div className="flex justify-center">
-                    {currentBall ? (
-                      <div
-                        className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl ${getBallColor(currentBall)} shadow-lg animate-bounce`}
-                      >
-                        {currentBall}
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-500">
-                        ?
-                      </div>
-                    )}
-                  </div>
-                </Card>
-
-                {/* Ball History */}
-                <Card className="bg-gradient-to-br from-[#49EACB]/10 to-[#49EACB]/5 border-[#49EACB]/20 p-6">
-                  <h3 className="text-lg font-bold text-[#49EACB] mb-4 text-center">
-                    Called Numbers ({drawnNumbers.length})
-                  </h3>
-                  <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
-                    {drawnNumbers.map((number, index) => (
-                      <div
-                        key={index}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${getBallColor(number)}`}
-                      >
-                        {number}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
+        {/* Ball Display and History */}
+        <div className="space-y-6">
+          {/* Current Ball */}
+          <div className="bg-[#004d40]/50 rounded-lg p-4">
+            <h3 className="text-lg font-bold text-[#49EACB] mb-4 text-center">Current Ball</h3>
+            <div className="flex justify-center">
+              {currentBall ? (
+                <motion.div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl ${getBallColor(
+                    currentBall,
+                  )} shadow-lg`}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                >
+                  {getColumnLetter(Math.floor((currentBall - 1) / 15))}-{currentBall}
+                </motion.div>
+              ) : (
+                <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-500">
+                  ?
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <LiveChat />
-            <LiveWins />
+          {/* Ball History */}
+          <div className="bg-[#004d40]/50 rounded-lg p-4">
+            <h3 className="text-lg font-bold text-[#49EACB] mb-4 text-center">
+              Called Numbers ({drawnNumbers.length})
+            </h3>
+            <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+              {drawnNumbers.map((number, index) => (
+                <div
+                  key={index}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs ${getBallColor(
+                    number,
+                  )}`}
+                >
+                  {number}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Result Modal */}
-      {result && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <Card className="bg-gradient-to-br from-[#49EACB]/20 to-[#49EACB]/10 border-[#49EACB]/30 p-8 max-w-md w-full mx-4">
-            <div className="text-center">
-              <h2 className={`text-3xl font-bold mb-4 ${result.type === "win" ? "text-[#49EACB]" : "text-red-400"}`}>
-                {result.type === "win" ? "BINGO!" : "No Bingo"}
-              </h2>
-
-              {result.type === "win" ? (
-                <div className="mb-6">
-                  <div className="text-lg text-gray-300 mb-2">You won</div>
-                  <div className="text-4xl font-bold text-[#49EACB]">{result.amount} KAS</div>
-                </div>
-              ) : (
-                <div className="mb-6">
-                  <div className="text-lg text-gray-300">Better luck next time!</div>
-                </div>
-              )}
-
-              <div className="bg-black/30 rounded-lg p-4 mb-6">
-                <div className="text-sm text-gray-400 mb-2">Provably Fair</div>
-                <div className="text-xs text-gray-500 break-all">Game ID: {result.gameId}</div>
-                <div className="text-xs text-gray-500 break-all">Server Seed Hash: {result.serverSeedHash}</div>
-              </div>
-
-              <Button onClick={resetGame} className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 w-full">
-                Play Again
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   )
 }
