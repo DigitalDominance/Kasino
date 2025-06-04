@@ -46,6 +46,7 @@ function BingoContent() {
   const [bingoCard, setBingoCard] = useState<BingoCardType>({})
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [currentBall, setCurrentBall] = useState<number | null>(null)
+  const [currentBallIsBomb, setCurrentBallIsBomb] = useState(false)
   const [markedNumbers, setMarkedNumbers] = useState<Set<number>>(new Set())
   const [gameStatus, setGameStatus] = useState<"betting" | "playing" | "complete">("betting")
   const [potentialWin, setPotentialWin] = useState(0)
@@ -70,6 +71,7 @@ function BingoContent() {
     clientSeed: string | null
     serverSeedHash: string | null
     patterns?: number
+    isBomb?: boolean
   } | null>(null)
 
   // Ball drawing sound
@@ -184,6 +186,7 @@ function BingoContent() {
       setDrawnNumbers([])
       setMarkedNumbers(new Set())
       setCurrentBall(null)
+      setCurrentBallIsBomb(false)
 
       setLoading(false)
     } catch (error) {
@@ -195,7 +198,7 @@ function BingoContent() {
 
   // Draw a ball
   const handleDrawBall = async () => {
-    if (!gameId || isDrawing) return
+    if (!gameId || isDrawing || gameStatus === "complete") return
 
     setIsDrawing(true)
     try {
@@ -215,8 +218,25 @@ function BingoContent() {
       setDrawnNumbers((prev) => [...prev, data.number])
       playBallSound()
 
-      // Check if this number is on our card (only if it's not a bomb)
-      if (data.gameResult === "continue") {
+      // Check if this is a bomb
+      if (data.gameResult === "lose" && data.reason === "bomb") {
+        setCurrentBallIsBomb(true)
+        setGameStatus("complete")
+
+        // Show bomb result immediately
+        setTimeout(() => {
+          setResult({
+            gameResult: "lose",
+            winAmount: 0,
+            clientSeed,
+            serverSeedHash,
+            isBomb: true,
+          })
+        }, 1000) // Short delay to show the bomb first
+      } else if (data.gameResult === "continue") {
+        setCurrentBallIsBomb(false)
+
+        // Check if this number is on our card
         let isOnCard = false
         for (let row = 0; row < 5; row++) {
           for (let col = 0; col < 5; col++) {
@@ -227,17 +247,6 @@ function BingoContent() {
             }
           }
         }
-      } else if (data.gameResult === "lose" && data.reason === "bomb") {
-        // Hit a bomb - show result immediately
-        setTimeout(() => {
-          setResult({
-            gameResult: "lose",
-            winAmount: 0,
-            clientSeed,
-            serverSeedHash,
-          })
-          setGameStatus("complete")
-        }, RESULT_POPUP_DELAY)
       }
 
       setIsDrawing(false)
@@ -288,6 +297,7 @@ function BingoContent() {
     setDrawnNumbers([])
     setMarkedNumbers(new Set())
     setCurrentBall(null)
+    setCurrentBallIsBomb(false)
     setGameStatus("betting")
     setResult(null)
     setClientSeed(null)
@@ -339,12 +349,24 @@ function BingoContent() {
 
   // Get ball color based on number
   const getBallColor = (number: number) => {
-    if (number >= 1 && number <= 15) return "bg-blue-500"
-    if (number >= 16 && number <= 30) return "bg-red-500"
+    if (number >= 1 && number <= 15) return "bg-blue-500 text-white"
+    if (number >= 16 && number <= 30) return "bg-red-500 text-white"
     if (number >= 31 && number <= 45) return "bg-white text-black"
-    if (number >= 46 && number <= 60) return "bg-green-500"
+    if (number >= 46 && number <= 60) return "bg-green-500 text-white"
     if (number >= 61 && number <= 75) return "bg-yellow-500 text-black"
-    return "bg-gray-500"
+    return "bg-gray-500 text-white"
+  }
+
+  // Get column letter color
+  const getColumnColor = (col: number) => {
+    const colors = [
+      "text-blue-500", // B
+      "text-red-500", // I
+      "text-white", // N
+      "text-green-500", // G
+      "text-yellow-500", // O
+    ]
+    return colors[col]
   }
 
   // Get column letter
@@ -408,7 +430,7 @@ function BingoContent() {
           <Card className="bg-[#49EACB]/5 border-[#49EACB]/10 backdrop-blur-sm overflow-hidden">
             <div className="p-6 flex flex-col h-full items-center">
               <div className="flex justify-between items-center w-full mb-4">
-                <h2 className="text-2xl font-bold text-[#49EACB]">Bingo</h2>
+                <h2 className="text-2xl font-bold text-[#49EACB]">Explosive Bingo</h2>
                 <Button variant="ghost" size="sm" className="text-[#49EACB]" onClick={resetGame}>
                   Reset
                 </Button>
@@ -421,6 +443,7 @@ function BingoContent() {
                   bingoCard={bingoCard}
                   drawnNumbers={drawnNumbers}
                   currentBall={currentBall}
+                  currentBallIsBomb={currentBallIsBomb}
                   markedNumbers={markedNumbers}
                   onDrawBall={handleDrawBall}
                   onCallBingo={handleCallBingo}
@@ -497,7 +520,7 @@ function BingoContent() {
                     onClick={handleStartGame}
                     disabled={isPlaying || !isConnected}
                   >
-                    {!isConnected ? "Connect Wallet" : isPlaying ? "Game in Progress" : "Start Bingo"}
+                    {!isConnected ? "Connect Wallet" : isPlaying ? "Game in Progress" : "Start Explosive Bingo"}
                   </Button>
                 </div>
               </Card>
@@ -520,24 +543,37 @@ function BingoContent() {
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           >
-            <Card className="bg-[#49EACB] p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
-              <h2 className="text-4xl font-bold mb-6 text-black">
-                {result.gameResult === "win" ? "BINGO!" : "No Bingo"}
-              </h2>
-              {result.gameResult === "win" ? (
-                <div className="mb-6">
-                  <p className="text-4xl animate-pulse uppercase mb-2 text-black">
-                    You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
-                  </p>
-                  <p className="text-lg text-black">
-                    {result.patterns} pattern{result.patterns !== 1 ? "s" : ""} completed!
-                  </p>
-                </div>
+            <Card
+              className={`${result.isBomb ? "bg-red-600" : "bg-[#49EACB]"} p-8 rounded-2xl shadow-2xl text-center max-w-md w-full`}
+            >
+              {result.isBomb ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <Image src="/bingobomb.webp" alt="Bomb" width={80} height={80} />
+                  </div>
+                  <h2 className="text-4xl font-bold mb-6 text-white">BOOM!</h2>
+                  <p className="text-2xl mb-4 text-white">You drew a bomb! Game over!</p>
+                </>
               ) : (
-                <p className="text-2xl mb-4 text-black">
-                  {result.gameResult === "lose" ? "Better luck next time!" : "No winning patterns found!"}
-                </p>
+                <>
+                  <h2 className="text-4xl font-bold mb-6 text-black">
+                    {result.gameResult === "win" ? "BINGO!" : "No Bingo"}
+                  </h2>
+                  {result.gameResult === "win" ? (
+                    <div className="mb-6">
+                      <p className="text-4xl animate-pulse uppercase mb-2 text-black">
+                        You won <strong>{result.winAmount.toFixed(2)}</strong> KAS!
+                      </p>
+                      <p className="text-lg text-black">
+                        {result.patterns} pattern{result.patterns !== 1 ? "s" : ""} completed!
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-2xl mb-4 text-black">No winning patterns found!</p>
+                  )}
+                </>
               )}
+
               <div className="bg-black/80 p-6 rounded-md mb-6 text-left">
                 <div className="flex items-center mb-2">
                   <ShieldCheck className="text-white mr-2" />
@@ -568,7 +604,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#49EACB" }}
         >
-          Bingo
+          Explosive Bingo
         </motion.h1>
         <motion.p
           className="text-xl tracking-wider mb-8"
@@ -576,7 +612,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#ffffff" }}
         >
-          GET A LINE, COLUMN OR DIAGONAL TO WIN
+          AVOID THE BOMBS AND GET BINGO TO WIN!
         </motion.p>
 
         {/* Game rules in the center */}
@@ -587,23 +623,23 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Place your bet and get a card</li>
                 <li>• Draw balls one by one</li>
-                <li>• Mark matching numbers on your card</li>
+                <li>• Avoid the hidden bombs!</li>
                 <li>• Call "Bingo" when you complete a pattern</li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Winning Patterns</h3>
+              <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Winning & Bombs</h3>
               <ul className="space-y-1 text-sm text-gray-300">
-                <li>• Any complete row (5 in a row)</li>
-                <li>• Any complete column (5 in a column)</li>
-                <li>• Any complete diagonal (5 diagonally)</li>
-                <li>• Win 75x your bet amount!</li>
+                <li>• Complete rows, columns, or diagonals</li>
+                <li>• More patterns = higher payout (2x-13x)</li>
+                <li>• 10 hidden bombs will end your game</li>
+                <li>• Risk vs reward - when to call bingo?</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* Animated bingo balls on left and right */}
+        {/* Animated bingo balls and bombs on left and right */}
         <div className="absolute left-8 top-1/2 transform -translate-y-1/2 space-y-4">
           <motion.div
             className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
@@ -620,11 +656,11 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             I-23
           </motion.div>
           <motion.div
-            className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center font-bold text-lg shadow-lg"
+            className="w-16 h-16 rounded-full bg-black flex items-center justify-center shadow-lg"
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.6 }}
           >
-            N-42
+            <Image src="/bingobomb.webp" alt="Bomb" width={32} height={32} />
           </motion.div>
         </div>
 
@@ -644,11 +680,11 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             O-68
           </motion.div>
           <motion.div
-            className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg"
+            className="w-16 h-16 rounded-full bg-black flex items-center justify-center shadow-lg"
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 2.1, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.8 }}
           >
-            B-12
+            <Image src="/bingobomb.webp" alt="Bomb" width={32} height={32} />
           </motion.div>
         </div>
 
@@ -663,7 +699,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             onClick={onStart}
             disabled={!isConnected}
           >
-            {!isConnected ? "Connect Wallet to Play" : "Start Bingo"}
+            {!isConnected ? "Connect Wallet to Play" : "Start Explosive Bingo"}
           </Button>
         </motion.div>
       </div>
@@ -680,6 +716,7 @@ function BingoGameScreen({
   bingoCard,
   drawnNumbers,
   currentBall,
+  currentBallIsBomb,
   markedNumbers,
   onDrawBall,
   onCallBingo,
@@ -690,6 +727,7 @@ function BingoGameScreen({
   bingoCard: BingoCardType
   drawnNumbers: number[]
   currentBall: number | null
+  currentBallIsBomb: boolean
   markedNumbers: Set<number>
   onDrawBall: () => void
   onCallBingo: () => void
@@ -699,12 +737,24 @@ function BingoGameScreen({
 }) {
   // Get ball color based on number
   const getBallColor = (number: number) => {
-    if (number >= 1 && number <= 15) return "bg-blue-500"
-    if (number >= 16 && number <= 30) return "bg-red-500"
+    if (number >= 1 && number <= 15) return "bg-blue-500 text-white"
+    if (number >= 16 && number <= 30) return "bg-red-500 text-white"
     if (number >= 31 && number <= 45) return "bg-white text-black"
-    if (number >= 46 && number <= 60) return "bg-green-500"
+    if (number >= 46 && number <= 60) return "bg-green-500 text-white"
     if (number >= 61 && number <= 75) return "bg-yellow-500 text-black"
-    return "bg-gray-500"
+    return "bg-gray-500 text-white"
+  }
+
+  // Get column letter color
+  const getColumnColor = (col: number) => {
+    const colors = [
+      "text-blue-500", // B
+      "text-red-500", // I
+      "text-white", // N
+      "text-green-500", // G
+      "text-yellow-500", // O
+    ]
+    return colors[col]
   }
 
   // Get column letter
@@ -720,10 +770,10 @@ function BingoGameScreen({
           <div className="bg-[#004d40]/50 rounded-lg p-4">
             <h3 className="text-xl font-bold text-[#49EACB] mb-4 text-center">Your Bingo Card</h3>
 
-            {/* Column Headers */}
+            {/* Column Headers with colors */}
             <div className="grid grid-cols-5 gap-2 mb-2">
-              {["B", "I", "N", "G", "O"].map((letter) => (
-                <div key={letter} className="text-center font-bold text-[#49EACB] text-xl py-2">
+              {["B", "I", "N", "G", "O"].map((letter, index) => (
+                <div key={letter} className={`text-center font-bold text-xl py-2 ${getColumnColor(index)}`}>
                   {letter}
                 </div>
               ))}
@@ -778,7 +828,7 @@ function BingoGameScreen({
                 {isDrawing ? "Drawing..." : "Draw Ball"}
               </Button>
 
-              {canCallBingo && (
+              {canCallBingo && gameStatus === "playing" && (
                 <Button
                   onClick={onCallBingo}
                   disabled={gameStatus === "complete"}
@@ -799,14 +849,18 @@ function BingoGameScreen({
             <div className="flex justify-center">
               {currentBall ? (
                 <motion.div
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl ${getBallColor(
-                    currentBall,
-                  )} shadow-lg`}
+                  className={`w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg ${
+                    currentBallIsBomb ? "bg-black" : getBallColor(currentBall)
+                  }`}
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 >
-                  {getColumnLetter(Math.floor((currentBall - 1) / 15))}-{currentBall}
+                  {currentBallIsBomb ? (
+                    <Image src="/bingobomb.webp" alt="Bomb" width={40} height={40} />
+                  ) : (
+                    `${getColumnLetter(Math.floor((currentBall - 1) / 15))}-${currentBall}`
+                  )}
                 </motion.div>
               ) : (
                 <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center text-gray-500">
@@ -825,7 +879,7 @@ function BingoGameScreen({
               {drawnNumbers.map((number, index) => (
                 <div
                   key={index}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs ${getBallColor(
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${getBallColor(
                     number,
                   )}`}
                 >
