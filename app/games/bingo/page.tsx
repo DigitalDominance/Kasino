@@ -632,7 +632,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Place your bet and get a card</li>
                 <li>• Draw balls one by one</li>
-                <li>• Avoid the hidden bombs!</li>
+                <li>• Draw a bomb and you lose!</li>
                 <li>• Call "Bingo" when you complete a pattern</li>
               </ul>
             </div>
@@ -641,7 +641,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Complete rows, columns, or diagonals</li>
                 <li>• More patterns = higher payout (2×–13×)</li>
-                <li>• 10 hidden bombs will end your game</li>
+                <li>• 3 hidden bombs within the 75 balls will end your game</li>
                 <li>• Risk vs reward - when to call bingo?</li>
               </ul>
             </div>
