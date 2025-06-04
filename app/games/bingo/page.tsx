@@ -649,7 +649,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Complete rows, columns, or diagonals</li>
                 <li>• More patterns = higher payout (2×–13×)</li>
-                <li>• 3 hidden bombs within the 75 balls can end your game</li>
+                <li>• 2 hidden bombs within the 75 balls can end your game</li>
                 <li>• Risk vs reward - when to call bingo?</li>
               </ul>
             </div>
