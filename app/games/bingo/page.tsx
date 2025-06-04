@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -91,11 +92,11 @@ function BingoContent() {
     }
   }
 
-  // Calculate potential win - show range since it depends on patterns
+  // Calculate potential win - show minimum (2× ante)
   useEffect(() => {
     const bet = Number(betAmount)
     if (!isNaN(bet)) {
-      setPotentialWin(bet * 2) // Minimum win (1 pattern = 2x)
+      setPotentialWin(bet * 2) // Minimum win (1 pattern = 2×)
     }
   }, [betAmount])
 
@@ -240,12 +241,11 @@ function BingoContent() {
         setCurrentBallIsBomb(false)
 
         // Check if this number is on our card
-        let isOnCard = false
         for (let row = 0; row < 5; row++) {
           for (let col = 0; col < 5; col++) {
-            if (bingoCard[row] && bingoCard[row][col] === data.number) {
+            const cell = bingoCard[row] && bingoCard[row][col]
+            if (cell === data.number) {
               setMarkedNumbers((prev) => new Set([...prev, data.number]))
-              isOnCard = true
               break
             }
           }
@@ -309,13 +309,18 @@ function BingoContent() {
     setGameId(null)
   }
 
-  // Check if there's a potential winning pattern
+  // Check if there's a potential winning pattern (for enabling “Call Bingo” button)
   const checkForWinningPattern = () => {
     if (!bingoCard || Object.keys(bingoCard).length === 0) return false
 
     // Check rows
     for (let row = 0; row < 5; row++) {
-      if (bingoCard[row] && bingoCard[row].every((cell) => cell === "FREE" || markedNumbers.has(cell as number))) {
+      if (
+        bingoCard[row] &&
+        bingoCard[row].every(
+          (cell) => (cell === 0) || markedNumbers.has(cell as number)
+        )
+      ) {
         return true
       }
     }
@@ -325,7 +330,7 @@ function BingoContent() {
       let columnComplete = true
       for (let row = 0; row < 5; row++) {
         const cell = bingoCard[row] && bingoCard[row][col]
-        if (cell !== "FREE" && !markedNumbers.has(cell as number)) {
+        if (cell !== 0 && !markedNumbers.has(cell as number)) {
           columnComplete = false
           break
         }
@@ -340,10 +345,10 @@ function BingoContent() {
       const cell1 = bingoCard[i] && bingoCard[i][i]
       const cell2 = bingoCard[i] && bingoCard[i][4 - i]
 
-      if (cell1 !== "FREE" && !markedNumbers.has(cell1 as number)) {
+      if (cell1 !== 0 && !markedNumbers.has(cell1 as number)) {
         diagonal1 = false
       }
-      if (cell2 !== "FREE" && !markedNumbers.has(cell2 as number)) {
+      if (cell2 !== 0 && !markedNumbers.has(cell2 as number)) {
         diagonal2 = false
       }
     }
@@ -518,7 +523,7 @@ function BingoContent() {
                     </Button>
                   </div>
                   <div className="text-center text-sm text-[#49EACB] mb-2">
-                    Potential Win: {potentialWin.toFixed(2)}+ KAS (2x-13x based on patterns)
+                    Potential Win: {potentialWin.toFixed(2)}+ KAS (2×–13× based on patterns)
                   </div>
                   <Button
                     className="w-full bg-[#49EACB] text-black hover:bg-[#49EACB]/80"
@@ -636,7 +641,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Winning & Bombs</h3>
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Complete rows, columns, or diagonals</li>
-                <li>• More patterns = higher payout (2x-13x)</li>
+                <li>• More patterns = higher payout (2×–13×)</li>
                 <li>• 10 hidden bombs will end your game</li>
                 <li>• Risk vs reward - when to call bingo?</li>
               </ul>
@@ -778,7 +783,7 @@ function BingoGameScreen({
             <h3 className="text-xl font-bold text-[#49EACB] mb-4 text-center">Your Bingo Card</h3>
 
             {/* Column Headers with colors */}
-            <div className="grid grid-cols-5 gap-2 mb-2">
+            <div className="grid grid-cols-5 gap-1 max-w-md mx-auto mb-2">
               {["B", "I", "N", "G", "O"].map((letter, index) => (
                 <div key={letter} className={`text-center font-bold text-xl py-2 ${getColumnColor(index)}`}>
                   {letter}
@@ -791,17 +796,17 @@ function BingoGameScreen({
               {Array.from({ length: 5 }, (_, row) =>
                 Array.from({ length: 5 }, (_, col) => {
                   const cell = bingoCard[row] && bingoCard[row][col]
-                  const isMarked = cell === "FREE" || markedNumbers.has(cell as number)
-                  const isFree = cell === "FREE"
+                  const isFree = cell === 0
+                  const isMarked = isFree || (typeof cell === "number" && markedNumbers.has(cell as number))
 
                   return (
                     <div
                       key={`${row}-${col}`}
                       className={`
-            w-20 h-20 flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
-            ${isMarked ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]" : "bg-black/50 border-gray-600 text-white"}
-            ${isFree ? "bg-[#49EACB]/30" : ""}
-          `}
+                        w-20 h-20 flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
+                        ${isMarked ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]" : "bg-black/50 border-gray-600 text-white"}
+                        ${isFree ? "bg-[#49EACB]/30" : ""}
+                      `}
                     >
                       {isFree ? "FREE" : cell}
                       {isMarked && !isFree && (
@@ -896,3 +901,4 @@ function BingoGameScreen({
     </div>
   )
 }
+
