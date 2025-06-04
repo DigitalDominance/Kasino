@@ -660,7 +660,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.6 }}
           >
-            <Image src="/bingobomb.webp" alt="Bomb" width={32} height={32} />
+            <Image src="/bingobomb.webp" alt="Bomb" width={42} height={42} />
           </motion.div>
         </div>
 
@@ -684,7 +684,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 2.1, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.8 }}
           >
-            <Image src="/bingobomb.webp" alt="Bomb" width={32} height={32} />
+            <Image src="/bingobomb.webp" alt="Bomb" width={42} height={42} />
           </motion.div>
         </div>
 
@@ -791,14 +791,10 @@ function BingoGameScreen({
                     <div
                       key={`${row}-${col}`}
                       className={`
-                        aspect-square flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
-                        ${
-                          isMarked
-                            ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]"
-                            : "bg-black/50 border-gray-600 text-white"
-                        }
-                        ${isFree ? "bg-[#49EACB]/30" : ""}
-                      `}
+            w-16 h-16 flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
+            ${isMarked ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]" : "bg-black/50 border-gray-600 text-white"}
+            ${isFree ? "bg-[#49EACB]/30" : ""}
+          `}
                     >
                       {cell}
                       {isMarked && !isFree && (
@@ -857,7 +853,7 @@ function BingoGameScreen({
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 >
                   {currentBallIsBomb ? (
-                    <Image src="/bingobomb.webp" alt="Bomb" width={40} height={40} />
+                    <Image src="/bingobomb.webp" alt="Bomb" width={52} height={52} />
                   ) : (
                     `${getColumnLetter(Math.floor((currentBall - 1) / 15))}-${currentBall}`
                   )}
