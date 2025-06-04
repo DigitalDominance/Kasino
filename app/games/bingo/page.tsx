@@ -45,6 +45,7 @@ function BingoContent() {
   const [betAmount, setBetAmount] = useState("1")
   const [bingoCard, setBingoCard] = useState<BingoCardType>({})
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
+  const [drawnBombs, setDrawnBombs] = useState<Set<number>>(new Set())
   const [currentBall, setCurrentBall] = useState<number | null>(null)
   const [currentBallIsBomb, setCurrentBallIsBomb] = useState(false)
   const [markedNumbers, setMarkedNumbers] = useState<Set<number>>(new Set())
@@ -184,6 +185,7 @@ function BingoContent() {
       setIsPlaying(true)
       setGameStatus("playing")
       setDrawnNumbers([])
+      setDrawnBombs(new Set())
       setMarkedNumbers(new Set())
       setCurrentBall(null)
       setCurrentBallIsBomb(false)
@@ -221,6 +223,7 @@ function BingoContent() {
       // Check if this is a bomb
       if (data.gameResult === "lose" && data.reason === "bomb") {
         setCurrentBallIsBomb(true)
+        setDrawnBombs((prev) => new Set([...prev, data.number]))
         setGameStatus("complete")
 
         // Show bomb result immediately
@@ -295,6 +298,7 @@ function BingoContent() {
     setIsPlaying(false)
     setBingoCard({})
     setDrawnNumbers([])
+    setDrawnBombs(new Set())
     setMarkedNumbers(new Set())
     setCurrentBall(null)
     setCurrentBallIsBomb(false)
@@ -442,6 +446,7 @@ function BingoContent() {
                 <BingoGameScreen
                   bingoCard={bingoCard}
                   drawnNumbers={drawnNumbers}
+                  drawnBombs={drawnBombs}
                   currentBall={currentBall}
                   currentBallIsBomb={currentBallIsBomb}
                   markedNumbers={markedNumbers}
@@ -715,6 +720,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
 function BingoGameScreen({
   bingoCard,
   drawnNumbers,
+  drawnBombs,
   currentBall,
   currentBallIsBomb,
   markedNumbers,
@@ -726,6 +732,7 @@ function BingoGameScreen({
 }: {
   bingoCard: BingoCardType
   drawnNumbers: number[]
+  drawnBombs: Set<number>
   currentBall: number | null
   currentBallIsBomb: boolean
   markedNumbers: Set<number>
@@ -780,7 +787,7 @@ function BingoGameScreen({
             </div>
 
             {/* Bingo Card Grid */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
               {Array.from({ length: 5 }, (_, row) =>
                 Array.from({ length: 5 }, (_, col) => {
                   const cell = bingoCard[row] && bingoCard[row][col]
@@ -791,12 +798,12 @@ function BingoGameScreen({
                     <div
                       key={`${row}-${col}`}
                       className={`
-            w-16 h-16 flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
+            w-20 h-20 flex items-center justify-center rounded-lg border-2 text-lg font-bold relative
             ${isMarked ? "bg-[#49EACB]/20 border-[#49EACB] text-[#49EACB]" : "bg-black/50 border-gray-600 text-white"}
             ${isFree ? "bg-[#49EACB]/30" : ""}
           `}
                     >
-                      {cell}
+                      {isFree ? "FREE" : cell}
                       {isMarked && !isFree && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Image
@@ -875,11 +882,11 @@ function BingoGameScreen({
               {drawnNumbers.map((number, index) => (
                 <div
                   key={index}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${getBallColor(
-                    number,
-                  )}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+                    drawnBombs.has(number) ? "bg-black" : getBallColor(number)
+                  }`}
                 >
-                  {number}
+                  {drawnBombs.has(number) ? <Image src="/bingobomb.webp" alt="Bomb" width={20} height={20} /> : number}
                 </div>
               ))}
             </div>
