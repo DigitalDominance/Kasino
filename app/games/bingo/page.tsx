@@ -54,6 +54,7 @@ function BingoContent() {
 
   // Animations
   const [isDrawing, setIsDrawing] = useState(false)
+  const [isCalling, setIsCalling] = useState(false) // new: track "Processing bingo..."
 
   // Provably-fair & results
   const [clientSeed, setClientSeed] = useState<string | null>(null)
@@ -263,6 +264,8 @@ function BingoContent() {
   const handleCallBingo = async () => {
     if (!gameId) return
 
+    setIsCalling(true) // show "Processing bingo..." typewriter
+
     try {
       const { data } = await axios.post(`${API_BASE}/api/game/settle`, {
         gameId,
@@ -271,6 +274,7 @@ function BingoContent() {
 
       if (!data.success) {
         alert("Call bingo action failed")
+        setIsCalling(false)
         return
       }
 
@@ -284,10 +288,12 @@ function BingoContent() {
           patterns: data.patterns || 0,
         })
         setGameStatus("complete")
+        setIsCalling(false)
       }, RESULT_POPUP_DELAY)
     } catch (error) {
       console.error("Error calling bingo:", error)
       alert("Failed to call bingo. Please try again.")
+      setIsCalling(false)
     }
   }
 
@@ -306,6 +312,7 @@ function BingoContent() {
     setClientSeed(null)
     setServerSeedHash(null)
     setGameId(null)
+    setIsCalling(false)
   }
 
   // Check if there's a potential winning pattern (for enabling “Call Bingo” button)
@@ -459,6 +466,7 @@ function BingoContent() {
                   isDrawing={isDrawing}
                   canCallBingo={checkForWinningPattern()}
                   gameStatus={gameStatus}
+                  isCalling={isCalling}
                 />
               )}
             </div>
@@ -641,7 +649,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
               <ul className="space-y-1 text-sm text-gray-300">
                 <li>• Complete rows, columns, or diagonals</li>
                 <li>• More patterns = higher payout (2×–13×)</li>
-                <li>• 3 hidden bombs within the 75 balls will end your game</li>
+                <li>• 10 hidden bombs will end your game</li>
                 <li>• Risk vs reward - when to call bingo?</li>
               </ul>
             </div>
@@ -733,6 +741,7 @@ function BingoGameScreen({
   isDrawing,
   canCallBingo,
   gameStatus,
+  isCalling,
 }: {
   bingoCard: BingoCardType
   drawnNumbers: number[]
@@ -745,6 +754,7 @@ function BingoGameScreen({
   isDrawing: boolean
   canCallBingo: boolean
   gameStatus: string
+  isCalling: boolean
 }) {
   // Get ball color based on number
   const getBallColor = (number: number) => {
@@ -772,6 +782,24 @@ function BingoGameScreen({
   const getColumnLetter = (col: number) => {
     return ["B", "I", "N", "G", "O"][col]
   }
+
+  // Typewriter state for "Processing bingo..."
+  const [callText, setCallText] = useState("")
+  const processingMessage = "Processing bingo..."
+
+  useEffect(() => {
+    if (!isCalling) return
+    setCallText("")
+    let idx = 0
+    const interval = setInterval(() => {
+      setCallText(processingMessage.slice(0, idx + 1))
+      idx++
+      if (idx >= processingMessage.length) {
+        clearInterval(interval)
+      }
+    }, 100)
+    return () => clearInterval(interval)
+  }, [isCalling])
 
   return (
     <div className="w-full h-full">
@@ -827,22 +855,28 @@ function BingoGameScreen({
 
             {/* Game Controls */}
             <div className="mt-6 flex justify-center space-x-4">
-              <Button
-                onClick={onDrawBall}
-                disabled={isDrawing || gameStatus === "complete"}
-                className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-6 py-2"
-              >
-                {isDrawing ? "Drawing..." : "Draw Ball"}
-              </Button>
+              {isCalling ? (
+                <div className="text-lg font-bold text-[#49EACB]">{callText}</div>
+              ) : (
+                <>
+                  <Button
+                    onClick={onDrawBall}
+                    disabled={isDrawing || gameStatus === "complete" || isCalling}
+                    className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-6 py-2"
+                  >
+                    {isDrawing ? "Drawing..." : "Draw Ball"}
+                  </Button>
 
-              {canCallBingo && gameStatus === "playing" && (
-                <Button
-                  onClick={onCallBingo}
-                  disabled={gameStatus === "complete"}
-                  className="bg-yellow-500 text-black hover:bg-yellow-400 px-6 py-2 animate-pulse"
-                >
-                  Call BINGO!
-                </Button>
+                  {canCallBingo && gameStatus === "playing" && (
+                    <Button
+                      onClick={onCallBingo}
+                      disabled={gameStatus === "complete" || isCalling}
+                      className="bg-yellow-500 text-black hover:bg-yellow-400 px-6 py-2 animate-pulse"
+                    >
+                      Call BINGO!
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
