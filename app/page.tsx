@@ -117,6 +117,7 @@ function MainPageContent() {
     { name: "Kaspian Cross", slug: "kaspiancross", image: "/kaspiancrosscard.webp" },
     { name: "Three Card Poker", slug: "threecardpoker", image: "/threecardpokercard.webp" },
     { name: "Crash", slug: "crash", image: "/crashcard.webp" },
+    { name: "777 Scratch-Off", slug: "scratch777", image: "/scratch777card.webp" },
     { name: "Blackjack", slug: "blackjack", image: "/blackjackcard.webp" },
     { name: "Mines", slug: "mines", image: "/minescard.webp" },
     { name: "Explosive Bingo", slug: "bingo", image: "/bingocard.webp" },
@@ -1118,6 +1119,7 @@ function MainPageContent() {
                           else if (lwGame === "craps") cardImage = "/crapscard.webp"
                           else if (lwGame === "threecardpoker") cardImage = "/threecardpokercard.webp"
                           else if (lwGame === "bingo") cardImage = "/bingocard.webp"
+                          else if (lwGame === "scratch777") cardImage = "/scratch777card.webp"
                           return (
                             <MotionCard
                               key={i}
