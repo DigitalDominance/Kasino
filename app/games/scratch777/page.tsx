@@ -544,7 +544,7 @@ function Scratch777Content() {
                   <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>Purchase a scratch ticket with your bet amount</li>
                     <li>Scratch squares one by one to reveal hidden symbols</li>
-                    <li>Match 3 or more identical symbols to win</li>
+                    <li>Get 3+ of the same symbol</li>
                     <li>Use "Reveal All" to instantly scratch all remaining squares</li>
                   </ul>
                 </div>
@@ -553,16 +553,16 @@ function Scratch777Content() {
                   <h3 className="text-lg font-semibold text-white mb-2">Winning & Payouts</h3>
                   <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>
-                      <span className="text-[#49EACB] font-bold">3 matches:</span> 2x your bet
+                      <span className="text-[#49EACB] font-bold">3 of a symbol:</span> 2x your bet
                     </li>
                     <li>
-                      <span className="text-[#49EACB] font-bold">4 matches:</span> 3x your bet
+                      <span className="text-[#49EACB] font-bold">4 of a symbol:</span> 3x your bet
                     </li>
                     <li>
-                      <span className="text-[#49EACB] font-bold">5 matches:</span> 4x your bet
+                      <span className="text-[#49EACB] font-bold">5 of a symbol:</span> 4x your bet
                     </li>
                     <li>
-                      <span className="text-[#49EACB] font-bold">6+ matches:</span> Up to 10x your bet
+                      <span className="text-[#49EACB] font-bold">6+ of a symbol:</span> Up to 10x your bet
                     </li>
                     <li>No matches = no win</li>
                   </ul>
@@ -663,7 +663,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           >
             <div className="text-center mb-4">
               <h3 className="text-2xl font-bold text-black">SCRATCH TICKET</h3>
-              <p className="text-black font-semibold">Match 3+ to Win!</p>
+              <p className="text-black font-semibold">Get 3+ of a Symbol to Win!</p>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {Array.from({ length: 16 }, (_, i) => (
@@ -698,15 +698,15 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
                 <li>• Buy a scratch ticket</li>
                 <li>• Click squares to scratch</li>
                 <li>• Reveal hidden symbols</li>
-                <li>• Match 3+ identical symbols</li>
+                <li>• Get 3+ of the same symbol</li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Payouts</h3>
               <ul className="space-y-1 text-sm text-gray-300">
-                <li>• 3 matches = 2x bet</li>
-                <li>• 4 matches = 3x bet</li>
-                <li>• 5+ matches = up to 10x bet</li>
+                <li>• 3 of a symbol = 2x bet</li>
+                <li>• 4 of a symbol = 3x bet</li>
+                <li>• 5+ of a symbol = up to 10x bet</li>
                 <li>• No matches = no win</li>
               </ul>
             </div>
@@ -714,11 +714,11 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </div>
 
         {/* Floating symbols */}
-        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 space-y-4">
+        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 space-y-6">
           {["🍒", "🍋", "🍊", "🍇"].map((symbol, index) => (
             <motion.div
               key={symbol}
-              className="text-4xl"
+              className="text-6xl"
               animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
               transition={{
                 duration: 2 + index * 0.2,
@@ -732,27 +732,27 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           ))}
         </div>
 
-        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 space-y-4">
+        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 space-y-6">
           {[
             <span
               key="777-1"
-              className="bg-gradient-to-r from-yellow-400 to-red-500 text-transparent bg-clip-text font-bold text-4xl"
+              className="bg-gradient-to-r from-yellow-400 to-red-500 text-transparent bg-clip-text font-bold text-6xl"
             >
               777
             </span>,
             <span
               key="777-2"
-              className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text font-bold text-4xl"
+              className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text font-bold text-6xl"
             >
               777
             </span>,
             <span
               key="777-3"
-              className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-bold text-4xl"
+              className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-bold text-6xl"
             >
               777
             </span>,
-            <span key="777-4" className="text-yellow-500 font-bold text-4xl">
+            <span key="777-4" className="text-yellow-500 font-bold text-6xl">
               777
             </span>,
           ].map((symbol, index) => (
@@ -772,10 +772,10 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </div>
 
         <motion.div
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
         >
           <Button
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
@@ -816,7 +816,7 @@ function ScratchGameScreen({
       <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-6 shadow-2xl border-4 border-yellow-300 mb-6">
         <div className="text-center mb-4">
           <h3 className="text-2xl font-bold text-black">777 SCRATCH TICKET</h3>
-          <p className="text-black font-semibold">Match 3 or more symbols to win!</p>
+          <p className="text-black font-semibold">Get 3 or more of the same symbol to win!</p>
         </div>
 
         {/* 4x4 Grid */}
