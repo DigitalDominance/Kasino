@@ -15,6 +15,7 @@ import { useWallet } from "@/contexts/WalletContext"
 import { LiveChat } from "../mines/live-chat"
 import { LiveWins } from "../mines/live-wins"
 import { XPDisplay } from "@/components/xp-display"
+import type { JSX } from "react"
 
 // Font & Constants
 const montserrat = Montserrat({ weight: "700", subsets: ["latin"] })
@@ -34,43 +35,79 @@ interface ScratchTicket {
 }
 
 // Symbol mapping for display
-const SYMBOL_EMOJIS: { [key: string]: string } = {
-  SYM1: "🍒",
-  SYM2: "🍋",
-  SYM3: "🍊",
-  SYM4: "🍇",
-  SYM5: "🍓",
-  SYM6: "🥝",
-  SYM7: "🍑",
-  SYM8: "🍍",
-  SYM9: "🥭",
-  SYM10: "🍌",
-  SYM11: "🍎",
-  SYM12: "🍐",
-  SYM13: "🥥",
-  SYM14: "🍈",
-  SYM15: "🍉",
-  SYM16: "🍅",
-  SYM17: "🥑",
-  SYM18: "🌶️",
-  SYM19: "🌽",
-  SYM20: "🥕",
-  SYM21: "🧄",
-  SYM22: "🧅",
-  SYM23: "🥔",
-  SYM24: "🍠",
-  SYM25: "🥜",
-  SYM26: "🌰",
-  SYM27: "🍄",
-  SYM28: "🥦",
-  SYM29: "🥬",
-  SYM30: "🥒",
-  SYM31: "🌶️",
-  SYM32: "🫐",
-  SYM33: "🍇",
-  SYM34: "🍊",
-  SYM35: "🍋",
-  SYM36: "🍒",
+const SYMBOL_EMOJIS: { [key: string]: string | JSX.Element } = {
+  // Special 777 symbols with different colors/gradients
+  SYM1: <span className="text-yellow-500 font-bold">777</span>,
+  SYM2: <span className="text-red-500 font-bold">777</span>,
+  SYM3: <span className="text-blue-500 font-bold">777</span>,
+  SYM4: <span className="text-purple-500 font-bold">777</span>,
+  SYM5: <span className="text-green-500 font-bold">777</span>,
+  SYM6: (
+    <span className="bg-gradient-to-r from-yellow-400 to-red-500 text-transparent bg-clip-text font-bold">777</span>
+  ),
+  SYM7: (
+    <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text font-bold">777</span>
+  ),
+  SYM8: (
+    <span className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-bold">777</span>
+  ),
+  // Regular fruit/object symbols
+  SYM9: "🍒",
+  SYM10: "🍋",
+  SYM11: "🍊",
+  SYM12: "🍇",
+  SYM13: "🍓",
+  SYM14: "🥝",
+  SYM15: "🍑",
+  SYM16: "🍍",
+  SYM17: "🥭",
+  SYM18: "🍌",
+  SYM19: "🍎",
+  SYM20: "🍐",
+  SYM21: "🥥",
+  SYM22: "🍈",
+  SYM23: "🍉",
+  SYM24: "🍅",
+  SYM25: "🥑",
+  SYM26: "🌶️",
+  SYM27: "🌽",
+  SYM28: "🥕",
+  SYM29: "🧄",
+  SYM30: "🧅",
+  SYM31: "🥔",
+  SYM32: "🍠",
+  SYM33: "🥜",
+  SYM34: "🌰",
+  SYM35: "🍄",
+  SYM36: "🥦",
+  SYM37: "💎",
+  SYM38: "⭐",
+  SYM39: "🔔",
+  SYM40: "🎰",
+  SYM41: "🃏",
+  SYM42: "🎲",
+  SYM43: "🎯",
+  SYM44: "🏆",
+  SYM45: "💰",
+  SYM46: "💵",
+  SYM47: "🎁",
+  SYM48: "🎪",
+  SYM49: "🎨",
+  SYM50: "🎭",
+  SYM51: "🎤",
+  SYM52: "🎧",
+  SYM53: "🎸",
+  SYM54: "🎹",
+  SYM55: "🎺",
+  SYM56: "🎻",
+  SYM57: "🎬",
+  SYM58: "🎮",
+  SYM59: "🎯",
+  SYM60: "🎱",
+  SYM61: "🎳",
+  SYM62: "🎾",
+  SYM63: "🏀",
+  SYM64: "🏈",
 }
 
 // Main Page
@@ -530,13 +567,16 @@ function Scratch777Content() {
                   <h3 className="text-lg font-semibold text-white mb-2">Winning & Payouts</h3>
                   <ul className="list-disc pl-5 space-y-1 text-gray-300">
                     <li>
-                      <span className="text-[#49EACB] font-bold">3 matches:</span> 3x your bet
+                      <span className="text-[#49EACB] font-bold">3 matches:</span> 2x your bet
                     </li>
                     <li>
-                      <span className="text-[#49EACB] font-bold">4 matches:</span> 4x your bet
+                      <span className="text-[#49EACB] font-bold">4 matches:</span> 3x your bet
                     </li>
                     <li>
-                      <span className="text-[#49EACB] font-bold">5+ matches:</span> Up to 10x your bet
+                      <span className="text-[#49EACB] font-bold">5 matches:</span> 4x your bet
+                    </li>
+                    <li>
+                      <span className="text-[#49EACB] font-bold">6+ matches:</span> Up to 10x your bet
                     </li>
                     <li>No matches = no win</li>
                   </ul>
@@ -609,10 +649,10 @@ function Scratch777Content() {
 // Pre-game welcome screen
 function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnected: boolean }) {
   return (
-    <div className="relative w-full h-[700px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-40">
+    <div className="relative w-full h-[800px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
+      <div className="absolute inset-0 flex flex-col items-center justify-start pt-16 z-40">
         <motion.h1
-          className="text-5xl font-bold mb-4"
+          className="text-5xl font-bold mb-6"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#49EACB" }}
@@ -620,7 +660,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           777 Scratch-Off
         </motion.h1>
         <motion.p
-          className="text-xl tracking-wider mb-8"
+          className="text-xl tracking-wider mb-12"
           animate={{ opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#ffffff" }}
@@ -629,7 +669,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </motion.p>
 
         {/* Animated scratch ticket preview */}
-        <div className="relative mb-8">
+        <div className="relative mb-12">
           <motion.div
             className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-6 shadow-2xl border-4 border-yellow-300"
             animate={{ rotateY: [0, 5, -5, 0] }}
@@ -650,7 +690,13 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
                   }}
                   transition={{ duration: 0.5 }}
                 >
-                  {i % 4 === Math.floor(Date.now() / 1000) % 4 ? "🍒" : "?"}
+                  {i % 4 === Math.floor(Date.now() / 1000) % 4 ? (
+                    <span className="bg-gradient-to-r from-yellow-400 to-red-500 text-transparent bg-clip-text font-bold">
+                      777
+                    </span>
+                  ) : (
+                    "?"
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -658,7 +704,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </div>
 
         {/* Game rules */}
-        <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-lg mb-8">
+        <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-lg mb-12 mx-8">
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h3 className="text-lg font-semibold text-[#49EACB] mb-2">How to Play</h3>
@@ -672,8 +718,8 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
             <div>
               <h3 className="text-lg font-semibold text-[#49EACB] mb-2">Payouts</h3>
               <ul className="space-y-1 text-sm text-gray-300">
-                <li>• 3 matches = 3x bet</li>
-                <li>• 4 matches = 4x bet</li>
+                <li>• 3 matches = 2x bet</li>
+                <li>• 4 matches = 3x bet</li>
                 <li>• 5+ matches = up to 10x bet</li>
                 <li>• No matches = no win</li>
               </ul>
@@ -701,10 +747,31 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </div>
 
         <div className="absolute right-8 top-1/2 transform -translate-y-1/2 space-y-4">
-          {["🍓", "🥝", "🍑", "🍍"].map((symbol, index) => (
+          {[
+            <span
+              key="777-1"
+              className="bg-gradient-to-r from-yellow-400 to-red-500 text-transparent bg-clip-text font-bold text-4xl"
+            >
+              777
+            </span>,
+            <span
+              key="777-2"
+              className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text font-bold text-4xl"
+            >
+              777
+            </span>,
+            <span
+              key="777-3"
+              className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-bold text-4xl"
+            >
+              777
+            </span>,
+            <span key="777-4" className="text-yellow-500 font-bold text-4xl">
+              777
+            </span>,
+          ].map((symbol, index) => (
             <motion.div
-              key={symbol}
-              className="text-4xl"
+              key={`symbol-${index}`}
               animate={{ y: [0, -10, 0], rotate: [0, -5, 5, 0] }}
               transition={{
                 duration: 2.2 + index * 0.2,
@@ -722,7 +789,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="absolute bottom-[35px] left-1/2 transform -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
         >
           <Button
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
@@ -810,7 +877,7 @@ function ScratchGameScreen({
           <p className="text-black font-semibold">Scratched: {scratchTicket.scratchedCount}/16</p>
           <div className="w-full bg-gray-300 rounded-full h-2 mt-2">
             <div
-              className="bg-green-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-[#49EACB] to-[#4AEAFF] h-2 rounded-full transition-all duration-300"
               style={{ width: `${(scratchTicket.scratchedCount / 16) * 100}%` }}
             />
           </div>
@@ -818,7 +885,13 @@ function ScratchGameScreen({
       </div>
 
       {/* Game Controls */}
-      <div className="flex gap-4">
+      <div className="flex flex-col items-center gap-4">
+        {gameStatus === "playing" && (
+          <div className="text-center text-[#49EACB]">
+            <p className="text-sm mb-3">Click squares to scratch and reveal symbols!</p>
+          </div>
+        )}
+
         {scratchTicket.scratchedCount < 16 && gameStatus === "playing" && (
           <Button
             onClick={onRevealAll}
@@ -827,12 +900,6 @@ function ScratchGameScreen({
           >
             Reveal All
           </Button>
-        )}
-
-        {gameStatus === "playing" && (
-          <div className="text-center text-[#49EACB]">
-            <p className="text-sm">Click squares to scratch and reveal symbols!</p>
-          </div>
         )}
       </div>
     </div>
