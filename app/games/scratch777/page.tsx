@@ -34,9 +34,9 @@ interface ScratchTicket {
   scratchedCount: number
 }
 
-// Symbol mapping for display
+// Symbol mapping for display - Updated to 50 symbols
 const SYMBOL_EMOJIS: { [key: string]: string | JSX.Element } = {
-  // Special 777 symbols with different colors/gradients
+  // Special 777 symbols with different colors/gradients (keep all 8)
   SYM1: <span className="text-yellow-500 font-bold">777</span>,
   SYM2: <span className="text-red-500 font-bold">777</span>,
   SYM3: <span className="text-blue-500 font-bold">777</span>,
@@ -51,7 +51,7 @@ const SYMBOL_EMOJIS: { [key: string]: string | JSX.Element } = {
   SYM8: (
     <span className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-bold">777</span>
   ),
-  // Regular fruit/object symbols
+  // Regular symbols (42 total to make 50)
   SYM9: "🍒",
   SYM10: "🍋",
   SYM11: "🍊",
@@ -94,20 +94,6 @@ const SYMBOL_EMOJIS: { [key: string]: string | JSX.Element } = {
   SYM48: "🎪",
   SYM49: "🎨",
   SYM50: "🎭",
-  SYM51: "🎤",
-  SYM52: "🎧",
-  SYM53: "🎸",
-  SYM54: "🎹",
-  SYM55: "🎺",
-  SYM56: "🎻",
-  SYM57: "🎬",
-  SYM58: "🎮",
-  SYM59: "🎯",
-  SYM60: "🎱",
-  SYM61: "🎳",
-  SYM62: "🎾",
-  SYM63: "🏀",
-  SYM64: "🏈",
 }
 
 // Main Page
@@ -649,10 +635,10 @@ function Scratch777Content() {
 // Pre-game welcome screen
 function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnected: boolean }) {
   return (
-    <div className="relative w-full h-[800px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
-      <div className="absolute inset-0 flex flex-col items-center justify-start pt-16 z-40">
+    <div className="relative w-full h-[900px] rounded-lg overflow-hidden border border-gray-600 shadow-2xl bg-gradient-to-b from-[#004d40] to-[#00251a]">
+      <div className="absolute inset-0 flex flex-col items-center justify-start pt-12 z-40">
         <motion.h1
-          className="text-5xl font-bold mb-6"
+          className="text-5xl font-bold mb-4"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#49EACB" }}
@@ -660,7 +646,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           777 Scratch-Off
         </motion.h1>
         <motion.p
-          className="text-xl tracking-wider mb-12"
+          className="text-xl tracking-wider mb-8"
           animate={{ opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
           style={{ color: "#ffffff" }}
@@ -669,7 +655,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </motion.p>
 
         {/* Animated scratch ticket preview */}
-        <div className="relative mb-12">
+        <div className="relative mb-8">
           <motion.div
             className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-6 shadow-2xl border-4 border-yellow-300"
             animate={{ rotateY: [0, 5, -5, 0] }}
@@ -704,7 +690,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
         </div>
 
         {/* Game rules */}
-        <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-lg mb-12 mx-8">
+        <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-lg mb-16 mx-8">
           <div className="grid grid-cols-2 gap-6">
             <div>
               <h3 className="text-lg font-semibold text-[#49EACB] mb-2">How to Play</h3>
@@ -789,7 +775,7 @@ function PreGameScreen({ onStart, isConnected }: { onStart: () => void; isConnec
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
         >
           <Button
             className="bg-[#49EACB] text-black hover:bg-[#49EACB]/80 px-8 py-6 text-lg"
