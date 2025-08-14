@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useWallet, WalletStatus } from "@/contexts/WalletContext"
 import { useModal } from "@/contexts/ModalContext"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,14 @@ export function WalletConnection({ className }: { className?: string }) {
   const { isConnected, connectWallet, disconnectWallet, showNotification } = useWallet()
   const { showModal } = useModal()
   const [isLoading, setIsLoading] = useState(false)
+
+  // Lock scrolling while the announcement is displayed
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [])
 
   const handleConnect = useCallback(
     debounce(async () => {
@@ -87,29 +95,50 @@ export function WalletConnection({ className }: { className?: string }) {
   }
 
   return (
-    <div className={`flex items-center space-x-4 ${className || ""}`}>
-      <WalletStatus />
-      {!isConnected ? (
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
-            onClick={handleConnect}
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Connect Wallet"}
-          </Button>
-        </motion.div>
-      ) : (
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
-            onClick={handleDisconnect}
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Disconnect"}
-          </Button>
-        </motion.div>
-      )}
-    </div>
+    <>
+      {/* Unbypassable full-screen announcement */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      >
+        <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#49EACB]/40 bg-neutral-900 p-6 text-center shadow-2xl">
+          <div className="mb-3 inline-block rounded-full border border-[#49EACB]/30 px-3 py-1 text-xs tracking-wide text-[#49EACB]">
+            Announcement
+          </div>
+          <h2 className="mb-2 text-2xl font-bold text-white">Beta testing is now over.</h2>
+          <p className="mx-auto max-w-md text-sm text-neutral-200">
+            Thank you to all our testers. We will soon be licensed and live.
+          </p>
+          {/* Intentionally no close or action buttons to prevent bypass */}
+        </div>
+      </div>
+
+      {/* Underlying UI (blocked by the modal above) */}
+      <div className={`flex items-center space-x-4 ${className || ""}`} aria-hidden>
+        <WalletStatus />
+        {!isConnected ? (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
+              onClick={handleConnect}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Connect Wallet"}
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              className="bg-gradient-to-r from-[#49EACB] to-[#49EACB]/80 hover:opacity-90 text-black font-semibold text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
+              onClick={handleDisconnect}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : "Disconnect"}
+            </Button>
+          </motion.div>
+        )}
+      </div>
+    </>
   )
 }
