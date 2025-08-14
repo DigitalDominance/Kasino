@@ -96,21 +96,23 @@ export function WalletConnection({ className }: { className?: string }) {
 
   return (
     <>
-      {/* Unbypassable full-screen announcement */}
+      {/* Unbypassable full-screen announcement, pushed down by 50vh */}
       <div
         role="dialog"
         aria-modal="true"
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm"
       >
-        <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#49EACB]/40 bg-neutral-900 p-6 text-center shadow-2xl">
-          <div className="mb-3 inline-block rounded-full border border-[#49EACB]/30 px-3 py-1 text-xs tracking-wide text-[#49EACB]">
-            Announcement
+        <div className="flex h-full w-full items-start justify-center pt-[50vh]">
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-[#49EACB]/40 bg-neutral-900 p-6 text-center shadow-2xl">
+            <div className="mb-3 inline-block rounded-full border border-[#49EACB]/30 px-3 py-1 text-xs tracking-wide text-[#49EACB]">
+              Announcement
+            </div>
+            <h2 className="mb-2 text-2xl font-bold text-white">Beta testing is now over.</h2>
+            <p className="mx-auto max-w-md text-sm text-neutral-200">
+              Thank you to all our testers. We will soon be licensed and live.
+            </p>
+            {/* No close/actions = unbypassable */}
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-white">Beta testing is now over.</h2>
-          <p className="mx-auto max-w-md text-sm text-neutral-200">
-            Thank you to all our testers. We will soon be licensed and live.
-          </p>
-          {/* Intentionally no close or action buttons to prevent bypass */}
         </div>
       </div>
 
